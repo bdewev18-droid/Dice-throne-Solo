@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+const String appVersionLabel = 'Version 1.0.1';
+
 void main() {
   runApp(const DiceThroneSurvieApp());
 }
@@ -148,7 +150,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({
     required this.onHistory,
     required this.onSurvival,
@@ -159,46 +161,148 @@ class HomePage extends StatelessWidget {
   final VoidCallback onSurvival;
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  bool _showActions = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future<void>.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() => _showActions = true);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              const Spacer(),
-              Image.asset('assets/dice-throne-logo.webp', height: 150),
-              const SizedBox(height: 18),
-              Text(
-                'Mode survie solo',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'assets/home_background.png',
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.05),
+                  Colors.black.withValues(alpha: 0.1),
+                  Colors.black.withValues(alpha: 0.76),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Prototype personnel en francais',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(color: Colors.white70),
-              ),
-              const Spacer(),
-              OutlinedButton.icon(
-                onPressed: onHistory,
-                icon: const Icon(Icons.history),
-                label: const Text('Historique'),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.58),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: const Text(
+                        appVersionLabel,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const Spacer(),
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 650),
+                    opacity: _showActions ? 1 : 0,
+                    child: IgnorePointer(
+                      ignoring: !_showActions,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ImageActionButton(
+                            label: 'Historique',
+                            icon: Icons.history,
+                            onPressed: widget.onHistory,
+                          ),
+                          const SizedBox(height: 12),
+                          ImageActionButton(
+                            label: 'Mode survie',
+                            icon: Icons.shield,
+                            onPressed: widget.onSurvival,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: onSurvival,
-                icon: const Icon(Icons.shield),
-                label: const Text('Mode survie'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ImageActionButton extends StatelessWidget {
+  const ImageActionButton({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    super.key,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Ink(
+          height: 64,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            image: const DecorationImage(
+              image: AssetImage('assets/button_background.png'),
+              fit: BoxFit.fill,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 24),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
               ),
             ],
           ),
