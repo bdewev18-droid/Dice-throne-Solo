@@ -2,27 +2,53 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-const String appVersionLabel = 'Version 1.1.0';
+const String appVersionLabel = 'Version 1.1.3';
+const int levelOneTarget = 33;
+const int levelTwoTarget = 52;
 
 void main() {
   runApp(const DiceThroneSurvieApp());
 }
 
 enum HeroType {
-  barbare('Barbare', Alignment.centerLeft, Color(0xffd94a24)),
-  elfeLunaire('Elfe lunaire', Alignment.centerRight, Color(0xff64b7e8));
+  barbare(
+    'Barbare',
+    'assets/barbarian_hero.jpg',
+    Alignment.center,
+    Color(0xffd94a24),
+  ),
+  elfeLunaire(
+    'Elfe lunaire',
+    'assets/moon_elf_hero.png',
+    Alignment.center,
+    Color(0xff64b7e8),
+  ),
+  tacticien(
+    'Tacticien',
+    'assets/tactician_hero.png',
+    Alignment.center,
+    Color(0xffd92f2f),
+  ),
+  deadpool(
+    'Deadpool',
+    'assets/deadpool_hero.jpg',
+    Alignment.center,
+    Color(0xffc91922),
+  );
 
-  const HeroType(this.label, this.imageAlignment, this.color);
+  const HeroType(this.label, this.asset, this.imageAlignment, this.color);
 
   final String label;
+  final String asset;
   final Alignment imageAlignment;
   final Color color;
 }
 
 enum EnemyRank {
-  green('Vert', 1, Color(0xff34d36d), 'assets/map_green.jpg'),
-  blue('Bleu', 2, Color(0xff3bb9ff), 'assets/map_blue.png'),
-  violet('Violet', 3, Color(0xff9b58ff), 'assets/map_violet.png'),
+  green('Green', 1, Color(0xff34d36d), 'assets/map_green.jpg'),
+  blue('Blue', 2, Color(0xff3bb9ff), 'assets/map_blue.png'),
+  violet('Purple', 3, Color(0xff9b58ff), 'assets/map_violet.png'),
+  brown('Brown', 4, Color(0xff8a5a2c), 'assets/map_orange.png'),
   orange('Orange', 6, Color(0xffff8a2b), 'assets/map_orange.png');
 
   const EnemyRank(this.label, this.points, this.color, this.asset);
@@ -34,8 +60,8 @@ enum EnemyRank {
 }
 
 enum BranchSide {
-  left('Gauche'),
-  right('Droite');
+  left('Left'),
+  right('Right');
 
   const BranchSide(this.label);
 
@@ -43,14 +69,25 @@ enum BranchSide {
 }
 
 enum HistorySort {
-  recent('Derniere partie'),
+  recent('Latest game'),
   hero('Hero'),
-  score('Meilleur score'),
-  date('Date de partie');
+  score('Best score'),
+  date('Game date');
 
   const HistorySort(this.label);
 
   final String label;
+}
+
+enum SurvivalMode {
+  levelOne('Level 1', levelOneTarget),
+  levelTwo('Level 2', levelTwoTarget),
+  free('Free mode', 33);
+
+  const SurvivalMode(this.label, this.defaultTarget);
+
+  final String label;
+  final int defaultTarget;
 }
 
 class GameRecord {
@@ -58,11 +95,31 @@ class GameRecord {
     required this.hero,
     required this.date,
     required this.score,
+    this.mode = SurvivalMode.levelOne,
   });
 
   final HeroType hero;
   final DateTime date;
   final int score;
+  final SurvivalMode mode;
+}
+
+class SurvivalConfig {
+  const SurvivalConfig({
+    required this.mode,
+    required this.targetScore,
+    this.freeCounts = const {},
+  });
+
+  final SurvivalMode mode;
+  final int targetScore;
+  final Map<EnemyRank, int> freeCounts;
+
+  String get label => switch (mode) {
+    SurvivalMode.levelOne => 'Level 1',
+    SurvivalMode.levelTwo => 'Level 2',
+    SurvivalMode.free => 'Free mode',
+  };
 }
 
 class EnemyNode {
@@ -93,13 +150,15 @@ class EnemyNode {
 }
 
 class AdventureState {
-  AdventureState({required this.hero, required this.targetScore})
-    : enemies = _generateEnemies(targetScore) {
+  AdventureState({required this.hero, required this.config})
+    : targetScore = config.targetScore,
+      enemies = _generateEnemies(config) {
     _refreshAvailability();
-    log('Campagne creee: objectif $targetScore points.');
+    log('Run created: ${config.label}, target $targetScore points.');
   }
 
   final HeroType hero;
+  final SurvivalConfig config;
   final int targetScore;
   final List<EnemyNode> enemies;
   final List<String> logs = [];
@@ -237,32 +296,31 @@ class AdventureState {
   }
 
   List<EnemyNode> _availableInBranch(BranchSide branch) {
-    final branchEnemies = enemies.where((enemy) => enemy.branch == branch);
-    final step1 = branchEnemies.firstWhere((enemy) => enemy.step == 1);
-    final step2 = branchEnemies.firstWhere((enemy) => enemy.step == 2);
-    final step3 = branchEnemies.firstWhere((enemy) => enemy.step == 3);
-    final choiceA = branchEnemies.firstWhere((enemy) => enemy.step == 4);
-    final choiceB = branchEnemies.firstWhere((enemy) => enemy.step == 5);
-    final boss = branchEnemies.firstWhere((enemy) => enemy.step == 6);
+    final branchEnemies =
+        enemies.where((enemy) => enemy.branch == branch).toList()
+          ..sort((a, b) => a.step.compareTo(b.step));
 
-    if (!step1.defeated) {
-      return [step1];
+    final sequentialLimit = branchEnemies.length > 6 ? 5 : 3;
+    for (var step = 1; step <= sequentialLimit; step++) {
+      final enemy = branchEnemies.firstWhere((enemy) => enemy.step == step);
+      if (!enemy.defeated) {
+        return [enemy];
+      }
     }
-    if (!step2.defeated) {
-      return [step2];
+
+    final unlockedSteps = branchEnemies.length > 6 ? [6, 7] : [4, 5];
+    final unlocked = branchEnemies
+        .where((enemy) => unlockedSteps.contains(enemy.step) && !enemy.defeated)
+        .toList();
+    if (unlocked.isNotEmpty) {
+      return unlocked;
     }
-    if (!step3.defeated) {
-      return [step3];
-    }
-    final choices = [
-      choiceA,
-      choiceB,
-    ].where((enemy) => !enemy.defeated).toList();
-    if (choices.isNotEmpty) {
-      return choices;
-    }
-    if (!boss.defeated) {
-      return [boss];
+
+    if (branchEnemies.length <= 6) {
+      final boss = branchEnemies.firstWhere((enemy) => enemy.step == 6);
+      if (!boss.defeated) {
+        return [boss];
+      }
     }
     return [];
   }
@@ -314,7 +372,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
       home: Builder(
         builder: (context) => HomePage(
           onHistory: () => _openHistory(context),
-          onSurvival: (targetScore) => _openHeroChoice(context, targetScore),
+          onSurvival: () => _openHeroChoice(context),
         ),
       ),
     );
@@ -322,18 +380,35 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
 
   void _openHistory(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => HistoryPage(records: _history)),
+      MaterialPageRoute<void>(
+        builder: (_) => HistoryPage(
+          records: _history,
+          onAddRecord: (record) => setState(() => _history.insert(0, record)),
+          onDeleteRecord: (record) => setState(() => _history.remove(record)),
+        ),
+      ),
     );
   }
 
-  void _openHeroChoice(BuildContext context, int targetScore) {
+  void _openHeroChoice(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => HeroChoicePage(
-          initialTargetScore: targetScore,
-          onStart: (hero, target) {
-            final adventure = AdventureState(hero: hero, targetScore: target);
-            _replaceWithMap(context, adventure, hero, target);
+          onNext: (hero) {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SurvivalSetupPage(
+                  hero: hero,
+                  onStart: (config) {
+                    final adventure = AdventureState(
+                      hero: hero,
+                      config: config,
+                    );
+                    _replaceWithMap(context, adventure, hero, config);
+                  },
+                ),
+              ),
+            );
           },
         ),
       ),
@@ -344,17 +419,17 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
     BuildContext context,
     AdventureState adventure,
     HeroType hero,
-    int target,
+    SurvivalConfig config,
   ) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => MapPage(
           adventure: adventure,
           onRecordScore: _recordAdventure,
-          onChangeHero: () => _openHeroChoice(context, target),
+          onChangeHero: () => _openHeroChoice(context),
           onReplay: () {
-            final next = AdventureState(hero: hero, targetScore: target);
-            _replaceWithMap(context, next, hero, target);
+            final next = AdventureState(hero: hero, config: config);
+            _replaceWithMap(context, next, hero, config);
           },
         ),
       ),
@@ -373,6 +448,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
           hero: adventure.hero,
           date: DateTime.now(),
           score: adventure.score,
+          mode: adventure.config.mode,
         ),
       );
     });
@@ -387,16 +463,13 @@ class HomePage extends StatefulWidget {
   });
 
   final VoidCallback onHistory;
-  final ValueChanged<int> onSurvival;
+  final VoidCallback onSurvival;
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  final TextEditingController _targetController = TextEditingController(
-    text: '33',
-  );
   bool _showActions = false;
 
   @override
@@ -410,18 +483,23 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  void dispose() {
-    _targetController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset('assets/home_background.png', fit: BoxFit.cover),
+          Positioned.fill(
+            top: MediaQuery.paddingOf(context).top + 18,
+            child: Image.asset('assets/home_background.png', fit: BoxFit.cover),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.paddingOf(context).top + 18,
+            child: const ColoredBox(color: Colors.black),
+          ),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -440,10 +518,6 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: VersionPill(label: appVersionLabel),
-                  ),
                   const Spacer(),
                   AnimatedOpacity(
                     duration: const Duration(milliseconds: 650),
@@ -453,46 +527,23 @@ class _HomePageState extends State<HomePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          TextField(
-                            controller: _targetController,
-                            keyboardType: TextInputType.number,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 20,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: 'Objectif de campagne',
-                              suffixText: 'pts',
-                              filled: true,
-                              fillColor: Colors.black.withValues(alpha: 0.62),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
                           ImageActionButton(
-                            label: 'Historique',
+                            label: 'History',
                             icon: Icons.history,
                             onPressed: widget.onHistory,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 22),
                           ImageActionButton(
-                            label: 'Mode survie',
+                            label: 'Survival mode',
                             icon: Icons.shield,
-                            onPressed: () {
-                              final target =
-                                  int.tryParse(_targetController.text.trim()) ??
-                                  33;
-                              widget.onSurvival(target);
-                            },
+                            onPressed: widget.onSurvival,
                           ),
                         ],
                       ),
                     ),
                   ),
+                  const SizedBox(height: 18),
+                  const VersionPill(label: appVersionLabel),
                 ],
               ),
             ),
@@ -539,7 +590,7 @@ class ImageActionButton extends StatelessWidget {
 
   final String label;
   final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -549,7 +600,7 @@ class ImageActionButton extends StatelessWidget {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(8),
         child: Ink(
-          height: 64,
+          height: 84,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             image: const DecorationImage(
@@ -557,20 +608,23 @@ class ImageActionButton extends StatelessWidget {
               fit: BoxFit.fill,
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: Colors.white, size: 24),
-              const SizedBox(width: 10),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
+          child: Opacity(
+            opacity: onPressed == null ? 0.48 : 1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: Colors.white, size: 24),
+                const SizedBox(width: 10),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -579,9 +633,16 @@ class ImageActionButton extends StatelessWidget {
 }
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({required this.records, super.key});
+  const HistoryPage({
+    required this.records,
+    required this.onAddRecord,
+    required this.onDeleteRecord,
+    super.key,
+  });
 
   final List<GameRecord> records;
+  final ValueChanged<GameRecord> onAddRecord;
+  final ValueChanged<GameRecord> onDeleteRecord;
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -589,42 +650,58 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   HistorySort _sort = HistorySort.recent;
-  HeroType? _heroFilter;
+  final Set<HeroType> _heroFilters = {...HeroType.values};
 
   @override
   Widget build(BuildContext context) {
     final records = [...widget.records.where(_matchesHero)]..sort(_sortRecords);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Historique')),
+      appBar: AppBar(
+        title: const Text('History'),
+        actions: [
+          IconButton(
+            tooltip: 'Add run',
+            onPressed: _addManualRun,
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SegmentedButton<HeroType?>(
-                segments: const [
-                  ButtonSegment(value: null, label: Text('Tous')),
-                  ButtonSegment(
-                    value: HeroType.barbare,
-                    label: Text('Barbare'),
-                  ),
-                  ButtonSegment(
-                    value: HeroType.elfeLunaire,
-                    label: Text('Elfe'),
-                  ),
-                ],
-                selected: {_heroFilter},
-                onSelectionChanged: (selection) {
-                  setState(() => _heroFilter = selection.first);
-                },
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: HeroType.values.map((hero) {
+                  final selected = _heroFilters.contains(hero);
+                  return FilterChip(
+                    selected: selected,
+                    avatar: CircleAvatar(
+                      backgroundImage: AssetImage(hero.asset),
+                      backgroundColor: hero.color,
+                    ),
+                    label: Text(hero.label),
+                    onSelected: (value) {
+                      setState(() {
+                        if (value) {
+                          _heroFilters.add(hero);
+                        } else if (_heroFilters.length > 1) {
+                          _heroFilters.remove(hero);
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<HistorySort>(
                 initialValue: _sort,
                 decoration: const InputDecoration(
-                  labelText: 'Trier par',
+                  labelText: 'Sort by',
                   border: OutlineInputBorder(),
                 ),
                 items: HistorySort.values
@@ -644,7 +721,7 @@ class _HistoryPageState extends State<HistoryPage> {
               const SizedBox(height: 16),
               Expanded(
                 child: records.isEmpty
-                    ? const Center(child: Text('Aucune partie pour ce filtre.'))
+                    ? const Center(child: Text('No game for this filter.'))
                     : ListView.separated(
                         itemCount: records.length,
                         separatorBuilder: (_, _) => const Divider(height: 1),
@@ -653,16 +730,28 @@ class _HistoryPageState extends State<HistoryPage> {
                           return ListTile(
                             leading: CircleAvatar(
                               backgroundColor: record.hero.color,
-                              child: Text(record.score.toString()),
+                              backgroundImage: AssetImage(record.hero.asset),
                             ),
                             title: Text(record.hero.label),
-                            subtitle: Text(_formatDate(record.date)),
-                            trailing: Text(
-                              '${record.score} pts',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                              ),
+                            subtitle: Text(
+                              '${_modeLabel(record.mode)} - ${_formatDate(record.date)}',
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '${record.score} pts',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: 'Delete run',
+                                  onPressed: () => _deleteRun(record),
+                                  icon: const Icon(Icons.delete_outline),
+                                ),
+                              ],
                             ),
                           );
                         },
@@ -675,8 +764,7 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  bool _matchesHero(GameRecord record) =>
-      _heroFilter == null || record.hero == _heroFilter;
+  bool _matchesHero(GameRecord record) => _heroFilters.contains(record.hero);
 
   int _sortRecords(GameRecord a, GameRecord b) {
     return switch (_sort) {
@@ -686,17 +774,152 @@ class _HistoryPageState extends State<HistoryPage> {
       HistorySort.date => a.date.compareTo(b.date),
     };
   }
+
+  Future<void> _addManualRun() async {
+    final record = await showDialog<GameRecord>(
+      context: context,
+      builder: (context) => const ManualRunDialog(),
+    );
+    if (record == null) {
+      return;
+    }
+    widget.onAddRecord(record);
+    setState(() {});
+  }
+
+  Future<void> _deleteRun(GameRecord record) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete run?'),
+        content: Text('${record.hero.label} - ${record.score} pts'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed ?? false) {
+      widget.onDeleteRecord(record);
+      setState(() {});
+    }
+  }
+}
+
+class ManualRunDialog extends StatefulWidget {
+  const ManualRunDialog({super.key});
+
+  @override
+  State<ManualRunDialog> createState() => _ManualRunDialogState();
+}
+
+class _ManualRunDialogState extends State<ManualRunDialog> {
+  HeroType _hero = HeroType.barbare;
+  SurvivalMode _mode = SurvivalMode.levelOne;
+  late final TextEditingController _scoreController = TextEditingController(
+    text: levelOneTarget.toString(),
+  );
+
+  @override
+  void dispose() {
+    _scoreController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add a run'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<HeroType>(
+              initialValue: _hero,
+              decoration: const InputDecoration(labelText: 'Hero'),
+              items: HeroType.values
+                  .map(
+                    (hero) =>
+                        DropdownMenuItem(value: hero, child: Text(hero.label)),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _hero = value);
+                }
+              },
+            ),
+            const SizedBox(height: 10),
+            DropdownButtonFormField<SurvivalMode>(
+              initialValue: _mode,
+              decoration: const InputDecoration(labelText: 'Scenario'),
+              items: SurvivalMode.values
+                  .map(
+                    (mode) => DropdownMenuItem(
+                      value: mode,
+                      child: Text(_modeLabel(mode)),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                setState(() {
+                  _mode = value;
+                  _scoreController.text = value.defaultTarget.toString();
+                });
+              },
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _scoreController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Score',
+                suffixText: 'pts',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final score = int.tryParse(_scoreController.text.trim());
+            if (score == null || score < 0) {
+              return;
+            }
+            Navigator.of(context).pop(
+              GameRecord(
+                hero: _hero,
+                date: DateTime.now(),
+                score: score,
+                mode: _mode,
+              ),
+            );
+          },
+          child: const Text('Add'),
+        ),
+      ],
+    );
+  }
 }
 
 class HeroChoicePage extends StatefulWidget {
-  const HeroChoicePage({
-    required this.initialTargetScore,
-    required this.onStart,
-    super.key,
-  });
+  const HeroChoicePage({required this.onNext, super.key});
 
-  final int initialTargetScore;
-  final void Function(HeroType hero, int targetScore) onStart;
+  final ValueChanged<HeroType> onNext;
 
   @override
   State<HeroChoicePage> createState() => _HeroChoicePageState();
@@ -704,62 +927,39 @@ class HeroChoicePage extends StatefulWidget {
 
 class _HeroChoicePageState extends State<HeroChoicePage> {
   HeroType _selectedHero = HeroType.barbare;
-  late final TextEditingController _targetController = TextEditingController(
-    text: widget.initialTargetScore.toString(),
-  );
-
-  @override
-  void dispose() {
-    _targetController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Choix du hero')),
+      appBar: AppBar(title: const Text('Choose your hero')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Row(
-              children: HeroType.values
-                  .map(
-                    (hero) => Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(
-                          right: hero == HeroType.barbare ? 8 : 0,
-                          left: hero == HeroType.elfeLunaire ? 8 : 0,
-                        ),
-                        child: HeroCard(
-                          hero: hero,
-                          selected: _selectedHero == hero,
-                          onTap: () => setState(() => _selectedHero = hero),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-            const SizedBox(height: 18),
-            TextField(
-              controller: _targetController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Objectif de points pour l aventure',
-                suffixText: 'pts',
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.58,
               ),
+              itemCount: HeroType.values.length,
+              itemBuilder: (context, index) {
+                final hero = HeroType.values[index];
+                return HeroCard(
+                  hero: hero,
+                  selected: _selectedHero == hero,
+                  onTap: () => setState(() => _selectedHero = hero),
+                );
+              },
             ),
             const SizedBox(height: 18),
-            FilledButton.icon(
-              onPressed: () {
-                final targetScore =
-                    int.tryParse(_targetController.text.trim()) ?? 33;
-                widget.onStart(_selectedHero, targetScore);
-              },
-              icon: const Icon(Icons.map),
-              label: const Text('Commencer la map'),
+            ImageActionButton(
+              label: 'Next',
+              icon: Icons.arrow_forward,
+              onPressed: () => widget.onNext(_selectedHero),
             ),
           ],
         ),
@@ -795,7 +995,7 @@ class HeroCard extends StatelessWidget {
             width: selected ? 4 : 1,
           ),
           image: DecorationImage(
-            image: const AssetImage('assets/heroes.jpg'),
+            image: AssetImage(hero.asset),
             fit: BoxFit.cover,
             alignment: hero.imageAlignment,
           ),
@@ -829,6 +1029,247 @@ class HeroCard extends StatelessWidget {
   }
 }
 
+class SurvivalSetupPage extends StatefulWidget {
+  const SurvivalSetupPage({
+    required this.hero,
+    required this.onStart,
+    super.key,
+  });
+
+  final HeroType hero;
+  final ValueChanged<SurvivalConfig> onStart;
+
+  @override
+  State<SurvivalSetupPage> createState() => _SurvivalSetupPageState();
+}
+
+class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
+  SurvivalMode _mode = SurvivalMode.levelOne;
+  final Map<EnemyRank, int> _freeCounts = {
+    EnemyRank.green: 4,
+    EnemyRank.blue: 4,
+    EnemyRank.violet: 3,
+    EnemyRank.orange: 2,
+  };
+
+  int get _freeTotal =>
+      _freeCounts.values.fold(0, (total, value) => total + value);
+
+  int get _freeScore => _freeCounts.entries.fold(
+    0,
+    (total, entry) => total + entry.key.points * entry.value,
+  );
+
+  bool get _freeValid =>
+      _freeTotal == 13 &&
+      (_freeCounts[EnemyRank.green] ?? 0) >= 1 &&
+      (_freeCounts[EnemyRank.orange] ?? 0) >= 2 &&
+      _freeScore >= 20;
+
+  @override
+  Widget build(BuildContext context) {
+    final config = switch (_mode) {
+      SurvivalMode.levelOne => const SurvivalConfig(
+        mode: SurvivalMode.levelOne,
+        targetScore: levelOneTarget,
+      ),
+      SurvivalMode.levelTwo => const SurvivalConfig(
+        mode: SurvivalMode.levelTwo,
+        targetScore: levelTwoTarget,
+      ),
+      SurvivalMode.free => SurvivalConfig(
+        mode: SurvivalMode.free,
+        targetScore: _freeScore,
+        freeCounts: Map<EnemyRank, int>.from(_freeCounts),
+      ),
+    };
+    final canStart = _mode != SurvivalMode.free || _freeValid;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Survival setup')),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            InfoCard(
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundImage: AssetImage(widget.hero.asset),
+                    backgroundColor: widget.hero.color,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.hero.label,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...SurvivalMode.values.map(
+              (mode) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: InkWell(
+                  onTap: () => setState(() => _mode = mode),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _mode == mode
+                          ? const Color(0xff4f2a86)
+                          : const Color(0xff202020),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _mode == mode
+                            ? const Color(0xffc084fc)
+                            : Colors.white12,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _mode == mode
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_unchecked,
+                          color: const Color(0xffc084fc),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                mode.label,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              Text(
+                                mode == SurvivalMode.free
+                                    ? 'Build your own 13-enemy run'
+                                    : '${mode.defaultTarget} points',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_mode == SurvivalMode.free) ...[
+              const SizedBox(height: 8),
+              InfoCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Free run: $_freeScore points / $_freeTotal enemies',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Minimum: 1 green, 2 orange, 20 points. Maximum: 13 enemies.',
+                    ),
+                    const SizedBox(height: 12),
+                    ...[
+                      EnemyRank.green,
+                      EnemyRank.blue,
+                      EnemyRank.violet,
+                      EnemyRank.orange,
+                    ].map(_buildRankCounter),
+                    if (!_freeValid)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Adjust the enemy count before starting.',
+                          style: TextStyle(color: Colors.orangeAccent),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            ImageActionButton(
+              label: 'Start run',
+              icon: Icons.play_arrow,
+              onPressed: canStart ? () => widget.onStart(config) : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRankCounter(EnemyRank rank) {
+    final value = _freeCounts[rank] ?? 0;
+    final min = rank == EnemyRank.green
+        ? 1
+        : rank == EnemyRank.orange
+        ? 2
+        : 0;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 38,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+              image: DecorationImage(
+                image: AssetImage(rank.asset),
+                fit: BoxFit.cover,
+                colorFilter: rank == EnemyRank.brown
+                    ? ColorFilter.mode(
+                        rank.color.withValues(alpha: 0.6),
+                        BlendMode.multiply,
+                      )
+                    : null,
+              ),
+              border: Border.all(color: rank.color),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text('${rank.label} (${rank.points} pts)')),
+          IconButton(
+            onPressed: value <= min
+                ? null
+                : () => setState(() => _freeCounts[rank] = value - 1),
+            icon: const Icon(Icons.remove),
+          ),
+          SizedBox(
+            width: 32,
+            child: Text(
+              value.toString(),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            ),
+          ),
+          IconButton(
+            onPressed: _freeTotal >= 13
+                ? null
+                : () => setState(() => _freeCounts[rank] = value + 1),
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class MapPage extends StatefulWidget {
   const MapPage({
     required this.adventure,
@@ -848,9 +1289,19 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
+  late final TransformationController _mapController =
+      TransformationController()..value = Matrix4.diagonal3Values(1.7, 1.7, 1);
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final adventure = widget.adventure;
+    final currentTarget = _currentTarget();
     if (adventure.finished) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         widget.onRecordScore(adventure);
@@ -858,54 +1309,89 @@ class _MapPageState extends State<MapPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          '${adventure.hero.label} - ${adventure.score}/${adventure.targetScore} pts',
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Detail',
-            onPressed: () => _openDetails(context),
-            icon: const Icon(Icons.receipt_long),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset('assets/fond-map.webp', fit: BoxFit.cover),
+          Container(color: Colors.black.withValues(alpha: 0.45)),
+          SafeArea(
+            child: Column(
+              children: [
+                MapHeader(
+                  adventure: adventure,
+                  onDetails: () => _openDetails(context),
+                  onChanged: () => setState(() {}),
+                ),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            return InteractiveViewer(
+                              constrained: false,
+                              boundaryMargin: const EdgeInsets.all(280),
+                              minScale: 0.75,
+                              maxScale: 2.2,
+                              transformationController: _mapController,
+                              child: SizedBox(
+                                width: max(520, constraints.maxWidth * 1.45),
+                                height: max(980, constraints.maxHeight * 1.45),
+                                child: Stack(
+                                  children: [
+                                    ..._buildMapNodes(
+                                      context,
+                                      constraints.biggest,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      if (adventure.finished)
+                        Positioned(
+                          left: 16,
+                          right: 16,
+                          top: 12,
+                          child: EndAdventureBanner(
+                            adventure: adventure,
+                            onReplay: widget.onReplay,
+                            onChangeHero: widget.onChangeHero,
+                            onDetails: () => _openDetails(context),
+                          ),
+                        ),
+                      Positioned(
+                        left: 12,
+                        right: 12,
+                        bottom: 12,
+                        child: CurrentTargetCard(
+                          enemy: currentTarget,
+                          onFight: currentTarget == null
+                              ? null
+                              : () => _openFight(currentTarget),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            if (adventure.finished)
-              EndAdventureBanner(
-                adventure: adventure,
-                onReplay: widget.onReplay,
-                onChangeHero: widget.onChangeHero,
-                onDetails: () => _openDetails(context),
-              ),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return InteractiveViewer(
-                    minScale: 0.8,
-                    maxScale: 2.2,
-                    child: SizedBox(
-                      width: constraints.maxWidth,
-                      height: constraints.maxHeight,
-                      child: Stack(
-                        children: _buildMapNodes(context, constraints.biggest),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            HeroStatusBar(
-              adventure: adventure,
-              onChanged: () => setState(() {}),
-              onDetails: () => _openDetails(context),
-            ),
-          ],
-        ),
-      ),
     );
+  }
+
+  EnemyNode? _currentTarget() {
+    final currentEnemies = widget.adventure.enemies
+        .where((enemy) => enemy.current && !enemy.defeated)
+        .toList();
+    if (currentEnemies.isEmpty) {
+      return null;
+    }
+    return currentEnemies.first;
   }
 
   List<Widget> _buildMapNodes(BuildContext context, Size size) {
@@ -918,11 +1404,17 @@ class _MapPageState extends State<MapPage> {
       ),
       ...widget.adventure.enemies.map((enemy) {
         final offset = positions[enemy.id]!;
+        final width = enemy.id == 0 || enemy.rank == EnemyRank.orange
+            ? 96.0
+            : 78.0;
+        final height = enemy.id == 0 || enemy.rank == EnemyRank.orange
+            ? 112.0
+            : 92.0;
         return Positioned(
-          left: offset.dx - 48,
-          top: offset.dy - 44,
-          width: 96,
-          height: 88,
+          left: offset.dx - width / 2,
+          top: offset.dy - height / 2,
+          width: width,
+          height: height,
           child: EnemyMapTile(enemy: enemy, onTap: () => _openFight(enemy)),
         );
       }),
@@ -932,15 +1424,32 @@ class _MapPageState extends State<MapPage> {
   Map<int, Offset> _positionsFor(Size size) {
     final width = size.width;
     final height = size.height;
-    final rowGap = (height - 130) / 6;
-    final map = <int, Offset>{0: Offset(width / 2, 58)};
-    for (var step = 1; step <= 6; step++) {
-      final y = 58 + step * rowGap;
-      final spread = width * (0.09 + step * 0.035);
-      map[step] = Offset(width / 2 - spread, y);
-      map[step + 6] = Offset(width / 2 + spread, y);
+    final centerX = width / 2;
+    final bottom = height - 160;
+    final rowGap = max(130.0, (height - 260) / 7);
+    final positions = <int, Offset>{0: Offset(centerX, bottom)};
+    for (final branch in BranchSide.values) {
+      final branchEnemies =
+          widget.adventure.enemies
+              .where((enemy) => enemy.branch == branch)
+              .toList()
+            ..sort((a, b) => a.step.compareTo(b.step));
+      final sign = branch == BranchSide.left ? -1.0 : 1.0;
+      for (final enemy in branchEnemies) {
+        final pairOffset = switch (enemy.step) {
+          4 || 6 => -0.08,
+          5 || 7 => 0.08,
+          _ => 0,
+        };
+        final x =
+            centerX +
+            sign * width * (0.12 + enemy.step * 0.045) +
+            width * pairOffset;
+        final y = bottom - rowGap * enemy.step;
+        positions[enemy.id] = Offset(x, y);
+      }
     }
-    return map;
+    return positions;
   }
 
   void _openFight(EnemyNode enemy) {
@@ -964,6 +1473,299 @@ class _MapPageState extends State<MapPage> {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => AdventureDetailsPage(adventure: widget.adventure),
+      ),
+    );
+  }
+}
+
+class MapHeader extends StatefulWidget {
+  const MapHeader({
+    required this.adventure,
+    required this.onDetails,
+    required this.onChanged,
+    super.key,
+  });
+
+  final AdventureState adventure;
+  final VoidCallback onDetails;
+  final VoidCallback onChanged;
+
+  @override
+  State<MapHeader> createState() => _MapHeaderState();
+}
+
+class _MapHeaderState extends State<MapHeader> {
+  String? _editing;
+  int _draftValue = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final adventure = widget.adventure;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+      decoration: const BoxDecoration(
+        color: Color(0xee131313),
+        border: Border(bottom: BorderSide(color: Color(0xff3d4a3e))),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundImage: AssetImage(adventure.hero.asset),
+                backgroundColor: adventure.hero.color,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  adventure.hero.label,
+                  style: const TextStyle(
+                    color: Color(0xff54e98a),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Detail',
+                onPressed: widget.onDetails,
+                icon: const Icon(Icons.receipt_long, color: Color(0xff54e98a)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: MapStatChip(
+                  icon: Icons.favorite,
+                  label: 'HP',
+                  value: adventure.health.toString(),
+                  color: Colors.redAccent,
+                  onTap: () => _openStatEditor('HP', adventure.health),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: MapStatChip(
+                  icon: Icons.bolt,
+                  label: 'CP',
+                  value: adventure.combatPoints.toString(),
+                  color: Colors.amber,
+                  onTap: () => _openStatEditor('CP', adventure.combatPoints),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: MapStatChip(
+                  icon: Icons.flag,
+                  label: 'PTS',
+                  value: '${adventure.score}/${adventure.targetScore}',
+                  color: const Color(0xff54e98a),
+                  onTap: null,
+                ),
+              ),
+            ],
+          ),
+          if (_editing != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xff54e98a)),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    _editing!,
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => setState(() => _draftValue--),
+                    icon: const Icon(Icons.remove),
+                  ),
+                  SizedBox(
+                    width: 58,
+                    child: Text(
+                      _draftValue.toString(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => setState(() => _draftValue++),
+                    icon: const Icon(Icons.add),
+                  ),
+                  FilledButton(onPressed: _saveStat, child: const Text('Save')),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _openStatEditor(String label, int value) {
+    setState(() {
+      _editing = label;
+      _draftValue = value;
+    });
+  }
+
+  void _saveStat() {
+    if (_editing == 'HP') {
+      widget.adventure.setHeroHealth(_draftValue);
+    } else if (_editing == 'CP') {
+      widget.adventure.setHeroPc(_draftValue);
+    }
+    setState(() => _editing = null);
+    widget.onChanged();
+  }
+}
+
+class MapStatChip extends StatelessWidget {
+  const MapStatChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.onTap,
+    super.key,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xff2a2a2a).withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xff3d4a3e)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xffbbcbbb),
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CurrentTargetCard extends StatelessWidget {
+  const CurrentTargetCard({
+    required this.enemy,
+    required this.onFight,
+    super.key,
+  });
+
+  final EnemyNode? enemy;
+  final VoidCallback? onFight;
+
+  @override
+  Widget build(BuildContext context) {
+    final target = enemy;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xff2a2a2a), Color(0xff101010)],
+        ),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xff3d4a3e), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xff9b59b6).withValues(alpha: 0.55),
+            blurRadius: 22,
+          ),
+          const BoxShadow(color: Colors.black87, blurRadius: 12),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'CURRENT TARGET',
+                  style: TextStyle(
+                    color: Color(0xffbbcbbb),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  target == null ? 'Aucune cible' : target.label,
+                  style: const TextStyle(
+                    color: Color(0xff54e98a),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 132,
+            height: 58,
+            child: FilledButton(
+              onPressed: onFight,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xff54e98a),
+                foregroundColor: const Color(0xff003919),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              child: const Text('FIGHT'),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1028,6 +1830,8 @@ class EnemyMapTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final opacity = enemy.defeated ? 0.38 : 1.0;
+    final accent = enemy.current ? const Color(0xff54e98a) : enemy.rank.color;
+    final isStart = enemy.id == 0;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -1036,53 +1840,86 @@ class EnemyMapTile extends StatelessWidget {
         opacity: opacity,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          padding: const EdgeInsets.all(5),
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: enemy.current ? Colors.white : enemy.rank.color,
-              width: enemy.current ? 4 : 2,
+              color: accent,
+              width: enemy.current || isStart ? 4 : 2,
             ),
-            boxShadow: enemy.current
-                ? [
-                    BoxShadow(
-                      color: enemy.rank.color.withValues(alpha: 0.62),
-                      blurRadius: 18,
-                      spreadRadius: 2,
-                    ),
-                  ]
-                : null,
+            color: const Color(0xdd131313),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: enemy.current ? 0.8 : 0.55),
+                blurRadius: enemy.current ? 20 : 12,
+                spreadRadius: enemy.current ? 2 : 0,
+              ),
+              BoxShadow(
+                color: accent.withValues(alpha: 0.35),
+                blurRadius: 10,
+                spreadRadius: -1,
+              ),
+            ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(enemy.rank.asset, fit: BoxFit.cover),
-                Container(color: Colors.black.withValues(alpha: 0.16)),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    width: double.infinity,
-                    color: Colors.black.withValues(alpha: 0.7),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 4,
-                      horizontal: 2,
-                    ),
-                    child: Text(
-                      enemy.defeated
-                          ? 'Battu'
-                          : '${enemy.rank.label} +${enemy.rank.points}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Image.asset(enemy.rank.asset, fit: BoxFit.cover),
+                ),
+              ),
+              Container(color: Colors.black.withValues(alpha: 0.1)),
+              if (enemy.current && !isStart)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: -16,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: const Text(
+                        'ELITE',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              if (isStart)
+                Positioned(
+                  left: 8,
+                  right: 8,
+                  bottom: -30,
+                  child: Container(
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff54e98a),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: const Text(
+                      'START',
+                      style: TextStyle(
+                        color: Color(0xff003919),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -1099,21 +1936,40 @@ class MapLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white24
-      ..strokeWidth = 4
+      ..color = const Color(0x88fcd34d)
+      ..strokeWidth = 3
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    void line(int a, int b) =>
-        canvas.drawLine(positions[a]!, positions[b]!, paint);
-    for (final start in [1, 7]) {
-      line(0, start);
-      line(start, start + 1);
-      line(start + 1, start + 2);
-      line(start + 2, start + 3);
-      line(start + 2, start + 4);
-      line(start + 3, start + 5);
-      line(start + 4, start + 5);
+    void line(EnemyNode a, EnemyNode b) =>
+        canvas.drawLine(positions[a.id]!, positions[b.id]!, paint);
+    final start = enemies.firstWhere((enemy) => enemy.id == 0);
+    for (final branch in BranchSide.values) {
+      final branchEnemies =
+          enemies.where((enemy) => enemy.branch == branch).toList()
+            ..sort((a, b) => a.step.compareTo(b.step));
+      if (branchEnemies.isEmpty) {
+        continue;
+      }
+      line(start, branchEnemies.first);
+      for (var index = 0; index < branchEnemies.length - 1; index++) {
+        final current = branchEnemies[index];
+        final next = branchEnemies[index + 1];
+        if (branchEnemies.length == 6 && current.step == 3) {
+          line(current, branchEnemies.firstWhere((enemy) => enemy.step == 4));
+          line(current, branchEnemies.firstWhere((enemy) => enemy.step == 5));
+          line(
+            branchEnemies.firstWhere((enemy) => enemy.step == 4),
+            branchEnemies.last,
+          );
+          line(
+            branchEnemies.firstWhere((enemy) => enemy.step == 5),
+            branchEnemies.last,
+          );
+          break;
+        }
+        line(current, next);
+      }
     }
   }
 
@@ -1302,6 +2158,17 @@ class _FightPageState extends State<FightPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            MapHeader(
+              adventure: widget.adventure,
+              onDetails: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) =>
+                      AdventureDetailsPage(adventure: widget.adventure),
+                ),
+              ),
+              onChanged: () => setState(() {}),
+            ),
+            const SizedBox(height: 12),
             HeroCombatPanel(
               adventure: widget.adventure,
               onChanged: () => setState(() {}),
@@ -1335,9 +2202,9 @@ class _FightPageState extends State<FightPage> {
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: _finishCombat,
+              onPressed: enemy.health <= 0 ? _finishCombat : null,
               icon: const Icon(Icons.flag),
-              label: const Text('Terminer le combat'),
+              label: const Text('Finish combat'),
             ),
           ],
         ),
@@ -2008,46 +2875,107 @@ Future<String?> showAlterationDialog(BuildContext context) {
   );
 }
 
-List<EnemyNode> _generateEnemies(int targetScore) {
-  final ranks = _ranksForTarget(targetScore);
-  final nodes = <EnemyNode>[
-    _enemy(0, 'Gardien vert', EnemyRank.green, null, 0),
-  ];
+List<EnemyNode> _generateEnemies(SurvivalConfig config) {
+  final ranks = switch (config.mode) {
+    SurvivalMode.levelOne => _levelOneRanks(),
+    SurvivalMode.levelTwo => _levelTwoRanks(),
+    SurvivalMode.free => _freeModeRanks(config.freeCounts),
+  };
+  final nodes = <EnemyNode>[_enemy(0, 'Start minion', ranks.first, null, 0)];
 
-  var rankIndex = 0;
+  var id = 1;
+  var rankIndex = 1;
   for (final branch in BranchSide.values) {
-    final base = branch == BranchSide.left ? 1 : 7;
-    for (var step = 1; step <= 6; step++) {
-      final rank = step == 6 ? EnemyRank.orange : ranks[rankIndex++];
-      nodes.add(
-        _enemy(base + step - 1, '${branch.label} $step', rank, branch, step),
-      );
+    final remaining = ranks.length - rankIndex;
+    final otherBranchSlots = branch == BranchSide.left
+        ? (config.mode == SurvivalMode.levelTwo ? 7 : 6)
+        : 0;
+    final branchSlots = branch == BranchSide.left
+        ? remaining - otherBranchSlots
+        : remaining;
+    for (var step = 1; step <= branchSlots; step++) {
+      final rank = ranks[rankIndex++];
+      nodes.add(_enemy(id++, '${branch.label} $step', rank, branch, step));
     }
   }
   return nodes;
 }
 
-List<EnemyRank> _ranksForTarget(int targetScore) {
-  final remainingTarget = (targetScore - 13).clamp(10, 60);
-  final ranks = List<EnemyRank>.filled(10, EnemyRank.green);
-  var total = 10;
-  var index = 0;
-  while (total < remainingTarget && index < ranks.length * 3) {
-    final slot = index % ranks.length;
-    final current = ranks[slot];
-    if (current == EnemyRank.green && total + 1 <= remainingTarget) {
-      ranks[slot] = EnemyRank.blue;
-      total += 1;
-    } else if (current == EnemyRank.blue && total + 1 <= remainingTarget) {
-      ranks[slot] = EnemyRank.violet;
-      total += 1;
-    } else if (current == EnemyRank.violet && total + 3 <= remainingTarget) {
-      ranks[slot] = EnemyRank.orange;
-      total += 3;
-    }
-    index++;
+List<EnemyRank> _levelOneRanks() {
+  return const [
+    EnemyRank.green,
+    EnemyRank.blue,
+    EnemyRank.green,
+    EnemyRank.violet,
+    EnemyRank.green,
+    EnemyRank.violet,
+    EnemyRank.orange,
+    EnemyRank.violet,
+    EnemyRank.blue,
+    EnemyRank.green,
+    EnemyRank.green,
+    EnemyRank.violet,
+    EnemyRank.orange,
+  ];
+}
+
+List<EnemyRank> _levelTwoRanks() {
+  return const [
+    EnemyRank.green,
+    EnemyRank.blue,
+    EnemyRank.violet,
+    EnemyRank.orange,
+    EnemyRank.green,
+    EnemyRank.violet,
+    EnemyRank.orange,
+    EnemyRank.brown,
+    EnemyRank.blue,
+    EnemyRank.orange,
+    EnemyRank.violet,
+    EnemyRank.blue,
+    EnemyRank.violet,
+    EnemyRank.orange,
+    EnemyRank.brown,
+  ];
+}
+
+List<EnemyRank> _freeModeRanks(Map<EnemyRank, int> counts) {
+  final pool = <EnemyRank>[];
+  final remainingCounts = Map<EnemyRank, int>.from(counts);
+  remainingCounts[EnemyRank.green] = max(
+    0,
+    (remainingCounts[EnemyRank.green] ?? 0) - 1,
+  );
+  remainingCounts[EnemyRank.orange] = max(
+    0,
+    (remainingCounts[EnemyRank.orange] ?? 0) - 2,
+  );
+  for (final rank in [
+    EnemyRank.green,
+    EnemyRank.blue,
+    EnemyRank.violet,
+    EnemyRank.orange,
+  ]) {
+    pool.addAll(List.filled(remainingCounts[rank] ?? 0, rank));
   }
-  return ranks;
+  pool.shuffle(Random());
+  final left = pool.take(5).toList();
+  final right = pool.skip(5).take(5).toList();
+  return [
+    EnemyRank.green,
+    ...left,
+    EnemyRank.orange,
+    ...right,
+    EnemyRank.orange,
+  ];
+}
+
+String _modeLabel(SurvivalMode mode) {
+  return switch (mode) {
+    SurvivalMode.levelOne => 'Scenario 1',
+    SurvivalMode.levelTwo => 'Scenario 2',
+    SurvivalMode.free => 'Free mode',
+  };
 }
 
 EnemyNode _enemy(
@@ -2067,31 +2995,32 @@ EnemyNode _enemy(
       EnemyRank.green => 8,
       EnemyRank.blue => 11,
       EnemyRank.violet => 14,
+      EnemyRank.brown => 16,
       EnemyRank.orange => 20,
     },
     pc: switch (rank) {
       EnemyRank.green => 1,
       EnemyRank.blue => 2,
       EnemyRank.violet => 3,
+      EnemyRank.brown => 4,
       EnemyRank.orange => 5,
     },
     attacks: switch (rank) {
-      EnemyRank.green => ['Coup rapide: 3 degats'],
-      EnemyRank.blue => ['Frappe precise: 4 degats', 'Pression: -1 PC'],
-      EnemyRank.violet => [
-        'Entaille mystique: 5 degats',
-        'Affaiblir: alteration',
-      ],
+      EnemyRank.green => ['Quick hit: 3 damage'],
+      EnemyRank.blue => ['Precise strike: 4 damage', 'Pressure: -1 CP'],
+      EnemyRank.violet => ['Mystic slash: 5 damage', 'Weaken: status token'],
+      EnemyRank.brown => ['Brutal charge: 6 damage', 'Guard break: -1 CP'],
       EnemyRank.orange => [
-        'Rage du boss: 8 degats',
-        'Riposte: defense renforcee',
+        'Boss rage: 8 damage',
+        'Counter: reinforced defense',
       ],
     },
     defense: switch (rank) {
-      EnemyRank.green => 'Bloque 1 degat',
-      EnemyRank.blue => 'Bloque 2 degats',
-      EnemyRank.violet => 'Bloque 3 degats',
-      EnemyRank.orange => 'Bloque 4 degats et riposte',
+      EnemyRank.green => 'Blocks 1 damage',
+      EnemyRank.blue => 'Blocks 2 damage',
+      EnemyRank.violet => 'Blocks 3 damage',
+      EnemyRank.brown => 'Blocks 3 damage and counters',
+      EnemyRank.orange => 'Blocks 4 damage and counters',
     },
   );
 }
