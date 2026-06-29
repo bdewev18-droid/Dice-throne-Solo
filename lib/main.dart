@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-const String appVersionLabel = 'Version 1.1.3';
+const String appVersionLabel = 'Version 1.1.4';
 const int levelOneTarget = 33;
 const int levelTwoTarget = 52;
 
@@ -12,22 +12,42 @@ void main() {
 
 enum HeroType {
   barbare(
-    'Barbare',
+    'Barbarian',
     'assets/barbarian_hero.jpg',
     Alignment.center,
     Color(0xffd94a24),
   ),
   elfeLunaire(
-    'Elfe lunaire',
+    'Moon Elf',
     'assets/moon_elf_hero.png',
     Alignment.center,
     Color(0xff64b7e8),
   ),
   tacticien(
-    'Tacticien',
+    'Tactician',
     'assets/tactician_hero.png',
     Alignment.center,
     Color(0xffd92f2f),
+  ),
+  monk('Monk', 'assets/monk_hero.png', Alignment.topCenter, Color(0xffd7a55a)),
+  paladin(
+    'Paladin',
+    'assets/paladin_hero.png',
+    Alignment.topCenter,
+    Color(0xfff4c95a),
+  ),
+  pyromancer(
+    'Pyromancer',
+    'assets/pyromancer_hero.png',
+    Alignment(0, -0.65),
+    Color(0xffff6a21),
+    1.22,
+  ),
+  shadowThief(
+    'Shadow Thief',
+    'assets/shadow_thief_hero.png',
+    Alignment.topCenter,
+    Color(0xff8f4dff),
   ),
   deadpool(
     'Deadpool',
@@ -36,20 +56,27 @@ enum HeroType {
     Color(0xffc91922),
   );
 
-  const HeroType(this.label, this.asset, this.imageAlignment, this.color);
+  const HeroType(
+    this.label,
+    this.asset,
+    this.imageAlignment,
+    this.color, [
+    this.imageScale = 1,
+  ]);
 
   final String label;
   final String asset;
   final Alignment imageAlignment;
   final Color color;
+  final double imageScale;
 }
 
 enum EnemyRank {
-  green('Green', 1, Color(0xff34d36d), 'assets/map_green.jpg'),
-  blue('Blue', 2, Color(0xff3bb9ff), 'assets/map_blue.png'),
-  violet('Purple', 3, Color(0xff9b58ff), 'assets/map_violet.png'),
+  green('Level 1', 1, Color(0xff34d36d), 'assets/map_green.jpg'),
+  blue('Level 2', 2, Color(0xff3bb9ff), 'assets/map_blue.png'),
+  violet('Level 3', 3, Color(0xff9b58ff), 'assets/map_violet.png'),
   brown('Brown', 4, Color(0xff8a5a2c), 'assets/map_orange.png'),
-  orange('Orange', 6, Color(0xffff8a2b), 'assets/map_orange.png');
+  orange('Level 4', 6, Color(0xffff8a2b), 'assets/map_orange.png');
 
   const EnemyRank(this.label, this.points, this.color, this.asset);
 
@@ -80,14 +107,30 @@ enum HistorySort {
 }
 
 enum SurvivalMode {
-  levelOne('Level 1', levelOneTarget),
-  levelTwo('Level 2', levelTwoTarget),
+  levelOne('Medium mode', levelOneTarget),
+  levelTwo('Difficult mode', levelTwoTarget),
   free('Free mode', 33);
 
   const SurvivalMode(this.label, this.defaultTarget);
 
   final String label;
   final int defaultTarget;
+}
+
+String _survivalModeTitle(SurvivalMode mode) {
+  return switch (mode) {
+    SurvivalMode.levelOne => 'Medium mode',
+    SurvivalMode.levelTwo => 'Difficult mode',
+    SurvivalMode.free => 'Free mode',
+  };
+}
+
+String _survivalModeDescription(SurvivalMode mode) {
+  return switch (mode) {
+    SurvivalMode.levelOne => 'Fixed 33-point route',
+    SurvivalMode.levelTwo => 'Fixed 52-point expert route',
+    SurvivalMode.free => 'Build your own 13-enemy run',
+  };
 }
 
 class GameRecord {
@@ -116,8 +159,8 @@ class SurvivalConfig {
   final Map<EnemyRank, int> freeCounts;
 
   String get label => switch (mode) {
-    SurvivalMode.levelOne => 'Level 1',
-    SurvivalMode.levelTwo => 'Level 2',
+    SurvivalMode.levelOne => 'Medium mode',
+    SurvivalMode.levelTwo => 'Difficult mode',
     SurvivalMode.free => 'Free mode',
   };
 }
@@ -133,7 +176,8 @@ class EnemyNode {
     required this.defense,
     this.branch,
     this.step = 0,
-  }) : health = maxHealth;
+  }) : health = maxHealth,
+       combatPoints = pc;
 
   final int id;
   final String label;
@@ -145,6 +189,8 @@ class EnemyNode {
   final BranchSide? branch;
   final int step;
   int health;
+  int combatPoints;
+  final List<String> alterations = [];
   bool defeated = false;
   bool current = false;
 }
@@ -532,7 +578,7 @@ class _HomePageState extends State<HomePage> {
                             icon: Icons.history,
                             onPressed: widget.onHistory,
                           ),
-                          const SizedBox(height: 22),
+                          const SizedBox(height: 42),
                           ImageActionButton(
                             label: 'Survival mode',
                             icon: Icons.shield,
@@ -927,15 +973,40 @@ class HeroChoicePage extends StatefulWidget {
 
 class _HeroChoicePageState extends State<HeroChoicePage> {
   HeroType _selectedHero = HeroType.barbare;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final query = _searchController.text.trim().toLowerCase();
+    final heroes = HeroType.values
+        .where((hero) => hero.label.toLowerCase().contains(query))
+        .toList();
+    if (!heroes.contains(_selectedHero) && heroes.isNotEmpty) {
+      _selectedHero = heroes.first;
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Choose your hero')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.search),
+                labelText: 'Search hero',
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 14),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -945,9 +1016,9 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
                 mainAxisSpacing: 12,
                 childAspectRatio: 0.58,
               ),
-              itemCount: HeroType.values.length,
+              itemCount: heroes.length,
               itemBuilder: (context, index) {
-                final hero = HeroType.values[index];
+                final hero = heroes[index];
                 return HeroCard(
                   hero: hero,
                   selected: _selectedHero == hero,
@@ -959,7 +1030,9 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
             ImageActionButton(
               label: 'Next',
               icon: Icons.arrow_forward,
-              onPressed: () => widget.onNext(_selectedHero),
+              onPressed: heroes.isEmpty
+                  ? null
+                  : () => widget.onNext(_selectedHero),
             ),
           ],
         ),
@@ -994,34 +1067,44 @@ class HeroCard extends StatelessWidget {
             color: selected ? hero.color : Colors.white24,
             width: selected ? 4 : 1,
           ),
-          image: DecorationImage(
-            image: AssetImage(hero.asset),
-            fit: BoxFit.cover,
-            alignment: hero.imageAlignment,
-          ),
         ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(5),
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.transparent, Colors.black87],
-            ),
-          ),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                hero.label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 21,
-                  fontWeight: FontWeight.w900,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(5),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Transform.scale(
+                scale: hero.imageScale,
+                child: Image.asset(
+                  hero.asset,
+                  fit: BoxFit.cover,
+                  alignment: hero.imageAlignment,
                 ),
               ),
-            ),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black87],
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    hero.label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1045,10 +1128,11 @@ class SurvivalSetupPage extends StatefulWidget {
 
 class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
   SurvivalMode _mode = SurvivalMode.levelOne;
+  bool _expertFreeMode = false;
   final Map<EnemyRank, int> _freeCounts = {
-    EnemyRank.green: 4,
-    EnemyRank.blue: 4,
-    EnemyRank.violet: 3,
+    EnemyRank.green: 1,
+    EnemyRank.blue: 0,
+    EnemyRank.violet: 0,
     EnemyRank.orange: 2,
   };
 
@@ -1146,16 +1230,12 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                mode.label,
+                                _survivalModeTitle(mode),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
-                              Text(
-                                mode == SurvivalMode.free
-                                    ? 'Build your own 13-enemy run'
-                                    : '${mode.defaultTarget} points',
-                              ),
+                              Text(_survivalModeDescription(mode)),
                             ],
                           ),
                         ),
@@ -1172,7 +1252,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Free run: $_freeScore points / $_freeTotal enemies',
+                      'Free run',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
@@ -1180,7 +1260,28 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Minimum: 1 green, 2 orange, 20 points. Maximum: 13 enemies.',
+                      'Minimum: 1 Level 1, 2 Level 4, 20 points.\nMaximum: 13 enemies.',
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Current score: $_freeScore points',
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    Text(
+                      'Enemies: $_freeTotal / 13',
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    Text(
+                      'Enemies left to add: ${max(0, 13 - _freeTotal)}',
+                      style: const TextStyle(color: Color(0xff54e98a)),
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Expert mode'),
+                      subtitle: const Text('Allow Level 4 changes'),
+                      value: _expertFreeMode,
+                      onChanged: (value) =>
+                          setState(() => _expertFreeMode = value),
                     ),
                     const SizedBox(height: 12),
                     ...[
@@ -1220,6 +1321,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
         : rank == EnemyRank.orange
         ? 2
         : 0;
+    final orangeLocked = rank == EnemyRank.orange && !_expertFreeMode;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -1244,22 +1346,19 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
           ),
           const SizedBox(width: 10),
           Expanded(child: Text('${rank.label} (${rank.points} pts)')),
+          Text(
+            value.toString(),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(width: 8),
           IconButton(
-            onPressed: value <= min
+            onPressed: value <= min || orangeLocked
                 ? null
                 : () => setState(() => _freeCounts[rank] = value - 1),
             icon: const Icon(Icons.remove),
           ),
-          SizedBox(
-            width: 32,
-            child: Text(
-              value.toString(),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-            ),
-          ),
           IconButton(
-            onPressed: _freeTotal >= 13
+            onPressed: _freeTotal >= 13 || orangeLocked
                 ? null
                 : () => setState(() => _freeCounts[rank] = value + 1),
             icon: const Icon(Icons.add),
@@ -1289,15 +1388,6 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
-  late final TransformationController _mapController =
-      TransformationController()..value = Matrix4.diagonal3Values(1.7, 1.7, 1);
-
-  @override
-  void dispose() {
-    _mapController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final adventure = widget.adventure;
@@ -1328,22 +1418,25 @@ class _MapPageState extends State<MapPage> {
                       Positioned.fill(
                         child: LayoutBuilder(
                           builder: (context, constraints) {
-                            return InteractiveViewer(
-                              constrained: false,
-                              boundaryMargin: const EdgeInsets.all(280),
-                              minScale: 0.75,
-                              maxScale: 2.2,
-                              transformationController: _mapController,
-                              child: SizedBox(
-                                width: max(520, constraints.maxWidth * 1.45),
-                                height: max(980, constraints.maxHeight * 1.45),
-                                child: Stack(
-                                  children: [
-                                    ..._buildMapNodes(
-                                      context,
-                                      constraints.biggest,
-                                    ),
-                                  ],
+                            final mapSize = Size(
+                              max(560, constraints.maxWidth),
+                              max(1320, constraints.maxHeight + 520),
+                            );
+                            return SingleChildScrollView(
+                              padding: const EdgeInsets.only(
+                                top: 80,
+                                bottom: 170,
+                              ),
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: SizedBox(
+                                  width: mapSize.width,
+                                  height: mapSize.height,
+                                  child: Stack(
+                                    children: [
+                                      ..._buildMapNodes(context, mapSize),
+                                    ],
+                                  ),
                                 ),
                               ),
                             );
@@ -1405,11 +1498,11 @@ class _MapPageState extends State<MapPage> {
       ...widget.adventure.enemies.map((enemy) {
         final offset = positions[enemy.id]!;
         final width = enemy.id == 0 || enemy.rank == EnemyRank.orange
-            ? 96.0
-            : 78.0;
+            ? 132.0
+            : 112.0;
         final height = enemy.id == 0 || enemy.rank == EnemyRank.orange
-            ? 112.0
-            : 92.0;
+            ? 86.0
+            : 72.0;
         return Positioned(
           left: offset.dx - width / 2,
           top: offset.dy - height / 2,
@@ -1425,8 +1518,8 @@ class _MapPageState extends State<MapPage> {
     final width = size.width;
     final height = size.height;
     final centerX = width / 2;
-    final bottom = height - 160;
-    final rowGap = max(130.0, (height - 260) / 7);
+    final bottom = height - 180;
+    final rowGap = max(150.0, (height - 360) / 7);
     final positions = <int, Offset>{0: Offset(centerX, bottom)};
     for (final branch in BranchSide.values) {
       final branchEnemies =
@@ -1437,8 +1530,8 @@ class _MapPageState extends State<MapPage> {
       final sign = branch == BranchSide.left ? -1.0 : 1.0;
       for (final enemy in branchEnemies) {
         final pairOffset = switch (enemy.step) {
-          4 || 6 => -0.08,
-          5 || 7 => 0.08,
+          4 || 6 => -0.1,
+          5 || 7 => 0.1,
           _ => 0,
         };
         final x =
@@ -1502,7 +1595,7 @@ class _MapHeaderState extends State<MapHeader> {
   Widget build(BuildContext context) {
     final adventure = widget.adventure;
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: const BoxDecoration(
         color: Color(0xee131313),
         border: Border(bottom: BorderSide(color: Color(0xff3d4a3e))),
@@ -1527,10 +1620,23 @@ class _MapHeaderState extends State<MapHeader> {
                   ),
                 ),
               ),
-              IconButton(
-                tooltip: 'Detail',
-                onPressed: widget.onDetails,
-                icon: const Icon(Icons.receipt_long, color: Color(0xff54e98a)),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xff203528),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xff54e98a)),
+                ),
+                child: Text(
+                  '${adventure.score}/${adventure.targetScore} pts',
+                  style: const TextStyle(
+                    color: Color(0xff54e98a),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
             ],
           ),
@@ -1538,35 +1644,113 @@ class _MapHeaderState extends State<MapHeader> {
           Row(
             children: [
               Expanded(
-                child: MapStatChip(
-                  icon: Icons.favorite,
-                  label: 'HP',
-                  value: adventure.health.toString(),
-                  color: Colors.redAccent,
-                  onTap: () => _openStatEditor('HP', adventure.health),
+                flex: 1,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: MapStatChip(
+                        icon: Icons.favorite,
+                        label: 'HP',
+                        value: adventure.health.toString(),
+                        color: Colors.redAccent,
+                        onTap: () => _openStatEditor('HP', adventure.health),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: MapStatChip(
+                        icon: Icons.bolt,
+                        label: 'CP',
+                        value: adventure.combatPoints.toString(),
+                        color: Colors.amber,
+                        onTap: () =>
+                            _openStatEditor('CP', adventure.combatPoints),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: MapStatChip(
-                  icon: Icons.bolt,
-                  label: 'CP',
-                  value: adventure.combatPoints.toString(),
-                  color: Colors.amber,
-                  onTap: () => _openStatEditor('CP', adventure.combatPoints),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: MapStatChip(
-                  icon: Icons.flag,
-                  label: 'PTS',
-                  value: '${adventure.score}/${adventure.targetScore}',
-                  color: const Color(0xff54e98a),
-                  onTap: null,
+                flex: 1,
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff312449).withValues(alpha: 0.95),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xff9b58ff)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.auto_fix_high,
+                        color: Color(0xffc084fc),
+                        size: 18,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          adventure.alterations.isEmpty
+                              ? 'Tokens'
+                              : adventure.alterations.join(', '),
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Add token',
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () async {
+                          final value = await showAlterationDialog(context);
+                          if (value != null) {
+                            adventure.addAlteration(value);
+                            widget.onChanged();
+                          }
+                        },
+                        icon: const Icon(Icons.add, size: 18),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xff1f2f24).withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xff3d4a3e)),
+            ),
+            child: Row(
+              children: [
+                const Text(
+                  'Bonuses',
+                  style: TextStyle(
+                    color: Color(0xff54e98a),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    adventure.bonuses.isEmpty
+                        ? 'No bonus yet'
+                        : adventure.bonuses.join(', '),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Run log',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: widget.onDetails,
+                  icon: const Icon(Icons.receipt_long),
+                ),
+              ],
+            ),
           ),
           if (_editing != null) ...[
             const SizedBox(height: 10),
@@ -1579,6 +1763,11 @@ class _MapHeaderState extends State<MapHeader> {
               ),
               child: Row(
                 children: [
+                  Icon(
+                    _editing == 'HP' ? Icons.favorite : Icons.bolt,
+                    color: _editing == 'HP' ? Colors.redAccent : Colors.amber,
+                  ),
+                  const SizedBox(width: 8),
                   Text(
                     _editing!,
                     style: const TextStyle(fontWeight: FontWeight.w900),
@@ -1603,7 +1792,12 @@ class _MapHeaderState extends State<MapHeader> {
                     onPressed: () => setState(() => _draftValue++),
                     icon: const Icon(Icons.add),
                   ),
-                  FilledButton(onPressed: _saveStat, child: const Text('Save')),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: _saveStat,
+                    icon: const Icon(Icons.check),
+                    label: const Text('Save'),
+                  ),
                 ],
               ),
             ),
@@ -2172,11 +2366,6 @@ class _FightPageState extends State<FightPage> {
               onChanged: () => setState(() {}),
             ),
             const SizedBox(height: 12),
-            HeroCombatPanel(
-              adventure: widget.adventure,
-              onChanged: () => setState(() {}),
-            ),
-            const SizedBox(height: 12),
             EnemyCombatPanel(enemy: enemy, onChanged: () => setState(() {})),
             const SizedBox(height: 12),
             DicePanel(
@@ -2362,7 +2551,7 @@ class HeroCombatPanel extends StatelessWidget {
   }
 }
 
-class EnemyCombatPanel extends StatelessWidget {
+class EnemyCombatPanel extends StatefulWidget {
   const EnemyCombatPanel({
     required this.enemy,
     required this.onChanged,
@@ -2373,8 +2562,25 @@ class EnemyCombatPanel extends StatelessWidget {
   final VoidCallback onChanged;
 
   @override
+  State<EnemyCombatPanel> createState() => _EnemyCombatPanelState();
+}
+
+class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
+  String? _editing;
+  int _draftValue = 0;
+
+  EnemyNode get enemy => widget.enemy;
+
+  @override
   Widget build(BuildContext context) {
-    return InfoCard(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xff301d1d),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: enemy.rank.color.withValues(alpha: 0.8)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -2394,37 +2600,139 @@ class EnemyCombatPanel extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: StepperStat(
+                child: MapStatChip(
                   icon: Icons.favorite,
                   label: 'HP',
-                  value: enemy.health,
+                  value: enemy.health.toString(),
                   color: enemy.rank.color,
-                  onChanged: (value) {
-                    enemy.health = value.clamp(0, enemy.maxHealth);
-                    onChanged();
-                  },
+                  onTap: () => _openEditor('HP', enemy.health),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: StepperStat(
+                child: MapStatChip(
                   icon: Icons.bolt,
                   label: 'CP',
-                  value: enemy.pc,
+                  value: enemy.combatPoints.toString(),
                   color: Colors.amber,
-                  onChanged: (_) {},
+                  onTap: () => _openEditor('CP', enemy.combatPoints),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff44272f),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: enemy.rank.color),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.auto_fix_high, size: 18),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          enemy.alterations.isEmpty
+                              ? 'Tokens'
+                              : enemy.alterations.join(', '),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Add token',
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () async {
+                          final value = await showAlterationDialog(context);
+                          if (value != null) {
+                            setState(() => enemy.alterations.add(value));
+                            widget.onChanged();
+                          }
+                        },
+                        icon: const Icon(Icons.add, size: 18),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
+          if (_editing != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: enemy.rank.color),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _editing == 'HP' ? Icons.favorite : Icons.bolt,
+                    color: _editing == 'HP' ? enemy.rank.color : Colors.amber,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _editing!,
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => setState(() => _draftValue--),
+                    icon: const Icon(Icons.remove),
+                  ),
+                  SizedBox(
+                    width: 58,
+                    child: Text(
+                      _draftValue.toString(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => setState(() => _draftValue++),
+                    icon: const Icon(Icons.add),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: _saveEnemyStat,
+                    icon: const Icon(Icons.check),
+                    label: const Text('Save'),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
-          const Text('Attaques', style: TextStyle(fontWeight: FontWeight.w900)),
+          const Text('Attacks', style: TextStyle(fontWeight: FontWeight.w900)),
           ...enemy.attacks.map((attack) => Text('- $attack')),
           const SizedBox(height: 8),
           Text('Defense: ${enemy.defense}'),
         ],
       ),
     );
+  }
+
+  void _openEditor(String label, int value) {
+    setState(() {
+      _editing = label;
+      _draftValue = value;
+    });
+  }
+
+  void _saveEnemyStat() {
+    if (_editing == 'HP') {
+      enemy.health = _draftValue.clamp(0, enemy.maxHealth);
+    } else if (_editing == 'CP') {
+      enemy.combatPoints = _draftValue.clamp(0, 20);
+    }
+    setState(() => _editing = null);
+    widget.onChanged();
   }
 }
 
@@ -2974,11 +3282,7 @@ List<EnemyRank> _freeModeRanks(Map<EnemyRank, int> counts) {
 }
 
 String _modeLabel(SurvivalMode mode) {
-  return switch (mode) {
-    SurvivalMode.levelOne => 'Scenario 1',
-    SurvivalMode.levelTwo => 'Scenario 2',
-    SurvivalMode.free => 'Free mode',
-  };
+  return _survivalModeTitle(mode);
 }
 
 EnemyNode _enemy(
