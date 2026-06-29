@@ -183,7 +183,7 @@ class AdventureState {
 
   void setHeroHealth(int value) {
     health = value.clamp(0, 99);
-    log('PV du hero ajustes a $health.');
+    log('Hero HP set to $health.');
     if (health == 0) {
       _endAdventure(false);
     }
@@ -191,19 +191,19 @@ class AdventureState {
 
   void setHeroPc(int value) {
     combatPoints = value.clamp(0, 20);
-    log('PC du hero ajustes a $combatPoints.');
+    log('Hero CP set to $combatPoints.');
   }
 
   void addAlteration(String value) {
     alterations.add(value);
-    log('Alteration ajoutee au hero: $value.');
+    log('Hero status added: $value.');
   }
 
   void completeCombat(EnemyNode enemy) {
     if (!enemy.defeated && enemy.health <= 0) {
       enemy.defeated = true;
       score += enemy.rank.points;
-      log('${enemy.label} vaincu: +${enemy.rank.points} points.');
+      log('${enemy.label} defeated: +${enemy.rank.points} points.');
     }
 
     if (health <= 0) {
@@ -217,12 +217,12 @@ class AdventureState {
   void applyReward(int d20) {
     if (d20 <= 10) {
       health = (health + 1).clamp(0, 99);
-      bonuses.add('D20 $d20: +1 PV');
-      log('Butin valide: D20 $d20, +1 PV.');
+      bonuses.add('D20 $d20: +1 HP');
+      log('Reward confirmed: D20 $d20, +1 HP.');
     } else {
       combatPoints = (combatPoints + 1).clamp(0, 20);
-      bonuses.add('D20 $d20: +1 PC');
-      log('Butin valide: D20 $d20, +1 PC.');
+      bonuses.add('D20 $d20: +1 CP');
+      log('Reward confirmed: D20 $d20, +1 CP.');
     }
   }
 
@@ -281,7 +281,7 @@ class AdventureState {
   void lockBranch(BranchSide branch) {
     lockedBranch ??= branch;
     _refreshAvailability();
-    log('Voie ${branch.label.toLowerCase()} engagee.');
+    log('${branch.label} path engaged.');
   }
 
   bool _branchComplete(BranchSide branch) {
@@ -1736,7 +1736,7 @@ class CurrentTargetCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  target == null ? 'Aucune cible' : target.label,
+                  target == null ? 'No target' : target.label,
                   style: const TextStyle(
                     color: Color(0xff54e98a),
                     fontSize: 24,
@@ -1796,11 +1796,11 @@ class EndAdventureBanner extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            adventure.victory ? 'Victoire: aventure terminee' : 'Fin de survie',
+            adventure.victory ? 'Victory: run complete' : 'Survival ended',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
           ),
           Text(
-            '${adventure.score} points - ${adventure.defeatedEnemies.length} ennemis vaincus',
+            '${adventure.score} points - ${adventure.defeatedEnemies.length} enemies defeated',
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1810,9 +1810,12 @@ class EndAdventureBanner extends StatelessWidget {
               FilledButton(onPressed: onReplay, child: const Text('Rejouer')),
               OutlinedButton(
                 onPressed: onChangeHero,
-                child: const Text('Changer de hero'),
+                child: const Text('Change hero'),
               ),
-              OutlinedButton(onPressed: onDetails, child: const Text('Detail')),
+              OutlinedButton(
+                onPressed: onDetails,
+                child: const Text('Details'),
+              ),
             ],
           ),
         ],
@@ -2018,7 +2021,7 @@ class HeroStatusBar extends StatelessWidget {
                 icon: const Icon(Icons.receipt_long),
               ),
               IconButton(
-                tooltip: 'Alterations',
+                tooltip: 'Status tokens',
                 onPressed: () async {
                   final value = await showAlterationDialog(context);
                   if (value != null) {
@@ -2036,7 +2039,7 @@ class HeroStatusBar extends StatelessWidget {
               Expanded(
                 child: StepperStat(
                   icon: Icons.favorite,
-                  label: 'PV',
+                  label: 'HP',
                   value: adventure.health,
                   color: Colors.redAccent,
                   onChanged: (value) {
@@ -2049,7 +2052,7 @@ class HeroStatusBar extends StatelessWidget {
               Expanded(
                 child: StepperStat(
                   icon: Icons.bolt,
-                  label: 'PC',
+                  label: 'CP',
                   value: adventure.combatPoints,
                   color: Colors.amber,
                   onChanged: (value) {
@@ -2226,7 +2229,7 @@ class _FightPageState extends State<FightPage> {
       }
       _rollCount++;
       widget.adventure.log(
-        'Lancer $_rollCount: ${rollable.map((die) => die.value).join(', ')}.',
+        'Roll $_rollCount: ${rollable.map((die) => die.value).join(', ')}.',
       );
       if (_rollCount == 3) {
         for (final die in _dice) {
@@ -2246,7 +2249,7 @@ class _FightPageState extends State<FightPage> {
         die.value = _random.nextInt(6) + 1;
         _rerollOneMode = false;
         widget.adventure.log(
-          'Relance speciale du de ${die.id + 1}: ${die.value}.',
+          'Special reroll for die ${die.id + 1}: ${die.value}.',
         );
         return;
       }
@@ -2259,7 +2262,7 @@ class _FightPageState extends State<FightPage> {
   void _selectFace(GameDie die, int face) {
     setState(() {
       die.value = face;
-      widget.adventure.log('De ${die.id + 1} modifie en $face.');
+      widget.adventure.log('Die ${die.id + 1} changed to $face.');
     });
   }
 
@@ -2329,7 +2332,7 @@ class HeroCombatPanel extends StatelessWidget {
               Expanded(
                 child: StepperStat(
                   icon: Icons.favorite,
-                  label: 'PV',
+                  label: 'HP',
                   value: adventure.health,
                   color: Colors.redAccent,
                   onChanged: (value) {
@@ -2342,7 +2345,7 @@ class HeroCombatPanel extends StatelessWidget {
               Expanded(
                 child: StepperStat(
                   icon: Icons.bolt,
-                  label: 'PC',
+                  label: 'CP',
                   value: adventure.combatPoints,
                   color: Colors.amber,
                   onChanged: (value) {
@@ -2393,7 +2396,7 @@ class EnemyCombatPanel extends StatelessWidget {
               Expanded(
                 child: StepperStat(
                   icon: Icons.favorite,
-                  label: 'PV',
+                  label: 'HP',
                   value: enemy.health,
                   color: enemy.rank.color,
                   onChanged: (value) {
@@ -2406,7 +2409,7 @@ class EnemyCombatPanel extends StatelessWidget {
               Expanded(
                 child: StepperStat(
                   icon: Icons.bolt,
-                  label: 'PC',
+                  label: 'CP',
                   value: enemy.pc,
                   color: Colors.amber,
                   onChanged: (_) {},
@@ -2481,7 +2484,7 @@ class DicePanel extends StatelessWidget {
             children: [
               const Expanded(
                 child: Text(
-                  'Zone de des',
+                  'Dice zone',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                 ),
               ),
@@ -2491,7 +2494,7 @@ class DicePanel extends StatelessWidget {
                     .map(
                       (count) => DropdownMenuItem(
                         value: count,
-                        child: Text('$count des'),
+                        child: Text('$count dice'),
                       ),
                     )
                     .toList(),
@@ -2503,7 +2506,7 @@ class DicePanel extends StatelessWidget {
               ),
             ],
           ),
-          Text('Lancers: $rollCount / 3'),
+          Text('Rolls: $rollCount / 3'),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -2512,28 +2515,28 @@ class DicePanel extends StatelessWidget {
               FilledButton.icon(
                 onPressed: rollCount < 3 ? onRoll : null,
                 icon: const Icon(Icons.casino),
-                label: const Text('Lancer'),
+                label: const Text('Roll'),
               ),
               OutlinedButton.icon(
                 onPressed: onToggleEdit,
                 icon: const Icon(Icons.tune),
-                label: Text(editMode ? 'Stop modification' : 'Modifier un de'),
+                label: Text(editMode ? 'Stop edit' : 'Edit a die'),
               ),
               OutlinedButton.icon(
                 onPressed: onToggleRerollOne,
                 icon: const Icon(Icons.refresh),
-                label: Text(rerollOneMode ? 'Choisir un de' : 'Relancer un de'),
+                label: Text(rerollOneMode ? 'Choose a die' : 'Reroll one die'),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          DiceZone(title: 'Des a lancer', dice: rollDice, onTapDie: onTapDie),
+          DiceZone(title: 'Dice to roll', dice: rollDice, onTapDie: onTapDie),
           const SizedBox(height: 12),
           DiceZone(title: 'Reserve', dice: reserveDice, onTapDie: onTapDie),
           if (editingDie != null) ...[
             const SizedBox(height: 12),
             Text(
-              'Modifier le de ${editingDie.id + 1}',
+              'Edit die ${editingDie.id + 1}',
               style: const TextStyle(fontWeight: FontWeight.w900),
             ),
             Wrap(
@@ -2551,7 +2554,7 @@ class DicePanel extends StatelessWidget {
             const SizedBox(height: 8),
             FilledButton(
               onPressed: onValidateEdit,
-              child: const Text('Valider ce de'),
+              child: const Text('Confirm die'),
             ),
           ],
         ],
@@ -2655,7 +2658,7 @@ class _RewardPageState extends State<RewardPage> {
   Widget build(BuildContext context) {
     final d20 = _d20;
     return Scaffold(
-      appBar: AppBar(title: const Text('Butin')),
+      appBar: AppBar(title: const Text('Reward')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -2663,7 +2666,7 @@ class _RewardPageState extends State<RewardPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                '${widget.enemy.label} vaincu',
+                '${widget.enemy.label} defeated',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
@@ -2674,7 +2677,7 @@ class _RewardPageState extends State<RewardPage> {
                 child: Column(
                   children: [
                     const Text(
-                      'D20 de gain',
+                      'Reward D20',
                       style: TextStyle(fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 10),
@@ -2689,8 +2692,8 @@ class _RewardPageState extends State<RewardPage> {
                       d20 == null
                           ? 'Lance le de'
                           : d20 <= 10
-                          ? '+1 PV'
-                          : '+1 PC',
+                          ? '+1 HP'
+                          : '+1 CP',
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -2702,12 +2705,12 @@ class _RewardPageState extends State<RewardPage> {
                           onPressed: () =>
                               setState(() => _d20 = _random.nextInt(20) + 1),
                           icon: const Icon(Icons.casino),
-                          label: Text(d20 == null ? 'Lancer' : 'Relancer'),
+                          label: Text(d20 == null ? 'Roll' : 'Reroll'),
                         ),
                         OutlinedButton.icon(
                           onPressed: d20 == null ? null : _modifyD20,
                           icon: const Icon(Icons.tune),
-                          label: const Text('Modifier'),
+                          label: const Text('Edit'),
                         ),
                       ],
                     ),
@@ -2723,7 +2726,7 @@ class _RewardPageState extends State<RewardPage> {
                         Navigator.of(context).pop();
                       },
                 icon: const Icon(Icons.check),
-                label: const Text('Valider le gain'),
+                label: const Text('Confirm reward'),
               ),
             ],
           ),
@@ -2736,7 +2739,7 @@ class _RewardPageState extends State<RewardPage> {
     final value = await showDialog<int>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Choisir le resultat'),
+        title: const Text('Choose the result'),
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
@@ -2769,7 +2772,7 @@ class AdventureDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Detail de la partie')),
+      appBar: AppBar(title: const Text('Run details')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -2780,8 +2783,8 @@ class AdventureDetailsPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             DetailSection(title: 'Bonus', items: adventure.bonuses),
-            DetailSection(title: 'Alterations', items: adventure.alterations),
-            DetailSection(title: 'Historique', items: adventure.logs),
+            DetailSection(title: 'Status tokens', items: adventure.alterations),
+            DetailSection(title: 'Log', items: adventure.logs),
           ],
         ),
       ),
@@ -2806,7 +2809,7 @@ class DetailSection extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
           ),
           const SizedBox(height: 8),
-          if (items.isEmpty) const Text('Aucun element.'),
+          if (items.isEmpty) const Text('No entry.'),
           ...items.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
@@ -2842,18 +2845,18 @@ class InfoCard extends StatelessWidget {
 Future<String?> showAlterationDialog(BuildContext context) {
   const alterations = [
     'Poison',
-    'Brulure',
-    'Gel',
-    'Sonne',
-    'Beni',
-    'Bouclier',
-    'Malus attaque',
-    'Bonus defense',
+    'Burn',
+    'Freeze',
+    'Stun',
+    'Blessed',
+    'Shield',
+    'Attack down',
+    'Defense up',
   ];
   return showDialog<String>(
     context: context,
     builder: (context) => SimpleDialog(
-      title: const Text('Ajouter une alteration'),
+      title: const Text('Add a status token'),
       children: [
         Padding(
           padding: const EdgeInsets.all(12),
