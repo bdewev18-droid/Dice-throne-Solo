@@ -1,17 +1,25 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dice_throne_survie/main.dart';
 
 void main() {
   testWidgets('home opens hero choice', (WidgetTester tester) async {
-    await tester.pumpWidget(const DiceThroneSurvieApp());
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('dt_solo_quest/active_adventure'),
+          (call) async => null,
+        );
 
-    expect(find.text('Version 1.1.5'), findsOneWidget);
+    await tester.pumpWidget(const DiceThroneSurvieApp());
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text('Version 1.1.6'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Survival mode'));
+    await tester.tap(find.text('Minion rush'));
     await tester.pumpAndSettle();
 
     expect(find.text('Choose your hero'), findsOneWidget);

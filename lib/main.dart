@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-const String appVersionLabel = 'Version 1.1.5';
+const String appVersionLabel = 'Version 1.1.6';
+const String _activeAdventureKey = 'active_adventure_v1';
 const int easyTarget = 29;
 const int mediumTarget = 33;
 const int hardTarget = 52;
@@ -150,6 +153,55 @@ enum RandomFilter {
   final String label;
 }
 
+T? _enumByName<T extends Enum>(Iterable<T> values, String? name) {
+  if (name == null) {
+    return null;
+  }
+  for (final value in values) {
+    if (value.name == name) {
+      return value;
+    }
+  }
+  return null;
+}
+
+class ActiveAdventureStore {
+  const ActiveAdventureStore();
+
+  static const MethodChannel _channel = MethodChannel(
+    'dt_solo_quest/active_adventure',
+  );
+
+  Future<String?> read() async {
+    try {
+      return _channel.invokeMethod<String>('read', {
+        'key': _activeAdventureKey,
+      });
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
+  Future<void> write(String value) async {
+    try {
+      await _channel.invokeMethod<void>('write', {
+        'key': _activeAdventureKey,
+        'value': value,
+      });
+    } on MissingPluginException {
+      return;
+    }
+  }
+
+  Future<void> clear() async {
+    try {
+      await _channel.invokeMethod<void>('clear', {'key': _activeAdventureKey});
+    } on MissingPluginException {
+      return;
+    }
+  }
+}
+
 String _survivalModeTitle(SurvivalMode mode) {
   return mode.label;
 }
@@ -197,6 +249,27 @@ class SurvivalConfig {
   final int targetScore;
   final Map<EnemyRank, int> freeCounts;
 
+  Map<String, dynamic> toJson() => {
+    'mode': mode.name,
+    'targetScore': targetScore,
+    'freeCounts': freeCounts.map((rank, count) => MapEntry(rank.name, count)),
+  };
+
+  factory SurvivalConfig.fromJson(Map<String, dynamic> json) {
+    final mode = _enumByName(SurvivalMode.values, json['mode'] as String?);
+    final rawCounts = (json['freeCounts'] as Map?) ?? {};
+    return SurvivalConfig(
+      mode: mode ?? SurvivalMode.mediumFixed,
+      targetScore: (json['targetScore'] as num?)?.toInt() ?? mediumTarget,
+      freeCounts: rawCounts.map(
+        (key, value) => MapEntry(
+          _enumByName(EnemyRank.values, key.toString()) ?? EnemyRank.green,
+          (value as num).toInt(),
+        ),
+      ),
+    );
+  }
+
   String get label => switch (mode) {
     SurvivalMode.mediumFixed || SurvivalMode.mediumRandom => 'Medium mode',
     SurvivalMode.easyFixed || SurvivalMode.easyRandom => 'Easy mode',
@@ -233,15 +306,41 @@ class EnemyNode {
   final List<String> alterations = [];
   bool defeated = false;
   bool current = false;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'health': health,
+    'combatPoints': combatPoints,
+    'alterations': alterations,
+    'defeated': defeated,
+  };
+
+  void applyJson(Map<String, dynamic> json) {
+    health = ((json['health'] as num?)?.toInt() ?? health).clamp(0, maxHealth);
+    combatPoints = ((json['combatPoints'] as num?)?.toInt() ?? combatPoints)
+        .clamp(0, 20);
+    defeated = json['defeated'] as bool? ?? defeated;
+    alterations
+      ..clear()
+      ..addAll((json['alterations'] as List? ?? const []).cast<String>());
+  }
 }
 
 class AdventureState {
   AdventureState({required this.hero, required this.config})
     : targetScore = config.targetScore,
+      startedAt = DateTime.now(),
       enemies = _generateEnemies(config) {
     _refreshAvailability();
     log('Run created: ${config.label}, target $targetScore points.');
   }
+
+  AdventureState._restored({
+    required this.hero,
+    required this.config,
+    required this.startedAt,
+  }) : targetScore = config.targetScore,
+       enemies = _generateEnemies(config);
 
   final HeroType hero;
   final SurvivalConfig config;
@@ -250,7 +349,7 @@ class AdventureState {
   final List<String> logs = [];
   final List<String> alterations = [];
   final List<String> bonuses = [];
-  final DateTime startedAt = DateTime.now();
+  final DateTime startedAt;
   int health = 30;
   int combatPoints = 2;
   int score = 0;
@@ -269,6 +368,79 @@ class AdventureState {
   EnemyNode enemyById(int id) => enemies.firstWhere((enemy) => enemy.id == id);
 
   Duration get elapsed => DateTime.now().difference(startedAt);
+
+  Map<String, dynamic> toJson() => {
+    'hero': hero.name,
+    'config': config.toJson(),
+    'startedAt': startedAt.toIso8601String(),
+    'health': health,
+    'combatPoints': combatPoints,
+    'score': score,
+    'lockedBranch': lockedBranch?.name,
+    'finished': finished,
+    'victory': victory,
+    'recorded': recorded,
+    'logs': logs,
+    'alterations': alterations,
+    'bonuses': bonuses,
+    'enemies': enemies.map((enemy) => enemy.toJson()).toList(),
+  };
+
+  factory AdventureState.fromJson(Map<String, dynamic> json) {
+    final hero = _enumByName(HeroType.values, json['hero'] as String?);
+    final configJson = json['config'] as Map?;
+    final state = AdventureState._restored(
+      hero: hero ?? HeroType.barbare,
+      config: configJson == null
+          ? const SurvivalConfig(
+              mode: SurvivalMode.mediumFixed,
+              targetScore: mediumTarget,
+            )
+          : SurvivalConfig.fromJson(Map<String, dynamic>.from(configJson)),
+      startedAt:
+          DateTime.tryParse(json['startedAt']?.toString() ?? '') ??
+          DateTime.now(),
+    );
+
+    state
+      ..health = ((json['health'] as num?)?.toInt() ?? 30).clamp(0, 99)
+      ..combatPoints = ((json['combatPoints'] as num?)?.toInt() ?? 2).clamp(
+        0,
+        20,
+      )
+      ..score = (json['score'] as num?)?.toInt() ?? 0
+      ..lockedBranch = _enumByName(
+        BranchSide.values,
+        json['lockedBranch'] as String?,
+      )
+      ..finished = json['finished'] as bool? ?? false
+      ..victory = json['victory'] as bool? ?? false
+      ..recorded = json['recorded'] as bool? ?? false;
+
+    state.logs
+      ..clear()
+      ..addAll((json['logs'] as List? ?? const []).cast<String>());
+    state.alterations
+      ..clear()
+      ..addAll((json['alterations'] as List? ?? const []).cast<String>());
+    state.bonuses
+      ..clear()
+      ..addAll((json['bonuses'] as List? ?? const []).cast<String>());
+
+    final enemySnapshots = {
+      for (final raw in (json['enemies'] as List? ?? const []))
+        if (raw is Map && raw['id'] != null)
+          (raw['id'] as num).toInt(): Map<String, dynamic>.from(raw),
+    };
+    for (final enemy in state.enemies) {
+      final snapshot = enemySnapshots[enemy.id];
+      if (snapshot != null) {
+        enemy.applyJson(snapshot);
+      }
+    }
+    state._refreshAvailability();
+    return state;
+  }
 
   void setHeroHealth(int value) {
     health = value.clamp(0, 99);
@@ -446,12 +618,21 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
       mode: SurvivalMode.mediumFixed,
     ),
   ];
+  final _store = const ActiveAdventureStore();
+  AdventureState? _activeAdventure;
+  bool _storageReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadActiveAdventure();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Dice Throne Survie',
+      title: 'D.T Solo Quest',
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -473,12 +654,75 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
         ),
       ),
       home: Builder(
-        builder: (context) => HomePage(
-          onHistory: () => _openHistory(context),
-          onSurvival: () => _openHeroChoice(context),
-        ),
+        builder: (context) {
+          if (!_storageReady) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          return HomePage(
+            activeAdventure: _activeAdventure,
+            onHistory: () => _openHistory(context),
+            onSurvival: () => _openHeroChoice(context),
+            onResume: () {
+              final adventure = _activeAdventure;
+              if (adventure != null) {
+                _replaceWithMap(
+                  context,
+                  adventure,
+                  adventure.hero,
+                  adventure.config,
+                );
+              }
+            },
+            onStopCampaign: _stopActiveCampaign,
+            onNaraxus: () => _showNaraxusComingSoon(context),
+          );
+        },
       ),
     );
+  }
+
+  Future<void> _loadActiveAdventure() async {
+    final raw = await _store.read();
+    AdventureState? restored;
+    if (raw != null) {
+      try {
+        restored = AdventureState.fromJson(
+          Map<String, dynamic>.from(jsonDecode(raw) as Map),
+        );
+        if (restored.finished) {
+          restored = null;
+          await _store.clear();
+        }
+      } catch (_) {
+        await _store.clear();
+      }
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _activeAdventure = restored;
+      _storageReady = true;
+    });
+  }
+
+  Future<void> _saveActiveAdventure() async {
+    final adventure = _activeAdventure;
+    if (adventure == null || adventure.finished) {
+      await _store.clear();
+      return;
+    }
+    await _store.write(jsonEncode(adventure.toJson()));
+  }
+
+  Future<void> _clearActiveAdventure() async {
+    _activeAdventure = null;
+    await _store.clear();
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _openHistory(BuildContext context) {
@@ -507,6 +751,8 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
                       hero: hero,
                       config: config,
                     );
+                    _activeAdventure = adventure;
+                    _saveActiveAdventure();
                     _replaceWithMap(context, adventure, hero, config);
                   },
                 ),
@@ -529,9 +775,25 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
         builder: (_) => MapPage(
           adventure: adventure,
           onRecordScore: _recordAdventure,
+          onChanged: () {
+            _activeAdventure = adventure;
+            _saveActiveAdventure();
+          },
+          onPauseExit: () {
+            _activeAdventure = adventure;
+            _saveActiveAdventure();
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
+          onAbandon: () {
+            _recordAdventure(adventure);
+            _clearActiveAdventure();
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
           onChangeHero: () => _openHeroChoice(context),
           onReplay: () {
             final next = AdventureState(hero: hero, config: config);
+            _activeAdventure = next;
+            _saveActiveAdventure();
             _replaceWithMap(context, next, hero, config);
           },
         ),
@@ -557,19 +819,55 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
           duration: adventure.elapsed,
         ),
       );
+      if (identical(_activeAdventure, adventure)) {
+        _activeAdventure = null;
+        _store.clear();
+      }
     });
+  }
+
+  Future<void> _stopActiveCampaign() async {
+    final adventure = _activeAdventure;
+    if (adventure != null) {
+      _recordAdventure(adventure);
+    }
+    await _clearActiveAdventure();
+  }
+
+  void _showNaraxusComingSoon(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Naraxus Battle'),
+        content: const Text('This mode will arrive in a next version.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
 class HomePage extends StatefulWidget {
   const HomePage({
+    required this.activeAdventure,
     required this.onHistory,
     required this.onSurvival,
+    required this.onResume,
+    required this.onStopCampaign,
+    required this.onNaraxus,
     super.key,
   });
 
+  final AdventureState? activeAdventure;
   final VoidCallback onHistory;
   final VoidCallback onSurvival;
+  final VoidCallback onResume;
+  final VoidCallback onStopCampaign;
+  final VoidCallback onNaraxus;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -597,7 +895,10 @@ class _HomePageState extends State<HomePage> {
         children: [
           Positioned.fill(
             top: MediaQuery.paddingOf(context).top + 18,
-            child: Image.asset('assets/home_background.png', fit: BoxFit.cover),
+            child: Image.asset(
+              'assets/home_background_v3.webp',
+              fit: BoxFit.cover,
+            ),
           ),
           Positioned(
             top: 0,
@@ -639,10 +940,23 @@ class _HomePageState extends State<HomePage> {
                             onPressed: widget.onHistory,
                           ),
                           const SizedBox(height: 20),
+                          if (widget.activeAdventure == null)
+                            ImageActionButton(
+                              label: 'Minion rush',
+                              icon: Icons.shield,
+                              onPressed: widget.onSurvival,
+                            )
+                          else
+                            ActiveCampaignHomeCard(
+                              adventure: widget.activeAdventure!,
+                              onResume: widget.onResume,
+                              onStop: widget.onStopCampaign,
+                            ),
+                          const SizedBox(height: 20),
                           ImageActionButton(
-                            label: 'Survival mode',
-                            icon: Icons.shield,
-                            onPressed: widget.onSurvival,
+                            label: 'Naraxus Battle',
+                            icon: Icons.local_fire_department,
+                            onPressed: widget.onNaraxus,
                           ),
                         ],
                       ),
@@ -653,6 +967,66 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ActiveCampaignHomeCard extends StatelessWidget {
+  const ActiveCampaignHomeCard({
+    required this.adventure,
+    required this.onResume,
+    required this.onStop,
+    super.key,
+  });
+
+  final AdventureState adventure;
+  final VoidCallback onResume;
+  final VoidCallback onStop;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        image: const DecorationImage(
+          image: AssetImage('assets/button_background.png'),
+          fit: BoxFit.fill,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FilledButton.icon(
+            onPressed: onResume,
+            icon: const Icon(Icons.play_arrow),
+            label: const Text('Resume current run'),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              HeroAvatar(hero: adventure.hero, size: 42),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '${adventure.hero.label} - ${adventure.score}/${adventure.targetScore} pts\n'
+                  '${adventure.config.label} - ${_formatDateTime(adventure.startedAt)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: onStop,
+            icon: const Icon(Icons.stop_circle),
+            label: const Text('Stop campaign'),
           ),
         ],
       ),
@@ -1779,6 +2153,9 @@ class MapPage extends StatefulWidget {
   const MapPage({
     required this.adventure,
     required this.onRecordScore,
+    required this.onChanged,
+    required this.onPauseExit,
+    required this.onAbandon,
     required this.onChangeHero,
     required this.onReplay,
     super.key,
@@ -1786,6 +2163,9 @@ class MapPage extends StatefulWidget {
 
   final AdventureState adventure;
   final ValueChanged<AdventureState> onRecordScore;
+  final VoidCallback onChanged;
+  final VoidCallback onPauseExit;
+  final VoidCallback onAbandon;
   final VoidCallback onChangeHero;
   final VoidCallback onReplay;
 
@@ -1844,7 +2224,11 @@ class _MapPageState extends State<MapPage> {
                 MapHeader(
                   adventure: adventure,
                   onDetails: () => _openDetails(context),
-                  onChanged: () => setState(() {}),
+                  onChanged: () {
+                    widget.onChanged();
+                    setState(() {});
+                  },
+                  onPause: _openPauseDialog,
                 ),
                 Expanded(
                   child: Stack(
@@ -1853,7 +2237,7 @@ class _MapPageState extends State<MapPage> {
                         child: LayoutBuilder(
                           builder: (context, constraints) {
                             final mapSize = Size(
-                              max(720, constraints.maxWidth + 160),
+                              max(920, constraints.maxWidth + 420),
                               max(1320, constraints.maxHeight + 520),
                             );
                             return InteractiveViewer(
@@ -1865,9 +2249,9 @@ class _MapPageState extends State<MapPage> {
                               child: SingleChildScrollView(
                                 controller: _mapScrollController,
                                 padding: const EdgeInsets.fromLTRB(
-                                  44,
+                                  150,
                                   100,
-                                  44,
+                                  150,
                                   180,
                                 ),
                                 child: SingleChildScrollView(
@@ -1980,7 +2364,7 @@ class _MapPageState extends State<MapPage> {
         };
         final x =
             centerX +
-            sign * width * (0.12 + enemy.step * 0.045) +
+            sign * width * (0.1 + enemy.step * 0.04) +
             width * pairOffset;
         final y = bottom - rowGap * enemy.step;
         positions[enemy.id] = Offset(x, y);
@@ -1999,11 +2383,19 @@ class _MapPageState extends State<MapPage> {
     Navigator.of(context)
         .push(
           MaterialPageRoute<void>(
-            builder: (_) =>
-                FightPage(adventure: widget.adventure, enemyId: enemy.id),
+            builder: (_) => FightPage(
+              adventure: widget.adventure,
+              enemyId: enemy.id,
+              onChanged: widget.onChanged,
+              onPauseExit: widget.onPauseExit,
+              onAbandon: widget.onAbandon,
+            ),
           ),
         )
-        .then((_) => setState(() {}));
+        .then((_) {
+          widget.onChanged();
+          setState(() {});
+        });
   }
 
   void _openDetails(BuildContext context) {
@@ -2013,6 +2405,21 @@ class _MapPageState extends State<MapPage> {
       ),
     );
   }
+
+  Future<void> _openPauseDialog() async {
+    final action = await showDialog<_PauseAction>(
+      context: context,
+      builder: (context) => const PauseRunDialog(),
+    );
+    if (!mounted || action == null) {
+      return;
+    }
+    if (action == _PauseAction.resumeLater) {
+      widget.onPauseExit();
+    } else {
+      widget.onAbandon();
+    }
+  }
 }
 
 class MapHeader extends StatefulWidget {
@@ -2020,12 +2427,14 @@ class MapHeader extends StatefulWidget {
     required this.adventure,
     required this.onDetails,
     required this.onChanged,
+    required this.onPause,
     super.key,
   });
 
   final AdventureState adventure;
   final VoidCallback onDetails;
   final VoidCallback onChanged;
+  final VoidCallback onPause;
 
   @override
   State<MapHeader> createState() => _MapHeaderState();
@@ -2059,6 +2468,11 @@ class _MapHeaderState extends State<MapHeader> {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
+              ),
+              IconButton(
+                tooltip: 'Pause',
+                onPressed: widget.onPause,
+                icon: const Icon(Icons.pause_circle, color: Color(0xff54e98a)),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -2203,40 +2617,50 @@ class _MapHeaderState extends State<MapHeader> {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    _editing == 'HP' ? Icons.favorite : Icons.bolt,
-                    color: _editing == 'HP' ? Colors.redAccent : Colors.amber,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _editing!,
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => setState(() => _draftValue--),
-                    icon: const Icon(Icons.remove),
-                  ),
-                  SizedBox(
-                    width: 58,
-                    child: Text(
-                      _draftValue.toString(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                      ),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          _editing == 'HP' ? Icons.favorite : Icons.bolt,
+                          color: _editing == 'HP'
+                              ? Colors.redAccent
+                              : Colors.amber,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _editing!,
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => setState(() => _draftValue--),
+                          icon: const Icon(Icons.remove),
+                        ),
+                        SizedBox(
+                          width: 58,
+                          child: Text(
+                            _draftValue.toString(),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => setState(() => _draftValue++),
+                          icon: const Icon(Icons.add),
+                        ),
+                      ],
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => setState(() => _draftValue++),
-                    icon: const Icon(Icons.add),
-                  ),
                   const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _saveStat,
-                    icon: const Icon(Icons.check),
-                    label: const Text('Save'),
+                  SizedBox(
+                    width: 88,
+                    child: FilledButton(
+                      onPressed: _saveStat,
+                      child: const Text('Save'),
+                    ),
                   ),
                 ],
               ),
@@ -2454,6 +2878,39 @@ class EndAdventureBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+enum _PauseAction { resumeLater, abandon }
+
+class PauseRunDialog extends StatelessWidget {
+  const PauseRunDialog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Pause run'),
+      content: const Text(
+        'Do you want to leave this run and resume it later, or abandon it now? '
+        'Abandoning keeps your current score for statistics.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => Navigator.of(context).pop(_PauseAction.resumeLater),
+          icon: const Icon(Icons.save),
+          label: const Text('Resume later'),
+        ),
+        FilledButton.icon(
+          onPressed: () => Navigator.of(context).pop(_PauseAction.abandon),
+          icon: const Icon(Icons.flag),
+          label: const Text('Abandon'),
+        ),
+      ],
     );
   }
 }
@@ -2757,10 +3214,20 @@ class StepperStat extends StatelessWidget {
 }
 
 class FightPage extends StatefulWidget {
-  const FightPage({required this.adventure, required this.enemyId, super.key});
+  const FightPage({
+    required this.adventure,
+    required this.enemyId,
+    required this.onChanged,
+    required this.onPauseExit,
+    required this.onAbandon,
+    super.key,
+  });
 
   final AdventureState adventure;
   final int enemyId;
+  final VoidCallback onChanged;
+  final VoidCallback onPauseExit;
+  final VoidCallback onAbandon;
 
   @override
   State<FightPage> createState() => _FightPageState();
@@ -2801,10 +3268,20 @@ class _FightPageState extends State<FightPage> {
                       AdventureDetailsPage(adventure: widget.adventure),
                 ),
               ),
-              onChanged: () => setState(() {}),
+              onChanged: () {
+                widget.onChanged();
+                setState(() {});
+              },
+              onPause: _openPauseDialog,
             ),
             const SizedBox(height: 12),
-            EnemyCombatPanel(enemy: enemy, onChanged: () => setState(() {})),
+            EnemyCombatPanel(
+              enemy: enemy,
+              onChanged: () {
+                widget.onChanged();
+                setState(() {});
+              },
+            ),
             const SizedBox(height: 12),
             DicePanel(
               dice: _dice,
@@ -2858,6 +3335,7 @@ class _FightPageState extends State<FightPage> {
       widget.adventure.log(
         'Roll $_rollCount: ${rollable.map((die) => die.value).join(', ')}.',
       );
+      widget.onChanged();
       if (_rollCount == 3) {
         for (final die in _dice) {
           die.reserved = true;
@@ -2878,6 +3356,7 @@ class _FightPageState extends State<FightPage> {
         widget.adventure.log(
           'Special reroll for die ${die.id + 1}: ${die.value}.',
         );
+        widget.onChanged();
         return;
       }
       if (_rollCount > 0) {
@@ -2890,11 +3369,13 @@ class _FightPageState extends State<FightPage> {
     setState(() {
       die.value = face;
       widget.adventure.log('Die ${die.id + 1} changed to $face.');
+      widget.onChanged();
     });
   }
 
   void _finishCombat() {
     widget.adventure.completeCombat(enemy);
+    widget.onChanged();
     if (enemy.defeated &&
         widget.adventure.health > 0 &&
         !widget.adventure.victory) {
@@ -2906,6 +3387,21 @@ class _FightPageState extends State<FightPage> {
       return;
     }
     Navigator.of(context).pop();
+  }
+
+  Future<void> _openPauseDialog() async {
+    final action = await showDialog<_PauseAction>(
+      context: context,
+      builder: (context) => const PauseRunDialog(),
+    );
+    if (!mounted || action == null) {
+      return;
+    }
+    if (action == _PauseAction.resumeLater) {
+      widget.onPauseExit();
+    } else {
+      widget.onAbandon();
+    }
   }
 }
 
@@ -3104,40 +3600,50 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    _editing == 'HP' ? Icons.favorite : Icons.bolt,
-                    color: _editing == 'HP' ? enemy.rank.color : Colors.amber,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _editing!,
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => setState(() => _draftValue--),
-                    icon: const Icon(Icons.remove),
-                  ),
-                  SizedBox(
-                    width: 58,
-                    child: Text(
-                      _draftValue.toString(),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                      ),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          _editing == 'HP' ? Icons.favorite : Icons.bolt,
+                          color: _editing == 'HP'
+                              ? enemy.rank.color
+                              : Colors.amber,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _editing!,
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => setState(() => _draftValue--),
+                          icon: const Icon(Icons.remove),
+                        ),
+                        SizedBox(
+                          width: 58,
+                          child: Text(
+                            _draftValue.toString(),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => setState(() => _draftValue++),
+                          icon: const Icon(Icons.add),
+                        ),
+                      ],
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => setState(() => _draftValue++),
-                    icon: const Icon(Icons.add),
-                  ),
                   const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _saveEnemyStat,
-                    icon: const Icon(Icons.check),
-                    label: const Text('Save'),
+                  SizedBox(
+                    width: 88,
+                    child: FilledButton(
+                      onPressed: _saveEnemyStat,
+                      child: const Text('Save'),
+                    ),
                   ),
                 ],
               ),
