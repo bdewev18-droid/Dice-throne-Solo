@@ -2,9 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-const String appVersionLabel = 'Version 1.1.4';
-const int levelOneTarget = 33;
-const int levelTwoTarget = 52;
+const String appVersionLabel = 'Version 1.1.5';
+const int easyTarget = 29;
+const int mediumTarget = 33;
+const int hardTarget = 52;
 
 void main() {
   runApp(const DiceThroneSurvieApp());
@@ -96,10 +97,10 @@ enum BranchSide {
 }
 
 enum HistorySort {
-  recent('Latest game'),
-  hero('Hero'),
-  score('Best score'),
-  date('Game date');
+  average('Average score'),
+  best('Best score'),
+  date('Game date'),
+  time('Time played');
 
   const HistorySort(this.label);
 
@@ -107,28 +108,60 @@ enum HistorySort {
 }
 
 enum SurvivalMode {
-  levelOne('Medium mode', levelOneTarget),
-  levelTwo('Difficult mode', levelTwoTarget),
-  free('Free mode', 33);
+  mediumFixed('Medium fixed route', mediumTarget, RunDifficulty.medium, false),
+  easyFixed('Easy fixed route', easyTarget, RunDifficulty.easy, false),
+  easyRandom('Easy random route', easyTarget, RunDifficulty.easy, true),
+  mediumRandom('Medium random route', mediumTarget, RunDifficulty.medium, true),
+  hardFixed('Hard fixed route', hardTarget, RunDifficulty.hard, false),
+  hardRandom('Hard random route', hardTarget, RunDifficulty.hard, true),
+  free('Free mode', mediumTarget, RunDifficulty.free, true);
 
-  const SurvivalMode(this.label, this.defaultTarget);
+  const SurvivalMode(
+    this.label,
+    this.defaultTarget,
+    this.difficulty,
+    this.random,
+  );
 
   final String label;
   final int defaultTarget;
+  final RunDifficulty difficulty;
+  final bool random;
+}
+
+enum RunDifficulty {
+  easy('Easy'),
+  medium('Medium'),
+  hard('Hard'),
+  free('Free');
+
+  const RunDifficulty(this.label);
+
+  final String label;
+}
+
+enum RandomFilter {
+  both('Both routes'),
+  fixed('Fixed only'),
+  random('Random only');
+
+  const RandomFilter(this.label);
+
+  final String label;
 }
 
 String _survivalModeTitle(SurvivalMode mode) {
-  return switch (mode) {
-    SurvivalMode.levelOne => 'Medium mode',
-    SurvivalMode.levelTwo => 'Difficult mode',
-    SurvivalMode.free => 'Free mode',
-  };
+  return mode.label;
 }
 
 String _survivalModeDescription(SurvivalMode mode) {
   return switch (mode) {
-    SurvivalMode.levelOne => 'Fixed 33-point route',
-    SurvivalMode.levelTwo => 'Fixed 52-point expert route',
+    SurvivalMode.easyFixed => 'Fixed 29-point route',
+    SurvivalMode.easyRandom => 'Random 29-point route',
+    SurvivalMode.mediumFixed => 'Fixed 33-point route for hero comparison',
+    SurvivalMode.mediumRandom => 'Random 33-point route',
+    SurvivalMode.hardFixed => 'Fixed 52-point route',
+    SurvivalMode.hardRandom => 'Random 52-point route',
     SurvivalMode.free => 'Build your own 13-enemy run',
   };
 }
@@ -138,13 +171,19 @@ class GameRecord {
     required this.hero,
     required this.date,
     required this.score,
-    this.mode = SurvivalMode.levelOne,
+    this.mode = SurvivalMode.mediumFixed,
+    this.healthRemaining,
+    this.enemiesDefeated = 0,
+    this.duration = Duration.zero,
   });
 
   final HeroType hero;
   final DateTime date;
   final int score;
   final SurvivalMode mode;
+  final int? healthRemaining;
+  final int enemiesDefeated;
+  final Duration duration;
 }
 
 class SurvivalConfig {
@@ -159,8 +198,9 @@ class SurvivalConfig {
   final Map<EnemyRank, int> freeCounts;
 
   String get label => switch (mode) {
-    SurvivalMode.levelOne => 'Medium mode',
-    SurvivalMode.levelTwo => 'Difficult mode',
+    SurvivalMode.mediumFixed || SurvivalMode.mediumRandom => 'Medium mode',
+    SurvivalMode.easyFixed || SurvivalMode.easyRandom => 'Easy mode',
+    SurvivalMode.hardFixed || SurvivalMode.hardRandom => 'Hard mode',
     SurvivalMode.free => 'Free mode',
   };
 }
@@ -210,6 +250,7 @@ class AdventureState {
   final List<String> logs = [];
   final List<String> alterations = [];
   final List<String> bonuses = [];
+  final DateTime startedAt = DateTime.now();
   int health = 30;
   int combatPoints = 2;
   int score = 0;
@@ -226,6 +267,8 @@ class AdventureState {
       enemies.where((enemy) => enemy.defeated).toList();
 
   EnemyNode enemyById(int id) => enemies.firstWhere((enemy) => enemy.id == id);
+
+  Duration get elapsed => DateTime.now().difference(startedAt);
 
   void setHeroHealth(int value) {
     health = value.clamp(0, 99);
@@ -381,13 +424,27 @@ class DiceThroneSurvieApp extends StatefulWidget {
 
 class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   final List<GameRecord> _history = [
-    GameRecord(hero: HeroType.barbare, date: DateTime(2026, 6, 26), score: 8),
+    GameRecord(
+      hero: HeroType.barbare,
+      date: DateTime(2026, 6, 26),
+      score: 8,
+      enemiesDefeated: 5,
+      mode: SurvivalMode.mediumFixed,
+    ),
     GameRecord(
       hero: HeroType.elfeLunaire,
       date: DateTime(2026, 6, 24),
       score: 13,
+      enemiesDefeated: 7,
+      mode: SurvivalMode.mediumFixed,
     ),
-    GameRecord(hero: HeroType.barbare, date: DateTime(2026, 6, 20), score: 5),
+    GameRecord(
+      hero: HeroType.barbare,
+      date: DateTime(2026, 6, 20),
+      score: 5,
+      enemiesDefeated: 3,
+      mode: SurvivalMode.mediumFixed,
+    ),
   ];
 
   @override
@@ -495,6 +552,9 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
           date: DateTime.now(),
           score: adventure.score,
           mode: adventure.config.mode,
+          healthRemaining: adventure.health,
+          enemiesDefeated: adventure.defeatedEnemies.length,
+          duration: adventure.elapsed,
         ),
       );
     });
@@ -578,7 +638,7 @@ class _HomePageState extends State<HomePage> {
                             icon: Icons.history,
                             onPressed: widget.onHistory,
                           ),
-                          const SizedBox(height: 42),
+                          const SizedBox(height: 20),
                           ImageActionButton(
                             label: 'Survival mode',
                             icon: Icons.shield,
@@ -695,12 +755,21 @@ class HistoryPage extends StatefulWidget {
 }
 
 class _HistoryPageState extends State<HistoryPage> {
-  HistorySort _sort = HistorySort.recent;
-  final Set<HeroType> _heroFilters = {...HeroType.values};
+  HistorySort _sort = HistorySort.average;
+  RunDifficulty _difficulty = RunDifficulty.medium;
+  RandomFilter _randomFilter = RandomFilter.both;
+  bool _deleteMode = false;
+  final Set<GameRecord> _selectedForDelete = {};
+  final Set<HeroType> _expandedHeroes = {};
 
   @override
   Widget build(BuildContext context) {
-    final records = [...widget.records.where(_matchesHero)]..sort(_sortRecords);
+    final records = [...widget.records.where(_matchesFilters)];
+    final flatMode = _sort == HistorySort.date || _sort == HistorySort.time;
+    if (flatMode) {
+      records.sort(_sortRecords);
+    }
+    final grouped = _groupRecords(records);
 
     return Scaffold(
       appBar: AppBar(
@@ -711,114 +780,292 @@ class _HistoryPageState extends State<HistoryPage> {
             onPressed: _addManualRun,
             icon: const Icon(Icons.add),
           ),
+          IconButton(
+            tooltip: _deleteMode ? 'Cancel delete' : 'Delete runs',
+            onPressed: () {
+              setState(() {
+                _deleteMode = !_deleteMode;
+                _selectedForDelete.clear();
+              });
+            },
+            icon: Icon(_deleteMode ? Icons.close : Icons.delete_outline),
+          ),
         ],
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: HeroType.values.map((hero) {
-                  final selected = _heroFilters.contains(hero);
-                  return FilterChip(
-                    selected: selected,
-                    avatar: CircleAvatar(
-                      backgroundImage: AssetImage(hero.asset),
-                      backgroundColor: hero.color,
-                    ),
-                    label: Text(hero.label),
-                    onSelected: (value) {
-                      setState(() {
-                        if (value) {
-                          _heroFilters.add(hero);
-                        } else if (_heroFilters.length > 1) {
-                          _heroFilters.remove(hero);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<HistorySort>(
-                initialValue: _sort,
-                decoration: const InputDecoration(
-                  labelText: 'Sort by',
-                  border: OutlineInputBorder(),
+        child: DefaultTabController(
+          length: RunDifficulty.values.length,
+          initialIndex: RunDifficulty.values.indexOf(_difficulty),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TabBar(
+                  isScrollable: true,
+                  onTap: (index) {
+                    setState(() {
+                      _difficulty = RunDifficulty.values[index];
+                      _selectedForDelete.clear();
+                    });
+                  },
+                  tabs: RunDifficulty.values
+                      .map((difficulty) => Tab(text: difficulty.label))
+                      .toList(),
                 ),
-                items: HistorySort.values
-                    .map(
-                      (sort) => DropdownMenuItem(
-                        value: sort,
-                        child: Text(sort.label),
+                const SizedBox(height: 12),
+                SegmentedButton<RandomFilter>(
+                  segments: RandomFilter.values
+                      .map(
+                        (filter) => ButtonSegment(
+                          value: filter,
+                          label: Text(filter.label),
+                        ),
+                      )
+                      .toList(),
+                  selected: {_randomFilter},
+                  onSelectionChanged: (selection) {
+                    setState(() => _randomFilter = selection.first);
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<HistorySort>(
+                  initialValue: _sort,
+                  decoration: const InputDecoration(
+                    labelText: 'Sort by',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: HistorySort.values
+                      .map(
+                        (sort) => DropdownMenuItem(
+                          value: sort,
+                          child: Text(sort.label),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _sort = value);
+                    }
+                  },
+                ),
+                if (_sort == HistorySort.best)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Best score uses points first, then remaining HP when available.',
+                      style: TextStyle(color: Color(0xffbbcbbb), fontSize: 12),
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    children: [
+                      Expanded(flex: 3, child: Text('Hero')),
+                      Expanded(
+                        child: Text('Runs', textAlign: TextAlign.center),
                       ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _sort = value);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: records.isEmpty
-                    ? const Center(child: Text('No game for this filter.'))
-                    : ListView.separated(
-                        itemCount: records.length,
-                        separatorBuilder: (_, _) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final record = records[index];
-                          return ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: record.hero.color,
-                              backgroundImage: AssetImage(record.hero.asset),
-                            ),
-                            title: Text(record.hero.label),
-                            subtitle: Text(
-                              '${_modeLabel(record.mode)} - ${_formatDate(record.date)}',
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '${record.score} pts',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                IconButton(
-                                  tooltip: 'Delete run',
-                                  onPressed: () => _deleteRun(record),
-                                  icon: const Icon(Icons.delete_outline),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
+                      Expanded(
+                        flex: 2,
+                        child: Text('Enemies', textAlign: TextAlign.center),
                       ),
-              ),
-            ],
+                      Expanded(
+                        flex: 2,
+                        child: Text('Avg pts', textAlign: TextAlign.right),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(),
+                Expanded(
+                  child: records.isEmpty
+                      ? const Center(child: Text('No game for this filter.'))
+                      : flatMode
+                      ? _buildFlatList(records)
+                      : _buildGroupedList(grouped),
+                ),
+                if (_deleteMode)
+                  FilledButton.icon(
+                    onPressed: _selectedForDelete.isEmpty
+                        ? null
+                        : _confirmDeleteSelected,
+                    icon: const Icon(Icons.delete),
+                    label: Text('Delete ${_selectedForDelete.length} run(s)'),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  bool _matchesHero(GameRecord record) => _heroFilters.contains(record.hero);
+  bool _matchesFilters(GameRecord record) {
+    if (record.mode.difficulty != _difficulty) {
+      return false;
+    }
+    return switch (_randomFilter) {
+      RandomFilter.both => true,
+      RandomFilter.fixed => !record.mode.random,
+      RandomFilter.random => record.mode.random,
+    };
+  }
 
   int _sortRecords(GameRecord a, GameRecord b) {
     return switch (_sort) {
-      HistorySort.recent => b.date.compareTo(a.date),
-      HistorySort.hero => a.hero.label.compareTo(b.hero.label),
-      HistorySort.score => b.score.compareTo(a.score),
-      HistorySort.date => a.date.compareTo(b.date),
+      HistorySort.average => b.score.compareTo(a.score),
+      HistorySort.best => _compareBestRecords(a, b),
+      HistorySort.date => b.date.compareTo(a.date),
+      HistorySort.time => b.duration.compareTo(a.duration),
     };
+  }
+
+  int _compareBestRecords(GameRecord a, GameRecord b) {
+    final score = b.score.compareTo(a.score);
+    if (score != 0) {
+      return score;
+    }
+    return (b.healthRemaining ?? -1).compareTo(a.healthRemaining ?? -1);
+  }
+
+  Map<HeroType, List<GameRecord>> _groupRecords(List<GameRecord> records) {
+    final grouped = <HeroType, List<GameRecord>>{};
+    for (final record in records) {
+      grouped.putIfAbsent(record.hero, () => []).add(record);
+    }
+    for (final runs in grouped.values) {
+      runs.sort(_sortRecords);
+    }
+    final entries = grouped.entries.toList()
+      ..sort((a, b) {
+        final avgA = _averageScore(a.value);
+        final avgB = _averageScore(b.value);
+        if (_sort == HistorySort.best) {
+          return _compareBestRecords(a.value.first, b.value.first);
+        }
+        return avgB.compareTo(avgA);
+      });
+    return Map.fromEntries(entries);
+  }
+
+  Widget _buildGroupedList(Map<HeroType, List<GameRecord>> grouped) {
+    return ListView(
+      children: grouped.entries.map((entry) {
+        final hero = entry.key;
+        final runs = entry.value;
+        final expanded = _expandedHeroes.contains(hero);
+        return Column(
+          children: [
+            InkWell(
+              onTap: () {
+                setState(() {
+                  if (expanded) {
+                    _expandedHeroes.remove(hero);
+                  } else {
+                    _expandedHeroes.add(hero);
+                  }
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    _deleteMode
+                        ? Checkbox(
+                            value: runs.every(_selectedForDelete.contains),
+                            onChanged: (value) => _toggleRuns(runs, value),
+                          )
+                        : HeroAvatar(hero: hero, size: 42),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        hero.label,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        runs.length.toString(),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        runs.map((run) => run.enemiesDefeated).join('/'),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        '${_averageScore(runs).toStringAsFixed(1)} pts',
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (expanded)
+              ...runs.map(
+                (run) => Padding(
+                  padding: const EdgeInsets.only(left: 52, bottom: 8),
+                  child: _RunDetailRow(
+                    record: run,
+                    deleteMode: _deleteMode,
+                    selected: _selectedForDelete.contains(run),
+                    onSelected: (value) => _toggleRun(run, value),
+                  ),
+                ),
+              ),
+            const Divider(height: 1),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildFlatList(List<GameRecord> records) {
+    return ListView.separated(
+      itemCount: records.length,
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final record = records[index];
+        return _RunDetailRow(
+          record: record,
+          deleteMode: _deleteMode,
+          selected: _selectedForDelete.contains(record),
+          onSelected: (value) => _toggleRun(record, value),
+          showHero: true,
+        );
+      },
+    );
+  }
+
+  double _averageScore(List<GameRecord> runs) =>
+      runs.fold<int>(0, (total, run) => total + run.score) / runs.length;
+
+  void _toggleRun(GameRecord run, bool? value) {
+    setState(() {
+      if (value ?? false) {
+        _selectedForDelete.add(run);
+      } else {
+        _selectedForDelete.remove(run);
+      }
+    });
+  }
+
+  void _toggleRuns(List<GameRecord> runs, bool? value) {
+    setState(() {
+      if (value ?? false) {
+        _selectedForDelete.addAll(runs);
+      } else {
+        _selectedForDelete.removeAll(runs);
+      }
+    });
   }
 
   Future<void> _addManualRun() async {
@@ -833,12 +1080,12 @@ class _HistoryPageState extends State<HistoryPage> {
     setState(() {});
   }
 
-  Future<void> _deleteRun(GameRecord record) async {
+  Future<void> _confirmDeleteSelected() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete run?'),
-        content: Text('${record.hero.label} - ${record.score} pts'),
+        title: const Text('Delete selected runs?'),
+        content: Text('${_selectedForDelete.length} run(s) will be deleted.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -852,9 +1099,70 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
     );
     if (confirmed ?? false) {
-      widget.onDeleteRecord(record);
-      setState(() {});
+      for (final record in _selectedForDelete) {
+        widget.onDeleteRecord(record);
+      }
+      setState(() {
+        _selectedForDelete.clear();
+        _deleteMode = false;
+      });
     }
+  }
+}
+
+class _RunDetailRow extends StatelessWidget {
+  const _RunDetailRow({
+    required this.record,
+    required this.deleteMode,
+    required this.selected,
+    required this.onSelected,
+    this.showHero = false,
+  });
+
+  final GameRecord record;
+  final bool deleteMode;
+  final bool selected;
+  final ValueChanged<bool?> onSelected;
+  final bool showHero;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        if (deleteMode)
+          Checkbox(value: selected, onChanged: onSelected)
+        else if (showHero)
+          HeroAvatar(hero: record.hero, size: 34),
+        if (showHero || deleteMode) const SizedBox(width: 8),
+        Expanded(
+          flex: 2,
+          child: Text(showHero ? record.hero.label : _formatDate(record.date)),
+        ),
+        Expanded(
+          child: Text(
+            record.enemiesDefeated.toString(),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        Expanded(
+          child: Text('${record.score} pts', textAlign: TextAlign.center),
+        ),
+        Expanded(
+          child: Text(
+            record.healthRemaining == null
+                ? 'HP n/a'
+                : '${record.healthRemaining} HP',
+            textAlign: TextAlign.center,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            _formatDuration(record.duration),
+            textAlign: TextAlign.right,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -867,14 +1175,40 @@ class ManualRunDialog extends StatefulWidget {
 
 class _ManualRunDialogState extends State<ManualRunDialog> {
   HeroType _hero = HeroType.barbare;
-  SurvivalMode _mode = SurvivalMode.levelOne;
+  SurvivalMode _mode = SurvivalMode.mediumFixed;
   late final TextEditingController _scoreController = TextEditingController(
-    text: levelOneTarget.toString(),
+    text: _suggestedScore.toString(),
   );
+  final TextEditingController _enemiesController = TextEditingController(
+    text: '0',
+  );
+  final TextEditingController _healthController = TextEditingController();
+  final TextEditingController _durationController = TextEditingController();
+
+  int get _enemyCount => int.tryParse(_enemiesController.text.trim()) ?? 0;
+
+  int get _suggestedScore => _scoreForDefeated(_mode, _enemyCount);
+
+  bool get _ambiguousScore => _enemyCount == 5 || _enemyCount == 11;
+
+  int get _scoreCap => _mode.defaultTarget;
+
+  bool get _hasScoreCap => _mode != SurvivalMode.free;
+
+  void _refreshSuggestedScore() {
+    final suggested = _suggestedScore.clamp(0, _scoreCap);
+    _scoreController.text = suggested.toString();
+    _scoreController.selection = TextSelection.fromPosition(
+      TextPosition(offset: _scoreController.text.length),
+    );
+  }
 
   @override
   void dispose() {
     _scoreController.dispose();
+    _enemiesController.dispose();
+    _healthController.dispose();
+    _durationController.dispose();
     super.dispose();
   }
 
@@ -919,10 +1253,28 @@ class _ManualRunDialogState extends State<ManualRunDialog> {
                 }
                 setState(() {
                   _mode = value;
-                  _scoreController.text = value.defaultTarget.toString();
+                  _refreshSuggestedScore();
                 });
               },
             ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _enemiesController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Enemies defeated',
+                helperText: 'Used to suggest a score for fixed routes',
+              ),
+              onChanged: (_) => setState(_refreshSuggestedScore),
+            ),
+            if (_ambiguousScore)
+              const Padding(
+                padding: EdgeInsets.only(top: 6),
+                child: Text(
+                  'For 5 or 11 enemies, the score assumes the weakest of the two side monsters. You can still edit the score.',
+                  style: TextStyle(color: Colors.orangeAccent, fontSize: 12),
+                ),
+              ),
             const SizedBox(height: 10),
             TextField(
               controller: _scoreController,
@@ -930,6 +1282,35 @@ class _ManualRunDialogState extends State<ManualRunDialog> {
               decoration: const InputDecoration(
                 labelText: 'Score',
                 suffixText: 'pts',
+              ),
+            ),
+            if (_hasScoreCap)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  'Maximum for this mode: $_scoreCap pts',
+                  style: const TextStyle(
+                    color: Color(0xffbbcbbb),
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _healthController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Remaining HP',
+                hintText: 'Not recorded',
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _durationController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Time played',
+                helperText: 'Minutes, optional',
               ),
             ),
           ],
@@ -942,16 +1323,24 @@ class _ManualRunDialogState extends State<ManualRunDialog> {
         ),
         FilledButton(
           onPressed: () {
-            final score = int.tryParse(_scoreController.text.trim());
+            var score = int.tryParse(_scoreController.text.trim());
             if (score == null || score < 0) {
               return;
             }
+            if (_hasScoreCap && score > _scoreCap) {
+              score = _scoreCap;
+            }
+            final health = int.tryParse(_healthController.text.trim());
+            final minutes = int.tryParse(_durationController.text.trim()) ?? 0;
             Navigator.of(context).pop(
               GameRecord(
                 hero: _hero,
                 date: DateTime.now(),
                 score: score,
                 mode: _mode,
+                healthRemaining: health,
+                enemiesDefeated: _enemyCount,
+                duration: Duration(minutes: minutes),
               ),
             );
           },
@@ -1112,6 +1501,35 @@ class HeroCard extends StatelessWidget {
   }
 }
 
+class HeroAvatar extends StatelessWidget {
+  const HeroAvatar({required this.hero, this.size = 42, super.key});
+
+  final HeroType hero;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: hero.color,
+        border: Border.all(color: hero.color.withValues(alpha: 0.9), width: 2),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Transform.scale(
+        scale: hero.imageScale * 1.35,
+        child: Image.asset(
+          hero.asset,
+          fit: BoxFit.cover,
+          alignment: hero.imageAlignment,
+        ),
+      ),
+    );
+  }
+}
+
 class SurvivalSetupPage extends StatefulWidget {
   const SurvivalSetupPage({
     required this.hero,
@@ -1127,7 +1545,7 @@ class SurvivalSetupPage extends StatefulWidget {
 }
 
 class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
-  SurvivalMode _mode = SurvivalMode.levelOne;
+  SurvivalMode _mode = SurvivalMode.mediumFixed;
   bool _expertFreeMode = false;
   final Map<EnemyRank, int> _freeCounts = {
     EnemyRank.green: 1,
@@ -1152,21 +1570,13 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
 
   @override
   Widget build(BuildContext context) {
-    final config = switch (_mode) {
-      SurvivalMode.levelOne => const SurvivalConfig(
-        mode: SurvivalMode.levelOne,
-        targetScore: levelOneTarget,
-      ),
-      SurvivalMode.levelTwo => const SurvivalConfig(
-        mode: SurvivalMode.levelTwo,
-        targetScore: levelTwoTarget,
-      ),
-      SurvivalMode.free => SurvivalConfig(
-        mode: SurvivalMode.free,
-        targetScore: _freeScore,
-        freeCounts: Map<EnemyRank, int>.from(_freeCounts),
-      ),
-    };
+    final config = _mode == SurvivalMode.free
+        ? SurvivalConfig(
+            mode: SurvivalMode.free,
+            targetScore: _freeScore,
+            freeCounts: Map<EnemyRank, int>.from(_freeCounts),
+          )
+        : SurvivalConfig(mode: _mode, targetScore: _mode.defaultTarget);
     final canStart = _mode != SurvivalMode.free || _freeValid;
 
     return Scaffold(
@@ -1178,11 +1588,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
             InfoCard(
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundImage: AssetImage(widget.hero.asset),
-                    backgroundColor: widget.hero.color,
-                  ),
+                  HeroAvatar(hero: widget.hero, size: 56),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -1388,6 +1794,34 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
+  static double _savedMapScale = 1;
+  late final TransformationController _mapController =
+      TransformationController()
+        ..value = Matrix4.diagonal3Values(_savedMapScale, _savedMapScale, 1);
+  final ScrollController _mapScrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _mapController.addListener(() {
+      _savedMapScale = _mapController.value.getMaxScaleOnAxis();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_mapScrollController.hasClients) {
+        _mapScrollController.jumpTo(
+          _mapScrollController.position.maxScrollExtent,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    _mapScrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final adventure = widget.adventure;
@@ -1419,23 +1853,33 @@ class _MapPageState extends State<MapPage> {
                         child: LayoutBuilder(
                           builder: (context, constraints) {
                             final mapSize = Size(
-                              max(560, constraints.maxWidth),
+                              max(720, constraints.maxWidth + 160),
                               max(1320, constraints.maxHeight + 520),
                             );
-                            return SingleChildScrollView(
-                              padding: const EdgeInsets.only(
-                                top: 80,
-                                bottom: 170,
-                              ),
+                            return InteractiveViewer(
+                              constrained: false,
+                              boundaryMargin: const EdgeInsets.all(220),
+                              minScale: 0.75,
+                              maxScale: 2.4,
+                              transformationController: _mapController,
                               child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: SizedBox(
-                                  width: mapSize.width,
-                                  height: mapSize.height,
-                                  child: Stack(
-                                    children: [
-                                      ..._buildMapNodes(context, mapSize),
-                                    ],
+                                controller: _mapScrollController,
+                                padding: const EdgeInsets.fromLTRB(
+                                  44,
+                                  100,
+                                  44,
+                                  180,
+                                ),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: SizedBox(
+                                    width: mapSize.width,
+                                    height: mapSize.height,
+                                    child: Stack(
+                                      children: [
+                                        ..._buildMapNodes(context, mapSize),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1604,11 +2048,7 @@ class _MapHeaderState extends State<MapHeader> {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundImage: AssetImage(adventure.hero.asset),
-                backgroundColor: adventure.hero.color,
-              ),
+              HeroAvatar(hero: adventure.hero, size: 48),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -2153,16 +2593,17 @@ class MapLinePainter extends CustomPainter {
         final current = branchEnemies[index];
         final next = branchEnemies[index + 1];
         if (branchEnemies.length == 6 && current.step == 3) {
-          line(current, branchEnemies.firstWhere((enemy) => enemy.step == 4));
-          line(current, branchEnemies.firstWhere((enemy) => enemy.step == 5));
-          line(
-            branchEnemies.firstWhere((enemy) => enemy.step == 4),
-            branchEnemies.last,
+          final choiceA = branchEnemies.firstWhere((enemy) => enemy.step == 4);
+          final choiceB = branchEnemies.firstWhere((enemy) => enemy.step == 5);
+          final boss = branchEnemies.last;
+          line(current, choiceA);
+          line(current, choiceB);
+          line(choiceA, choiceB);
+          final union = Offset(
+            (positions[choiceA.id]!.dx + positions[choiceB.id]!.dx) / 2,
+            (positions[choiceA.id]!.dy + positions[choiceB.id]!.dy) / 2,
           );
-          line(
-            branchEnemies.firstWhere((enemy) => enemy.step == 5),
-            branchEnemies.last,
-          );
+          canvas.drawLine(union, positions[boss.id]!, paint);
           break;
         }
         line(current, next);
@@ -2198,10 +2639,7 @@ class HeroStatusBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                backgroundColor: adventure.hero.color,
-                child: Text(adventure.hero.label[0]),
-              ),
+              HeroAvatar(hero: adventure.hero, size: 40),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -2489,10 +2927,7 @@ class HeroCombatPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                backgroundColor: adventure.hero.color,
-                child: Text(adventure.hero.label[0]),
-              ),
+              HeroAvatar(hero: adventure.hero, size: 40),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -3089,6 +3524,8 @@ class AdventureDetailsPage extends StatelessWidget {
               '${adventure.hero.label} - ${adventure.score} points',
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
             ),
+            const SizedBox(height: 6),
+            Text('Time played: ${_formatDuration(adventure.elapsed)}'),
             const SizedBox(height: 12),
             DetailSection(title: 'Bonus', items: adventure.bonuses),
             DetailSection(title: 'Status tokens', items: adventure.alterations),
@@ -3187,11 +3624,7 @@ Future<String?> showAlterationDialog(BuildContext context) {
 }
 
 List<EnemyNode> _generateEnemies(SurvivalConfig config) {
-  final ranks = switch (config.mode) {
-    SurvivalMode.levelOne => _levelOneRanks(),
-    SurvivalMode.levelTwo => _levelTwoRanks(),
-    SurvivalMode.free => _freeModeRanks(config.freeCounts),
-  };
+  final ranks = _ranksForMode(config);
   final nodes = <EnemyNode>[_enemy(0, 'Start minion', ranks.first, null, 0)];
 
   var id = 1;
@@ -3199,7 +3632,7 @@ List<EnemyNode> _generateEnemies(SurvivalConfig config) {
   for (final branch in BranchSide.values) {
     final remaining = ranks.length - rankIndex;
     final otherBranchSlots = branch == BranchSide.left
-        ? (config.mode == SurvivalMode.levelTwo ? 7 : 6)
+        ? (_branchSlotsFor(config.mode) == 7 ? 7 : 6)
         : 0;
     final branchSlots = branch == BranchSide.left
         ? remaining - otherBranchSlots
@@ -3212,7 +3645,44 @@ List<EnemyNode> _generateEnemies(SurvivalConfig config) {
   return nodes;
 }
 
-List<EnemyRank> _levelOneRanks() {
+int _branchSlotsFor(SurvivalMode mode) {
+  return switch (mode) {
+    SurvivalMode.hardFixed || SurvivalMode.hardRandom => 7,
+    _ => 6,
+  };
+}
+
+List<EnemyRank> _ranksForMode(SurvivalConfig config) {
+  return switch (config.mode) {
+    SurvivalMode.easyFixed => _easyRanks(),
+    SurvivalMode.mediumFixed => _mediumRanks(),
+    SurvivalMode.hardFixed => _hardRanks(),
+    SurvivalMode.easyRandom => _randomRanks(config.targetScore, hard: false),
+    SurvivalMode.mediumRandom => _randomRanks(config.targetScore, hard: false),
+    SurvivalMode.hardRandom => _randomRanks(config.targetScore, hard: true),
+    SurvivalMode.free => _freeModeRanks(config.freeCounts),
+  };
+}
+
+List<EnemyRank> _easyRanks() {
+  return const [
+    EnemyRank.green,
+    EnemyRank.blue,
+    EnemyRank.green,
+    EnemyRank.blue,
+    EnemyRank.green,
+    EnemyRank.violet,
+    EnemyRank.orange,
+    EnemyRank.blue,
+    EnemyRank.green,
+    EnemyRank.green,
+    EnemyRank.green,
+    EnemyRank.blue,
+    EnemyRank.orange,
+  ];
+}
+
+List<EnemyRank> _mediumRanks() {
   return const [
     EnemyRank.green,
     EnemyRank.blue,
@@ -3230,7 +3700,7 @@ List<EnemyRank> _levelOneRanks() {
   ];
 }
 
-List<EnemyRank> _levelTwoRanks() {
+List<EnemyRank> _hardRanks() {
   return const [
     EnemyRank.green,
     EnemyRank.blue,
@@ -3247,6 +3717,65 @@ List<EnemyRank> _levelTwoRanks() {
     EnemyRank.violet,
     EnemyRank.orange,
     EnemyRank.brown,
+  ];
+}
+
+List<EnemyRank> _randomRanks(int targetScore, {required bool hard}) {
+  final random = Random();
+  final mandatory = hard
+      ? <EnemyRank>[
+          EnemyRank.green,
+          EnemyRank.orange,
+          EnemyRank.brown,
+          EnemyRank.orange,
+          EnemyRank.brown,
+        ]
+      : <EnemyRank>[EnemyRank.green, EnemyRank.orange, EnemyRank.orange];
+  final poolCount = hard ? 10 : 10;
+  final target =
+      targetScore - mandatory.fold(0, (sum, rank) => sum + rank.points);
+  var best = <EnemyRank>[];
+  var bestDelta = 999;
+  for (var attempt = 0; attempt < 1200; attempt++) {
+    final pool = List.generate(poolCount, (_) {
+      final choices = hard
+          ? [
+              EnemyRank.green,
+              EnemyRank.blue,
+              EnemyRank.violet,
+              EnemyRank.orange,
+            ]
+          : [EnemyRank.green, EnemyRank.blue, EnemyRank.violet];
+      return choices[random.nextInt(choices.length)];
+    });
+    final score = pool.fold(0, (sum, rank) => sum + rank.points);
+    final delta = (score - target).abs().toInt();
+    if (delta < bestDelta) {
+      best = pool;
+      bestDelta = delta;
+    }
+    if (delta == 0) {
+      break;
+    }
+  }
+  best.shuffle(random);
+  if (hard) {
+    return [
+      EnemyRank.green,
+      ...best.take(5),
+      EnemyRank.orange,
+      EnemyRank.brown,
+      ...best.skip(5).take(5),
+      EnemyRank.orange,
+      EnemyRank.brown,
+    ];
+  }
+  return [
+    EnemyRank.green,
+    ...best.take(5),
+    EnemyRank.orange,
+    ...best.skip(5).take(5),
+    EnemyRank.orange,
   ];
 }
 
@@ -3283,6 +3812,27 @@ List<EnemyRank> _freeModeRanks(Map<EnemyRank, int> counts) {
 
 String _modeLabel(SurvivalMode mode) {
   return _survivalModeTitle(mode);
+}
+
+int _scoreForDefeated(SurvivalMode mode, int defeatedCount) {
+  if (defeatedCount <= 0) {
+    return 0;
+  }
+  final ranks = _ranksForMode(
+    SurvivalConfig(mode: mode, targetScore: mode.defaultTarget),
+  );
+  final count = defeatedCount.clamp(0, ranks.length);
+  if ((count == 5 || count == 11) && ranks.length >= count + 1) {
+    final fixedBeforeChoice = count == 5 ? ranks.take(4) : ranks.take(10);
+    final choiceA = ranks[count - 1].points;
+    final choiceB = ranks[count].points;
+    return fixedBeforeChoice.fold<int>(0, (sum, rank) => sum + rank.points) +
+        min(choiceA, choiceB);
+  }
+  return ranks
+      .take(count)
+      .fold<int>(0, (sum, rank) => sum + rank.points)
+      .clamp(0, mode.defaultTarget);
 }
 
 EnemyNode _enemy(
@@ -3342,4 +3892,16 @@ String _formatDateTime(DateTime date) {
   final hour = date.hour.toString().padLeft(2, '0');
   final minute = date.minute.toString().padLeft(2, '0');
   return '${_formatDate(date)} $hour:$minute';
+}
+
+String _formatDuration(Duration duration) {
+  if (duration.inMinutes <= 0) {
+    return 'Time n/a';
+  }
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  if (hours == 0) {
+    return '${duration.inMinutes} min';
+  }
+  return '${hours}h ${minutes.toString().padLeft(2, '0')}';
 }

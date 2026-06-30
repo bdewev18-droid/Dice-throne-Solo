@@ -6,7 +6,7 @@ void main() {
   testWidgets('home opens hero choice', (WidgetTester tester) async {
     await tester.pumpWidget(const DiceThroneSurvieApp());
 
-    expect(find.text('Version 1.1.4'), findsOneWidget);
+    expect(find.text('Version 1.1.5'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
