@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-const String appVersionLabel = 'Version 1.1.6';
+const String appVersionLabel = 'Version 1.1.7';
 const String _activeAdventureKey = 'active_adventure_v1';
 const int easyTarget = 29;
 const int mediumTarget = 33;
@@ -14,37 +15,57 @@ void main() {
   runApp(const DiceThroneSurvieApp());
 }
 
+enum HeroSegment {
+  season1('Season 1'),
+  season2('Season 2'),
+  marvel('Marvel'),
+  xmen('X-Men'),
+  outcast('Outcast'),
+  other('Other');
+
+  const HeroSegment(this.label);
+
+  final String label;
+}
+
 enum HeroType {
   barbare(
     'Barbarian',
     'assets/barbarian_hero.jpg',
     Alignment.center,
     Color(0xffd94a24),
+    [HeroSegment.season1],
   ),
   elfeLunaire(
     'Moon Elf',
     'assets/moon_elf_hero.png',
     Alignment.center,
     Color(0xff64b7e8),
+    [HeroSegment.season1],
   ),
   tacticien(
     'Tactician',
     'assets/tactician_hero.png',
     Alignment.center,
     Color(0xffd92f2f),
+    [HeroSegment.season2],
   ),
-  monk('Monk', 'assets/monk_hero.png', Alignment.topCenter, Color(0xffd7a55a)),
+  monk('Monk', 'assets/monk_hero.png', Alignment.topCenter, Color(0xffd7a55a), [
+    HeroSegment.season1,
+  ]),
   paladin(
     'Paladin',
     'assets/paladin_hero.png',
     Alignment.topCenter,
     Color(0xfff4c95a),
+    [HeroSegment.season1],
   ),
   pyromancer(
     'Pyromancer',
     'assets/pyromancer_hero.png',
     Alignment(0, -0.65),
     Color(0xffff6a21),
+    [HeroSegment.season1],
     1.22,
   ),
   shadowThief(
@@ -52,19 +73,22 @@ enum HeroType {
     'assets/shadow_thief_hero.png',
     Alignment.topCenter,
     Color(0xff8f4dff),
+    [HeroSegment.season1],
   ),
   deadpool(
     'Deadpool',
     'assets/deadpool_hero.jpg',
     Alignment.center,
     Color(0xffc91922),
+    [HeroSegment.marvel, HeroSegment.xmen],
   );
 
   const HeroType(
     this.label,
     this.asset,
     this.imageAlignment,
-    this.color, [
+    this.color,
+    this.segments, [
     this.imageScale = 1,
   ]);
 
@@ -72,6 +96,7 @@ enum HeroType {
   final String asset;
   final Alignment imageAlignment;
   final Color color;
+  final List<HeroSegment> segments;
   final double imageScale;
 }
 
@@ -478,11 +503,11 @@ class AdventureState {
   void applyReward(int d20) {
     if (d20 <= 10) {
       health = (health + 1).clamp(0, 99);
-      bonuses.add('D20 $d20: +1 HP');
+      bonuses.add('+1 HP');
       log('Reward confirmed: D20 $d20, +1 HP.');
     } else {
       combatPoints = (combatPoints + 1).clamp(0, 20);
-      bonuses.add('D20 $d20: +1 CP');
+      bonuses.add('+1 CP');
       log('Reward confirmed: D20 $d20, +1 CP.');
     }
   }
@@ -926,39 +951,42 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 children: [
                   const Spacer(),
-                  AnimatedOpacity(
-                    duration: const Duration(milliseconds: 650),
-                    opacity: _showActions ? 1 : 0,
-                    child: IgnorePointer(
-                      ignoring: !_showActions,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          ImageActionButton(
-                            label: 'History',
-                            icon: Icons.history,
-                            onPressed: widget.onHistory,
-                          ),
-                          const SizedBox(height: 20),
-                          if (widget.activeAdventure == null)
+                  Transform.translate(
+                    offset: const Offset(0, -30),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 650),
+                      opacity: _showActions ? 1 : 0,
+                      child: IgnorePointer(
+                        ignoring: !_showActions,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
                             ImageActionButton(
-                              label: 'Minion rush',
-                              icon: Icons.shield,
-                              onPressed: widget.onSurvival,
-                            )
-                          else
-                            ActiveCampaignHomeCard(
-                              adventure: widget.activeAdventure!,
-                              onResume: widget.onResume,
-                              onStop: widget.onStopCampaign,
+                              label: 'History',
+                              icon: Icons.history,
+                              onPressed: widget.onHistory,
                             ),
-                          const SizedBox(height: 20),
-                          ImageActionButton(
-                            label: 'Naraxus Battle',
-                            icon: Icons.local_fire_department,
-                            onPressed: widget.onNaraxus,
-                          ),
-                        ],
+                            const SizedBox(height: 20),
+                            if (widget.activeAdventure == null)
+                              ImageActionButton(
+                                label: 'Minion rush',
+                                icon: Icons.shield,
+                                onPressed: widget.onSurvival,
+                              )
+                            else
+                              ActiveCampaignHomeCard(
+                                adventure: widget.activeAdventure!,
+                                onResume: widget.onResume,
+                                onStop: widget.onStopCampaign,
+                              ),
+                            const SizedBox(height: 20),
+                            ImageActionButton(
+                              label: 'Naraxus Battle',
+                              icon: Icons.local_fire_department,
+                              onPressed: widget.onNaraxus,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1736,10 +1764,16 @@ class HeroChoicePage extends StatefulWidget {
 
 class _HeroChoicePageState extends State<HeroChoicePage> {
   HeroType _selectedHero = HeroType.barbare;
+  final Set<HeroSegment> _selectedSegments = {};
   final TextEditingController _searchController = TextEditingController();
+  Timer? _holdTimer;
+  HeroType? _holdingHero;
+  double _holdProgress = 0;
+  static const Duration _holdToValidateDuration = Duration(seconds: 3);
 
   @override
   void dispose() {
+    _holdTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -1749,6 +1783,11 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
     final query = _searchController.text.trim().toLowerCase();
     final heroes = HeroType.values
         .where((hero) => hero.label.toLowerCase().contains(query))
+        .where(
+          (hero) =>
+              _selectedSegments.isEmpty ||
+              hero.segments.any(_selectedSegments.contains),
+        )
         .toList();
     if (!heroes.contains(_selectedHero) && heroes.isNotEmpty) {
       _selectedHero = heroes.first;
@@ -1769,26 +1808,55 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
               ),
               onChanged: (_) => setState(() {}),
             ),
-            const SizedBox(height: 14),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.58,
-              ),
-              itemCount: heroes.length,
-              itemBuilder: (context, index) {
-                final hero = heroes[index];
-                return HeroCard(
-                  hero: hero,
-                  selected: _selectedHero == hero,
-                  onTap: () => setState(() => _selectedHero = hero),
-                );
+            const SizedBox(height: 12),
+            HeroSegmentFilters(
+              selectedSegments: _selectedSegments,
+              onChanged: (segment, selected) {
+                setState(() {
+                  if (segment == null) {
+                    _selectedSegments.clear();
+                  } else if (selected) {
+                    _selectedSegments.add(segment);
+                  } else {
+                    _selectedSegments.remove(segment);
+                  }
+                });
               },
             ),
+            const SizedBox(height: 14),
+            if (heroes.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: Text(
+                    'No hero found',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              )
+            else
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.58,
+                ),
+                itemCount: heroes.length,
+                itemBuilder: (context, index) {
+                  final hero = heroes[index];
+                  return HeroCard(
+                    hero: hero,
+                    selected: _selectedHero == hero,
+                    holdProgress: _holdingHero == hero ? _holdProgress : 0,
+                    onTap: () => setState(() => _selectedHero = hero),
+                    onHoldStart: () => _startHeroHold(hero),
+                    onHoldEnd: _cancelHeroHold,
+                  );
+                },
+              ),
             const SizedBox(height: 18),
             ImageActionButton(
               label: 'Next',
@@ -1802,24 +1870,110 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
       ),
     );
   }
+
+  void _startHeroHold(HeroType hero) {
+    _holdTimer?.cancel();
+    setState(() {
+      _selectedHero = hero;
+      _holdingHero = hero;
+      _holdProgress = 0;
+    });
+
+    final startedAt = DateTime.now();
+    _holdTimer = Timer.periodic(const Duration(milliseconds: 35), (timer) {
+      final elapsed = DateTime.now().difference(startedAt);
+      final progress =
+          elapsed.inMilliseconds / _holdToValidateDuration.inMilliseconds;
+      if (progress >= 1) {
+        timer.cancel();
+        if (!mounted || _holdingHero != hero) {
+          return;
+        }
+        setState(() {
+          _holdProgress = 1;
+          _holdingHero = null;
+        });
+        widget.onNext(hero);
+        return;
+      }
+      if (mounted) {
+        setState(() => _holdProgress = progress.clamp(0, 1));
+      }
+    });
+  }
+
+  void _cancelHeroHold() {
+    if (_holdProgress >= 1) {
+      return;
+    }
+    _holdTimer?.cancel();
+    if (mounted) {
+      setState(() {
+        _holdingHero = null;
+        _holdProgress = 0;
+      });
+    }
+  }
+}
+
+class HeroSegmentFilters extends StatelessWidget {
+  const HeroSegmentFilters({
+    required this.selectedSegments,
+    required this.onChanged,
+    super.key,
+  });
+
+  final Set<HeroSegment> selectedSegments;
+  final void Function(HeroSegment? segment, bool selected) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        FilterChip(
+          label: const Text('All'),
+          selected: selectedSegments.isEmpty,
+          onSelected: (_) => onChanged(null, true),
+        ),
+        ...HeroSegment.values.map(
+          (segment) => FilterChip(
+            label: Text(segment.label),
+            selected: selectedSegments.contains(segment),
+            onSelected: (selected) => onChanged(segment, selected),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class HeroCard extends StatelessWidget {
   const HeroCard({
     required this.hero,
     required this.selected,
+    required this.holdProgress,
     required this.onTap,
+    required this.onHoldStart,
+    required this.onHoldEnd,
     super.key,
   });
 
   final HeroType hero;
   final bool selected;
+  final double holdProgress;
   final VoidCallback onTap;
+  final VoidCallback onHoldStart;
+  final VoidCallback onHoldEnd;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      onTapDown: (_) => onHoldStart(),
+      onTapUp: (_) => onHoldEnd(),
+      onTapCancel: onHoldEnd,
       borderRadius: BorderRadius.circular(8),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
@@ -1853,6 +2007,48 @@ class HeroCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (holdProgress > 0)
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        width: 3,
+                      ),
+                    ),
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: LinearProgressIndicator(
+                        minHeight: 8,
+                        value: holdProgress,
+                        backgroundColor: Colors.black54,
+                        color: hero.color,
+                      ),
+                    ),
+                  ),
+                ),
+              if (holdProgress > 0)
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.68),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: hero.color),
+                    ),
+                    child: const Text(
+                      'Hold to confirm',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
@@ -2174,11 +2370,12 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
-  static double _savedMapScale = 1;
+  static double _savedMapScale = 1.18;
   late final TransformationController _mapController =
       TransformationController()
         ..value = Matrix4.diagonal3Values(_savedMapScale, _savedMapScale, 1);
   final ScrollController _mapScrollController = ScrollController();
+  final ScrollController _mapHorizontalController = ScrollController();
 
   @override
   void initState() {
@@ -2188,8 +2385,15 @@ class _MapPageState extends State<MapPage> {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_mapScrollController.hasClients) {
-        _mapScrollController.jumpTo(
-          _mapScrollController.position.maxScrollExtent,
+        final targetOffset = max(
+          0.0,
+          _mapScrollController.position.maxScrollExtent - 95,
+        );
+        _mapScrollController.jumpTo(targetOffset);
+      }
+      if (_mapHorizontalController.hasClients) {
+        _mapHorizontalController.jumpTo(
+          _mapHorizontalController.position.maxScrollExtent / 2,
         );
       }
     });
@@ -2199,6 +2403,7 @@ class _MapPageState extends State<MapPage> {
   void dispose() {
     _mapController.dispose();
     _mapScrollController.dispose();
+    _mapHorizontalController.dispose();
     super.dispose();
   }
 
@@ -2237,24 +2442,25 @@ class _MapPageState extends State<MapPage> {
                         child: LayoutBuilder(
                           builder: (context, constraints) {
                             final mapSize = Size(
-                              max(920, constraints.maxWidth + 420),
+                              max(1160, constraints.maxWidth + 720),
                               max(1320, constraints.maxHeight + 520),
                             );
                             return InteractiveViewer(
                               constrained: false,
-                              boundaryMargin: const EdgeInsets.all(220),
+                              boundaryMargin: const EdgeInsets.all(360),
                               minScale: 0.75,
                               maxScale: 2.4,
                               transformationController: _mapController,
                               child: SingleChildScrollView(
                                 controller: _mapScrollController,
                                 padding: const EdgeInsets.fromLTRB(
-                                  150,
+                                  260,
                                   100,
-                                  150,
+                                  260,
                                   180,
                                 ),
                                 child: SingleChildScrollView(
+                                  controller: _mapHorizontalController,
                                   scrollDirection: Axis.horizontal,
                                   child: SizedBox(
                                     width: mapSize.width,
@@ -2364,8 +2570,8 @@ class _MapPageState extends State<MapPage> {
         };
         final x =
             centerX +
-            sign * width * (0.1 + enemy.step * 0.04) +
-            width * pairOffset;
+            sign * width * (0.075 + enemy.step * 0.032) +
+            width * pairOffset * 0.72;
         final y = bottom - rowGap * enemy.step;
         positions[enemy.id] = Offset(x, y);
       }
@@ -2527,83 +2733,42 @@ class _MapHeaderState extends State<MapHeader> {
               const SizedBox(width: 8),
               Expanded(
                 flex: 1,
-                child: Container(
-                  height: 44,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xff312449).withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xff9b58ff)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.auto_fix_high,
-                        color: Color(0xffc084fc),
-                        size: 18,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          adventure.alterations.isEmpty
-                              ? 'Tokens'
-                              : adventure.alterations.join(', '),
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Add token',
-                        visualDensity: VisualDensity.compact,
-                        onPressed: () async {
-                          final value = await showAlterationDialog(context);
-                          if (value != null) {
-                            adventure.addAlteration(value);
-                            widget.onChanged();
-                          }
-                        },
-                        icon: const Icon(Icons.add, size: 18),
-                      ),
-                    ],
+                child: CompactItemStrip(
+                  label: 'Tokens',
+                  emptyText: 'Tokens',
+                  items: adventure.alterations,
+                  accent: const Color(0xffc084fc),
+                  background: const Color(0xff312449),
+                  border: const Color(0xff9b58ff),
+                  trailing: IconButton(
+                    tooltip: 'Add token',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () async {
+                      final value = await showAlterationDialog(context);
+                      if (value != null) {
+                        adventure.addAlteration(value);
+                        widget.onChanged();
+                      }
+                    },
+                    icon: const Icon(Icons.add, size: 18),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Container(
-            height: 42,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xff1f2f24).withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xff3d4a3e)),
-            ),
-            child: Row(
-              children: [
-                const Text(
-                  'Bonuses',
-                  style: TextStyle(
-                    color: Color(0xff54e98a),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    adventure.bonuses.isEmpty
-                        ? 'No bonus yet'
-                        : adventure.bonuses.join(', '),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Run log',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: widget.onDetails,
-                  icon: const Icon(Icons.receipt_long),
-                ),
-              ],
+          CompactItemStrip(
+            label: 'Rewards',
+            emptyText: 'No reward yet',
+            items: adventure.bonuses,
+            accent: const Color(0xff54e98a),
+            background: const Color(0xff1f2f24),
+            border: const Color(0xff3d4a3e),
+            trailing: IconButton(
+              tooltip: 'Run log',
+              visualDensity: VisualDensity.compact,
+              onPressed: widget.onDetails,
+              icon: const Icon(Icons.receipt_long),
             ),
           ),
           if (_editing != null) ...[
@@ -2759,6 +2924,11 @@ class CurrentTargetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final target = enemy;
+    final accent = target?.rank.color ?? const Color(0xff54e98a);
+    final pointText = target == null
+        ? 'No target available'
+        : '${target.rank.label} Minion = ${target.rank.points} '
+              '${target.rank.points == 1 ? 'point' : 'points'}';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -2784,7 +2954,7 @@ class CurrentTargetCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'CURRENT TARGET',
+                  'NEXT TARGET',
                   style: TextStyle(
                     color: Color(0xffbbcbbb),
                     fontSize: 12,
@@ -2794,9 +2964,9 @@ class CurrentTargetCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  target == null ? 'No target' : target.label,
-                  style: const TextStyle(
-                    color: Color(0xff54e98a),
+                  pointText,
+                  style: TextStyle(
+                    color: accent,
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
                   ),
@@ -2810,8 +2980,8 @@ class CurrentTargetCard extends StatelessWidget {
             child: FilledButton(
               onPressed: onFight,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xff54e98a),
-                foregroundColor: const Color(0xff003919),
+                backgroundColor: accent,
+                foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -2924,7 +3094,7 @@ class EnemyMapTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final opacity = enemy.defeated ? 0.38 : 1.0;
-    final accent = enemy.current ? const Color(0xff54e98a) : enemy.rank.color;
+    final accent = enemy.rank.color;
     final isStart = enemy.id == 0;
     return InkWell(
       onTap: onTap,
@@ -2965,32 +3135,6 @@ class EnemyMapTile extends StatelessWidget {
                 ),
               ),
               Container(color: Colors.black.withValues(alpha: 0.1)),
-              if (enemy.current && !isStart)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: -16,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 1,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                      child: const Text(
-                        'ELITE',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               if (isStart)
                 Positioned(
                   left: 8,
@@ -3403,6 +3547,139 @@ class _FightPageState extends State<FightPage> {
       widget.onAbandon();
     }
   }
+}
+
+class CompactItemStrip extends StatelessWidget {
+  const CompactItemStrip({
+    required this.label,
+    required this.emptyText,
+    required this.items,
+    required this.accent,
+    required this.background,
+    required this.border,
+    this.trailing,
+    super.key,
+  });
+
+  final String label;
+  final String emptyText;
+  final List<String> items;
+  final Color accent;
+  final Color background;
+  final Color border;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: background.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: border),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final showLabel = constraints.maxWidth >= 190;
+          final reservedWidth = (showLabel ? 74.0 : 0.0) + 38.0;
+          final usableWidth = max(0.0, constraints.maxWidth - reservedWidth);
+          final maxVisibleItems = max(1, usableWidth ~/ 34);
+          final visibleItems = items.take(maxVisibleItems).toList();
+          final hiddenCount = max(0, items.length - visibleItems.length);
+
+          return Row(
+            children: [
+              if (showLabel) ...[
+                Text(
+                  items.isEmpty ? emptyText : label,
+                  style: TextStyle(color: accent, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: items.isEmpty
+                    ? const SizedBox.shrink()
+                    : SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: Row(
+                          children: [
+                            ...visibleItems.map(
+                              (item) => Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: Tooltip(
+                                  message: item,
+                                  child: CompactItemBadge(
+                                    value: _compactItemCode(item),
+                                    color: accent,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (hiddenCount > 0)
+                              CompactItemBadge(
+                                value: '+$hiddenCount',
+                                color: accent,
+                              ),
+                          ],
+                        ),
+                      ),
+              ),
+              ?trailing,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class CompactItemBadge extends StatelessWidget {
+  const CompactItemBadge({required this.value, required this.color, super.key});
+
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 30,
+      height: 28,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        value,
+        maxLines: 1,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+String _compactItemCode(String value) {
+  final upper = value.toUpperCase();
+  if (upper.contains('HP')) {
+    return 'HP';
+  }
+  if (upper.contains('CP')) {
+    return 'CP';
+  }
+  final letters = RegExp(
+    r'[A-Z0-9]+',
+  ).allMatches(upper).map((match) => match.group(0)!).join();
+  if (letters.isEmpty) {
+    return '--';
+  }
+  return letters.length <= 2 ? letters : letters.substring(0, 2);
 }
 
 class HeroCombatPanel extends StatelessWidget {
@@ -4033,7 +4310,7 @@ class AdventureDetailsPage extends StatelessWidget {
             const SizedBox(height: 6),
             Text('Time played: ${_formatDuration(adventure.elapsed)}'),
             const SizedBox(height: 12),
-            DetailSection(title: 'Bonus', items: adventure.bonuses),
+            DetailSection(title: 'Rewards', items: adventure.bonuses),
             DetailSection(title: 'Status tokens', items: adventure.alterations),
             DetailSection(title: 'Log', items: adventure.logs),
           ],
