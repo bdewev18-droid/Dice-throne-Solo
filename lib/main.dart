@@ -5,7 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-const String appVersionLabel = 'Version 1.1.8';
+const String appVersionLabel = 'Version 1.1.9';
 const String _activeAdventureKey = 'active_adventure_v1';
 const int mediumTarget = 33;
 const int hardTarget = 52;
@@ -466,6 +466,13 @@ class AdventureState {
   void addAlteration(String value) {
     alterations.add(value);
     log('Hero status added: $value.');
+  }
+
+  void setAlterations(List<String> values) {
+    alterations
+      ..clear()
+      ..addAll(values);
+    log('Hero status tokens updated.');
   }
 
   void completeCombat(EnemyNode enemy) {
@@ -2381,6 +2388,7 @@ class _MapPageState extends State<MapPage> {
   final ScrollController _mapScrollController = ScrollController();
   final ScrollController _mapHorizontalController = ScrollController();
   int? _selectedEnemyId;
+  Size? _latestMapSize;
 
   @override
   void initState() {
@@ -2389,18 +2397,7 @@ class _MapPageState extends State<MapPage> {
       _savedMapScale = _mapController.value.getMaxScaleOnAxis();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_mapScrollController.hasClients) {
-        final targetOffset = max(
-          0.0,
-          _mapScrollController.position.maxScrollExtent - 95,
-        );
-        _mapScrollController.jumpTo(targetOffset);
-      }
-      if (_mapHorizontalController.hasClients) {
-        _mapHorizontalController.jumpTo(
-          _mapHorizontalController.position.maxScrollExtent / 2,
-        );
-      }
+      _centerOnEnemy(_currentTarget(), immediate: true);
     });
   }
 
@@ -2450,6 +2447,7 @@ class _MapPageState extends State<MapPage> {
                               max(1160, constraints.maxWidth + 720),
                               max(1320, constraints.maxHeight + 520),
                             );
+                            _latestMapSize = mapSize;
                             return InteractiveViewer(
                               constrained: false,
                               boundaryMargin: const EdgeInsets.all(360),
@@ -2572,6 +2570,9 @@ class _MapPageState extends State<MapPage> {
       return;
     }
     setState(() => _selectedEnemyId = enemy.id);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _centerOnEnemy(enemy);
+    });
   }
 
   Map<int, Offset> _positionsFor(Size size) {
@@ -2615,19 +2616,80 @@ class _MapPageState extends State<MapPage> {
     Navigator.of(context)
         .push(
           MaterialPageRoute<void>(
-            builder: (_) => FightPage(
+            builder: (_) => EnemyIntroPage(
               adventure: widget.adventure,
-              enemyId: enemy.id,
-              onChanged: widget.onChanged,
-              onPauseExit: widget.onPauseExit,
-              onAbandon: widget.onAbandon,
+              enemy: enemy,
+              onNext: () async {
+                final navigator = Navigator.of(context);
+                await navigator.push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => FightPage(
+                      adventure: widget.adventure,
+                      enemyId: enemy.id,
+                      onChanged: widget.onChanged,
+                      onPauseExit: widget.onPauseExit,
+                      onAbandon: widget.onAbandon,
+                    ),
+                  ),
+                );
+                if (mounted) {
+                  navigator.pop();
+                }
+              },
             ),
           ),
         )
         .then((_) {
           widget.onChanged();
           setState(() {});
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _centerOnEnemy(_currentTarget());
+          });
         });
+  }
+
+  void _centerOnEnemy(EnemyNode? enemy, {bool immediate = false}) {
+    final mapSize = _latestMapSize;
+    if (enemy == null ||
+        mapSize == null ||
+        !_mapScrollController.hasClients ||
+        !_mapHorizontalController.hasClients) {
+      return;
+    }
+    final offset = _positionsFor(mapSize)[enemy.id];
+    if (offset == null) {
+      return;
+    }
+    final verticalTarget =
+        (offset.dy + 100) -
+        _mapScrollController.position.viewportDimension * 0.62;
+    final horizontalTarget =
+        offset.dx - _mapHorizontalController.position.viewportDimension / 2;
+
+    final v = verticalTarget.clamp(
+      _mapScrollController.position.minScrollExtent,
+      _mapScrollController.position.maxScrollExtent,
+    );
+    final h = horizontalTarget.clamp(
+      _mapHorizontalController.position.minScrollExtent,
+      _mapHorizontalController.position.maxScrollExtent,
+    );
+
+    if (immediate) {
+      _mapScrollController.jumpTo(v);
+      _mapHorizontalController.jumpTo(h);
+    } else {
+      _mapScrollController.animateTo(
+        v,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+      );
+      _mapHorizontalController.animateTo(
+        h,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   void _openDetails(BuildContext context) {
@@ -2660,6 +2722,7 @@ class MapHeader extends StatefulWidget {
     required this.onDetails,
     required this.onChanged,
     required this.onPause,
+    this.showRewards = true,
     super.key,
   });
 
@@ -2667,6 +2730,7 @@ class MapHeader extends StatefulWidget {
   final VoidCallback onDetails;
   final VoidCallback onChanged;
   final VoidCallback onPause;
+  final bool showRewards;
 
   @override
   State<MapHeader> createState() => _MapHeaderState();
@@ -2705,6 +2769,11 @@ class _MapHeaderState extends State<MapHeader> {
                 tooltip: 'Pause',
                 onPressed: widget.onPause,
                 icon: const Icon(Icons.pause_circle, color: Color(0xff54e98a)),
+              ),
+              IconButton(
+                tooltip: 'Run log',
+                onPressed: widget.onDetails,
+                icon: const Icon(Icons.receipt_long, color: Color(0xff54e98a)),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -2759,44 +2828,33 @@ class _MapHeaderState extends State<MapHeader> {
               const SizedBox(width: 8),
               Expanded(
                 flex: 1,
-                child: CompactItemStrip(
-                  label: 'Tokens',
-                  emptyText: 'Tokens',
-                  items: adventure.alterations,
-                  accent: const Color(0xffc084fc),
-                  background: const Color(0xff312449),
-                  border: const Color(0xff9b58ff),
-                  trailing: IconButton(
-                    tooltip: 'Add token',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () async {
-                      final value = await showAlterationDialog(context);
-                      if (value != null) {
-                        adventure.addAlteration(value);
-                        widget.onChanged();
-                      }
-                    },
-                    icon: const Icon(Icons.add, size: 18),
-                  ),
+                child: HeroTokenStrip(
+                  tokens: adventure.alterations,
+                  onEdit: () async {
+                    final values = await showAlterationDialog(
+                      context,
+                      adventure.alterations,
+                    );
+                    if (values != null) {
+                      adventure.setAlterations(values);
+                      widget.onChanged();
+                    }
+                  },
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          CompactItemStrip(
-            label: 'Rewards',
-            emptyText: 'No reward yet',
-            items: adventure.bonuses,
-            accent: const Color(0xff54e98a),
-            background: const Color(0xff1f2f24),
-            border: const Color(0xff3d4a3e),
-            trailing: IconButton(
-              tooltip: 'Run log',
-              visualDensity: VisualDensity.compact,
-              onPressed: widget.onDetails,
-              icon: const Icon(Icons.receipt_long),
+          if (widget.showRewards) ...[
+            const SizedBox(height: 8),
+            CompactItemStrip(
+              label: 'Rewards',
+              emptyText: 'No reward yet',
+              items: adventure.bonuses,
+              accent: const Color(0xff54e98a),
+              background: const Color(0xff1f2f24),
+              border: const Color(0xff3d4a3e),
             ),
-          ),
+          ],
           if (_editing != null) ...[
             const SizedBox(height: 10),
             Container(
@@ -3091,6 +3149,72 @@ class EndAdventureBanner extends StatelessWidget {
   }
 }
 
+class EnemyIntroPage extends StatelessWidget {
+  const EnemyIntroPage({
+    required this.adventure,
+    required this.enemy,
+    required this.onNext,
+    super.key,
+  });
+
+  final AdventureState adventure;
+  final EnemyNode enemy;
+  final Future<void> Function() onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(enemy.rank.asset, fit: BoxFit.cover),
+          Container(color: Colors.black.withValues(alpha: 0.58)),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Spacer(),
+                  Center(child: EnemyRankAvatar(enemy: enemy, size: 132)),
+                  const SizedBox(height: 18),
+                  Text(
+                    enemy.label.isEmpty ? 'Opponent name' : enemy.label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: enemy.rank.color,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${enemy.rank.label} Minion',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const Spacer(),
+                  ImageActionButton(
+                    label: 'Next',
+                    icon: Icons.arrow_forward,
+                    onPressed: () {
+                      onNext();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 enum _PauseAction { resumeLater, abandon }
 
 class PauseRunDialog extends StatelessWidget {
@@ -3202,10 +3326,91 @@ class EnemyMapTile extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (!isStart && selected && !enemy.defeated)
+                Positioned(
+                  left: 8,
+                  right: 8,
+                  bottom: -28,
+                  child: _MapTileLabel(
+                    text: 'START',
+                    background: accent,
+                    foreground: Colors.black,
+                  ),
+                ),
+              if (enemy.defeated)
+                Positioned(
+                  left: 4,
+                  right: 4,
+                  bottom: -28,
+                  child: _MapTileLabel(
+                    text: 'COMPLETED',
+                    background: Colors.black87,
+                    foreground: Colors.white,
+                  ),
+                ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MapTileLabel extends StatelessWidget {
+  const _MapTileLabel({
+    required this.text,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String text;
+  final Color background;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: foreground,
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class EnemyRankAvatar extends StatelessWidget {
+  const EnemyRankAvatar({required this.enemy, this.size = 54, super.key});
+
+  final EnemyNode enemy;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: enemy.rank.color, width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: enemy.rank.color.withValues(alpha: 0.45),
+            blurRadius: 14,
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Image.asset(enemy.rank.asset, fit: BoxFit.cover),
     );
   }
 }
@@ -3301,13 +3506,16 @@ class HeroStatusBar extends StatelessWidget {
               IconButton(
                 tooltip: 'Status tokens',
                 onPressed: () async {
-                  final value = await showAlterationDialog(context);
-                  if (value != null) {
-                    adventure.addAlteration(value);
+                  final values = await showAlterationDialog(
+                    context,
+                    adventure.alterations,
+                  );
+                  if (values != null) {
+                    adventure.setAlterations(values);
                     onChanged();
                   }
                 },
-                icon: const Icon(Icons.auto_fix_high),
+                icon: const Icon(Icons.edit),
               ),
             ],
           ),
@@ -3444,10 +3652,8 @@ class _FightPageState extends State<FightPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(enemy.label)),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
             MapHeader(
               adventure: widget.adventure,
@@ -3462,45 +3668,54 @@ class _FightPageState extends State<FightPage> {
                 setState(() {});
               },
               onPause: _openPauseDialog,
+              showRewards: false,
             ),
-            const SizedBox(height: 12),
-            EnemyCombatPanel(
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  EnemyRulesPanel(enemy: enemy),
+                  const SizedBox(height: 12),
+                  DicePanel(
+                    dice: _dice,
+                    diceToRoll: _diceToRoll,
+                    rollCount: _rollCount,
+                    editMode: _editMode,
+                    rerollOneMode: _rerollOneMode,
+                    editingDieId: _editingDieId,
+                    onDiceToRollChanged: (value) =>
+                        setState(() => _diceToRoll = value),
+                    onRoll: _rollDice,
+                    onTapDie: _tapDie,
+                    onSelectFace: _selectFace,
+                    onValidateEdit: () => setState(() => _editingDieId = null),
+                    onToggleEdit: () => setState(() {
+                      _editMode = !_editMode;
+                      _rerollOneMode = false;
+                      _editingDieId = null;
+                    }),
+                    onToggleRerollOne: () => setState(() {
+                      _rerollOneMode = !_rerollOneMode;
+                      _editMode = false;
+                      _editingDieId = null;
+                    }),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: enemy.health <= 0 ? _finishCombat : null,
+                    icon: const Icon(Icons.flag),
+                    label: const Text('Finish combat'),
+                  ),
+                ],
+              ),
+            ),
+            FightStatusPanel(
+              adventure: widget.adventure,
               enemy: enemy,
               onChanged: () {
                 widget.onChanged();
                 setState(() {});
               },
-            ),
-            const SizedBox(height: 12),
-            DicePanel(
-              dice: _dice,
-              diceToRoll: _diceToRoll,
-              rollCount: _rollCount,
-              editMode: _editMode,
-              rerollOneMode: _rerollOneMode,
-              editingDieId: _editingDieId,
-              onDiceToRollChanged: (value) =>
-                  setState(() => _diceToRoll = value),
-              onRoll: _rollDice,
-              onTapDie: _tapDie,
-              onSelectFace: _selectFace,
-              onValidateEdit: () => setState(() => _editingDieId = null),
-              onToggleEdit: () => setState(() {
-                _editMode = !_editMode;
-                _rerollOneMode = false;
-                _editingDieId = null;
-              }),
-              onToggleRerollOne: () => setState(() {
-                _rerollOneMode = !_rerollOneMode;
-                _editMode = false;
-                _editingDieId = null;
-              }),
-            ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: enemy.health <= 0 ? _finishCombat : null,
-              icon: const Icon(Icons.flag),
-              label: const Text('Finish combat'),
             ),
           ],
         ),
@@ -3616,6 +3831,7 @@ class CompactItemStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayItems = _compactItemModels(items);
     return Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -3630,8 +3846,8 @@ class CompactItemStrip extends StatelessWidget {
           final reservedWidth = (showLabel ? 74.0 : 0.0) + 38.0;
           final usableWidth = max(0.0, constraints.maxWidth - reservedWidth);
           final maxVisibleItems = max(1, usableWidth ~/ 34);
-          final visibleItems = items.take(maxVisibleItems).toList();
-          final hiddenCount = max(0, items.length - visibleItems.length);
+          final visibleItems = displayItems.take(maxVisibleItems).toList();
+          final hiddenCount = max(0, displayItems.length - visibleItems.length);
 
           return Row(
             children: [
@@ -3643,7 +3859,7 @@ class CompactItemStrip extends StatelessWidget {
                 const SizedBox(width: 8),
               ],
               Expanded(
-                child: items.isEmpty
+                child: displayItems.isEmpty
                     ? const SizedBox.shrink()
                     : SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
@@ -3654,9 +3870,9 @@ class CompactItemStrip extends StatelessWidget {
                               (item) => Padding(
                                 padding: const EdgeInsets.only(right: 4),
                                 child: Tooltip(
-                                  message: item,
+                                  message: item.tooltip,
                                   child: CompactItemBadge(
-                                    value: _compactItemCode(item),
+                                    value: item.label,
                                     color: accent,
                                   ),
                                 ),
@@ -3678,6 +3894,38 @@ class CompactItemStrip extends StatelessWidget {
       ),
     );
   }
+}
+
+class HeroTokenStrip extends StatelessWidget {
+  const HeroTokenStrip({required this.tokens, required this.onEdit, super.key});
+
+  final List<String> tokens;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return CompactItemStrip(
+      label: 'Tokens',
+      emptyText: 'Tokens',
+      items: tokens,
+      accent: const Color(0xffc084fc),
+      background: const Color(0xff312449),
+      border: const Color(0xff9b58ff),
+      trailing: IconButton(
+        tooltip: 'Edit tokens',
+        visualDensity: VisualDensity.compact,
+        onPressed: onEdit,
+        icon: const Icon(Icons.edit, size: 18),
+      ),
+    );
+  }
+}
+
+class CompactItemModel {
+  const CompactItemModel({required this.label, required this.tooltip});
+
+  final String label;
+  final String tooltip;
 }
 
 class CompactItemBadge extends StatelessWidget {
@@ -3710,21 +3958,41 @@ class CompactItemBadge extends StatelessWidget {
   }
 }
 
-String _compactItemCode(String value) {
+List<CompactItemModel> _compactItemModels(List<String> values) {
+  final counts = <String, int>{};
+  for (final value in values) {
+    counts[value] = (counts[value] ?? 0) + 1;
+  }
+  return counts.entries
+      .map(
+        (entry) => CompactItemModel(
+          label: _compactItemCode(entry.key, entry.value),
+          tooltip: entry.value == 1
+              ? entry.key
+              : '${entry.key} x${entry.value}',
+        ),
+      )
+      .toList();
+}
+
+String _compactItemCode(String value, [int count = 1]) {
   final upper = value.toUpperCase();
+  String base;
   if (upper.contains('HP')) {
-    return 'HP';
+    base = 'HP';
+  } else if (upper.contains('CP')) {
+    base = 'CP';
+  } else {
+    final letters = RegExp(
+      r'[A-Z0-9]+',
+    ).allMatches(upper).map((match) => match.group(0)!).join();
+    if (letters.isEmpty) {
+      base = '--';
+    } else {
+      base = letters.length <= 2 ? letters : letters.substring(0, 2);
+    }
   }
-  if (upper.contains('CP')) {
-    return 'CP';
-  }
-  final letters = RegExp(
-    r'[A-Z0-9]+',
-  ).allMatches(upper).map((match) => match.group(0)!).join();
-  if (letters.isEmpty) {
-    return '--';
-  }
-  return letters.length <= 2 ? letters : letters.substring(0, 2);
+  return count <= 1 ? base : '${base}x$count';
 }
 
 class HeroCombatPanel extends StatelessWidget {
@@ -3758,9 +4026,12 @@ class HeroCombatPanel extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () async {
-                  final value = await showAlterationDialog(context);
-                  if (value != null) {
-                    adventure.addAlteration(value);
+                  final values = await showAlterationDialog(
+                    context,
+                    adventure.alterations,
+                  );
+                  if (values != null) {
+                    adventure.setAlterations(values);
                     onChanged();
                   }
                 },
@@ -3800,6 +4071,283 @@ class HeroCombatPanel extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class EnemyRulesPanel extends StatelessWidget {
+  const EnemyRulesPanel({required this.enemy, super.key});
+
+  final EnemyNode enemy;
+
+  @override
+  Widget build(BuildContext context) {
+    return InfoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            '${enemy.label} - ${enemy.rank.label} (+${enemy.rank.points})',
+            style: TextStyle(
+              color: enemy.rank.color,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text('Attacks', style: TextStyle(fontWeight: FontWeight.w900)),
+          ...enemy.attacks.map((attack) => Text('- $attack')),
+          const SizedBox(height: 8),
+          Text('Defense: ${enemy.defense}'),
+        ],
+      ),
+    );
+  }
+}
+
+class FightStatusPanel extends StatefulWidget {
+  const FightStatusPanel({
+    required this.adventure,
+    required this.enemy,
+    required this.onChanged,
+    super.key,
+  });
+
+  final AdventureState adventure;
+  final EnemyNode enemy;
+  final VoidCallback onChanged;
+
+  @override
+  State<FightStatusPanel> createState() => _FightStatusPanelState();
+}
+
+class _FightStatusPanelState extends State<FightStatusPanel> {
+  String? _editing;
+  int _draftValue = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      decoration: const BoxDecoration(
+        color: Color(0xee121212),
+        border: Border(top: BorderSide(color: Colors.white12)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CombatantStatusRow.enemy(
+            enemy: widget.enemy,
+            onHp: () => _openEditor('enemyHp', widget.enemy.health),
+            onCp: () => _openEditor('enemyCp', widget.enemy.combatPoints),
+            onEditTokens: _editEnemyTokens,
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              'VS',
+              style: TextStyle(
+                color: Color(0xff54e98a),
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          CombatantStatusRow.hero(
+            adventure: widget.adventure,
+            onHp: () => _openEditor('heroHp', widget.adventure.health),
+            onCp: () => _openEditor('heroCp', widget.adventure.combatPoints),
+            onEditTokens: _editHeroTokens,
+          ),
+          if (_editing != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Text(
+                  _editing!.contains('Hp') ? 'HP' : 'CP',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+                const Spacer(),
+                RoundIconButton(
+                  icon: Icons.remove,
+                  tooltip: 'Remove',
+                  onPressed: () => setState(() => _draftValue--),
+                ),
+                SizedBox(
+                  width: 58,
+                  child: Text(
+                    _draftValue.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                RoundIconButton(
+                  icon: Icons.add,
+                  tooltip: 'Add',
+                  onPressed: () => setState(() => _draftValue++),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 82,
+                  child: FilledButton(
+                    onPressed: _saveStat,
+                    child: const Text('Save'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _openEditor(String key, int value) {
+    setState(() {
+      _editing = key;
+      _draftValue = value;
+    });
+  }
+
+  void _saveStat() {
+    switch (_editing) {
+      case 'heroHp':
+        widget.adventure.setHeroHealth(_draftValue);
+      case 'heroCp':
+        widget.adventure.setHeroPc(_draftValue);
+      case 'enemyHp':
+        widget.enemy.health = _draftValue.clamp(0, widget.enemy.maxHealth);
+      case 'enemyCp':
+        widget.enemy.combatPoints = _draftValue.clamp(0, 20);
+    }
+    setState(() => _editing = null);
+    widget.onChanged();
+  }
+
+  Future<void> _editHeroTokens() async {
+    final values = await showAlterationDialog(
+      context,
+      widget.adventure.alterations,
+    );
+    if (values != null) {
+      widget.adventure.setAlterations(values);
+      widget.onChanged();
+      setState(() {});
+    }
+  }
+
+  Future<void> _editEnemyTokens() async {
+    final values = await showAlterationDialog(
+      context,
+      widget.enemy.alterations,
+    );
+    if (values != null) {
+      widget.enemy.alterations
+        ..clear()
+        ..addAll(values);
+      widget.onChanged();
+      setState(() {});
+    }
+  }
+}
+
+class CombatantStatusRow extends StatelessWidget {
+  CombatantStatusRow.hero({
+    required AdventureState adventure,
+    required this.onHp,
+    required this.onCp,
+    required this.onEditTokens,
+    super.key,
+  }) : hero = adventure.hero,
+       enemy = null,
+       title = 'Hero',
+       hp = adventure.health,
+       cp = adventure.combatPoints,
+       tokens = adventure.alterations,
+       accent = const Color(0xff54e98a);
+
+  CombatantStatusRow.enemy({
+    required EnemyNode enemy,
+    required this.onHp,
+    required this.onCp,
+    required this.onEditTokens,
+    super.key,
+  }) : enemy = enemy,
+       hero = null,
+       title = 'Enemy',
+       hp = enemy.health,
+       cp = enemy.combatPoints,
+       tokens = enemy.alterations,
+       accent = enemy.rank.color;
+
+  final HeroType? hero;
+  final EnemyNode? enemy;
+  final String title;
+  final int hp;
+  final int cp;
+  final List<String> tokens;
+  final Color accent;
+  final VoidCallback onHp;
+  final VoidCallback onCp;
+  final VoidCallback onEditTokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        if (hero != null)
+          HeroAvatar(hero: hero!, size: 46)
+        else
+          EnemyRankAvatar(enemy: enemy!, size: 46),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: MapStatChip(
+                      icon: Icons.favorite,
+                      label: 'HP',
+                      value: hp.toString(),
+                      color: Colors.redAccent,
+                      onTap: onHp,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: MapStatChip(
+                      icon: Icons.bolt,
+                      label: 'CP',
+                      value: cp.toString(),
+                      color: Colors.amber,
+                      onTap: onCp,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              CompactItemStrip(
+                label: '$title tokens',
+                emptyText: 'Tokens',
+                items: tokens,
+                accent: accent,
+                background: const Color(0xff241f32),
+                border: accent,
+                trailing: IconButton(
+                  tooltip: 'Edit tokens',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onEditTokens,
+                  icon: const Icon(Icons.edit, size: 18),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -3897,13 +4445,20 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
                         tooltip: 'Add token',
                         visualDensity: VisualDensity.compact,
                         onPressed: () async {
-                          final value = await showAlterationDialog(context);
-                          if (value != null) {
-                            setState(() => enemy.alterations.add(value));
+                          final values = await showAlterationDialog(
+                            context,
+                            enemy.alterations,
+                          );
+                          if (values != null) {
+                            setState(() {
+                              enemy.alterations
+                                ..clear()
+                                ..addAll(values);
+                            });
                             widget.onChanged();
                           }
                         },
-                        icon: const Icon(Icons.add, size: 18),
+                        icon: const Icon(Icons.edit, size: 18),
                       ),
                     ],
                   ),
@@ -4085,11 +4640,6 @@ class DicePanel extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              FilledButton.icon(
-                onPressed: rollCount < 3 ? onRoll : null,
-                icon: const Icon(Icons.casino),
-                label: const Text('Roll'),
-              ),
               OutlinedButton.icon(
                 onPressed: onToggleEdit,
                 icon: const Icon(Icons.tune),
@@ -4104,6 +4654,12 @@ class DicePanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           DiceZone(title: 'Dice to roll', dice: rollDice, onTapDie: onTapDie),
+          const SizedBox(height: 10),
+          ImageActionButton(
+            label: rollCount == 0 ? 'Roll' : 'Reroll',
+            icon: Icons.casino,
+            onPressed: rollCount < 3 ? onRoll : null,
+          ),
           const SizedBox(height: 12),
           DiceZone(title: 'Reserve', dice: reserveDice, onTapDie: onTapDie),
           if (editingDie != null) ...[
@@ -4417,7 +4973,10 @@ class InfoCard extends StatelessWidget {
   }
 }
 
-Future<String?> showAlterationDialog(BuildContext context) {
+Future<List<String>?> showAlterationDialog(
+  BuildContext context,
+  List<String> current,
+) {
   const alterations = [
     'Poison',
     'Burn',
@@ -4428,27 +4987,75 @@ Future<String?> showAlterationDialog(BuildContext context) {
     'Attack down',
     'Defense up',
   ];
-  return showDialog<String>(
+  final counts = <String, int>{for (final value in alterations) value: 0};
+  for (final value in current) {
+    counts[value] = (counts[value] ?? 0) + 1;
+  }
+  return showDialog<List<String>>(
     context: context,
-    builder: (context) => SimpleDialog(
-      title: const Text('Add a status token'),
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: alterations
-                .map(
-                  (value) => ActionChip(
-                    label: Text(value),
-                    onPressed: () => Navigator.of(context).pop(value),
+    builder: (context) => StatefulBuilder(
+      builder: (context, setDialogState) {
+        final selected = <String>[];
+        for (final entry in counts.entries) {
+          selected.addAll(List.filled(entry.value, entry.key));
+        }
+        return AlertDialog(
+          title: const Text('Edit status tokens'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: alterations.map((value) {
+                final count = counts[value] ?? 0;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Expanded(child: Text(value)),
+                      RoundIconButton(
+                        icon: Icons.remove,
+                        tooltip: 'Remove',
+                        onPressed: count <= 0
+                            ? null
+                            : () => setDialogState(() {
+                                counts[value] = count - 1;
+                              }),
+                      ),
+                      SizedBox(
+                        width: 40,
+                        child: Text(
+                          count.toString(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      RoundIconButton(
+                        icon: Icons.add,
+                        tooltip: 'Add',
+                        onPressed: () => setDialogState(() {
+                          counts[value] = count + 1;
+                        }),
+                      ),
+                    ],
                   ),
-                )
-                .toList(),
+                );
+              }).toList(),
+            ),
           ),
-        ),
-      ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(selected),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
     ),
   );
 }
