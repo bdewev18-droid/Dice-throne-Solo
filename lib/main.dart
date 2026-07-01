@@ -5,9 +5,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-const String appVersionLabel = 'Version 1.1.7';
+const String appVersionLabel = 'Version 1.1.8';
 const String _activeAdventureKey = 'active_adventure_v1';
-const int easyTarget = 29;
 const int mediumTarget = 33;
 const int hardTarget = 52;
 
@@ -137,8 +136,6 @@ enum HistorySort {
 
 enum SurvivalMode {
   mediumFixed('Medium fixed route', mediumTarget, RunDifficulty.medium, false),
-  easyFixed('Easy fixed route', easyTarget, RunDifficulty.easy, false),
-  easyRandom('Easy random route', easyTarget, RunDifficulty.easy, true),
   mediumRandom('Medium random route', mediumTarget, RunDifficulty.medium, true),
   hardFixed('Hard fixed route', hardTarget, RunDifficulty.hard, false),
   hardRandom('Hard random route', hardTarget, RunDifficulty.hard, true),
@@ -158,7 +155,6 @@ enum SurvivalMode {
 }
 
 enum RunDifficulty {
-  easy('Easy'),
   medium('Medium'),
   hard('Hard'),
   free('Free');
@@ -231,18 +227,6 @@ String _survivalModeTitle(SurvivalMode mode) {
   return mode.label;
 }
 
-String _survivalModeDescription(SurvivalMode mode) {
-  return switch (mode) {
-    SurvivalMode.easyFixed => 'Fixed 29-point route',
-    SurvivalMode.easyRandom => 'Random 29-point route',
-    SurvivalMode.mediumFixed => 'Fixed 33-point route for hero comparison',
-    SurvivalMode.mediumRandom => 'Random 33-point route',
-    SurvivalMode.hardFixed => 'Fixed 52-point route',
-    SurvivalMode.hardRandom => 'Random 52-point route',
-    SurvivalMode.free => 'Build your own 13-enemy run',
-  };
-}
-
 class GameRecord {
   const GameRecord({
     required this.hero,
@@ -297,7 +281,6 @@ class SurvivalConfig {
 
   String get label => switch (mode) {
     SurvivalMode.mediumFixed || SurvivalMode.mediumRandom => 'Medium mode',
-    SurvivalMode.easyFixed || SurvivalMode.easyRandom => 'Easy mode',
     SurvivalMode.hardFixed || SurvivalMode.hardRandom => 'Hard mode',
     SurvivalMode.free => 'Free mode',
   };
@@ -620,29 +603,7 @@ class DiceThroneSurvieApp extends StatefulWidget {
 }
 
 class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
-  final List<GameRecord> _history = [
-    GameRecord(
-      hero: HeroType.barbare,
-      date: DateTime(2026, 6, 26),
-      score: 8,
-      enemiesDefeated: 5,
-      mode: SurvivalMode.mediumFixed,
-    ),
-    GameRecord(
-      hero: HeroType.elfeLunaire,
-      date: DateTime(2026, 6, 24),
-      score: 13,
-      enemiesDefeated: 7,
-      mode: SurvivalMode.mediumFixed,
-    ),
-    GameRecord(
-      hero: HeroType.barbare,
-      date: DateTime(2026, 6, 20),
-      score: 5,
-      enemiesDefeated: 3,
-      mode: SurvivalMode.mediumFixed,
-    ),
-  ];
+  final List<GameRecord> _history = [];
   final _store = const ActiveAdventureStore();
   AdventureState? _activeAdventure;
   bool _storageReady = false;
@@ -921,7 +882,7 @@ class _HomePageState extends State<HomePage> {
           Positioned.fill(
             top: MediaQuery.paddingOf(context).top + 18,
             child: Image.asset(
-              'assets/home_background_v3.webp',
+              'assets/home_background_v4.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -1769,7 +1730,7 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
   Timer? _holdTimer;
   HeroType? _holdingHero;
   double _holdProgress = 0;
-  static const Duration _holdToValidateDuration = Duration(seconds: 3);
+  static const Duration _holdToValidateDuration = Duration(milliseconds: 1500);
 
   @override
   void dispose() {
@@ -1816,7 +1777,9 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
                   if (segment == null) {
                     _selectedSegments.clear();
                   } else if (selected) {
-                    _selectedSegments.add(segment);
+                    _selectedSegments
+                      ..clear()
+                      ..add(segment);
                   } else {
                     _selectedSegments.remove(segment);
                   }
@@ -2116,6 +2079,7 @@ class SurvivalSetupPage extends StatefulWidget {
 
 class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
   SurvivalMode _mode = SurvivalMode.mediumFixed;
+  bool _randomRoute = false;
   bool _expertFreeMode = false;
   final Map<EnemyRank, int> _freeCounts = {
     EnemyRank.green: 1,
@@ -2138,16 +2102,39 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
       (_freeCounts[EnemyRank.orange] ?? 0) >= 2 &&
       _freeScore >= 20;
 
+  Map<EnemyRank, int> get _displayCounts =>
+      _mode == SurvivalMode.free ? _freeCounts : _rankCountsForMode(_mode);
+
+  int get _targetScore => _mode == SurvivalMode.free
+      ? _freeScore
+      : (_randomRoute ? _randomModeFor(_mode) : _mode).defaultTarget;
+
+  List<EnemyRank> get _setupRanksToDisplay => [
+    EnemyRank.green,
+    EnemyRank.blue,
+    EnemyRank.violet,
+    EnemyRank.orange,
+    if (_mode == SurvivalMode.hardFixed) EnemyRank.brown,
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final config = _mode == SurvivalMode.free
+    final effectiveMode = _mode == SurvivalMode.free
+        ? SurvivalMode.free
+        : _randomRoute
+        ? _randomModeFor(_mode)
+        : _mode;
+    final config = effectiveMode == SurvivalMode.free
         ? SurvivalConfig(
             mode: SurvivalMode.free,
             targetScore: _freeScore,
             freeCounts: Map<EnemyRank, int>.from(_freeCounts),
           )
-        : SurvivalConfig(mode: _mode, targetScore: _mode.defaultTarget);
-    final canStart = _mode != SurvivalMode.free || _freeValid;
+        : SurvivalConfig(
+            mode: effectiveMode,
+            targetScore: effectiveMode.defaultTarget,
+          );
+    final canStart = effectiveMode != SurvivalMode.free || _freeValid;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Survival setup')),
@@ -2173,76 +2160,61 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
               ),
             ),
             const SizedBox(height: 8),
-            ...SurvivalMode.values.map(
-              (mode) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: InkWell(
-                  onTap: () => setState(() => _mode = mode),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _mode == mode
-                          ? const Color(0xff4f2a86)
-                          : const Color(0xff202020),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _mode == mode
-                            ? const Color(0xffc084fc)
-                            : Colors.white12,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          _mode == mode
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_unchecked,
-                          color: const Color(0xffc084fc),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _survivalModeTitle(mode),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              Text(_survivalModeDescription(mode)),
-                            ],
-                          ),
-                        ),
-                      ],
+            SegmentedButton<SurvivalMode>(
+              segments: const [
+                ButtonSegment(value: SurvivalMode.free, label: Text('Free')),
+                ButtonSegment(
+                  value: SurvivalMode.mediumFixed,
+                  label: Text('Medium'),
+                ),
+                ButtonSegment(
+                  value: SurvivalMode.hardFixed,
+                  label: Text('Difficult'),
+                ),
+              ],
+              selected: {_mode},
+              onSelectionChanged: (selection) {
+                setState(() {
+                  _mode = selection.first;
+                  _randomRoute = _mode == SurvivalMode.free;
+                });
+              },
+            ),
+            const SizedBox(height: 12),
+            InfoCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    '$_targetScore pts',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Color(0xff54e98a),
+                      fontSize: 38,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                ),
-              ),
-            ),
-            if (_mode == SurvivalMode.free) ...[
-              const SizedBox(height: 8),
-              InfoCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Free run',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Random route'),
+                    value: _mode == SurvivalMode.free || _randomRoute,
+                    onChanged: _mode == SurvivalMode.free
+                        ? null
+                        : (value) => setState(() => _randomRoute = value),
+                  ),
+                  if (!(_mode != SurvivalMode.free && _randomRoute)) ...[
+                    const SizedBox(height: 8),
+                    ..._setupRanksToDisplay.map(
+                      (rank) => _buildRankCounter(
+                        rank,
+                        valueOverride: _displayCounts[rank] ?? 0,
+                        enabled: _mode == SurvivalMode.free,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Minimum: 1 Level 1, 2 Level 4, 20 points.\nMaximum: 13 enemies.',
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Current score: $_freeScore points',
-                      style: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
+                  ],
+                  if (_mode == SurvivalMode.free) ...[
+                    const SizedBox(height: 4),
                     Text(
                       'Enemies: $_freeTotal / 13',
                       style: const TextStyle(fontWeight: FontWeight.w900),
@@ -2259,13 +2231,6 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                       onChanged: (value) =>
                           setState(() => _expertFreeMode = value),
                     ),
-                    const SizedBox(height: 12),
-                    ...[
-                      EnemyRank.green,
-                      EnemyRank.blue,
-                      EnemyRank.violet,
-                      EnemyRank.orange,
-                    ].map(_buildRankCounter),
                     if (!_freeValid)
                       const Padding(
                         padding: EdgeInsets.only(top: 8),
@@ -2275,9 +2240,9 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                         ),
                       ),
                   ],
-                ),
+                ],
               ),
-            ],
+            ),
             const SizedBox(height: 16),
             ImageActionButton(
               label: 'Start run',
@@ -2290,14 +2255,20 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
     );
   }
 
-  Widget _buildRankCounter(EnemyRank rank) {
-    final value = _freeCounts[rank] ?? 0;
+  Widget _buildRankCounter(
+    EnemyRank rank, {
+    int? valueOverride,
+    bool enabled = true,
+  }) {
+    final value = valueOverride ?? _freeCounts[rank] ?? 0;
     final min = rank == EnemyRank.green
         ? 1
         : rank == EnemyRank.orange
         ? 2
         : 0;
-    final orangeLocked = rank == EnemyRank.orange && !_expertFreeMode;
+    final orangeLocked =
+        enabled && rank == EnemyRank.orange && !_expertFreeMode;
+    final canEdit = enabled && !orangeLocked;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -2322,25 +2293,58 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
           ),
           const SizedBox(width: 10),
           Expanded(child: Text('${rank.label} (${rank.points} pts)')),
-          Text(
-            value.toString(),
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: value <= min || orangeLocked
+          RoundIconButton(
+            icon: Icons.remove,
+            tooltip: 'Remove',
+            onPressed: !canEdit || value <= min
                 ? null
                 : () => setState(() => _freeCounts[rank] = value - 1),
-            icon: const Icon(Icons.remove),
           ),
-          IconButton(
-            onPressed: _freeTotal >= 13 || orangeLocked
+          SizedBox(
+            width: 42,
+            child: Text(
+              value.toString(),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+            ),
+          ),
+          RoundIconButton(
+            icon: Icons.add,
+            tooltip: 'Add',
+            onPressed: !canEdit || _freeTotal >= 13
                 ? null
                 : () => setState(() => _freeCounts[rank] = value + 1),
-            icon: const Icon(Icons.add),
           ),
         ],
       ),
+    );
+  }
+}
+
+class RoundIconButton extends StatelessWidget {
+  const RoundIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    super.key,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        shape: const CircleBorder(),
+        side: BorderSide(
+          color: onPressed == null ? Colors.white12 : const Color(0xff54e98a),
+        ),
+      ),
+      icon: Icon(icon),
     );
   }
 }
@@ -2376,6 +2380,7 @@ class _MapPageState extends State<MapPage> {
         ..value = Matrix4.diagonal3Values(_savedMapScale, _savedMapScale, 1);
   final ScrollController _mapScrollController = ScrollController();
   final ScrollController _mapHorizontalController = ScrollController();
+  int? _selectedEnemyId;
 
   @override
   void initState() {
@@ -2516,9 +2521,19 @@ class _MapPageState extends State<MapPage> {
         .where((enemy) => enemy.current && !enemy.defeated)
         .toList();
     if (currentEnemies.isEmpty) {
+      _selectedEnemyId = null;
       return null;
     }
-    return currentEnemies.first;
+    EnemyNode? selected;
+    for (final enemy in currentEnemies) {
+      if (enemy.id == _selectedEnemyId) {
+        selected = enemy;
+        break;
+      }
+    }
+    final target = selected ?? currentEnemies.first;
+    _selectedEnemyId = target.id;
+    return target;
   }
 
   List<Widget> _buildMapNodes(BuildContext context, Size size) {
@@ -2542,10 +2557,21 @@ class _MapPageState extends State<MapPage> {
           top: offset.dy - height / 2,
           width: width,
           height: height,
-          child: EnemyMapTile(enemy: enemy, onTap: () => _openFight(enemy)),
+          child: EnemyMapTile(
+            enemy: enemy,
+            selected: _selectedEnemyId == enemy.id,
+            onTap: () => _selectEnemy(enemy),
+          ),
         );
       }),
     ];
+  }
+
+  void _selectEnemy(EnemyNode enemy) {
+    if (!enemy.current || enemy.defeated || widget.adventure.finished) {
+      return;
+    }
+    setState(() => _selectedEnemyId = enemy.id);
   }
 
   Map<int, Offset> _positionsFor(Size size) {
@@ -2797,9 +2823,10 @@ class _MapHeaderState extends State<MapHeader> {
                           style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                         const Spacer(),
-                        IconButton(
+                        RoundIconButton(
+                          icon: Icons.remove,
+                          tooltip: 'Remove',
                           onPressed: () => setState(() => _draftValue--),
-                          icon: const Icon(Icons.remove),
                         ),
                         SizedBox(
                           width: 58,
@@ -2812,9 +2839,10 @@ class _MapHeaderState extends State<MapHeader> {
                             ),
                           ),
                         ),
-                        IconButton(
+                        RoundIconButton(
+                          icon: Icons.add,
+                          tooltip: 'Add',
                           onPressed: () => setState(() => _draftValue++),
-                          icon: const Icon(Icons.add),
                         ),
                       ],
                     ),
@@ -2925,10 +2953,12 @@ class CurrentTargetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final target = enemy;
     final accent = target?.rank.color ?? const Color(0xff54e98a);
-    final pointText = target == null
+    final targetTitle = target == null
         ? 'No target available'
-        : '${target.rank.label} Minion = ${target.rank.points} '
-              '${target.rank.points == 1 ? 'point' : 'points'}';
+        : '${target.rank.label} Minion';
+    final targetPoints = target == null
+        ? ''
+        : '${target.rank.points} ${target.rank.points == 1 ? 'point' : 'points'}';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -2964,13 +2994,22 @@ class CurrentTargetCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  pointText,
+                  targetTitle,
                   style: TextStyle(
                     color: accent,
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
+                if (targetPoints.isNotEmpty)
+                  Text(
+                    targetPoints,
+                    style: TextStyle(
+                      color: accent,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -3086,9 +3125,15 @@ class PauseRunDialog extends StatelessWidget {
 }
 
 class EnemyMapTile extends StatelessWidget {
-  const EnemyMapTile({required this.enemy, required this.onTap, super.key});
+  const EnemyMapTile({
+    required this.enemy,
+    required this.selected,
+    required this.onTap,
+    super.key,
+  });
 
   final EnemyNode enemy;
+  final bool selected;
   final VoidCallback onTap;
 
   @override
@@ -3109,7 +3154,7 @@ class EnemyMapTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: accent,
-              width: enemy.current || isStart ? 4 : 2,
+              width: selected || enemy.current || isStart ? 4 : 2,
             ),
             color: const Color(0xdd131313),
             boxShadow: [
@@ -3333,10 +3378,10 @@ class StepperStat extends StatelessWidget {
           const SizedBox(width: 6),
           Text(label, style: const TextStyle(fontWeight: FontWeight.w900)),
           const Spacer(),
-          IconButton(
-            tooltip: 'Retirer',
+          RoundIconButton(
+            icon: Icons.remove,
+            tooltip: 'Remove',
             onPressed: () => onChanged(value - 1),
-            icon: const Icon(Icons.remove),
           ),
           SizedBox(
             width: 36,
@@ -3346,10 +3391,10 @@ class StepperStat extends StatelessWidget {
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
             ),
           ),
-          IconButton(
-            tooltip: 'Ajouter',
+          RoundIconButton(
+            icon: Icons.add,
+            tooltip: 'Add',
             onPressed: () => onChanged(value + 1),
-            icon: const Icon(Icons.add),
           ),
         ],
       ),
@@ -3892,9 +3937,10 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
                           style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                         const Spacer(),
-                        IconButton(
+                        RoundIconButton(
+                          icon: Icons.remove,
+                          tooltip: 'Remove',
                           onPressed: () => setState(() => _draftValue--),
-                          icon: const Icon(Icons.remove),
                         ),
                         SizedBox(
                           width: 58,
@@ -3907,9 +3953,10 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
                             ),
                           ),
                         ),
-                        IconButton(
+                        RoundIconButton(
+                          icon: Icons.add,
+                          tooltip: 'Add',
                           onPressed: () => setState(() => _draftValue++),
-                          icon: const Icon(Icons.add),
                         ),
                       ],
                     ),
@@ -4437,32 +4484,38 @@ int _branchSlotsFor(SurvivalMode mode) {
 
 List<EnemyRank> _ranksForMode(SurvivalConfig config) {
   return switch (config.mode) {
-    SurvivalMode.easyFixed => _easyRanks(),
     SurvivalMode.mediumFixed => _mediumRanks(),
     SurvivalMode.hardFixed => _hardRanks(),
-    SurvivalMode.easyRandom => _randomRanks(config.targetScore, hard: false),
     SurvivalMode.mediumRandom => _randomRanks(config.targetScore, hard: false),
     SurvivalMode.hardRandom => _randomRanks(config.targetScore, hard: true),
     SurvivalMode.free => _freeModeRanks(config.freeCounts),
   };
 }
 
-List<EnemyRank> _easyRanks() {
-  return const [
-    EnemyRank.green,
-    EnemyRank.blue,
-    EnemyRank.green,
-    EnemyRank.blue,
-    EnemyRank.green,
-    EnemyRank.violet,
-    EnemyRank.orange,
-    EnemyRank.blue,
-    EnemyRank.green,
-    EnemyRank.green,
-    EnemyRank.green,
-    EnemyRank.blue,
-    EnemyRank.orange,
-  ];
+SurvivalMode _randomModeFor(SurvivalMode mode) {
+  return switch (mode) {
+    SurvivalMode.mediumFixed ||
+    SurvivalMode.mediumRandom => SurvivalMode.mediumRandom,
+    SurvivalMode.hardFixed ||
+    SurvivalMode.hardRandom => SurvivalMode.hardRandom,
+    SurvivalMode.free => SurvivalMode.free,
+  };
+}
+
+Map<EnemyRank, int> _rankCountsForMode(SurvivalMode mode) {
+  final ranks = _ranksForMode(
+    SurvivalConfig(mode: mode, targetScore: mode.defaultTarget),
+  );
+  return {
+    for (final rank in [
+      EnemyRank.green,
+      EnemyRank.blue,
+      EnemyRank.violet,
+      EnemyRank.orange,
+      EnemyRank.brown,
+    ])
+      rank: ranks.where((value) => value == rank).length,
+  };
 }
 
 List<EnemyRank> _mediumRanks() {
