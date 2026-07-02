@@ -5,11 +5,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-const String appVersionLabel = 'Version 1.2.2';
+const String appVersionLabel = 'Version 1.2.3';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
 const int hardTarget = 52;
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
   runApp(const DiceThroneSurvieApp());
@@ -179,7 +180,84 @@ enum CombatPhase {
   final String label;
 }
 
-const List<String> knownStatusTokens = ['Poison', 'Riposte', 'Première Frappe'];
+enum StatusTokenKind { positive, negative, unique }
+
+class StatusTokenRule {
+  const StatusTokenRule({
+    required this.label,
+    required this.kind,
+    required this.maxStack,
+    required this.persistent,
+    this.minionAllowed = true,
+  });
+
+  final String label;
+  final StatusTokenKind kind;
+  final int maxStack;
+  final bool persistent;
+  final bool minionAllowed;
+}
+
+const List<StatusTokenRule> statusTokenRules = [
+  StatusTokenRule(
+    label: 'Poison',
+    kind: StatusTokenKind.negative,
+    maxStack: 3,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Riposte',
+    kind: StatusTokenKind.positive,
+    maxStack: 1,
+    persistent: false,
+  ),
+  StatusTokenRule(
+    label: 'Première Frappe',
+    kind: StatusTokenKind.unique,
+    maxStack: 1,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Silence',
+    kind: StatusTokenKind.unique,
+    maxStack: 1,
+    persistent: false,
+    minionAllowed: false,
+  ),
+  StatusTokenRule(
+    label: 'Ronces',
+    kind: StatusTokenKind.negative,
+    maxStack: 1,
+    persistent: false,
+  ),
+  StatusTokenRule(
+    label: 'Hémorragie',
+    kind: StatusTokenKind.negative,
+    maxStack: 2,
+    persistent: true,
+  ),
+];
+
+const List<String> knownStatusTokens = [
+  'Poison',
+  'Riposte',
+  'Première Frappe',
+  'Silence',
+  'Ronces',
+  'Hémorragie',
+];
+
+StatusTokenRule _tokenRule(String label) {
+  return statusTokenRules.firstWhere(
+    (rule) => rule.label == label,
+    orElse: () => StatusTokenRule(
+      label: label,
+      kind: StatusTokenKind.negative,
+      maxStack: 99,
+      persistent: true,
+    ),
+  );
+}
 
 const List<EnemyProfile> greenEnemyProfiles = [
   EnemyProfile(
@@ -243,6 +321,112 @@ const List<EnemyProfile> greenEnemyProfiles = [
     attackPlan: MinionAttackPlan.symbols([
       SymbolGoal(white: 1, yellow: 2, red: 1),
     ]),
+  ),
+  EnemyProfile(
+    key: 'archer-de-lombre',
+    name: "Archer de l'Ombre",
+    rank: EnemyRank.green,
+    maxHealth: 10,
+    pc: 3,
+    cardAsset: 'assets/enemy_green_shadow_archer.png',
+    attacks: [
+      "Volée de l'Ombre",
+      '2 symboles jaunes: inflige 5 dégâts.',
+      '3 symboles jaunes: inflige 6 dégâts.',
+      '4 symboles jaunes: inflige 7 dégâts.',
+      '5 symboles jaunes: inflige 8 dégâts.',
+      'Si vous obtenez 3 chiffres identiques, inflige Silence.',
+    ],
+    defense:
+        'Jet défensif 3 dés: sur 1 ou plusieurs symboles jaunes, prévient 3 dégâts.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(yellow: 2),
+      SymbolGoal(yellow: 3),
+      SymbolGoal(yellow: 4),
+      SymbolGoal(yellow: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'ombre-feline',
+    name: 'Ombre Féline',
+    rank: EnemyRank.green,
+    maxHealth: 9,
+    pc: 2,
+    cardAsset: 'assets/enemy_green_feline_shadow.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Griffure',
+      '3 symboles blancs: inflige 4 dégâts.',
+      '4 symboles blancs: inflige 5 dégâts.',
+      '5 symboles blancs: inflige 6 dégâts.',
+      'Si vous obtenez 3 chiffres identiques, inflige Hémorragie.',
+    ],
+    defense: 'Jet défensif 1 dé: sur symbole blanc, inflige Hémorragie.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 3),
+      SymbolGoal(white: 4),
+      SymbolGoal(white: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'epeiste-egare',
+    name: 'Épéiste Égaré',
+    rank: EnemyRank.green,
+    maxHealth: 11,
+    pc: 0,
+    cardAsset: 'assets/enemy_green_lost_fencer.png',
+    attacks: [
+      'En Garde',
+      '3 symboles blancs: inflige 5 dégâts.',
+      '4 symboles blancs: inflige 6 dégâts.',
+      '5 symboles blancs: inflige 7 dégâts.',
+    ],
+    defense:
+        'Jet défensif 3 dés: inflige 1 dégât par symbole blanc + 1 dégât par symbole rouge. Prévient 1 dégât par symbole jaune.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 3),
+      SymbolGoal(white: 4),
+      SymbolGoal(white: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'elfe-du-chaos',
+    name: 'Elfe du Chaos',
+    rank: EnemyRank.green,
+    maxHealth: 10,
+    pc: 1,
+    cardAsset: 'assets/enemy_green_chaos_elf.png',
+    attacks: [
+      'Fil de Lame',
+      'Micro suite: inflige 4 dégâts.',
+      'Petite suite: inflige 7 dégâts.',
+      'Grande suite: inflige Ronces et inflige 8 dégâts.',
+    ],
+    defense:
+        'Jet défensif 4 dés: sur 2 symboles jaunes, prévient la moitié des dégâts, arrondie au chiffre supérieur.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.suite(),
+  ),
+  EnemyProfile(
+    key: 'oni-delirant',
+    name: 'Oni Délirant',
+    rank: EnemyRank.green,
+    maxHealth: 11,
+    pc: 0,
+    cardAsset: 'assets/enemy_green_raving_oni.png',
+    attacks: [
+      'Onisima',
+      '4 symboles jaunes, puis lancez 1 dé.',
+      'Sur symbole blanc: inflige 5 dégâts imparables.',
+      'Sur symbole jaune: inflige 6 dégâts imparables.',
+      'Sur symbole rouge: vole 4 points de Santé.',
+    ],
+    defense: 'Jet défensif 2 dés: vole 1 point de Santé par symbole jaune.',
+    defenseDice: 2,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(yellow: 4)]),
   ),
 ];
 
@@ -683,7 +867,7 @@ class AdventureState {
       bonuses.add('+1 HP');
       log('Reward confirmed: D20 $d20, +1 HP.');
     } else {
-      combatPoints = (combatPoints + 1).clamp(0, 20);
+      combatPoints = (combatPoints + 1).clamp(0, 99);
       bonuses.add('+1 CP');
       log('Reward confirmed: D20 $d20, +1 CP.');
     }
@@ -812,6 +996,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      navigatorKey: appNavigatorKey,
       title: 'D.T Solo Quest',
       theme: ThemeData(
         useMaterial3: true,
@@ -962,12 +1147,14 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
           onPauseExit: () {
             _activeAdventure = adventure;
             _saveActiveAdventure();
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
           },
           onAbandon: () {
             _recordAdventure(adventure);
-            _clearActiveAdventure();
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            _activeAdventure = null;
+            _store.clear();
+            setState(() {});
+            appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
           },
           onChangeHero: () => _openHeroChoice(context),
           onReplay: () {
@@ -2568,7 +2755,7 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
-  static double _savedMapScale = 1.18;
+  static double _savedMapScale = 0.52;
   late final TransformationController _mapController =
       TransformationController()
         ..value = Matrix4.diagonal3Values(_savedMapScale, _savedMapScale, 1);
@@ -2584,7 +2771,7 @@ class _MapPageState extends State<MapPage> {
       _savedMapScale = _mapController.value.getMaxScaleOnAxis();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _centerOnEnemy(_currentTarget(), immediate: true);
+      _showWholeMap(immediate: true);
     });
   }
 
@@ -2645,7 +2832,7 @@ class _MapPageState extends State<MapPage> {
                               return InteractiveViewer(
                                 constrained: false,
                                 boundaryMargin: const EdgeInsets.all(360),
-                                minScale: 0.75,
+                                minScale: 0.45,
                                 maxScale: 2.4,
                                 transformationController: _mapController,
                                 child: SingleChildScrollView(
@@ -2816,8 +3003,8 @@ class _MapPageState extends State<MapPage> {
               enemy: enemy,
               onNext: () async {
                 final navigator = Navigator.of(context);
-                await navigator.push(
-                  MaterialPageRoute<void>(
+                final rewardDue = await navigator.push<bool>(
+                  MaterialPageRoute<bool>(
                     builder: (_) => FightPage(
                       adventure: widget.adventure,
                       enemyId: enemy.id,
@@ -2829,6 +3016,14 @@ class _MapPageState extends State<MapPage> {
                 );
                 if (mounted) {
                   navigator.pop();
+                }
+                if (rewardDue == true && mounted) {
+                  await navigator.push(
+                    MaterialPageRoute<void>(
+                      builder: (_) =>
+                          RewardPage(adventure: widget.adventure, enemy: enemy),
+                    ),
+                  );
                 }
               },
             ),
@@ -2885,6 +3080,40 @@ class _MapPageState extends State<MapPage> {
         curve: Curves.easeOutCubic,
       );
     }
+  }
+
+  void _showWholeMap({bool immediate = false}) {
+    if (!_mapScrollController.hasClients ||
+        !_mapHorizontalController.hasClients) {
+      return;
+    }
+    final v = (_mapScrollController.position.maxScrollExtent * 0.48)
+        .clamp(
+          _mapScrollController.position.minScrollExtent,
+          _mapScrollController.position.maxScrollExtent,
+        )
+        .toDouble();
+    final h = (_mapHorizontalController.position.maxScrollExtent * 0.5)
+        .clamp(
+          _mapHorizontalController.position.minScrollExtent,
+          _mapHorizontalController.position.maxScrollExtent,
+        )
+        .toDouble();
+    if (immediate) {
+      _mapScrollController.jumpTo(v);
+      _mapHorizontalController.jumpTo(h);
+      return;
+    }
+    _mapScrollController.animateTo(
+      v,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
+    _mapHorizontalController.animateTo(
+      h,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _openDetails(BuildContext context) {
@@ -3946,16 +4175,17 @@ class _FightPageState extends State<FightPage> {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    EnemyRulesPanel(enemy: enemy),
-                    const SizedBox(height: 12),
                     TurnPhasePanel(
                       phase: _phase,
+                      adventure: widget.adventure,
                       enemy: enemy,
                       upkeepApplied: _upkeepApplied,
                       onPhaseChanged: _setPhase,
                       onNext: _advancePhase,
                       onApplyUpkeep: _applyUpkeep,
                     ),
+                    const SizedBox(height: 12),
+                    EnemyRulesPanel(enemy: enemy),
                     const SizedBox(height: 12),
                     DicePanel(
                       dice: _dice,
@@ -3994,6 +4224,7 @@ class _FightPageState extends State<FightPage> {
               FightStatusPanel(
                 adventure: widget.adventure,
                 enemy: enemy,
+                phase: _phase,
                 onChanged: () {
                   widget.onChanged();
                   setState(() {});
@@ -4009,6 +4240,20 @@ class _FightPageState extends State<FightPage> {
   void _rollDice() {
     if (_rollCount >= 3) {
       return;
+    }
+    if (_phase == CombatPhase.minionAttack &&
+        _rollCount > 0 &&
+        enemy.alterations.contains('Ronces')) {
+      if (enemy.health <= 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ronces would defeat the minion: reroll blocked.'),
+          ),
+        );
+        return;
+      }
+      enemy.health = (enemy.health - 1).clamp(0, 99);
+      widget.adventure.log('Ronces: minion loses 1 HP for reroll.');
     }
     setState(() {
       final rollable = _dice
@@ -4118,13 +4363,32 @@ class _FightPageState extends State<FightPage> {
       final poisonCount = enemy.alterations
           .where((token) => token == 'Poison')
           .length;
+      final hemorrhageCount = enemy.alterations
+          .where((token) => token == 'Hémorragie')
+          .length;
       enemy.combatPoints = (enemy.combatPoints + 1).clamp(0, 99);
       if (poisonCount > 0) {
         enemy.health = (enemy.health - poisonCount).clamp(0, 99);
       }
+      var hemorrhageDamage = 0;
+      var hemorrhageRemoved = 0;
+      for (var i = 0; i < hemorrhageCount; i++) {
+        final roll = _random.nextInt(6) + 1;
+        if (roll <= 4) {
+          hemorrhageDamage++;
+        } else {
+          hemorrhageRemoved++;
+        }
+      }
+      if (hemorrhageDamage > 0) {
+        enemy.health = (enemy.health - hemorrhageDamage).clamp(0, 99);
+      }
+      for (var i = 0; i < hemorrhageRemoved; i++) {
+        enemy.alterations.remove('Hémorragie');
+      }
       _upkeepApplied = true;
       widget.adventure.log(
-        'Minion upkeep: +1 CP${poisonCount > 0 ? ', -$poisonCount HP from Poison' : ''}.',
+        'Minion upkeep: +1 CP${poisonCount > 0 ? ', -$poisonCount HP from Poison' : ''}${hemorrhageCount > 0 ? ', Hemorrhage -$hemorrhageDamage HP / $hemorrhageRemoved removed' : ''}.',
       );
       widget.onChanged();
     });
@@ -4232,14 +4496,10 @@ class _FightPageState extends State<FightPage> {
     widget.adventure.completeCombat(enemy);
     widget.onChanged();
     if (enemy.defeated && widget.adventure.health > 0) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(
-          builder: (_) => RewardPage(adventure: widget.adventure, enemy: enemy),
-        ),
-      );
+      Navigator.of(context).pop(true);
       return;
     }
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(false);
   }
 
   Future<void> _openPauseDialog() async {
@@ -4601,12 +4861,14 @@ class FightStatusPanel extends StatefulWidget {
   const FightStatusPanel({
     required this.adventure,
     required this.enemy,
+    required this.phase,
     required this.onChanged,
     super.key,
   });
 
   final AdventureState adventure;
   final EnemyNode enemy;
+  final CombatPhase phase;
   final VoidCallback onChanged;
 
   @override
@@ -4740,7 +5002,7 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
     });
   }
 
-  void _saveStat(String key) {
+  Future<void> _saveStat(String key) async {
     final value = _draftValues[key] ?? 0;
     switch (key) {
       case 'heroHp':
@@ -4748,12 +5010,48 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       case 'heroCp':
         widget.adventure.setHeroPc(value);
       case 'enemyHp':
+        final oldHealth = widget.enemy.health;
         widget.enemy.health = value.clamp(0, 99);
+        if (widget.phase == CombatPhase.hero &&
+            widget.enemy.health < oldHealth &&
+            widget.enemy.alterations.contains('Riposte')) {
+          await _offerRiposte();
+        }
       case 'enemyCp':
         widget.enemy.combatPoints = value.clamp(0, 99);
     }
     setState(() => _editing.remove(key));
     widget.onChanged();
+  }
+
+  Future<void> _offerRiposte() async {
+    final spend = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Riposte'),
+        content: const Text(
+          'The minion lost HP during the hero turn. Spend Riposte now?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('No'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+    if (spend != true) {
+      return;
+    }
+    final roll = Random().nextInt(6) + 1;
+    final damage = (roll / 2).ceil();
+    widget.enemy.alterations.remove('Riposte');
+    widget.adventure.setHeroHealth(widget.adventure.health - damage);
+    widget.adventure.log('Riposte spent: D6 $roll, hero loses $damage HP.');
   }
 
   Future<void> _editHeroTokens() async {
@@ -4772,6 +5070,7 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
     final values = await showAlterationDialog(
       context,
       widget.enemy.alterations,
+      forMinion: true,
     );
     if (values != null) {
       widget.enemy.alterations
@@ -4967,6 +5266,7 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
                           final values = await showAlterationDialog(
                             context,
                             enemy.alterations,
+                            forMinion: true,
                           );
                           if (values != null) {
                             setState(() {
@@ -5078,6 +5378,7 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
 class TurnPhasePanel extends StatelessWidget {
   const TurnPhasePanel({
     required this.phase,
+    required this.adventure,
     required this.enemy,
     required this.upkeepApplied,
     required this.onPhaseChanged,
@@ -5087,6 +5388,7 @@ class TurnPhasePanel extends StatelessWidget {
   });
 
   final CombatPhase phase;
+  final AdventureState adventure;
   final EnemyNode enemy;
   final bool upkeepApplied;
   final ValueChanged<CombatPhase> onPhaseChanged;
@@ -5098,15 +5400,14 @@ class TurnPhasePanel extends StatelessWidget {
     final poisonCount = enemy.alterations
         .where((token) => token == 'Poison')
         .length;
+    final heroHasSilence = adventure.alterations.contains('Silence');
+    final heroHasHemorrhage = adventure.alterations.contains('Hémorragie');
+    final heroHasRonces = adventure.alterations.contains('Ronces');
+    final enemyHasRiposte = enemy.alterations.contains('Riposte');
     return InfoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Turn sequence',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 10),
           SegmentedButton<CombatPhase>(
             segments: CombatPhase.values
                 .map(
@@ -5119,10 +5420,21 @@ class TurnPhasePanel extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(switch (phase) {
-            CombatPhase.hero =>
+            CombatPhase.hero => [
               'Hero turn: apply damage and CP changes, then roll minion defense (${enemy.defenseDice} dice).',
+              if (enemyHasRiposte)
+                'Reminder: Riposte may trigger if the minion loses HP.',
+              if (heroHasSilence)
+                'Silence active: the hero cannot validate a suite.',
+              if (heroHasHemorrhage)
+                'Hémorragie active: resolve it at the beginning of the turn.',
+              if (heroHasRonces)
+                'Ronces active: each reroll after the first costs 1 HP.',
+            ].join('\n'),
             CombatPhase.minionUpkeep =>
-              'Upkeep: +1 CP for the minion. Poison removes 1 HP per token${poisonCount > 0 ? ' ($poisonCount)' : ''}.',
+              poisonCount > 0
+                  ? 'Upkeep: +1 CP for the minion. Poison removes 1 HP per token ($poisonCount).'
+                  : 'Upkeep: +1 CP for the minion.',
             CombatPhase.minionAttack =>
               'Minion attack: first roll is automatic, then the app keeps useful dice for the minion plan.',
           }),
@@ -5204,8 +5516,10 @@ class DicePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rollDice = dice.where((die) => !die.reserved).toList();
-    final reserveDice = dice.where((die) => die.reserved).toList();
+    final rollDice = dice.where((die) => !die.reserved).toList()
+      ..sort(_compareDice);
+    final reserveDice = dice.where((die) => die.reserved).toList()
+      ..sort(_compareDice);
     final editingDie = editingDieId == null
         ? null
         : dice.firstWhere((die) => die.id == editingDieId);
@@ -5309,6 +5623,13 @@ class DicePanel extends StatelessWidget {
       ),
     );
   }
+}
+
+int _compareDice(GameDie a, GameDie b) {
+  final av = a.value ?? 99;
+  final bv = b.value ?? 99;
+  final byValue = av.compareTo(bv);
+  return byValue == 0 ? a.id.compareTo(b.id) : byValue;
 }
 
 class DiceZone extends StatelessWidget {
@@ -5594,9 +5915,13 @@ class InfoCard extends StatelessWidget {
 
 Future<List<String>?> showAlterationDialog(
   BuildContext context,
-  List<String> current,
-) {
-  const alterations = knownStatusTokens;
+  List<String> current, {
+  bool forMinion = false,
+}) {
+  final alterations = statusTokenRules
+      .where((rule) => !forMinion || rule.minionAllowed)
+      .map((rule) => rule.label)
+      .toList();
   final counts = <String, int>{for (final value in alterations) value: 0};
   for (final value in current) {
     counts[value] = (counts[value] ?? 0) + 1;
@@ -5644,9 +5969,11 @@ Future<List<String>?> showAlterationDialog(
                       RoundIconButton(
                         icon: Icons.add,
                         tooltip: 'Add',
-                        onPressed: () => setDialogState(() {
-                          counts[value] = count + 1;
-                        }),
+                        onPressed: count >= _tokenRule(value).maxStack
+                            ? null
+                            : () => setDialogState(() {
+                                counts[value] = count + 1;
+                              }),
                       ),
                     ],
                   ),
