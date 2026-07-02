@@ -5,7 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-const String appVersionLabel = 'Version 1.2.0';
+const String appVersionLabel = 'Version 1.2.1';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -104,7 +104,7 @@ enum EnemyRank {
   green('Level 1', 1, Color(0xff34d36d), 'assets/map_green.jpg'),
   blue('Level 2', 2, Color(0xff3bb9ff), 'assets/map_blue.png'),
   violet('Level 3', 3, Color(0xff9b58ff), 'assets/map_violet.png'),
-  brown('Brown', 4, Color(0xff8a5a2c), 'assets/map_orange.png'),
+  viseer('Viseer', 4, Color(0xff8a5a2c), 'assets/enemy_viseer.jpg'),
   orange('Level 4', 6, Color(0xffff8a2b), 'assets/map_orange.png');
 
   const EnemyRank(this.label, this.points, this.color, this.asset);
@@ -113,6 +113,114 @@ enum EnemyRank {
   final int points;
   final Color color;
   final String asset;
+}
+
+class EnemyProfile {
+  const EnemyProfile({
+    required this.key,
+    required this.name,
+    required this.rank,
+    required this.maxHealth,
+    required this.pc,
+    required this.cardAsset,
+    required this.attacks,
+    required this.defense,
+    this.initialTokens = const [],
+  });
+
+  final String key;
+  final String name;
+  final EnemyRank rank;
+  final int maxHealth;
+  final int pc;
+  final String cardAsset;
+  final List<String> attacks;
+  final String defense;
+  final List<String> initialTokens;
+}
+
+const List<String> knownStatusTokens = ['Poison', 'Riposte', 'Première Frappe'];
+
+const List<EnemyProfile> greenEnemyProfiles = [
+  EnemyProfile(
+    key: 'fee',
+    name: 'Fée',
+    rank: EnemyRank.green,
+    maxHealth: 9,
+    pc: 2,
+    cardAsset: 'assets/enemy_green_fairy.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Agacement',
+      'Micro suite: inflige 2 dégâts imparables.',
+      'Petite suite: inflige 5 dégâts.',
+      'Grande suite: vole 1 CP et inflige 6 dégâts.',
+    ],
+    defense: 'Jet défensif 4 dés: sur 2 symboles jaunes, prévient 3 dégâts.',
+  ),
+  EnemyProfile(
+    key: 'ronin-vagabond',
+    name: 'Ronin Vagabond',
+    rank: EnemyRank.green,
+    maxHealth: 8,
+    pc: 2,
+    cardAsset: 'assets/enemy_green_ronin.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Coupe & Découpe',
+      '3 symboles blancs: inflige 5 dégâts.',
+      '4 symboles blancs: inflige 6 dégâts.',
+      '5 symboles blancs: inflige 7 dégâts.',
+      'Si vous obtenez 4 symboles identiques, gagne le token Riposte.',
+    ],
+    defense:
+        'Jet défensif 1 dé: inflige la moitié de la valeur du dé en dégâts, arrondie au chiffre supérieur.',
+  ),
+  EnemyProfile(
+    key: 'enchanteur-gobelin',
+    name: 'Enchanteur Gobelin',
+    rank: EnemyRank.green,
+    maxHealth: 10,
+    pc: 1,
+    cardAsset: 'assets/enemy_green_goblin_enchanter.png',
+    attacks: [
+      'Ensorcellule',
+      'Objectif: 1 symbole blanc, 2 symboles jaunes, 1 symbole rouge.',
+      'Inflige 4 dégâts imparables.',
+      'Votre adversaire défausse 1 carte au hasard.',
+    ],
+    defense:
+        'Jet défensif 3 dés: sur 1 ou plusieurs symboles jaunes, inflige 1 dégât. Sur 1 ou plusieurs symboles rouges, inflige Poison.',
+  ),
+];
+
+const EnemyProfile fallbackGreenProfile = EnemyProfile(
+  key: 'green-fallback',
+  name: 'Level 1 Minion',
+  rank: EnemyRank.green,
+  maxHealth: 8,
+  pc: 1,
+  cardAsset: 'assets/map_green.jpg',
+  attacks: ['Quick hit: 3 damage'],
+  defense: 'Blocks 1 damage',
+);
+
+EnemyProfile? _profileByKey(String? key) {
+  if (key == null) {
+    return null;
+  }
+  for (final profile in [...greenEnemyProfiles, fallbackGreenProfile]) {
+    if (profile.key == key) {
+      return profile;
+    }
+  }
+  return switch (key) {
+    'blue-generic' => _defaultProfileFor(EnemyRank.blue),
+    'violet-generic' => _defaultProfileFor(EnemyRank.violet),
+    'viseer' => _defaultProfileFor(EnemyRank.viseer),
+    'orange-generic' => _defaultProfileFor(EnemyRank.orange),
+    _ => null,
+  };
 }
 
 enum BranchSide {
@@ -296,18 +404,25 @@ class EnemyNode {
     required this.pc,
     required this.attacks,
     required this.defense,
+    required this.cardAsset,
+    this.profileKey,
+    List<String> initialTokens = const [],
     this.branch,
     this.step = 0,
   }) : health = maxHealth,
-       combatPoints = pc;
+       combatPoints = pc {
+    alterations.addAll(initialTokens);
+  }
 
   final int id;
-  final String label;
+  String label;
   final EnemyRank rank;
-  final int maxHealth;
-  final int pc;
-  final List<String> attacks;
-  final String defense;
+  int maxHealth;
+  int pc;
+  List<String> attacks;
+  String defense;
+  String cardAsset;
+  String? profileKey;
   final BranchSide? branch;
   final int step;
   int health;
@@ -322,12 +437,23 @@ class EnemyNode {
     'combatPoints': combatPoints,
     'alterations': alterations,
     'defeated': defeated,
+    'profileKey': profileKey,
   };
 
   void applyJson(Map<String, dynamic> json) {
+    final restoredProfile = _profileByKey(json['profileKey']?.toString());
+    if (restoredProfile != null && restoredProfile.rank == rank) {
+      label = restoredProfile.name;
+      maxHealth = restoredProfile.maxHealth;
+      pc = restoredProfile.pc;
+      attacks = restoredProfile.attacks;
+      defense = restoredProfile.defense;
+      cardAsset = restoredProfile.cardAsset;
+      profileKey = restoredProfile.key;
+    }
     health = ((json['health'] as num?)?.toInt() ?? health).clamp(0, maxHealth);
     combatPoints = ((json['combatPoints'] as num?)?.toInt() ?? combatPoints)
-        .clamp(0, 20);
+        .clamp(0, 99);
     defeated = json['defeated'] as bool? ?? defeated;
     alterations
       ..clear()
@@ -415,7 +541,7 @@ class AdventureState {
       ..health = ((json['health'] as num?)?.toInt() ?? 30).clamp(0, 99)
       ..combatPoints = ((json['combatPoints'] as num?)?.toInt() ?? 2).clamp(
         0,
-        20,
+        99,
       )
       ..score = (json['score'] as num?)?.toInt() ?? 0
       ..lockedBranch = _enumByName(
@@ -460,7 +586,7 @@ class AdventureState {
   }
 
   void setHeroPc(int value) {
-    combatPoints = value.clamp(0, 20);
+    combatPoints = value.clamp(0, 99);
     log('Hero CP set to $combatPoints.');
   }
 
@@ -2122,7 +2248,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
     EnemyRank.blue,
     EnemyRank.violet,
     EnemyRank.orange,
-    if (_mode == SurvivalMode.hardFixed) EnemyRank.brown,
+    if (_mode == SurvivalMode.hardFixed) EnemyRank.viseer,
   ];
 
   @override
@@ -2289,7 +2415,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
               image: DecorationImage(
                 image: AssetImage(rank.asset),
                 fit: BoxFit.cover,
-                colorFilter: rank == EnemyRank.brown
+                colorFilter: rank == EnemyRank.viseer
                     ? ColorFilter.mode(
                         rank.color.withValues(alpha: 0.6),
                         BlendMode.multiply,
@@ -2811,7 +2937,7 @@ class _MapHeaderState extends State<MapHeader> {
             Row(
               children: [
                 SizedBox(
-                  width: 70,
+                  width: 74,
                   child: MapStatChip(
                     icon: Icons.favorite,
                     label: '',
@@ -2823,7 +2949,7 @@ class _MapHeaderState extends State<MapHeader> {
                 ),
                 const SizedBox(width: 8),
                 SizedBox(
-                  width: 76,
+                  width: 74,
                   child: MapStatChip(
                     label: 'CP',
                     value: adventure.combatPoints.toString(),
@@ -2858,7 +2984,7 @@ class _MapHeaderState extends State<MapHeader> {
               emptyText: 'No reward yet',
               items: adventure.bonuses,
               accent: heroAccent,
-              background: heroAccent.withValues(alpha: 0.12),
+              background: Colors.black.withValues(alpha: 0.32),
               border: heroAccent,
             ),
           ],
@@ -3181,7 +3307,11 @@ class EnemyIntroPage extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(enemy.rank.asset, fit: BoxFit.cover),
+          Image.asset(
+            enemy.cardAsset,
+            fit: BoxFit.cover,
+            alignment: Alignment.centerLeft,
+          ),
           Container(color: Colors.black.withValues(alpha: 0.58)),
           SafeArea(
             child: Padding(
@@ -3424,7 +3554,7 @@ class EnemyRankAvatar extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Image.asset(enemy.rank.asset, fit: BoxFit.cover),
+      child: Image.asset(enemy.cardAsset, fit: BoxFit.cover),
     );
   }
 }
@@ -3858,7 +3988,7 @@ class CompactItemStrip extends StatelessWidget {
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: background.withValues(alpha: 0.92),
+        color: background,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: border),
       ),
@@ -3920,7 +4050,7 @@ class HeroTokenStrip extends StatelessWidget {
       emptyText: 'Tokens',
       items: tokens,
       accent: heroAccent,
-      background: heroAccent.withValues(alpha: 0.12),
+      background: Colors.black.withValues(alpha: 0.32),
       border: heroAccent,
       trailing: IconButton(
         tooltip: 'Edit tokens',
@@ -4235,9 +4365,9 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       case 'heroCp':
         widget.adventure.setHeroPc(_draftValue);
       case 'enemyHp':
-        widget.enemy.health = _draftValue.clamp(0, widget.enemy.maxHealth);
+        widget.enemy.health = _draftValue.clamp(0, 99);
       case 'enemyCp':
-        widget.enemy.combatPoints = _draftValue.clamp(0, 20);
+        widget.enemy.combatPoints = _draftValue.clamp(0, 99);
     }
     setState(() => _editing = null);
     widget.onChanged();
@@ -4343,7 +4473,7 @@ class CombatantStatusRow extends StatelessWidget {
             emptyText: 'Tokens',
             items: tokens,
             accent: accent,
-            background: accent.withValues(alpha: 0.12),
+            background: Colors.black.withValues(alpha: 0.32),
             border: accent,
             trailing: IconButton(
               tooltip: 'Edit tokens',
@@ -4553,9 +4683,9 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
 
   void _saveEnemyStat() {
     if (_editing == 'HP') {
-      enemy.health = _draftValue.clamp(0, enemy.maxHealth);
+      enemy.health = _draftValue.clamp(0, 99);
     } else if (_editing == 'CP') {
-      enemy.combatPoints = _draftValue.clamp(0, 20);
+      enemy.combatPoints = _draftValue.clamp(0, 99);
     }
     setState(() => _editing = null);
     widget.onChanged();
@@ -4640,7 +4770,6 @@ class DicePanel extends StatelessWidget {
               ),
             ],
           ),
-          Text('Rolls: $rollCount / 3'),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -4661,10 +4790,24 @@ class DicePanel extends StatelessWidget {
           const SizedBox(height: 12),
           DiceZone(title: 'Dice to roll', dice: rollDice, onTapDie: onTapDie),
           const SizedBox(height: 10),
-          ImageActionButton(
-            label: rollCount == 0 ? 'Roll' : 'Reroll',
-            icon: Icons.casino,
-            onPressed: rollCount < 3 ? onRoll : null,
+          Row(
+            children: [
+              Text(
+                '$rollCount / 3',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ImageActionButton(
+                  label: rollCount == 0 ? 'Roll' : 'Reroll',
+                  icon: Icons.casino,
+                  onPressed: rollCount < 3 ? onRoll : null,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           DiceZone(title: 'Reserve', dice: reserveDice, onTapDie: onTapDie),
@@ -4983,16 +5126,7 @@ Future<List<String>?> showAlterationDialog(
   BuildContext context,
   List<String> current,
 ) {
-  const alterations = [
-    'Poison',
-    'Burn',
-    'Freeze',
-    'Stun',
-    'Blessed',
-    'Shield',
-    'Attack down',
-    'Defense up',
-  ];
+  const alterations = knownStatusTokens;
   final counts = <String, int>{for (final value in alterations) value: 0};
   for (final value in current) {
     counts[value] = (counts[value] ?? 0) + 1;
@@ -5068,7 +5202,18 @@ Future<List<String>?> showAlterationDialog(
 
 List<EnemyNode> _generateEnemies(SurvivalConfig config) {
   final ranks = _ranksForMode(config);
-  final nodes = <EnemyNode>[_enemy(0, 'Start minion', ranks.first, null, 0)];
+  final random = Random();
+  final greenProfiles = [...greenEnemyProfiles]..shuffle(random);
+  EnemyProfile? nextGreenProfile() {
+    if (greenProfiles.isEmpty) {
+      return null;
+    }
+    return greenProfiles.removeLast();
+  }
+
+  final nodes = <EnemyNode>[
+    _enemy(0, 'Start minion', ranks.first, null, 0, nextGreenProfile()),
+  ];
 
   var id = 1;
   var rankIndex = 1;
@@ -5082,7 +5227,16 @@ List<EnemyNode> _generateEnemies(SurvivalConfig config) {
         : remaining;
     for (var step = 1; step <= branchSlots; step++) {
       final rank = ranks[rankIndex++];
-      nodes.add(_enemy(id++, '${branch.label} $step', rank, branch, step));
+      nodes.add(
+        _enemy(
+          id++,
+          '${branch.label} $step',
+          rank,
+          branch,
+          step,
+          rank == EnemyRank.green ? nextGreenProfile() : null,
+        ),
+      );
     }
   }
   return nodes;
@@ -5125,7 +5279,7 @@ Map<EnemyRank, int> _rankCountsForMode(SurvivalMode mode) {
       EnemyRank.blue,
       EnemyRank.violet,
       EnemyRank.orange,
-      EnemyRank.brown,
+      EnemyRank.viseer,
     ])
       rank: ranks.where((value) => value == rank).length,
   };
@@ -5158,14 +5312,14 @@ List<EnemyRank> _hardRanks() {
     EnemyRank.green,
     EnemyRank.violet,
     EnemyRank.orange,
-    EnemyRank.brown,
+    EnemyRank.viseer,
     EnemyRank.blue,
     EnemyRank.orange,
     EnemyRank.violet,
     EnemyRank.blue,
     EnemyRank.violet,
     EnemyRank.orange,
-    EnemyRank.brown,
+    EnemyRank.viseer,
   ];
 }
 
@@ -5175,9 +5329,9 @@ List<EnemyRank> _randomRanks(int targetScore, {required bool hard}) {
       ? <EnemyRank>[
           EnemyRank.green,
           EnemyRank.orange,
-          EnemyRank.brown,
+          EnemyRank.viseer,
           EnemyRank.orange,
-          EnemyRank.brown,
+          EnemyRank.viseer,
         ]
       : <EnemyRank>[EnemyRank.green, EnemyRank.orange, EnemyRank.orange];
   final poolCount = hard ? 10 : 10;
@@ -5213,10 +5367,10 @@ List<EnemyRank> _randomRanks(int targetScore, {required bool hard}) {
       EnemyRank.green,
       ...best.take(5),
       EnemyRank.orange,
-      EnemyRank.brown,
+      EnemyRank.viseer,
       ...best.skip(5).take(5),
       EnemyRank.orange,
-      EnemyRank.brown,
+      EnemyRank.viseer,
     ];
   }
   return [
@@ -5290,45 +5444,74 @@ EnemyNode _enemy(
   EnemyRank rank,
   BranchSide? branch,
   int step,
+  EnemyProfile? profile,
 ) {
+  final selectedProfile = profile ?? _defaultProfileFor(rank);
   return EnemyNode(
     id: id,
-    label: label,
+    label: rank == EnemyRank.green ? selectedProfile.name : label,
     rank: rank,
     branch: branch,
     step: step,
-    maxHealth: switch (rank) {
-      EnemyRank.green => 8,
-      EnemyRank.blue => 11,
-      EnemyRank.violet => 14,
-      EnemyRank.brown => 16,
-      EnemyRank.orange => 20,
-    },
-    pc: switch (rank) {
-      EnemyRank.green => 1,
-      EnemyRank.blue => 2,
-      EnemyRank.violet => 3,
-      EnemyRank.brown => 4,
-      EnemyRank.orange => 5,
-    },
-    attacks: switch (rank) {
-      EnemyRank.green => ['Quick hit: 3 damage'],
-      EnemyRank.blue => ['Precise strike: 4 damage', 'Pressure: -1 CP'],
-      EnemyRank.violet => ['Mystic slash: 5 damage', 'Weaken: status token'],
-      EnemyRank.brown => ['Brutal charge: 6 damage', 'Guard break: -1 CP'],
-      EnemyRank.orange => [
-        'Boss rage: 8 damage',
-        'Counter: reinforced defense',
-      ],
-    },
-    defense: switch (rank) {
-      EnemyRank.green => 'Blocks 1 damage',
-      EnemyRank.blue => 'Blocks 2 damage',
-      EnemyRank.violet => 'Blocks 3 damage',
-      EnemyRank.brown => 'Blocks 3 damage and counters',
-      EnemyRank.orange => 'Blocks 4 damage and counters',
-    },
+    maxHealth: selectedProfile.maxHealth,
+    pc: selectedProfile.pc,
+    attacks: selectedProfile.attacks,
+    defense: selectedProfile.defense,
+    cardAsset: selectedProfile.cardAsset,
+    profileKey: selectedProfile.key,
+    initialTokens: selectedProfile.initialTokens,
   );
+}
+
+EnemyProfile _defaultProfileFor(EnemyRank rank) {
+  return switch (rank) {
+    EnemyRank.green => fallbackGreenProfile,
+    EnemyRank.blue => const EnemyProfile(
+      key: 'blue-generic',
+      name: 'Level 2 Minion',
+      rank: EnemyRank.blue,
+      maxHealth: 11,
+      pc: 2,
+      cardAsset: 'assets/map_blue.png',
+      attacks: ['Precise strike: 4 damage', 'Pressure: -1 CP'],
+      defense: 'Blocks 2 damage',
+    ),
+    EnemyRank.violet => const EnemyProfile(
+      key: 'violet-generic',
+      name: 'Level 3 Minion',
+      rank: EnemyRank.violet,
+      maxHealth: 14,
+      pc: 3,
+      cardAsset: 'assets/map_violet.png',
+      attacks: ['Mystic slash: 5 damage', 'Weaken: status token'],
+      defense: 'Blocks 3 damage',
+    ),
+    EnemyRank.viseer => const EnemyProfile(
+      key: 'viseer',
+      name: 'Viseer',
+      rank: EnemyRank.viseer,
+      maxHealth: 20,
+      pc: 0,
+      cardAsset: 'assets/enemy_viseer.jpg',
+      attacks: [
+        'Special rules',
+        'When the Boss is attacked, the attacker may choose to target Viseer instead.',
+        'Viseer is immune to status effects, CP loss, and everything else besides damage.',
+        'Passive: during the Boss upkeep phase, roll 1 die.',
+      ],
+      defense: 'Defense roll 4 dice: on red symbol, activate Passive Ability.',
+    ),
+    EnemyRank.orange => const EnemyProfile(
+      key: 'orange-generic',
+      name: 'Level 4 Minion',
+      rank: EnemyRank.orange,
+      maxHealth: 20,
+      pc: 5,
+      cardAsset: 'assets/map_orange.png',
+      attacks: ['Boss rage: 8 damage', 'Counter: reinforced defense'],
+      defense: 'Blocks 4 damage and counters',
+    ),
+  };
 }
 
 String _formatDate(DateTime date) {
