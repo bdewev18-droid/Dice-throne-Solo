@@ -6,8 +6,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'active_adventure_storage.dart';
+import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.5';
+const String appVersionLabel = 'Version 1.2.6';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -445,6 +446,34 @@ const EnemyProfile fallbackGreenProfile = EnemyProfile(
   attackPlan: MinionAttackPlan.none(),
 );
 
+List<EnemyProfile> _recipeProfilesFor(EnemyRank rank) {
+  final profiles = rank == EnemyRank.green
+      ? [...greenEnemyProfiles]
+      : [_defaultProfileFor(rank)];
+  profiles.sort(
+    (a, b) => _recipeProfileCode(a).compareTo(_recipeProfileCode(b)),
+  );
+  return profiles;
+}
+
+String _recipeProfileLabel(EnemyProfile profile) {
+  return '${_recipeProfileCode(profile)} - ${profile.name}';
+}
+
+String _recipeProfileCode(EnemyProfile profile) {
+  return switch (profile.key) {
+    'fee' => 'Vert002',
+    'ronin-vagabond' => 'Vert003',
+    'enchanteur-gobelin' => 'Vert004',
+    'archer-de-lombre' => 'Vert005',
+    'ombre-feline' => 'Vert007',
+    'epeiste-egare' => 'Vert008',
+    'elfe-du-chaos' => 'Vert009',
+    'oni-delirant' => 'Vert010',
+    _ => '${profile.rank.name.toUpperCase()}000',
+  };
+}
+
 EnemyProfile? _profileByKey(String? key) {
   if (key == null) {
     return null;
@@ -681,6 +710,26 @@ class EnemyNode {
       ..clear()
       ..addAll((json['alterations'] as List? ?? const []).cast<String>());
   }
+
+  void applyProfile(EnemyProfile profile) {
+    if (profile.rank != rank) {
+      return;
+    }
+    label = profile.name;
+    maxHealth = profile.maxHealth;
+    pc = profile.pc;
+    attacks = profile.attacks;
+    defense = profile.defense;
+    defenseDice = profile.defenseDice;
+    attackPlan = profile.attackPlan;
+    cardAsset = profile.cardAsset;
+    profileKey = profile.key;
+    health = maxHealth;
+    combatPoints = pc;
+    alterations
+      ..clear()
+      ..addAll(profile.initialTokens);
+  }
 }
 
 class AdventureState {
@@ -840,15 +889,18 @@ class AdventureState {
   }
 
   void applyReward(int d20) {
-    if (d20 <= 10) {
-      health = (health + 1).clamp(0, 99);
-      bonuses.add('+1 HP');
-      log('Reward confirmed: D20 $d20, +1 HP.');
-    } else {
-      combatPoints = (combatPoints + 1).clamp(0, 99);
-      bonuses.add('+1 CP');
-      log('Reward confirmed: D20 $d20, +1 CP.');
+    final outcome = GameEngine.rewardForD20(d20);
+    if (outcome.healthDelta != 0) {
+      health = (health + outcome.healthDelta).clamp(0, 99);
     }
+    if (outcome.cpDelta != 0) {
+      combatPoints = (combatPoints + outcome.cpDelta).clamp(0, 99);
+    }
+    if (outcome.token != null) {
+      alterations.add(outcome.token!);
+    }
+    bonuses.add(outcome.label);
+    log('Reward confirmed: D20 $d20, ${outcome.label}.');
   }
 
   void _endAdventure(bool won) {
@@ -2981,10 +3033,20 @@ class _MapPageState extends State<MapPage> {
     return positions;
   }
 
-  void _openFight(EnemyNode enemy) {
+  Future<void> _openFight(EnemyNode enemy) async {
     if (!enemy.current || enemy.defeated || widget.adventure.finished) {
       return;
     }
+    final selectedProfile = await Navigator.of(context).push<EnemyProfile>(
+      MaterialPageRoute<EnemyProfile>(
+        builder: (_) => RecipeEnemySelectionPage(enemy: enemy),
+      ),
+    );
+    if (!mounted || selectedProfile == null) {
+      return;
+    }
+    enemy.applyProfile(selectedProfile);
+    widget.onChanged();
     if (enemy.branch != null) {
       widget.adventure.lockBranch(enemy.branch!);
     }
@@ -3268,6 +3330,7 @@ class _MapHeaderState extends State<MapHeader> {
               accent: heroAccent,
               background: Colors.black.withValues(alpha: 0.32),
               border: heroAccent,
+              compactDuplicates: false,
             ),
           ],
           if (_editing != null) ...[
@@ -3571,6 +3634,87 @@ class EndAdventureBanner extends StatelessWidget {
   }
 }
 
+class RecipeEnemySelectionPage extends StatefulWidget {
+  const RecipeEnemySelectionPage({required this.enemy, super.key});
+
+  final EnemyNode enemy;
+
+  @override
+  State<RecipeEnemySelectionPage> createState() =>
+      _RecipeEnemySelectionPageState();
+}
+
+class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
+  late final List<EnemyProfile> _profiles = _recipeProfilesFor(
+    widget.enemy.rank,
+  );
+  late EnemyProfile _selected = _profiles.firstWhere(
+    (profile) => profile.key == widget.enemy.profileKey,
+    orElse: () => _profiles.first,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Recipe minion selection')),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Choose the minion for this slot',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<EnemyProfile>(
+                initialValue: _selected,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Minion',
+                ),
+                items: _profiles
+                    .map(
+                      (profile) => DropdownMenuItem(
+                        value: profile,
+                        child: Text(_recipeProfileLabel(profile)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (profile) {
+                  if (profile != null) {
+                    setState(() => _selected = profile);
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    _selected.cardAsset,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.centerLeft,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ImageActionButton(
+                label: 'Next',
+                icon: Icons.arrow_forward,
+                onPressed: () => Navigator.of(context).pop(_selected),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class EnemyIntroPage extends StatefulWidget {
   const EnemyIntroPage({
     required this.adventure,
@@ -3631,6 +3775,41 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.56),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: enemy.rank.color),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.favorite,
+                              color: enemy.rank.color,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${enemy.maxHealth} HP',
+                              style: TextStyle(
+                                color: enemy.rank.color,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(width: 18),
+                            RewardChestBadge(rank: enemy.rank, count: 1),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        EnemyObjectivePreview(enemy: enemy),
+                      ],
                     ),
                   ),
                   if (enemy.alterations.contains('Première Frappe')) ...[
@@ -4122,6 +4301,7 @@ class _FightPageState extends State<FightPage> {
   bool _upkeepApplied = false;
   bool _specialAttackReady = false;
   bool _specialAttackMode = false;
+  bool _heroCpGrantedForPhase = false;
 
   EnemyNode get enemy => widget.adventure.enemyById(widget.enemyId);
 
@@ -4135,6 +4315,9 @@ class _FightPageState extends State<FightPage> {
         ? CombatPhase.minionAttack
         : CombatPhase.hero;
     _configureDiceForPhase(autoRollAttack: _phase == CombatPhase.minionAttack);
+    if (_phase == CombatPhase.hero) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _grantHeroTurnCp());
+    }
   }
 
   @override
@@ -4185,6 +4368,7 @@ class _FightPageState extends State<FightPage> {
                     DicePanel(
                       dice: _dice,
                       diceToRoll: _diceToRoll,
+                      visibleDiceCount: _visibleDiceCount,
                       rollCount: _rollCount,
                       editMode: _editMode,
                       rerollOneMode: _rerollOneMode,
@@ -4208,20 +4392,14 @@ class _FightPageState extends State<FightPage> {
                         _editingDieId = null;
                       }),
                     ),
-                    const SizedBox(height: 12),
                     if (_specialAttackReady) ...[
+                      const SizedBox(height: 12),
                       ImageActionButton(
                         label: 'Next',
                         icon: Icons.arrow_forward,
                         onPressed: _resolveSpecialAttack,
                       ),
-                      const SizedBox(height: 12),
                     ],
-                    FilledButton.icon(
-                      onPressed: enemy.health <= 0 ? _finishCombat : null,
-                      icon: const Icon(Icons.flag),
-                      label: const Text('Finish combat'),
-                    ),
                   ],
                 ),
               ),
@@ -4229,6 +4407,7 @@ class _FightPageState extends State<FightPage> {
                 adventure: widget.adventure,
                 enemy: enemy,
                 phase: _phase,
+                onFinish: enemy.health <= 0 ? _finishCombat : null,
                 onChanged: () {
                   widget.onChanged();
                   setState(() {});
@@ -4316,12 +4495,18 @@ class _FightPageState extends State<FightPage> {
 
   void _setPhase(CombatPhase phase) {
     setState(() {
+      if (_phase != phase && phase != CombatPhase.hero) {
+        _heroCpGrantedForPhase = false;
+      }
       _phase = phase;
       _upkeepApplied = false;
       _specialAttackReady = false;
       _specialAttackMode = false;
       _configureDiceForPhase(autoRollAttack: phase == CombatPhase.minionAttack);
     });
+    if (phase == CombatPhase.hero) {
+      _grantHeroTurnCp();
+    }
   }
 
   void _advancePhase() {
@@ -4337,6 +4522,8 @@ class _FightPageState extends State<FightPage> {
     _resetDice();
     if (_phase == CombatPhase.hero) {
       _diceToRoll = enemy.defenseDice.clamp(1, 6);
+    } else if (_phase == CombatPhase.minionUpkeep) {
+      _diceToRoll = 0;
     } else if (_phase == CombatPhase.minionAttack) {
       _diceToRoll = 6;
       if (autoRollAttack) {
@@ -4365,41 +4552,46 @@ class _FightPageState extends State<FightPage> {
     }
   }
 
+  int get _visibleDiceCount {
+    if (_specialAttackMode) {
+      return 1;
+    }
+    if (_phase == CombatPhase.minionAttack) {
+      return 6;
+    }
+    return _diceToRoll.clamp(0, 6);
+  }
+
+  void _grantHeroTurnCp() {
+    if (!mounted || _heroCpGrantedForPhase || _phase != CombatPhase.hero) {
+      return;
+    }
+    setState(() {
+      _heroCpGrantedForPhase = true;
+      widget.adventure.setHeroPc(
+        widget.adventure.combatPoints + GameEngine.combatPointStartGain(),
+      );
+      widget.adventure.log('Hero turn: +1 CP.');
+      widget.onChanged();
+    });
+  }
+
   void _applyUpkeep() {
     if (_upkeepApplied) {
       return;
     }
     setState(() {
-      final poisonCount = enemy.alterations
-          .where((token) => token == 'Poison')
-          .length;
-      final hemorrhageCount = enemy.alterations
-          .where((token) => token == 'Hémorragie')
-          .length;
-      enemy.combatPoints = (enemy.combatPoints + 1).clamp(0, 99);
-      if (poisonCount > 0) {
-        enemy.health = (enemy.health - poisonCount).clamp(0, 99);
-      }
-      var hemorrhageDamage = 0;
-      var hemorrhageRemoved = 0;
-      for (var i = 0; i < hemorrhageCount; i++) {
-        final roll = _random.nextInt(6) + 1;
-        if (roll <= 4) {
-          hemorrhageDamage++;
-        } else {
-          hemorrhageRemoved++;
-        }
-      }
-      if (hemorrhageDamage > 0) {
-        enemy.health = (enemy.health - hemorrhageDamage).clamp(0, 99);
-      }
-      for (var i = 0; i < hemorrhageRemoved; i++) {
-        enemy.alterations.remove('Hémorragie');
+      final outcome = GameEngine.minionUpkeep(
+        tokens: enemy.alterations,
+        rollD6: () => _random.nextInt(6) + 1,
+      );
+      enemy.combatPoints = (enemy.combatPoints + outcome.cpDelta).clamp(0, 99);
+      enemy.health = (enemy.health + outcome.healthDelta).clamp(0, 99);
+      for (final token in outcome.removedTokens) {
+        enemy.alterations.remove(token);
       }
       _upkeepApplied = true;
-      widget.adventure.log(
-        'Minion upkeep: +1 CP${poisonCount > 0 ? ', -$poisonCount HP from Poison' : ''}${hemorrhageCount > 0 ? ', Hemorrhage -$hemorrhageDamage HP / $hemorrhageRemoved removed' : ''}.',
-      );
+      widget.adventure.log('Minion upkeep: ${outcome.log}.');
       widget.onChanged();
     });
   }
@@ -4622,6 +4814,7 @@ class CompactItemStrip extends StatelessWidget {
     required this.accent,
     required this.background,
     required this.border,
+    this.compactDuplicates = true,
     this.trailing,
     super.key,
   });
@@ -4632,11 +4825,16 @@ class CompactItemStrip extends StatelessWidget {
   final Color accent;
   final Color background;
   final Color border;
+  final bool compactDuplicates;
   final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
-    final displayItems = _compactItemModels(items);
+    final displayItems = compactDuplicates
+        ? _compactItemModels(items)
+        : items
+              .map((value) => CompactItemModel(label: value, tooltip: value))
+              .toList();
     return Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -5108,6 +5306,76 @@ class MinionAttackSummary extends StatelessWidget {
   }
 }
 
+class EnemyObjectivePreview extends StatelessWidget {
+  const EnemyObjectivePreview({required this.enemy, super.key});
+
+  final EnemyNode enemy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          'Roll target',
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: switch (enemy.attackPlan.style) {
+            MinionAttackStyle.suite => const Text(
+              'Suite',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+            MinionAttackStyle.symbols => SymbolGoalView(
+              goal: enemy.attackPlan.goals.isEmpty
+                  ? const SymbolGoal()
+                  : enemy.attackPlan.goals.first,
+            ),
+            MinionAttackStyle.none => const Text('--'),
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class RewardChestBadge extends StatelessWidget {
+  const RewardChestBadge({required this.rank, required this.count, super.key});
+
+  final EnemyRank rank;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 34,
+      height: 30,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: rank.color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: rank.color, width: 2),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(Icons.inventory_2, color: rank.color, size: 24),
+          Text(
+            count.toString(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              shadows: [Shadow(color: Colors.black, blurRadius: 4)],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class MinionDefenseSummary extends StatelessWidget {
   const MinionDefenseSummary({required this.enemy, super.key});
 
@@ -5371,6 +5639,7 @@ class FightStatusPanel extends StatefulWidget {
     required this.adventure,
     required this.enemy,
     required this.phase,
+    required this.onFinish,
     required this.onChanged,
     super.key,
   });
@@ -5378,6 +5647,7 @@ class FightStatusPanel extends StatefulWidget {
   final AdventureState adventure;
   final EnemyNode enemy;
   final CombatPhase phase;
+  final VoidCallback? onFinish;
   final VoidCallback onChanged;
 
   @override
@@ -5399,6 +5669,22 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (widget.onFinish != null) ...[
+            Row(
+              children: [
+                const Spacer(),
+                SizedBox(
+                  width: 150,
+                  child: FilledButton.icon(
+                    onPressed: widget.onFinish,
+                    icon: const Icon(Icons.flag),
+                    label: const Text('Finish'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+          ],
           if (_editing.contains('enemyHp')) ...[
             _buildEditorRow('enemyHp'),
             const SizedBox(height: 6),
@@ -6071,6 +6357,7 @@ class DicePanel extends StatelessWidget {
   const DicePanel({
     required this.dice,
     required this.diceToRoll,
+    required this.visibleDiceCount,
     required this.rollCount,
     required this.editMode,
     required this.rerollOneMode,
@@ -6088,6 +6375,7 @@ class DicePanel extends StatelessWidget {
 
   final List<GameDie> dice;
   final int diceToRoll;
+  final int visibleDiceCount;
   final int rollCount;
   final bool editMode;
   final bool rerollOneMode;
@@ -6103,7 +6391,7 @@ class DicePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleDice = specialAttackMode ? dice.take(1).toList() : dice;
+    final visibleDice = dice.take(visibleDiceCount.clamp(0, 6)).toList();
     final rollDice = visibleDice.where((die) => !die.reserved).toList()
       ..sort(_compareDice);
     final reserveDice = visibleDice.where((die) => die.reserved).toList()
@@ -6126,7 +6414,7 @@ class DicePanel extends StatelessWidget {
               ),
               DropdownButton<int>(
                 value: diceToRoll,
-                items: [1, 2, 3, 4, 5, 6]
+                items: [0, 1, 2, 3, 4, 5, 6]
                     .map(
                       (count) => DropdownMenuItem(
                         value: count,
@@ -6176,7 +6464,7 @@ class DicePanel extends StatelessWidget {
                 child: ImageActionButton(
                   label: rollCount == 0 ? 'Roll' : 'Reroll',
                   icon: Icons.casino,
-                  onPressed: rollCount < 3 ? onRoll : null,
+                  onPressed: rollCount < 3 && diceToRoll > 0 ? onRoll : null,
                 ),
               ),
             ],
