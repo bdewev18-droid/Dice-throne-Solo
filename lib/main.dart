@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-const String appVersionLabel = 'Version 1.2.3';
+import 'active_adventure_storage.dart';
+
+const String appVersionLabel = 'Version 1.2.4';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -534,40 +536,16 @@ T? _enumByName<T extends Enum>(Iterable<T> values, String? name) {
 }
 
 class ActiveAdventureStore {
-  const ActiveAdventureStore();
+  ActiveAdventureStore() : _storage = createActiveAdventureStorage();
 
-  static const MethodChannel _channel = MethodChannel(
-    'dt_solo_quest/active_adventure',
-  );
+  final ActiveAdventureStorage _storage;
 
-  Future<String?> read() async {
-    try {
-      return _channel.invokeMethod<String>('read', {
-        'key': _activeAdventureKey,
-      });
-    } on MissingPluginException {
-      return null;
-    }
-  }
+  Future<String?> read() => _storage.read(_activeAdventureKey);
 
-  Future<void> write(String value) async {
-    try {
-      await _channel.invokeMethod<void>('write', {
-        'key': _activeAdventureKey,
-        'value': value,
-      });
-    } on MissingPluginException {
-      return;
-    }
-  }
+  Future<void> write(String value) =>
+      _storage.write(_activeAdventureKey, value);
 
-  Future<void> clear() async {
-    try {
-      await _channel.invokeMethod<void>('clear', {'key': _activeAdventureKey});
-    } on MissingPluginException {
-      return;
-    }
-  }
+  Future<void> clear() => _storage.clear(_activeAdventureKey);
 }
 
 String _survivalModeTitle(SurvivalMode mode) {
@@ -982,7 +960,7 @@ class DiceThroneSurvieApp extends StatefulWidget {
 
 class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   final List<GameRecord> _history = [];
-  final _store = const ActiveAdventureStore();
+  final _store = ActiveAdventureStore();
   AdventureState? _activeAdventure;
   bool _storageReady = false;
 
@@ -1018,6 +996,21 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
           ),
         ),
       ),
+      builder: (context, child) {
+        final content = child ?? const SizedBox.shrink();
+        if (!kIsWeb) {
+          return content;
+        }
+        return ColoredBox(
+          color: Colors.black,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 430),
+              child: ClipRect(child: content),
+            ),
+          ),
+        );
+      },
       home: Builder(
         builder: (context) {
           if (!_storageReady) {
