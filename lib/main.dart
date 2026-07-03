@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 
 import 'active_adventure_storage.dart';
 
-const String appVersionLabel = 'Version 1.2.4';
+const String appVersionLabel = 'Version 1.2.5';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -4120,6 +4120,8 @@ class _FightPageState extends State<FightPage> {
   int? _editingDieId;
   late CombatPhase _phase;
   bool _upkeepApplied = false;
+  bool _specialAttackReady = false;
+  bool _specialAttackMode = false;
 
   EnemyNode get enemy => widget.adventure.enemyById(widget.enemyId);
 
@@ -4187,6 +4189,7 @@ class _FightPageState extends State<FightPage> {
                       editMode: _editMode,
                       rerollOneMode: _rerollOneMode,
                       editingDieId: _editingDieId,
+                      specialAttackMode: _specialAttackMode,
                       onDiceToRollChanged: (value) =>
                           setState(() => _diceToRoll = value),
                       onRoll: _rollDice,
@@ -4206,6 +4209,14 @@ class _FightPageState extends State<FightPage> {
                       }),
                     ),
                     const SizedBox(height: 12),
+                    if (_specialAttackReady) ...[
+                      ImageActionButton(
+                        label: 'Next',
+                        icon: Icons.arrow_forward,
+                        onPressed: _resolveSpecialAttack,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     FilledButton.icon(
                       onPressed: enemy.health <= 0 ? _finishCombat : null,
                       icon: const Icon(Icons.flag),
@@ -4236,6 +4247,7 @@ class _FightPageState extends State<FightPage> {
     }
     if (_phase == CombatPhase.minionAttack &&
         _rollCount > 0 &&
+        !_specialAttackMode &&
         enemy.alterations.contains('Ronces')) {
       if (enemy.health <= 1) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -4268,6 +4280,7 @@ class _FightPageState extends State<FightPage> {
         for (final die in _dice) {
           die.reserved = true;
         }
+        _specialAttackReady = _shouldResolveSpecialAttack();
       }
     });
   }
@@ -4305,6 +4318,8 @@ class _FightPageState extends State<FightPage> {
     setState(() {
       _phase = phase;
       _upkeepApplied = false;
+      _specialAttackReady = false;
+      _specialAttackMode = false;
       _configureDiceForPhase(autoRollAttack: phase == CombatPhase.minionAttack);
     });
   }
@@ -4341,6 +4356,8 @@ class _FightPageState extends State<FightPage> {
     _editingDieId = null;
     _editMode = false;
     _rerollOneMode = false;
+    _specialAttackReady = false;
+    _specialAttackMode = false;
     for (final die in _dice) {
       die
         ..value = null
@@ -4483,6 +4500,92 @@ class _FightPageState extends State<FightPage> {
       }
     }
     return counts;
+  }
+
+  bool _shouldResolveSpecialAttack() {
+    return enemy.profileKey == 'oni-delirant' &&
+        _phase == CombatPhase.minionAttack &&
+        _symbolGoalMet(const SymbolGoal(yellow: 4));
+  }
+
+  Future<void> _resolveSpecialAttack() async {
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Attack choice'),
+        content: const Text(
+          'The minion attack succeeded. Continue to the single die roll?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Not yet'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Roll'),
+          ),
+        ],
+      ),
+    );
+    if (proceed != true || !mounted) {
+      return;
+    }
+
+    final roll = _random.nextInt(6) + 1;
+    final symbol = _symbolForFace(roll);
+    final effect = switch (symbol) {
+      DieSymbol.white => '5 imparable damage to the hero',
+      DieSymbol.yellow => '6 imparable damage to the hero',
+      DieSymbol.red => 'steal 4 HP',
+    };
+    setState(() {
+      _specialAttackMode = true;
+      _specialAttackReady = false;
+      _rollCount = 1;
+      _diceToRoll = 1;
+      for (final die in _dice) {
+        die
+          ..value = null
+          ..reserved = true;
+      }
+      _dice.first
+        ..value = roll
+        ..reserved = false;
+    });
+
+    final apply = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('D6 $roll'),
+        content: Text(effect),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
+    if (apply != true || !mounted) {
+      return;
+    }
+    setState(() {
+      if (symbol == DieSymbol.white) {
+        widget.adventure.setHeroHealth(widget.adventure.health - 5);
+      } else if (symbol == DieSymbol.yellow) {
+        widget.adventure.setHeroHealth(widget.adventure.health - 6);
+      } else {
+        widget.adventure.setHeroHealth(widget.adventure.health - 4);
+        enemy.health = (enemy.health + 4).clamp(0, enemy.maxHealth);
+      }
+      widget.adventure.log('Oni attack choice: D6 $roll, $effect.');
+      widget.onChanged();
+    });
   }
 
   void _finishCombat() {
@@ -4766,10 +4869,19 @@ class HeroCombatPanel extends StatelessWidget {
   }
 }
 
-class EnemyRulesPanel extends StatelessWidget {
+class EnemyRulesPanel extends StatefulWidget {
   const EnemyRulesPanel({required this.enemy, super.key});
 
   final EnemyNode enemy;
+
+  @override
+  State<EnemyRulesPanel> createState() => _EnemyRulesPanelState();
+}
+
+class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
+  bool _showAttack = true;
+
+  EnemyNode get enemy => widget.enemy;
 
   @override
   Widget build(BuildContext context) {
@@ -4799,7 +4911,7 @@ class EnemyRulesPanel extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '${enemy.label} - ${enemy.rank.label} (+${enemy.rank.points})',
+                  enemy.label,
                   style: TextStyle(
                     color: enemy.rank.color,
                     fontSize: 18,
@@ -4809,11 +4921,35 @@ class EnemyRulesPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          const Text('Attacks', style: TextStyle(fontWeight: FontWeight.w900)),
-          ...enemy.attacks.map((attack) => Text('- $attack')),
           const SizedBox(height: 8),
-          Text('Defense: ${enemy.defense}'),
+          SegmentedButton<bool>(
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(
+                value: true,
+                icon: Icon(Icons.gps_fixed, size: 18),
+                label: Text('Attack'),
+              ),
+              ButtonSegment(
+                value: false,
+                icon: Icon(Icons.shield, size: 18),
+                label: Text('Defense'),
+              ),
+            ],
+            selected: {_showAttack},
+            onSelectionChanged: (values) =>
+                setState(() => _showAttack = values.first),
+          ),
+          const SizedBox(height: 10),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 180),
+            child: _showAttack
+                ? MinionAttackSummary(enemy: enemy, key: const ValueKey('atk'))
+                : MinionDefenseSummary(
+                    enemy: enemy,
+                    key: const ValueKey('def'),
+                  ),
+          ),
         ],
       ),
     );
@@ -4848,6 +4984,386 @@ class EnemyRulesPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class MinionAttackSummary extends StatelessWidget {
+  const MinionAttackSummary({required this.enemy, super.key});
+
+  final EnemyNode enemy;
+
+  @override
+  Widget build(BuildContext context) {
+    if (enemy.profileKey == 'oni-delirant') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _ObjectiveRow(
+            label: 'Roll target',
+            symbols: [
+              DieSymbol.yellow,
+              DieSymbol.yellow,
+              DieSymbol.yellow,
+              DieSymbol.yellow,
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'If successful, roll 1 die',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 6),
+          const _ResultLine(
+            symbol: DieSymbol.white,
+            children: [DamageBadge(value: 5, imparable: true)],
+          ),
+          const _ResultLine(
+            symbol: DieSymbol.yellow,
+            children: [DamageBadge(value: 6, imparable: true)],
+          ),
+          _ResultLine(
+            symbol: DieSymbol.red,
+            children: [LifeStealBadge(value: 4, color: enemy.rank.color)],
+          ),
+        ],
+      );
+    }
+
+    switch (enemy.attackPlan.style) {
+      case MinionAttackStyle.symbols:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Roll target',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 6),
+            ...enemy.attackPlan.goals.map((goal) {
+              final damage = _damageForSymbolGoal(enemy, goal);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  children: [
+                    Expanded(child: SymbolGoalView(goal: goal)),
+                    if (damage != null)
+                      DamageBadge(
+                        value: damage.value,
+                        imparable: damage.imparable,
+                      ),
+                  ],
+                ),
+              );
+            }),
+            ..._shortTokenHints(enemy),
+          ],
+        );
+      case MinionAttackStyle.suite:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Suite targets',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 6),
+            _SuiteLine(
+              label: 'Micro',
+              length: 3,
+              damage: _suiteDamage(enemy, 3),
+            ),
+            _SuiteLine(
+              label: 'Small',
+              length: 4,
+              damage: _suiteDamage(enemy, 4),
+            ),
+            _SuiteLine(
+              label: 'Large',
+              length: 5,
+              damage: _suiteDamage(enemy, 5),
+            ),
+            ..._shortTokenHints(enemy),
+          ],
+        );
+      case MinionAttackStyle.none:
+        return Text(enemy.attacks.skip(1).join('\n'));
+    }
+  }
+
+  List<Widget> _shortTokenHints(EnemyNode enemy) {
+    final hints = <Widget>[];
+    final text = enemy.attacks.join(' ').toLowerCase();
+    if (text.contains('riposte')) {
+      hints.add(const Text('Bonus: Riposte on 4 identical symbols.'));
+    }
+    if (text.contains('silence')) {
+      hints.add(const Text('Bonus: Silence on 3 identical values.'));
+    }
+    if (text.contains('hémorragie')) {
+      hints.add(const Text('Bonus: Hémorragie on 3 identical values.'));
+    }
+    if (text.contains('ronces')) {
+      hints.add(const Text('Large suite also applies Ronces.'));
+    }
+    return hints;
+  }
+}
+
+class MinionDefenseSummary extends StatelessWidget {
+  const MinionDefenseSummary({required this.enemy, super.key});
+
+  final EnemyNode enemy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.shield, color: enemy.rank.color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            '${enemy.defenseDice} defense dice\n${_compactDefenseText(enemy.defense)}',
+            style: const TextStyle(height: 1.25),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ObjectiveRow extends StatelessWidget {
+  const _ObjectiveRow({required this.label, required this.symbols});
+
+  final String label;
+  final List<DieSymbol> symbols;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w900)),
+        const SizedBox(width: 8),
+        ...symbols.map((symbol) => DieSymbolMark(symbol: symbol)),
+      ],
+    );
+  }
+}
+
+class _ResultLine extends StatelessWidget {
+  const _ResultLine({required this.symbol, required this.children});
+
+  final DieSymbol symbol;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        children: [
+          DieSymbolMark(symbol: symbol),
+          const SizedBox(width: 8),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _SuiteLine extends StatelessWidget {
+  const _SuiteLine({
+    required this.label,
+    required this.length,
+    required this.damage,
+  });
+
+  final String label;
+  final int length;
+  final _AttackDamage? damage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 56,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+          Expanded(child: Text('$length consecutive values')),
+          if (damage != null)
+            DamageBadge(value: damage!.value, imparable: damage!.imparable),
+        ],
+      ),
+    );
+  }
+}
+
+class SymbolGoalView extends StatelessWidget {
+  const SymbolGoalView({required this.goal, super.key});
+
+  final SymbolGoal goal;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        for (var i = 0; i < goal.white; i++)
+          const DieSymbolMark(symbol: DieSymbol.white),
+        for (var i = 0; i < goal.yellow; i++)
+          const DieSymbolMark(symbol: DieSymbol.yellow),
+        for (var i = 0; i < goal.red; i++)
+          const DieSymbolMark(symbol: DieSymbol.red),
+      ],
+    );
+  }
+}
+
+class DieSymbolMark extends StatelessWidget {
+  const DieSymbolMark({required this.symbol, super.key});
+
+  final DieSymbol symbol;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = switch (symbol) {
+      DieSymbol.white => Colors.white,
+      DieSymbol.yellow => Colors.orangeAccent,
+      DieSymbol.red => Colors.redAccent,
+    };
+    final foreground = symbol == DieSymbol.white ? Colors.black : Colors.white;
+    return Container(
+      width: 25,
+      height: 25,
+      margin: const EdgeInsets.only(right: 3),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.black54),
+      ),
+      child: Icon(Icons.casino, size: 15, color: foreground),
+    );
+  }
+}
+
+class DamageBadge extends StatelessWidget {
+  const DamageBadge({required this.value, required this.imparable, super.key});
+
+  final int value;
+  final bool imparable;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = imparable ? Colors.redAccent : Colors.white;
+    return Container(
+      width: 28,
+      height: 28,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: imparable
+            ? Colors.redAccent.withValues(alpha: 0.9)
+            : Colors.transparent,
+        shape: BoxShape.circle,
+        border: Border.all(color: color, width: 2),
+      ),
+      child: Text(
+        value.toString(),
+        style: TextStyle(
+          color: imparable ? Colors.white : Colors.white,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class LifeStealBadge extends StatelessWidget {
+  const LifeStealBadge({required this.value, required this.color, super.key});
+
+  final int value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        '-$value / +$value',
+        style: TextStyle(color: color, fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
+
+class _AttackDamage {
+  const _AttackDamage(this.value, {this.imparable = false});
+
+  final int value;
+  final bool imparable;
+}
+
+_AttackDamage? _damageForSymbolGoal(EnemyNode enemy, SymbolGoal goal) {
+  final key = enemy.profileKey;
+  if (key == 'ronin-vagabond') {
+    return _AttackDamage(goal.white + 2);
+  }
+  if (key == 'enchanteur-gobelin') {
+    return const _AttackDamage(4, imparable: true);
+  }
+  if (key == 'archer-de-lombre') {
+    return _AttackDamage(goal.yellow + 3);
+  }
+  if (key == 'ombre-feline') {
+    return _AttackDamage(goal.white + 1);
+  }
+  if (key == 'epeiste-egare') {
+    return _AttackDamage(goal.white + 2);
+  }
+  return null;
+}
+
+_AttackDamage? _suiteDamage(EnemyNode enemy, int length) {
+  final key = enemy.profileKey;
+  if (key == 'fee') {
+    return switch (length) {
+      3 => const _AttackDamage(2, imparable: true),
+      4 => const _AttackDamage(5),
+      5 => const _AttackDamage(6),
+      _ => null,
+    };
+  }
+  if (key == 'elfe-du-chaos') {
+    return switch (length) {
+      3 => const _AttackDamage(4),
+      4 => const _AttackDamage(7),
+      5 => const _AttackDamage(8),
+      _ => null,
+    };
+  }
+  return null;
+}
+
+String _compactDefenseText(String value) {
+  return value
+      .replaceAll('symboles', 'symbols')
+      .replaceAll('symbole', 'symbol')
+      .replaceAll('dés', 'dice')
+      .replaceAll('dé', 'die')
+      .replaceAll('dégâts', 'damage')
+      .replaceAll('dégât', 'damage')
+      .replaceAll('Jet défensif ', '')
+      .replaceAll('Jet defensif ', '');
 }
 
 class FightStatusPanel extends StatefulWidget {
@@ -5397,61 +5913,143 @@ class TurnPhasePanel extends StatelessWidget {
     final heroHasHemorrhage = adventure.alterations.contains('Hémorragie');
     final heroHasRonces = adventure.alterations.contains('Ronces');
     final enemyHasRiposte = enemy.alterations.contains('Riposte');
-    return InfoCard(
+    final reminder = switch (phase) {
+      CombatPhase.hero => [
+        if (enemyHasRiposte) 'Riposte',
+        if (heroHasSilence) 'Silence',
+        if (heroHasHemorrhage) 'Hémorragie',
+        if (heroHasRonces) 'Ronces',
+      ].join(' | '),
+      CombatPhase.minionUpkeep => poisonCount > 0 ? 'Poison x$poisonCount' : '',
+      CombatPhase.minionAttack => '',
+    };
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SegmentedButton<CombatPhase>(
-            segments: CombatPhase.values
-                .map(
-                  (value) =>
-                      ButtonSegment(value: value, label: Text(value.label)),
-                )
-                .toList(),
-            selected: {phase},
-            onSelectionChanged: (values) => onPhaseChanged(values.first),
+          Row(
+            children: [
+              Expanded(
+                child: _CompactPhaseSelector(
+                  phase: phase,
+                  onPhaseChanged: onPhaseChanged,
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 52,
+                height: 44,
+                child: IconButton.filled(
+                  tooltip: phase == CombatPhase.minionUpkeep && !upkeepApplied
+                      ? 'Apply upkeep and continue'
+                      : 'Next phase',
+                  onPressed: () {
+                    if (phase == CombatPhase.minionUpkeep && !upkeepApplied) {
+                      onApplyUpkeep();
+                    }
+                    onNext();
+                  },
+                  icon: const Icon(Icons.arrow_forward),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
-          Text(switch (phase) {
-            CombatPhase.hero => [
-              'Hero turn: apply damage and CP changes, then roll minion defense (${enemy.defenseDice} dice).',
-              if (enemyHasRiposte)
-                'Reminder: Riposte may trigger if the minion loses HP.',
-              if (heroHasSilence)
-                'Silence active: the hero cannot validate a suite.',
-              if (heroHasHemorrhage)
-                'Hémorragie active: resolve it at the beginning of the turn.',
-              if (heroHasRonces)
-                'Ronces active: each reroll after the first costs 1 HP.',
-            ].join('\n'),
-            CombatPhase.minionUpkeep =>
-              poisonCount > 0
-                  ? 'Upkeep: +1 CP for the minion. Poison removes 1 HP per token ($poisonCount).'
-                  : 'Upkeep: +1 CP for the minion.',
-            CombatPhase.minionAttack =>
-              'Minion attack: first roll is automatic, then the app keeps useful dice for the minion plan.',
-          }),
-          const SizedBox(height: 10),
-          if (phase == CombatPhase.minionUpkeep) ...[
-            OutlinedButton.icon(
-              onPressed: upkeepApplied ? null : onApplyUpkeep,
-              icon: const Icon(Icons.auto_fix_high),
-              label: Text(upkeepApplied ? 'Upkeep applied' : 'Apply upkeep'),
+          if (reminder.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              reminder,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: heroAccent,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-            const SizedBox(height: 8),
           ],
-          ImageActionButton(
-            label: 'Next phase',
-            icon: Icons.arrow_forward,
-            onPressed: onNext,
-          ),
         ],
       ),
     );
   }
 }
 
+class _CompactPhaseSelector extends StatelessWidget {
+  const _CompactPhaseSelector({
+    required this.phase,
+    required this.onPhaseChanged,
+  });
+
+  final CombatPhase phase;
+  final ValueChanged<CombatPhase> onPhaseChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: CombatPhase.values.map((value) {
+        final selected = value == phase;
+        return Expanded(
+          child: InkWell(
+            onTap: () => onPhaseChanged(value),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    width: selected ? 30 : 8,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: selected ? heroAccent : Colors.white24,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Container(
+                    height: 36,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? heroAccent.withValues(alpha: 0.18)
+                          : Colors.black.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: selected ? heroAccent : Colors.white24,
+                      ),
+                    ),
+                    child: Icon(
+                      switch (value) {
+                        CombatPhase.hero => Icons.person,
+                        CombatPhase.minionUpkeep => Icons.autorenew,
+                        CombatPhase.minionAttack => Icons.gps_fixed,
+                      },
+                      color: selected ? heroAccent : Colors.white70,
+                      size: 19,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
 enum DieSymbol { white, yellow, red }
+
+DieSymbol _symbolForFace(int face) {
+  if (face == 6) {
+    return DieSymbol.red;
+  }
+  if (face >= 4) {
+    return DieSymbol.yellow;
+  }
+  return DieSymbol.white;
+}
 
 class GameDie {
   GameDie({required this.id});
@@ -5465,13 +6063,7 @@ class GameDie {
     if (face == null) {
       return null;
     }
-    if (face == 6) {
-      return DieSymbol.red;
-    }
-    if (face >= 4) {
-      return DieSymbol.yellow;
-    }
-    return DieSymbol.white;
+    return _symbolForFace(face);
   }
 }
 
@@ -5483,6 +6075,7 @@ class DicePanel extends StatelessWidget {
     required this.editMode,
     required this.rerollOneMode,
     required this.editingDieId,
+    required this.specialAttackMode,
     required this.onDiceToRollChanged,
     required this.onRoll,
     required this.onTapDie,
@@ -5499,6 +6092,7 @@ class DicePanel extends StatelessWidget {
   final bool editMode;
   final bool rerollOneMode;
   final int? editingDieId;
+  final bool specialAttackMode;
   final ValueChanged<int> onDiceToRollChanged;
   final VoidCallback onRoll;
   final ValueChanged<GameDie> onTapDie;
@@ -5509,9 +6103,10 @@ class DicePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rollDice = dice.where((die) => !die.reserved).toList()
+    final visibleDice = specialAttackMode ? dice.take(1).toList() : dice;
+    final rollDice = visibleDice.where((die) => !die.reserved).toList()
       ..sort(_compareDice);
-    final reserveDice = dice.where((die) => die.reserved).toList()
+    final reserveDice = visibleDice.where((die) => die.reserved).toList()
       ..sort(_compareDice);
     final editingDie = editingDieId == null
         ? null
@@ -5564,9 +6159,9 @@ class DicePanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          DiceZone(title: 'Dice to roll', dice: rollDice, onTapDie: onTapDie),
           const SizedBox(height: 10),
+          DiceZone(title: 'Dice to roll', dice: rollDice, onTapDie: onTapDie),
+          const SizedBox(height: 6),
           Row(
             children: [
               Text(
@@ -5586,7 +6181,7 @@ class DicePanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           DiceZone(title: 'Reserve', dice: reserveDice, onTapDie: onTapDie),
           if (editingDie != null) ...[
             const SizedBox(height: 12),
@@ -5639,26 +6234,43 @@ class DiceZone extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: dice
-                .map((die) => DieTile(die: die, onTap: () => onTapDie(die)))
-                .toList(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 5),
+        Container(
+          height: 54,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.22),
+            borderRadius: BorderRadius.circular(8),
+            border: Border(
+              left: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
+            ),
           ),
-        ],
-      ),
+          child: Row(
+            children: [
+              for (final die in dice) ...[
+                DieTile(die: die, onTap: () => onTapDie(die)),
+                const SizedBox(width: 5),
+              ],
+              if (dice.isEmpty)
+                const Expanded(
+                  child: Center(
+                    child: Text(
+                      '--',
+                      style: TextStyle(
+                        color: Colors.white38,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -5682,8 +6294,9 @@ class DieTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        width: 48,
-        height: 48,
+        width: 42,
+        height: 42,
+        constraints: const BoxConstraints(maxWidth: 42),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: value == null ? Colors.white24 : color,
