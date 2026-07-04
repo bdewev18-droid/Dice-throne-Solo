@@ -174,7 +174,8 @@ class MinionAttackPlan {
 }
 
 enum CombatPhase {
-  hero('Hero turn'),
+  heroUpkeep('Hero upkeep'),
+  hero('Hero attack'),
   minionUpkeep('Minion upkeep'),
   minionAttack('Minion attack');
 
@@ -3079,6 +3080,8 @@ class _MapPageState extends State<MapPage> {
                           RewardPage(adventure: widget.adventure, enemy: enemy),
                     ),
                   );
+                  widget.onChanged();
+                  setState(() {});
                 }
               },
             ),
@@ -4299,9 +4302,9 @@ class _FightPageState extends State<FightPage> {
   int? _editingDieId;
   late CombatPhase _phase;
   bool _upkeepApplied = false;
+  bool _heroUpkeepApplied = false;
   bool _specialAttackReady = false;
   bool _specialAttackMode = false;
-  bool _heroCpGrantedForPhase = false;
 
   EnemyNode get enemy => widget.adventure.enemyById(widget.enemyId);
 
@@ -4313,10 +4316,10 @@ class _FightPageState extends State<FightPage> {
     }
     _phase = enemy.alterations.contains('Première Frappe')
         ? CombatPhase.minionAttack
-        : CombatPhase.hero;
+        : CombatPhase.heroUpkeep;
     _configureDiceForPhase(autoRollAttack: _phase == CombatPhase.minionAttack);
-    if (_phase == CombatPhase.hero) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _grantHeroTurnCp());
+    if (_phase == CombatPhase.heroUpkeep) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _applyHeroUpkeep());
     }
   }
 
@@ -4349,6 +4352,16 @@ class _FightPageState extends State<FightPage> {
                 showRewards: false,
                 showVitals: false,
               ),
+              FightStatusPanel(
+                adventure: widget.adventure,
+                enemy: enemy,
+                phase: _phase,
+                onFinish: enemy.health <= 0 ? _finishCombat : null,
+                onChanged: () {
+                  widget.onChanged();
+                  setState(() {});
+                },
+              ),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(16),
@@ -4358,9 +4371,11 @@ class _FightPageState extends State<FightPage> {
                       adventure: widget.adventure,
                       enemy: enemy,
                       upkeepApplied: _upkeepApplied,
+                      heroUpkeepApplied: _heroUpkeepApplied,
                       onPhaseChanged: _setPhase,
                       onNext: _advancePhase,
                       onApplyUpkeep: _applyUpkeep,
+                      onApplyHeroUpkeep: _applyHeroUpkeep,
                     ),
                     const SizedBox(height: 12),
                     EnemyRulesPanel(enemy: enemy),
@@ -4402,16 +4417,6 @@ class _FightPageState extends State<FightPage> {
                     ],
                   ],
                 ),
-              ),
-              FightStatusPanel(
-                adventure: widget.adventure,
-                enemy: enemy,
-                phase: _phase,
-                onFinish: enemy.health <= 0 ? _finishCombat : null,
-                onChanged: () {
-                  widget.onChanged();
-                  setState(() {});
-                },
               ),
             ],
           ),
@@ -4495,8 +4500,8 @@ class _FightPageState extends State<FightPage> {
 
   void _setPhase(CombatPhase phase) {
     setState(() {
-      if (_phase != phase && phase != CombatPhase.hero) {
-        _heroCpGrantedForPhase = false;
+      if (_phase != phase && phase != CombatPhase.heroUpkeep) {
+        _heroUpkeepApplied = false;
       }
       _phase = phase;
       _upkeepApplied = false;
@@ -4504,16 +4509,17 @@ class _FightPageState extends State<FightPage> {
       _specialAttackMode = false;
       _configureDiceForPhase(autoRollAttack: phase == CombatPhase.minionAttack);
     });
-    if (phase == CombatPhase.hero) {
-      _grantHeroTurnCp();
+    if (phase == CombatPhase.heroUpkeep) {
+      _applyHeroUpkeep();
     }
   }
 
   void _advancePhase() {
     final next = switch (_phase) {
+      CombatPhase.heroUpkeep => CombatPhase.hero,
       CombatPhase.hero => CombatPhase.minionUpkeep,
       CombatPhase.minionUpkeep => CombatPhase.minionAttack,
-      CombatPhase.minionAttack => CombatPhase.hero,
+      CombatPhase.minionAttack => CombatPhase.heroUpkeep,
     };
     _setPhase(next);
   }
@@ -4522,7 +4528,8 @@ class _FightPageState extends State<FightPage> {
     _resetDice();
     if (_phase == CombatPhase.hero) {
       _diceToRoll = enemy.defenseDice.clamp(1, 6);
-    } else if (_phase == CombatPhase.minionUpkeep) {
+    } else if (_phase == CombatPhase.heroUpkeep ||
+        _phase == CombatPhase.minionUpkeep) {
       _diceToRoll = 0;
     } else if (_phase == CombatPhase.minionAttack) {
       _diceToRoll = 6;
@@ -4562,16 +4569,16 @@ class _FightPageState extends State<FightPage> {
     return _diceToRoll.clamp(0, 6);
   }
 
-  void _grantHeroTurnCp() {
-    if (!mounted || _heroCpGrantedForPhase || _phase != CombatPhase.hero) {
+  void _applyHeroUpkeep() {
+    if (!mounted || _heroUpkeepApplied || _phase != CombatPhase.heroUpkeep) {
       return;
     }
     setState(() {
-      _heroCpGrantedForPhase = true;
+      _heroUpkeepApplied = true;
       widget.adventure.setHeroPc(
         widget.adventure.combatPoints + GameEngine.combatPointStartGain(),
       );
-      widget.adventure.log('Hero turn: +1 CP.');
+      widget.adventure.log('Hero upkeep: +1 CP.');
       widget.onChanged();
     });
   }
@@ -4861,6 +4868,7 @@ class CompactItemStrip extends StatelessWidget {
                     ? const SizedBox.shrink()
                     : SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
+                        reverse: true,
                         child: Row(
                           children: [
                             ...displayItems.map(
@@ -4929,8 +4937,9 @@ class CompactItemBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 30,
+      constraints: BoxConstraints(minWidth: 30 + max(0, value.length - 2) * 8),
       height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.22),
@@ -5505,18 +5514,15 @@ class DieSymbolMark extends StatelessWidget {
       DieSymbol.yellow => Colors.orangeAccent,
       DieSymbol.red => Colors.redAccent,
     };
-    final foreground = symbol == DieSymbol.white ? Colors.black : Colors.white;
     return Container(
       width: 25,
       height: 25,
       margin: const EdgeInsets.only(right: 3),
-      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: Colors.black54),
       ),
-      child: Icon(Icons.casino, size: 15, color: foreground),
     );
   }
 }
@@ -5624,6 +5630,8 @@ _AttackDamage? _suiteDamage(EnemyNode enemy, int length) {
 
 String _compactDefenseText(String value) {
   return value
+      .replaceAll('jaunes', 'orange')
+      .replaceAll('jaune', 'orange')
       .replaceAll('symboles', 'symbols')
       .replaceAll('symbole', 'symbol')
       .replaceAll('dés', 'dice')
@@ -5669,6 +5677,21 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          CombatantStatusRow.hero(
+            adventure: widget.adventure,
+            onHp: () => _openEditor('heroHp', widget.adventure.health),
+            onCp: () => _openEditor('heroCp', widget.adventure.combatPoints),
+            onEditTokens: _editHeroTokens,
+          ),
+          if (_editing.contains('heroHp')) ...[
+            const SizedBox(height: 6),
+            _buildEditorRow('heroHp'),
+          ],
+          if (_editing.contains('heroCp')) ...[
+            const SizedBox(height: 6),
+            _buildEditorRow('heroCp'),
+          ],
+          const SizedBox(height: 8),
           if (widget.onFinish != null) ...[
             Row(
               children: [
@@ -5685,34 +5708,19 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
             ),
             const SizedBox(height: 6),
           ],
-          if (_editing.contains('enemyHp')) ...[
-            _buildEditorRow('enemyHp'),
-            const SizedBox(height: 6),
-          ],
-          if (_editing.contains('enemyCp')) ...[
-            _buildEditorRow('enemyCp'),
-            const SizedBox(height: 6),
-          ],
           CombatantStatusRow.enemy(
             enemy: widget.enemy,
             onHp: () => _openEditor('enemyHp', widget.enemy.health),
             onCp: () => _openEditor('enemyCp', widget.enemy.combatPoints),
             onEditTokens: _editEnemyTokens,
           ),
-          const SizedBox(height: 8),
-          CombatantStatusRow.hero(
-            adventure: widget.adventure,
-            onHp: () => _openEditor('heroHp', widget.adventure.health),
-            onCp: () => _openEditor('heroCp', widget.adventure.combatPoints),
-            onEditTokens: _editHeroTokens,
-          ),
-          if (_editing.contains('heroHp')) ...[
+          if (_editing.contains('enemyHp')) ...[
             const SizedBox(height: 6),
-            _buildEditorRow('heroHp'),
+            _buildEditorRow('enemyHp'),
           ],
-          if (_editing.contains('heroCp')) ...[
+          if (_editing.contains('enemyCp')) ...[
             const SizedBox(height: 6),
-            _buildEditorRow('heroCp'),
+            _buildEditorRow('enemyCp'),
           ],
         ],
       ),
@@ -6176,9 +6184,11 @@ class TurnPhasePanel extends StatelessWidget {
     required this.adventure,
     required this.enemy,
     required this.upkeepApplied,
+    required this.heroUpkeepApplied,
     required this.onPhaseChanged,
     required this.onNext,
     required this.onApplyUpkeep,
+    required this.onApplyHeroUpkeep,
     super.key,
   });
 
@@ -6186,9 +6196,11 @@ class TurnPhasePanel extends StatelessWidget {
   final AdventureState adventure;
   final EnemyNode enemy;
   final bool upkeepApplied;
+  final bool heroUpkeepApplied;
   final ValueChanged<CombatPhase> onPhaseChanged;
   final VoidCallback onNext;
   final VoidCallback onApplyUpkeep;
+  final VoidCallback onApplyHeroUpkeep;
 
   @override
   Widget build(BuildContext context) {
@@ -6199,12 +6211,16 @@ class TurnPhasePanel extends StatelessWidget {
     final heroHasHemorrhage = adventure.alterations.contains('Hémorragie');
     final heroHasRonces = adventure.alterations.contains('Ronces');
     final enemyHasRiposte = enemy.alterations.contains('Riposte');
+    final nextPhase = _nextCombatPhase(phase);
+    final nextColor = _phaseColor(nextPhase, enemy);
     final reminder = switch (phase) {
+      CombatPhase.heroUpkeep => [
+        if (heroHasHemorrhage) 'Hémorragie',
+        if (heroHasRonces) 'Ronces',
+      ].join(' | '),
       CombatPhase.hero => [
         if (enemyHasRiposte) 'Riposte',
         if (heroHasSilence) 'Silence',
-        if (heroHasHemorrhage) 'Hémorragie',
-        if (heroHasRonces) 'Ronces',
       ].join(' | '),
       CombatPhase.minionUpkeep => poisonCount > 0 ? 'Poison x$poisonCount' : '',
       CombatPhase.minionAttack => '',
@@ -6220,6 +6236,7 @@ class TurnPhasePanel extends StatelessWidget {
               Expanded(
                 child: _CompactPhaseSelector(
                   phase: phase,
+                  enemy: enemy,
                   onPhaseChanged: onPhaseChanged,
                 ),
               ),
@@ -6228,10 +6245,20 @@ class TurnPhasePanel extends StatelessWidget {
                 width: 52,
                 height: 44,
                 child: IconButton.filled(
-                  tooltip: phase == CombatPhase.minionUpkeep && !upkeepApplied
+                  style: IconButton.styleFrom(
+                    backgroundColor: nextColor,
+                    foregroundColor: Colors.black,
+                  ),
+                  tooltip:
+                      (phase == CombatPhase.minionUpkeep && !upkeepApplied) ||
+                          (phase == CombatPhase.heroUpkeep &&
+                              !heroUpkeepApplied)
                       ? 'Apply upkeep and continue'
                       : 'Next phase',
                   onPressed: () {
+                    if (phase == CombatPhase.heroUpkeep && !heroUpkeepApplied) {
+                      onApplyHeroUpkeep();
+                    }
                     if (phase == CombatPhase.minionUpkeep && !upkeepApplied) {
                       onApplyUpkeep();
                     }
@@ -6263,10 +6290,12 @@ class TurnPhasePanel extends StatelessWidget {
 class _CompactPhaseSelector extends StatelessWidget {
   const _CompactPhaseSelector({
     required this.phase,
+    required this.enemy,
     required this.onPhaseChanged,
   });
 
   final CombatPhase phase;
+  final EnemyNode enemy;
   final ValueChanged<CombatPhase> onPhaseChanged;
 
   @override
@@ -6274,6 +6303,7 @@ class _CompactPhaseSelector extends StatelessWidget {
     return Row(
       children: CombatPhase.values.map((value) {
         final selected = value == phase;
+        final accent = _phaseColor(value, enemy);
         return Expanded(
           child: InkWell(
             onTap: () => onPhaseChanged(value),
@@ -6288,7 +6318,7 @@ class _CompactPhaseSelector extends StatelessWidget {
                     width: selected ? 30 : 8,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: selected ? heroAccent : Colors.white24,
+                      color: selected ? accent : Colors.white24,
                       borderRadius: BorderRadius.circular(99),
                     ),
                   ),
@@ -6298,20 +6328,19 @@ class _CompactPhaseSelector extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: selected
-                          ? heroAccent.withValues(alpha: 0.18)
+                          ? accent.withValues(alpha: 0.18)
                           : Colors.black.withValues(alpha: 0.22),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: selected ? heroAccent : Colors.white24,
-                      ),
+                      border: Border.all(color: accent),
                     ),
                     child: Icon(
                       switch (value) {
-                        CombatPhase.hero => Icons.person,
+                        CombatPhase.heroUpkeep => Icons.autorenew,
+                        CombatPhase.hero => Icons.gps_fixed,
                         CombatPhase.minionUpkeep => Icons.autorenew,
                         CombatPhase.minionAttack => Icons.gps_fixed,
                       },
-                      color: selected ? heroAccent : Colors.white70,
+                      color: Colors.white,
                       size: 19,
                     ),
                   ),
@@ -6323,6 +6352,22 @@ class _CompactPhaseSelector extends StatelessWidget {
       }).toList(),
     );
   }
+}
+
+CombatPhase _nextCombatPhase(CombatPhase phase) {
+  return switch (phase) {
+    CombatPhase.heroUpkeep => CombatPhase.hero,
+    CombatPhase.hero => CombatPhase.minionUpkeep,
+    CombatPhase.minionUpkeep => CombatPhase.minionAttack,
+    CombatPhase.minionAttack => CombatPhase.heroUpkeep,
+  };
+}
+
+Color _phaseColor(CombatPhase phase, EnemyNode enemy) {
+  return switch (phase) {
+    CombatPhase.heroUpkeep || CombatPhase.hero => heroAccent,
+    CombatPhase.minionUpkeep || CombatPhase.minionAttack => enemy.rank.color,
+  };
 }
 
 enum DieSymbol { white, yellow, red }
