@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
@@ -4305,6 +4306,8 @@ class _FightPageState extends State<FightPage> {
   bool _heroUpkeepApplied = false;
   bool _specialAttackReady = false;
   bool _specialAttackMode = false;
+  bool _aiMode = true;
+  bool _showManualExtraDicePhase = false;
 
   EnemyNode get enemy => widget.adventure.enemyById(widget.enemyId);
 
@@ -4317,7 +4320,9 @@ class _FightPageState extends State<FightPage> {
     _phase = enemy.alterations.contains('Première Frappe')
         ? CombatPhase.minionAttack
         : CombatPhase.heroUpkeep;
-    _configureDiceForPhase(autoRollAttack: _phase == CombatPhase.minionAttack);
+    _configureDiceForPhase(
+      autoRollAttack: _aiMode && _phase == CombatPhase.minionAttack,
+    );
     if (_phase == CombatPhase.heroUpkeep) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _applyHeroUpkeep());
     }
@@ -4340,8 +4345,14 @@ class _FightPageState extends State<FightPage> {
                 adventure: widget.adventure,
                 onDetails: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) =>
-                        AdventureDetailsPage(adventure: widget.adventure),
+                    builder: (_) => AdventureDetailsPage(
+                      adventure: widget.adventure,
+                      combatEnemy: enemy,
+                      combatPhase: _phase,
+                      combatDice: _dice,
+                      aiMode: _aiMode,
+                      rollCount: _rollCount,
+                    ),
                   ),
                 ),
                 onChanged: () {
@@ -4378,7 +4389,50 @@ class _FightPageState extends State<FightPage> {
                       onApplyHeroUpkeep: _applyHeroUpkeep,
                     ),
                     const SizedBox(height: 12),
-                    EnemyRulesPanel(enemy: enemy),
+                    EnemyRulesPanel(
+                      enemy: enemy,
+                      phase: _phase,
+                      aiMode: _aiMode,
+                      onAiModeChanged: (value) {
+                        setState(() {
+                          _aiMode = value;
+                          _configureDiceForPhase(
+                            autoRollAttack:
+                                _aiMode && _phase == CombatPhase.minionAttack,
+                          );
+                        });
+                      },
+                    ),
+                    if (_aiMode) ...[
+                      const SizedBox(height: 12),
+                      MinionAiPanel(
+                        enemy: enemy,
+                        phase: _phase,
+                        dice: _dice,
+                        adventure: widget.adventure,
+                        rollCount: _rollCount,
+                        onNextStep: _handleAiNextStep,
+                        onInteract: _openAiInteraction,
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => setState(
+                          () => _showManualExtraDicePhase =
+                              !_showManualExtraDicePhase,
+                        ),
+                        icon: const Icon(Icons.add_circle_outline),
+                        label: Text(
+                          _showManualExtraDicePhase
+                              ? 'Hide extra dice phase'
+                              : 'Add dice phase',
+                        ),
+                      ),
+                      if (_showManualExtraDicePhase) ...[
+                        const SizedBox(height: 8),
+                        const ManualExtraDicePhasePanel(),
+                      ],
+                    ],
                     const SizedBox(height: 12),
                     DicePanel(
                       dice: _dice,
@@ -4456,7 +4510,7 @@ class _FightPageState extends State<FightPage> {
       widget.adventure.log(
         'Roll $_rollCount: ${rollable.map((die) => die.value).join(', ')}.',
       );
-      if (_phase == CombatPhase.minionAttack) {
+      if (_phase == CombatPhase.minionAttack && _aiMode) {
         _applyMinionDiceStrategy();
       }
       widget.onChanged();
@@ -4467,6 +4521,98 @@ class _FightPageState extends State<FightPage> {
         _specialAttackReady = _shouldResolveSpecialAttack();
       }
     });
+  }
+
+  Future<void> _handleAiNextStep() async {
+    if (_phase == CombatPhase.heroUpkeep) {
+      if (!_heroUpkeepApplied) {
+        _applyHeroUpkeep();
+      }
+      _advancePhase();
+      return;
+    }
+    if (_phase == CombatPhase.minionUpkeep) {
+      if (!_upkeepApplied) {
+        _applyUpkeep();
+      }
+      _advancePhase();
+      return;
+    }
+    if (_phase == CombatPhase.minionAttack && _rollCount < 3) {
+      _rollDice();
+      return;
+    }
+    _advancePhase();
+  }
+
+  Future<void> _openAiInteraction() async {
+    final controller = TextEditingController();
+    final text = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('AI interaction'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          minLines: 3,
+          maxLines: 5,
+          decoration: const InputDecoration(
+            hintText: 'Example: -1 CP, change 2 to 3',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
+    if (text == null || text.trim().isEmpty || !mounted) {
+      return;
+    }
+    setState(() {
+      _applyAiInteraction(text);
+      widget.adventure.log('AI interaction: $text');
+      widget.onChanged();
+    });
+  }
+
+  void _applyAiInteraction(String text) {
+    final lower = text.toLowerCase();
+    if (lower.contains('cp') &&
+        (lower.contains('-1') || lower.contains('moins 1'))) {
+      widget.adventure.setHeroPc(widget.adventure.combatPoints - 1);
+    }
+    final changeMatch = RegExp(
+      r'(?:change|changer|modifie|modifier)[^\d]*(\d)[^\d]+(?:en|to)[^\d]*(\d)',
+      caseSensitive: false,
+    ).firstMatch(text);
+    if (changeMatch != null) {
+      final from = int.tryParse(changeMatch.group(1) ?? '');
+      final to = int.tryParse(changeMatch.group(2) ?? '');
+      if (from != null && to != null) {
+        GameDie? die;
+        for (final candidate in _dice) {
+          if (candidate.value == from) {
+            die = candidate;
+            break;
+          }
+        }
+        if (die != null) {
+          die
+            ..value = to.clamp(1, 6)
+            ..reserved = false;
+        }
+      }
+    }
+    if (_phase == CombatPhase.minionAttack && _aiMode) {
+      _applyMinionDiceStrategy();
+    }
   }
 
   void _tapDie(GameDie die) {
@@ -4507,7 +4653,9 @@ class _FightPageState extends State<FightPage> {
       _upkeepApplied = false;
       _specialAttackReady = false;
       _specialAttackMode = false;
-      _configureDiceForPhase(autoRollAttack: phase == CombatPhase.minionAttack);
+      _configureDiceForPhase(
+        autoRollAttack: _aiMode && phase == CombatPhase.minionAttack,
+      );
     });
     if (phase == CombatPhase.heroUpkeep) {
       _applyHeroUpkeep();
@@ -5077,16 +5225,26 @@ class HeroCombatPanel extends StatelessWidget {
 }
 
 class EnemyRulesPanel extends StatefulWidget {
-  const EnemyRulesPanel({required this.enemy, super.key});
+  const EnemyRulesPanel({
+    required this.enemy,
+    required this.phase,
+    required this.aiMode,
+    required this.onAiModeChanged,
+    super.key,
+  });
 
   final EnemyNode enemy;
+  final CombatPhase phase;
+  final bool aiMode;
+  final ValueChanged<bool> onAiModeChanged;
 
   @override
   State<EnemyRulesPanel> createState() => _EnemyRulesPanelState();
 }
 
 class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
-  bool _showAttack = true;
+  bool _showAttack = false;
+  bool _showDefense = false;
 
   EnemyNode get enemy => widget.enemy;
 
@@ -5117,46 +5275,69 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  enemy.label,
-                  style: TextStyle(
-                    color: enemy.rank.color,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Text(
+                    enemy.label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: enemy.rank.color,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
+              ),
+              const SizedBox(width: 8),
+              _AiModeSwitch(
+                enabled: widget.aiMode,
+                color: enemy.rank.color,
+                onChanged: widget.onAiModeChanged,
               ),
             ],
           ),
           const SizedBox(height: 8),
-          SegmentedButton<bool>(
-            showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(
-                value: true,
-                icon: Icon(Icons.gps_fixed, size: 18),
-                label: Text('Attack'),
-              ),
-              ButtonSegment(
-                value: false,
-                icon: Icon(Icons.shield, size: 18),
-                label: Text('Defense'),
-              ),
-            ],
-            selected: {_showAttack},
-            onSelectionChanged: (values) =>
-                setState(() => _showAttack = values.first),
-          ),
-          const SizedBox(height: 10),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 180),
-            child: _showAttack
-                ? MinionAttackSummary(enemy: enemy, key: const ValueKey('atk'))
-                : MinionDefenseSummary(
-                    enemy: enemy,
-                    key: const ValueKey('def'),
-                  ),
-          ),
+          if (widget.aiMode)
+            Column(
+              children: [
+                _CollapsibleRulesLine(
+                  label: 'Attack',
+                  icon: Icons.gps_fixed,
+                  color: enemy.rank.color,
+                  expanded: _showAttack,
+                  onTap: () => setState(() => _showAttack = !_showAttack),
+                  child: MinionAttackSummary(enemy: enemy),
+                ),
+                const SizedBox(height: 8),
+                _CollapsibleRulesLine(
+                  label: 'Defense',
+                  icon: Icons.shield,
+                  color: enemy.rank.color,
+                  expanded: _showDefense,
+                  onTap: () => setState(() => _showDefense = !_showDefense),
+                  child: MinionDefenseSummary(enemy: enemy),
+                ),
+              ],
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Attack',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 6),
+                MinionAttackSummary(enemy: enemy),
+                const SizedBox(height: 10),
+                const Text(
+                  'Defense',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 6),
+                MinionDefenseSummary(enemy: enemy),
+              ],
+            ),
         ],
       ),
     );
@@ -5188,6 +5369,97 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AiModeSwitch extends StatelessWidget {
+  const _AiModeSwitch({
+    required this.enabled,
+    required this.color,
+    required this.onChanged,
+  });
+
+  final bool enabled;
+  final Color color;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<bool>(
+      showSelectedIcon: false,
+      style: ButtonStyle(
+        visualDensity: VisualDensity.compact,
+        side: WidgetStatePropertyAll(BorderSide(color: color)),
+      ),
+      segments: const [
+        ButtonSegment(value: true, label: Text('AI')),
+        ButtonSegment(value: false, label: Text('Manual')),
+      ],
+      selected: {enabled},
+      onSelectionChanged: (values) => onChanged(values.first),
+    );
+  }
+}
+
+class _CollapsibleRulesLine extends StatelessWidget {
+  const _CollapsibleRulesLine({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.expanded,
+    required this.onTap,
+    required this.child,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final bool expanded;
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      decoration: BoxDecoration(
+        color: expanded ? color.withValues(alpha: 0.1) : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(icon, color: Colors.white, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                  Icon(
+                    expanded ? Icons.expand_less : Icons.expand_more,
+                    color: color,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+              child: child,
+            ),
+        ],
       ),
     );
   }
@@ -5332,10 +5604,7 @@ class EnemyObjectivePreview extends StatelessWidget {
         const SizedBox(width: 8),
         Flexible(
           child: switch (enemy.attackPlan.style) {
-            MinionAttackStyle.suite => const Text(
-              'Suite',
-              style: TextStyle(fontWeight: FontWeight.w900),
-            ),
+            MinionAttackStyle.suite => const SuiteGoalView(length: 4),
             MinionAttackStyle.symbols => SymbolGoalView(
               goal: enemy.attackPlan.goals.isEmpty
                   ? const SymbolGoal()
@@ -5408,6 +5677,260 @@ class MinionDefenseSummary extends StatelessWidget {
   }
 }
 
+class MinionAiPanel extends StatelessWidget {
+  const MinionAiPanel({
+    required this.enemy,
+    required this.phase,
+    required this.dice,
+    required this.adventure,
+    required this.rollCount,
+    required this.onNextStep,
+    required this.onInteract,
+    super.key,
+  });
+
+  final EnemyNode enemy;
+  final CombatPhase phase;
+  final List<GameDie> dice;
+  final AdventureState adventure;
+  final int rollCount;
+  final VoidCallback onNextStep;
+  final VoidCallback onInteract;
+
+  @override
+  Widget build(BuildContext context) {
+    final message = _aiMessageFor(enemy, phase, dice, rollCount);
+    return InfoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.smart_toy, color: enemy.rank.color),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Minion AI',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (final die in dice.take(6))
+                DieTile(
+                  die: die,
+                  onTap: () {},
+                  compact: true,
+                  highlight: die.reserved,
+                  highlightColor: enemy.rank.color,
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: enemy.rank.color.withValues(alpha: 0.7),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (phase == CombatPhase.minionAttack) ...[
+                  Text(
+                    '${enemy.label}: ${enemy.health} HP, ${enemy.combatPoints} CP, ${enemy.alterations.length} tokens.',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 6),
+                ],
+                Text(message),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onNextStep,
+                  icon: const Icon(Icons.skip_next),
+                  label: const Text('Next AI step'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onInteract,
+                  icon: const Icon(Icons.touch_app),
+                  label: const Text('Intervene'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _aiMessageFor(
+  EnemyNode enemy,
+  CombatPhase phase,
+  List<GameDie> dice,
+  int rollCount,
+) {
+  return switch (phase) {
+    CombatPhase.heroUpkeep =>
+      'Hero upkeep is automated for CP. No minion dice action.',
+    CombatPhase.hero =>
+      'Hero attack phase: AI is idle. Roll minion defense if needed.',
+    CombatPhase.minionUpkeep =>
+      'Minion upkeep is automated for CP. Token dice will appear here when required.',
+    CombatPhase.minionAttack => _minionAttackAiMessage(enemy, dice, rollCount),
+  };
+}
+
+String _minionAttackAiMessage(
+  EnemyNode enemy,
+  List<GameDie> dice,
+  int rollCount,
+) {
+  final rolled = dice.where((die) => die.value != null).toList();
+  if (rollCount == 0 || rolled.isEmpty) {
+    if (enemy.attackPlan.style == MinionAttackStyle.suite) {
+      return 'I use ${enemy.attacks.first}. First target: micro suite, then I will try to improve.';
+    }
+    return 'I use ${enemy.attacks.first}. First target: the smallest valid symbol attack.';
+  }
+
+  final values = rolled.map((die) => die.value!).toList()..sort();
+  final kept =
+      rolled.where((die) => die.reserved).map((die) => die.value!).toList()
+        ..sort();
+
+  if (enemy.attackPlan.style == MinionAttackStyle.suite) {
+    final best = _bestSuiteLength(values);
+    if (best >= 5) {
+      return 'Large suite validated with ${values.join('/')}. I can apply the strongest suite result.';
+    }
+    if (best == 4) {
+      return 'Small suite validated with ${values.join('/')}. I can hit, then try to improve if one roll remains.';
+    }
+    if (best == 3) {
+      return 'Micro suite validated. Kept dice: ${kept.join('/')}. I can keep rolling to improve.';
+    }
+    return 'No suite yet. I keep ${kept.isEmpty ? 'nothing' : kept.join('/')} and continue looking for connected values.';
+  }
+
+  return kept.isEmpty
+      ? 'No valid symbol set yet. I reroll toward the first attack.'
+      : 'I keep ${kept.join('/')} and try to improve the attack.';
+}
+
+int _bestSuiteLength(List<int> values) {
+  final unique = values.toSet();
+  for (final suite in const [
+    [1, 2, 3, 4, 5],
+    [2, 3, 4, 5, 6],
+    [1, 2, 3, 4],
+    [2, 3, 4, 5],
+    [3, 4, 5, 6],
+    [1, 2, 3],
+    [2, 3, 4],
+    [3, 4, 5],
+    [4, 5, 6],
+  ]) {
+    if (suite.every(unique.contains)) {
+      return suite.length;
+    }
+  }
+  return 0;
+}
+
+class ManualExtraDicePhasePanel extends StatefulWidget {
+  const ManualExtraDicePhasePanel({super.key});
+
+  @override
+  State<ManualExtraDicePhasePanel> createState() =>
+      _ManualExtraDicePhasePanelState();
+}
+
+class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
+  final _random = Random();
+  late final List<GameDie> _dice = List.generate(
+    6,
+    (index) => GameDie(id: index),
+  );
+  int _diceToRoll = 1;
+  int _rollCount = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleDice = _dice.take(_diceToRoll.clamp(0, 6)).toList();
+    return InfoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Extra dice phase',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                ),
+              ),
+              DropdownButton<int>(
+                value: _diceToRoll,
+                items: [0, 1, 2, 3, 4, 5, 6]
+                    .map(
+                      (count) => DropdownMenuItem(
+                        value: count,
+                        child: Text('$count dice'),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _diceToRoll = value);
+                  }
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (final die in visibleDice)
+                DieTile(die: die, onTap: () {}, compact: true),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ImageActionButton(
+            label: _rollCount == 0 ? 'Roll' : 'Reroll',
+            icon: Icons.casino,
+            onPressed: _diceToRoll <= 0
+                ? null
+                : () => setState(() {
+                    for (final die in visibleDice) {
+                      die.value = _random.nextInt(6) + 1;
+                    }
+                    _rollCount++;
+                  }),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ObjectiveRow extends StatelessWidget {
   const _ObjectiveRow({required this.label, required this.symbols});
 
@@ -5471,11 +5994,39 @@ class _SuiteLine extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
-          Expanded(child: Text('$length consecutive values')),
+          Expanded(child: SuiteGoalView(length: length)),
           if (damage != null)
             DamageBadge(value: damage!.value, imparable: damage!.imparable),
         ],
       ),
+    );
+  }
+}
+
+class SuiteGoalView extends StatelessWidget {
+  const SuiteGoalView({required this.length, super.key});
+
+  final int length;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = length.clamp(1, 5);
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        for (var index = 0; index < count; index++)
+          Container(
+            width: 18 + index * 4,
+            height: 18 + index * 4,
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.white, width: 1.5),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -6609,10 +7160,20 @@ class DiceZone extends StatelessWidget {
 }
 
 class DieTile extends StatelessWidget {
-  const DieTile({required this.die, required this.onTap, super.key});
+  const DieTile({
+    required this.die,
+    required this.onTap,
+    this.compact = false,
+    this.highlight = false,
+    this.highlightColor,
+    super.key,
+  });
 
   final GameDie die;
   final VoidCallback onTap;
+  final bool compact;
+  final bool highlight;
+  final Color? highlightColor;
 
   @override
   Widget build(BuildContext context) {
@@ -6627,19 +7188,22 @@ class DieTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        width: 42,
-        height: 42,
-        constraints: const BoxConstraints(maxWidth: 42),
+        width: compact ? 34 : 42,
+        height: compact ? 34 : 42,
+        constraints: BoxConstraints(maxWidth: compact ? 34 : 42),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: value == null ? Colors.white24 : color,
           borderRadius: BorderRadius.circular(8),
+          border: highlight
+              ? Border.all(color: highlightColor ?? heroAccent, width: 3)
+              : null,
         ),
         child: Text(
           value?.toString() ?? '-',
           style: TextStyle(
             color: value == null ? Colors.white : textColor,
-            fontSize: 22,
+            fontSize: compact ? 18 : 22,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -6773,14 +7337,36 @@ class _RewardPageState extends State<RewardPage> {
 }
 
 class AdventureDetailsPage extends StatelessWidget {
-  const AdventureDetailsPage({required this.adventure, super.key});
+  const AdventureDetailsPage({
+    required this.adventure,
+    this.combatEnemy,
+    this.combatPhase,
+    this.combatDice = const [],
+    this.aiMode,
+    this.rollCount,
+    super.key,
+  });
 
   final AdventureState adventure;
+  final EnemyNode? combatEnemy;
+  final CombatPhase? combatPhase;
+  final List<GameDie> combatDice;
+  final bool? aiMode;
+  final int? rollCount;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Run details')),
+      appBar: AppBar(
+        title: const Text('Run details'),
+        actions: [
+          IconButton(
+            tooltip: 'Export JSON',
+            onPressed: () => _openExport(context),
+            icon: const Icon(Icons.ios_share),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -6799,6 +7385,106 @@ class AdventureDetailsPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _openExport(BuildContext context) {
+    final jsonText = const JsonEncoder.withIndent(
+      '  ',
+    ).convert(_combatExportPayload());
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Combat export'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: SelectableText(
+              jsonText,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: jsonText));
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('JSON copied.')));
+            },
+            icon: const Icon(Icons.copy),
+            label: const Text('Copy JSON'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Map<String, dynamic> _combatExportPayload() {
+    final enemy = combatEnemy;
+    return {
+      'exportVersion': 1,
+      'createdAt': DateTime.now().toIso8601String(),
+      'run': {
+        'hero': adventure.hero.label,
+        'mode': adventure.config.label,
+        'score': adventure.score,
+        'targetScore': adventure.targetScore,
+        'elapsed': adventure.elapsed.inSeconds,
+        'rewards': adventure.bonuses,
+        'logs': adventure.logs,
+      },
+      'heroState': {
+        'hp': adventure.health,
+        'cp': adventure.combatPoints,
+        'tokens': adventure.alterations,
+      },
+      if (enemy != null)
+        'combat': {
+          'phase': combatPhase?.name,
+          'aiMode': aiMode,
+          'rollCount': rollCount,
+          'enemy': {
+            'id': enemy.id,
+            'profileKey': enemy.profileKey,
+            'name': enemy.label,
+            'rank': enemy.rank.name,
+            'hp': enemy.health,
+            'maxHp': enemy.maxHealth,
+            'cp': enemy.combatPoints,
+            'tokens': enemy.alterations,
+            'attacks': enemy.attacks,
+            'defense': enemy.defense,
+            'defenseDice': enemy.defenseDice,
+            'attackPlan': {
+              'style': enemy.attackPlan.style.name,
+              'goals': enemy.attackPlan.goals
+                  .map(
+                    (goal) => {
+                      'white': goal.white,
+                      'orange': goal.yellow,
+                      'red': goal.red,
+                    },
+                  )
+                  .toList(),
+            },
+          },
+          'dice': combatDice
+              .map(
+                (die) => {
+                  'id': die.id,
+                  'value': die.value,
+                  'symbol': die.symbol?.name,
+                  'reserved': die.reserved,
+                },
+              )
+              .toList(),
+        },
+    };
   }
 }
 
