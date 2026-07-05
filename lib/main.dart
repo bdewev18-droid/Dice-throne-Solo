@@ -174,6 +174,94 @@ class MinionAttackPlan {
   final List<SymbolGoal> goals;
 }
 
+class MinionDiceDecision {
+  const MinionDiceDecision({required this.values, required this.reason});
+
+  final List<int> values;
+  final String reason;
+}
+
+class MinionDiceEngine {
+  const MinionDiceEngine._();
+
+  static MinionDiceDecision chooseSuiteHold(List<GameDie> dice) {
+    final values =
+        dice.where((die) => die.value != null).map((die) => die.value!).toList()
+          ..sort();
+    final unique = values.toSet();
+
+    final complete = _bestCompleteSuite(unique);
+    if (complete.isNotEmpty) {
+      return MinionDiceDecision(
+        values: complete,
+        reason: '${complete.length}-value suite already validated.',
+      );
+    }
+
+    final pair = _bestAdjacentPair(unique);
+    if (pair.isNotEmpty) {
+      return MinionDiceDecision(
+        values: pair,
+        reason:
+            'Keeping ${pair.join('/')} because it is the best micro-suite start.',
+      );
+    }
+
+    if (unique.contains(3)) {
+      return const MinionDiceDecision(
+        values: [3],
+        reason: 'Keeping 3 as a central suite pivot.',
+      );
+    }
+    if (unique.contains(4)) {
+      return const MinionDiceDecision(
+        values: [4],
+        reason: 'Keeping 4 as a central suite pivot.',
+      );
+    }
+
+    return const MinionDiceDecision(
+      values: [],
+      reason: 'No connected values or central pivot found.',
+    );
+  }
+
+  static List<int> _bestCompleteSuite(Set<int> values) {
+    for (final suite in const [
+      [1, 2, 3, 4, 5],
+      [2, 3, 4, 5, 6],
+      [1, 2, 3, 4],
+      [2, 3, 4, 5],
+      [3, 4, 5, 6],
+      [1, 2, 3],
+      [2, 3, 4],
+      [3, 4, 5],
+      [4, 5, 6],
+    ]) {
+      if (suite.every(values.contains)) {
+        return suite;
+      }
+    }
+    return const [];
+  }
+
+  static List<int> _bestAdjacentPair(Set<int> values) {
+    const pairs = [
+      [2, 3],
+      [3, 4],
+      [4, 5],
+      [1, 2],
+      [5, 6],
+    ];
+    for (final pair in pairs) {
+      if (pair.every(values.contains)) {
+        return pair;
+      }
+    }
+    return const [];
+  }
+}
+
 enum CombatPhase {
   heroUpkeep('Hero upkeep'),
   hero('Hero attack'),
@@ -435,6 +523,102 @@ const List<EnemyProfile> greenEnemyProfiles = [
   ),
 ];
 
+final List<EnemyProfile> generatedGreenEnemyProfiles = _genericAssetProfiles(
+  rank: EnemyRank.green,
+  folder: 'vert',
+  files: const [
+    'vert-011.png',
+    'vert-012.png',
+    'vert-013.png',
+    'vert-014.png',
+    'vert-015.png',
+    'vert-016.png',
+    'vert-017.png',
+    'vert-018.png',
+    'vert-019.png',
+    'vert-020.png',
+    'vert-021.png',
+  ],
+);
+
+final List<EnemyProfile> blueEnemyProfiles = _genericAssetProfiles(
+  rank: EnemyRank.blue,
+  folder: 'bleu',
+  files: const [
+    'bleu-001.png',
+    'bleu-002.png',
+    'bleu-003.png',
+    'bleu-004.png',
+    'bleu-005.png',
+    'bleu-006.png',
+    'bleu-007.png',
+    'bleu-008.png',
+    'bleu-009.png',
+    'bleu-010.png',
+    'bleu-011.png',
+    'bleu-012.png',
+    'bleu-013.png',
+    'bleu-014.png',
+    'bleu-015.png',
+    'bleu-016.png',
+    'bleu-017.png',
+    'bleu-018.png',
+    'bleu-019.png',
+    'bleu-020.png',
+    'bleu-021.png',
+    'bleu-022.png',
+    'bleu-023.png',
+    'vert-022.png',
+    'vert-023.png',
+  ],
+);
+
+final List<EnemyProfile> violetEnemyProfiles = _genericAssetProfiles(
+  rank: EnemyRank.violet,
+  folder: 'violet',
+  files: const [
+    'violet-001.png',
+    'violet-002.png',
+    'violet-003.png',
+    'violet-004.png',
+    'violet-005.png',
+    'violet-006.png',
+    'violet-007.png',
+    'violet-008.png',
+    'violet-009.png',
+    'violet-010.png',
+    'violet-011.png',
+    'violet-012.png',
+    'violet-013.png',
+    'violet-014.png',
+    'violet-015.png',
+    'violet-016.png',
+    'violet-017.png',
+    'violet-018.png',
+    'violet-019.png',
+    'violet-020.png',
+    'violet-021.png',
+  ],
+);
+
+final List<EnemyProfile> orangeEnemyProfiles = _genericAssetProfiles(
+  rank: EnemyRank.orange,
+  folder: 'orange',
+  files: const [
+    'orange-001.png',
+    'orange-002.png',
+    'orange-003.png',
+    'orange-004.png',
+    'orange-005.png',
+    'orange-006.png',
+    'orange-007.png',
+    'orange-008.png',
+    'orange-009.png',
+    'orange-010.png',
+    'orange-011.png',
+  ],
+);
+
 const EnemyProfile fallbackGreenProfile = EnemyProfile(
   key: 'green-fallback',
   name: 'Level 1 Minion',
@@ -448,14 +632,126 @@ const EnemyProfile fallbackGreenProfile = EnemyProfile(
   attackPlan: MinionAttackPlan.none(),
 );
 
+List<EnemyProfile> _genericAssetProfiles({
+  required EnemyRank rank,
+  required String folder,
+  required List<String> files,
+}) {
+  return [
+    for (final file in files)
+      EnemyProfile(
+        key: '$folder-${file.replaceAll('.png', '')}',
+        name: '${rank.label} ${file.replaceAll('.png', '').toUpperCase()}',
+        rank: rank,
+        maxHealth: _genericHealthFor(rank),
+        pc: _genericPcFor(rank),
+        cardAsset: 'assets/$folder/$file',
+        attacks: _genericAttacksFor(rank),
+        defense: _genericDefenseFor(rank),
+        defenseDice: _genericDefenseDiceFor(rank),
+        attackPlan: _genericAttackPlanFor(rank),
+      ),
+  ];
+}
+
+int _genericHealthFor(EnemyRank rank) {
+  return switch (rank) {
+    EnemyRank.green => 10,
+    EnemyRank.blue => 13,
+    EnemyRank.violet => 16,
+    EnemyRank.viseer => 20,
+    EnemyRank.orange => 20,
+  };
+}
+
+int _genericPcFor(EnemyRank rank) {
+  return switch (rank) {
+    EnemyRank.green => 1,
+    EnemyRank.blue => 2,
+    EnemyRank.violet => 3,
+    EnemyRank.viseer => 0,
+    EnemyRank.orange => 5,
+  };
+}
+
+int _genericDefenseDiceFor(EnemyRank rank) {
+  return switch (rank) {
+    EnemyRank.green => 2,
+    EnemyRank.blue => 3,
+    EnemyRank.violet => 4,
+    EnemyRank.viseer => 4,
+    EnemyRank.orange => 4,
+  };
+}
+
+List<String> _genericAttacksFor(EnemyRank rank) {
+  return switch (rank) {
+    EnemyRank.green => const [
+      'Level 1 assault',
+      '3 matching symbols: inflige 4 dégâts.',
+      '4 matching symbols: inflige 5 dégâts.',
+    ],
+    EnemyRank.blue => const [
+      'Level 2 assault',
+      '3 matching symbols: inflige 5 dégâts.',
+      '4 matching symbols: inflige 7 dégâts.',
+    ],
+    EnemyRank.violet => const [
+      'Level 3 assault',
+      '3 matching symbols: inflige 6 dégâts.',
+      '4 matching symbols: inflige 8 dégâts.',
+      '5 matching symbols: inflige 10 dégâts.',
+    ],
+    EnemyRank.viseer => const ['Special rules'],
+    EnemyRank.orange => const [
+      'Level 4 assault',
+      '4 matching symbols: inflige 9 dégâts.',
+      '5 matching symbols: inflige 12 dégâts.',
+    ],
+  };
+}
+
+String _genericDefenseFor(EnemyRank rank) {
+  return switch (rank) {
+    EnemyRank.green => 'Jet défensif 2 dés: prévient 1 dégât.',
+    EnemyRank.blue => 'Jet défensif 3 dés: prévient 2 dégâts.',
+    EnemyRank.violet => 'Jet défensif 4 dés: prévient 3 dégâts.',
+    EnemyRank.viseer => 'Defense roll 4 dice.',
+    EnemyRank.orange => 'Jet défensif 4 dés: prévient 4 dégâts.',
+  };
+}
+
+MinionAttackPlan _genericAttackPlanFor(EnemyRank rank) {
+  return switch (rank) {
+    EnemyRank.green => const MinionAttackPlan.symbols([SymbolGoal(yellow: 3)]),
+    EnemyRank.blue => const MinionAttackPlan.symbols([SymbolGoal(yellow: 4)]),
+    EnemyRank.violet => const MinionAttackPlan.symbols([
+      SymbolGoal(yellow: 4),
+      SymbolGoal(yellow: 5),
+    ]),
+    EnemyRank.viseer => const MinionAttackPlan.none(),
+    EnemyRank.orange => const MinionAttackPlan.symbols([
+      SymbolGoal(yellow: 4, red: 1),
+    ]),
+  };
+}
+
 List<EnemyProfile> _recipeProfilesFor(EnemyRank rank) {
-  final profiles = rank == EnemyRank.green
-      ? [...greenEnemyProfiles]
-      : [_defaultProfileFor(rank)];
+  final profiles = _profilesForRank(rank);
   profiles.sort(
     (a, b) => _recipeProfileCode(a).compareTo(_recipeProfileCode(b)),
   );
   return profiles;
+}
+
+List<EnemyProfile> _profilesForRank(EnemyRank rank) {
+  return switch (rank) {
+    EnemyRank.green => [...greenEnemyProfiles, ...generatedGreenEnemyProfiles],
+    EnemyRank.blue => [...blueEnemyProfiles],
+    EnemyRank.violet => [...violetEnemyProfiles],
+    EnemyRank.viseer => [_defaultProfileFor(EnemyRank.viseer)],
+    EnemyRank.orange => [...orangeEnemyProfiles],
+  };
 }
 
 String _recipeProfileLabel(EnemyProfile profile) {
@@ -472,15 +768,33 @@ String _recipeProfileCode(EnemyProfile profile) {
     'epeiste-egare' => 'Vert008',
     'elfe-du-chaos' => 'Vert009',
     'oni-delirant' => 'Vert010',
-    _ => '${profile.rank.name.toUpperCase()}000',
+    _ => _genericProfileCode(profile),
   };
+}
+
+String _genericProfileCode(EnemyProfile profile) {
+  final assetName = profile.cardAsset.split('/').last.split('.').first;
+  final parts = assetName.split('-');
+  if (parts.length >= 2) {
+    final prefix = parts.first;
+    final number = parts.last;
+    return '${prefix[0].toUpperCase()}${prefix.substring(1)}$number';
+  }
+  return '${profile.rank.name.toUpperCase()}000';
 }
 
 EnemyProfile? _profileByKey(String? key) {
   if (key == null) {
     return null;
   }
-  for (final profile in [...greenEnemyProfiles, fallbackGreenProfile]) {
+  for (final profile in [
+    ...greenEnemyProfiles,
+    ...generatedGreenEnemyProfiles,
+    ...blueEnemyProfiles,
+    ...violetEnemyProfiles,
+    ...orangeEnemyProfiles,
+    fallbackGreenProfile,
+  ]) {
     if (profile.key == key) {
       return profile;
     }
@@ -1196,13 +1510,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
             _saveActiveAdventure();
             appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
           },
-          onAbandon: () {
-            _recordAdventure(adventure);
-            _activeAdventure = null;
-            _store.clear();
-            setState(() {});
-            appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
-          },
+          onAbandon: () => _abandonAdventure(adventure),
           onChangeHero: () => _openHeroChoice(context),
           onReplay: () {
             final next = AdventureState(hero: hero, config: config);
@@ -1238,6 +1546,17 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
         _store.clear();
       }
     });
+  }
+
+  Future<void> _abandonAdventure(AdventureState adventure) async {
+    _recordAdventure(adventure);
+    _activeAdventure = null;
+    await _store.clear();
+    if (!mounted) {
+      return;
+    }
+    setState(() {});
+    appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
   }
 
   Future<void> _stopActiveCampaign() async {
@@ -3329,12 +3648,13 @@ class _MapHeaderState extends State<MapHeader> {
             const SizedBox(height: 8),
             CompactItemStrip(
               label: 'Rewards',
-              emptyText: 'No reward yet',
+              emptyText: 'Rewards',
               items: adventure.bonuses,
               accent: heroAccent,
               background: Colors.black.withValues(alpha: 0.32),
               border: heroAccent,
               compactDuplicates: false,
+              leading: Icon(Icons.emoji_events, color: heroAccent, size: 18),
             ),
           ],
           if (_editing != null) ...[
@@ -3654,7 +3974,7 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
   );
   late EnemyProfile _selected = _profiles.firstWhere(
     (profile) => profile.key == widget.enemy.profileKey,
-    orElse: () => _profiles.first,
+    orElse: () => _profiles[Random().nextInt(_profiles.length)],
   );
 
   @override
@@ -4318,7 +4638,7 @@ class _FightPageState extends State<FightPage> {
       _dice.add(GameDie(id: i));
     }
     _phase = enemy.alterations.contains('Première Frappe')
-        ? CombatPhase.minionAttack
+        ? CombatPhase.minionUpkeep
         : CombatPhase.heroUpkeep;
     _configureDiceForPhase(
       autoRollAttack: _aiMode && _phase == CombatPhase.minionAttack,
@@ -4515,9 +4835,6 @@ class _FightPageState extends State<FightPage> {
       }
       widget.onChanged();
       if (_rollCount == 3) {
-        for (final die in _dice) {
-          die.reserved = true;
-        }
         _specialAttackReady = _shouldResolveSpecialAttack();
       }
     });
@@ -4763,30 +5080,8 @@ class _FightPageState extends State<FightPage> {
   }
 
   void _reserveBestSuite() {
-    const candidates = [
-      [1, 2, 3, 4, 5],
-      [2, 3, 4, 5, 6],
-      [1, 2, 3, 4],
-      [2, 3, 4, 5],
-      [3, 4, 5, 6],
-      [1, 2, 3],
-      [2, 3, 4],
-      [3, 4, 5],
-      [4, 5, 6],
-    ];
-    final values = _dice.where((die) => die.value != null).toList();
-    final rolledValues = values.map((die) => die.value!).toSet();
-    List<int> best = const [];
-    for (final candidate in candidates) {
-      if (candidate.every(rolledValues.contains)) {
-        best = candidate;
-        break;
-      }
-    }
-    if (best.isEmpty && rolledValues.contains(3) && rolledValues.contains(4)) {
-      best = const [3, 4];
-    }
-    final needed = <int, int>{for (final value in best) value: 1};
+    final decision = MinionDiceEngine.chooseSuiteHold(_dice);
+    final needed = <int, int>{for (final value in decision.values) value: 1};
     for (final die in _dice) {
       final value = die.value;
       if (value == null || (needed[value] ?? 0) <= 0) {
@@ -4970,6 +5265,7 @@ class CompactItemStrip extends StatelessWidget {
     required this.background,
     required this.border,
     this.compactDuplicates = true,
+    this.leading,
     this.trailing,
     super.key,
   });
@@ -4981,6 +5277,7 @@ class CompactItemStrip extends StatelessWidget {
   final Color background;
   final Color border;
   final bool compactDuplicates;
+  final Widget? leading;
   final Widget? trailing;
 
   @override
@@ -4990,6 +5287,7 @@ class CompactItemStrip extends StatelessWidget {
         : items
               .map((value) => CompactItemModel(label: value, tooltip: value))
               .toList();
+    final displayLabel = items.isEmpty ? emptyText : '';
     return Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -5004,9 +5302,10 @@ class CompactItemStrip extends StatelessWidget {
 
           return Row(
             children: [
-              if (showLabel) ...[
+              if (leading != null) ...[leading!, const SizedBox(width: 6)],
+              if (showLabel && displayLabel.isNotEmpty) ...[
                 Text(
-                  items.isEmpty ? emptyText : label,
+                  displayLabel,
                   style: TextStyle(color: accent, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(width: 8),
@@ -5016,7 +5315,6 @@ class CompactItemStrip extends StatelessWidget {
                     ? const SizedBox.shrink()
                     : SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
-                        reverse: true,
                         child: Row(
                           children: [
                             ...displayItems.map(
@@ -5098,9 +5396,10 @@ class CompactItemBadge extends StatelessWidget {
         value,
         maxLines: 1,
         style: TextStyle(
-          color: color,
+          color: Colors.white,
           fontSize: 11,
           fontWeight: FontWeight.w900,
+          shadows: const [Shadow(color: Colors.black, blurRadius: 3)],
         ),
       ),
     );
@@ -5125,6 +5424,9 @@ List<CompactItemModel> _compactItemModels(List<String> values) {
 }
 
 String _compactItemCode(String value, [int count = 1]) {
+  if (value == 'Première Frappe') {
+    return count <= 1 ? '1ST' : '1STx$count';
+  }
   final upper = value.toUpperCase();
   String base;
   if (upper.contains('HP')) {
@@ -5304,6 +5606,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                   label: 'Attack',
                   icon: Icons.gps_fixed,
                   color: enemy.rank.color,
+                  trailing: AttackObjectiveInline(enemy: enemy),
                   expanded: _showAttack,
                   onTap: () => setState(() => _showAttack = !_showAttack),
                   child: MinionAttackSummary(enemy: enemy),
@@ -5313,6 +5616,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                   label: 'Defense',
                   icon: Icons.shield,
                   color: enemy.rank.color,
+                  trailing: DefenseDiceInline(count: enemy.defenseDice),
                   expanded: _showDefense,
                   onTap: () => setState(() => _showDefense = !_showDefense),
                   child: MinionDefenseSummary(enemy: enemy),
@@ -5408,6 +5712,7 @@ class _CollapsibleRulesLine extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.color,
+    required this.trailing,
     required this.expanded,
     required this.onTap,
     required this.child,
@@ -5416,6 +5721,7 @@ class _CollapsibleRulesLine extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color color;
+  final Widget trailing;
   final bool expanded;
   final VoidCallback onTap;
   final Widget child;
@@ -5446,6 +5752,8 @@ class _CollapsibleRulesLine extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.w900),
                     ),
                   ),
+                  Flexible(child: trailing),
+                  const SizedBox(width: 6),
                   Icon(
                     expanded ? Icons.expand_less : Icons.expand_more,
                     color: color,
@@ -5618,6 +5926,70 @@ class EnemyObjectivePreview extends StatelessWidget {
   }
 }
 
+class AttackObjectiveInline extends StatelessWidget {
+  const AttackObjectiveInline({required this.enemy, super.key});
+
+  final EnemyNode enemy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: switch (enemy.attackPlan.style) {
+          MinionAttackStyle.suite => const SuiteGoalView(length: 3),
+          MinionAttackStyle.symbols => SymbolGoalView(
+            goal: enemy.attackPlan.goals.isEmpty
+                ? const SymbolGoal()
+                : enemy.attackPlan.goals.first,
+          ),
+          MinionAttackStyle.none => const Text('--'),
+        },
+      ),
+    );
+  }
+}
+
+class DefenseDiceInline extends StatelessWidget {
+  const DefenseDiceInline({required this.count, super.key});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Wrap(
+        spacing: 3,
+        children: [
+          for (var i = 0; i < count.clamp(0, 6); i++)
+            const SuiteGoalPip(size: 24),
+        ],
+      ),
+    );
+  }
+}
+
+class SuiteGoalPip extends StatelessWidget {
+  const SuiteGoalPip({required this.size, super.key});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.white, width: 1.5),
+      ),
+    );
+  }
+}
+
 class RewardChestBadge extends StatelessWidget {
   const RewardChestBadge({required this.rank, required this.count, super.key});
 
@@ -5700,6 +6072,15 @@ class MinionAiPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final message = _aiMessageFor(enemy, phase, dice, rollCount);
+    final sortedDice = [...dice]
+      ..sort((a, b) {
+        final left = a.value ?? 99;
+        final right = b.value ?? 99;
+        if (left != right) {
+          return left.compareTo(right);
+        }
+        return a.id.compareTo(b.id);
+      });
     return InfoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -5720,7 +6101,7 @@ class MinionAiPanel extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              for (final die in dice.take(6))
+              for (final die in sortedDice.take(6))
                 DieTile(
                   die: die,
                   onTap: () {},
@@ -5758,18 +6139,26 @@ class MinionAiPanel extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onNextStep,
-                  icon: const Icon(Icons.skip_next),
-                  label: const Text('Next AI step'),
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: heroAccent,
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: onInteract,
+                  icon: const Icon(Icons.touch_app),
+                  label: const Text('Intervene'),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onInteract,
-                  icon: const Icon(Icons.touch_app),
-                  label: const Text('Intervene'),
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: enemy.rank.color,
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: onNextStep,
+                  icon: const Icon(Icons.skip_next),
+                  label: const Text('Next AI step'),
                 ),
               ),
             ],
@@ -5816,6 +6205,7 @@ String _minionAttackAiMessage(
         ..sort();
 
   if (enemy.attackPlan.style == MinionAttackStyle.suite) {
+    final decision = MinionDiceEngine.chooseSuiteHold(dice);
     final best = _bestSuiteLength(values);
     if (best >= 5) {
       return 'Large suite validated with ${values.join('/')}. I can apply the strongest suite result.';
@@ -5826,7 +6216,7 @@ String _minionAttackAiMessage(
     if (best == 3) {
       return 'Micro suite validated. Kept dice: ${kept.join('/')}. I can keep rolling to improve.';
     }
-    return 'No suite yet. I keep ${kept.isEmpty ? 'nothing' : kept.join('/')} and continue looking for connected values.';
+    return 'No suite yet. ${decision.reason} Kept dice: ${kept.isEmpty ? 'nothing' : kept.join('/')}.';
   }
 
   return kept.isEmpty
@@ -7187,26 +7577,52 @@ class DieTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: compact ? 34 : 42,
-        height: compact ? 34 : 42,
-        constraints: BoxConstraints(maxWidth: compact ? 34 : 42),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: value == null ? Colors.white24 : color,
-          borderRadius: BorderRadius.circular(8),
-          border: highlight
-              ? Border.all(color: highlightColor ?? heroAccent, width: 3)
-              : null,
-        ),
-        child: Text(
-          value?.toString() ?? '-',
-          style: TextStyle(
-            color: value == null ? Colors.white : textColor,
-            fontSize: compact ? 18 : 22,
-            fontWeight: FontWeight.w900,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: compact ? 34 : 42,
+            height: compact ? 34 : 42,
+            constraints: BoxConstraints(maxWidth: compact ? 34 : 42),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: value == null ? Colors.white24 : color,
+              borderRadius: BorderRadius.circular(8),
+              border: highlight
+                  ? Border.all(color: highlightColor ?? heroAccent, width: 3)
+                  : null,
+              boxShadow: highlight
+                  ? [
+                      BoxShadow(
+                        color: (highlightColor ?? heroAccent).withValues(
+                          alpha: 0.72,
+                        ),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Text(
+              value?.toString() ?? '-',
+              style: TextStyle(
+                color: value == null ? Colors.white : textColor,
+                fontSize: compact ? 18 : 22,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ),
-        ),
+          if (highlight)
+            Positioned(
+              right: -4,
+              top: -5,
+              child: Icon(
+                Icons.check_circle,
+                color: highlightColor ?? heroAccent,
+                size: compact ? 14 : 16,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -7483,6 +7899,12 @@ class AdventureDetailsPage extends StatelessWidget {
                 },
               )
               .toList(),
+          if (enemy.attackPlan.style == MinionAttackStyle.suite)
+            'aiDecision': {
+              'type': 'suiteHold',
+              'values': MinionDiceEngine.chooseSuiteHold(combatDice).values,
+              'reason': MinionDiceEngine.chooseSuiteHold(combatDice).reason,
+            },
         },
     };
   }
@@ -7625,16 +8047,21 @@ Future<List<String>?> showAlterationDialog(
 List<EnemyNode> _generateEnemies(SurvivalConfig config) {
   final ranks = _ranksForMode(config);
   final random = Random();
-  final greenProfiles = [...greenEnemyProfiles]..shuffle(random);
-  EnemyProfile? nextGreenProfile() {
-    if (greenProfiles.isEmpty) {
+  final profilePools = {
+    for (final rank in EnemyRank.values)
+      rank: [..._profilesForRank(rank)]..shuffle(random),
+  };
+
+  EnemyProfile? nextProfile(EnemyRank rank) {
+    final pool = profilePools[rank];
+    if (pool == null || pool.isEmpty) {
       return null;
     }
-    return greenProfiles.removeLast();
+    return pool.removeLast();
   }
 
   final nodes = <EnemyNode>[
-    _enemy(0, 'Start minion', ranks.first, null, 0, nextGreenProfile()),
+    _enemy(0, 'Start minion', ranks.first, null, 0, nextProfile(ranks.first)),
   ];
 
   var id = 1;
@@ -7656,7 +8083,7 @@ List<EnemyNode> _generateEnemies(SurvivalConfig config) {
           rank,
           branch,
           step,
-          rank == EnemyRank.green ? nextGreenProfile() : null,
+          nextProfile(rank),
         ),
       );
     }

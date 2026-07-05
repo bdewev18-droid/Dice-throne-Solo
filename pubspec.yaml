@@ -88,6 +88,10 @@ flutter:
     - assets/enemy_green_chaos_elf.png
     - assets/enemy_green_raving_oni.png
     - assets/enemy_viseer.jpg
+    - assets/vert/
+    - assets/bleu/
+    - assets/violet/
+    - assets/orange/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
