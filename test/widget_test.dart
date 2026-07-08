@@ -14,7 +14,7 @@ void main() {
     await tester.pumpWidget(const DiceThroneSurvieApp());
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('Version 1.2.6'), findsOneWidget);
+    expect(find.text('Version 1.2.8'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();

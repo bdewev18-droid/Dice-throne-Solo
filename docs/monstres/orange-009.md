@@ -1,44 +1,42 @@
-# ORANGE-009
-
-## Statut
-
-Fiche generee automatiquement pour rendre la carte jouable dans l'application. Les valeurs ci-dessous sont un profil generique de niveau 4 a remplacer quand la carte sera lue precisement.
+# Orange-009 - Bloodseeker
 
 ## Image
 
-- Fichier : ssets/orange/orange-009.png
+- Fichier : `assets/orange/orange-009.png`
 
 ## Couleur
 
-orange, niveau 4.
+- Orange
+- Niveau : 4
 
 ## Points de vie et PC
 
-- Points de vie : 20
+- Points de vie : 30
 - PC : 5
 
-## Tokens
+## Tokens initiaux
 
-- Aucun token initial connu.
+- First Strike
+- Main du roi
 
 ## Recompense
 
-- Recompense : 1 lance de D20 orange.
+- 1 coffre orange
 
 ## Jet a faire
 
-Objectif de lancer :
-
-- 4 symboles jaunes et 1 symbole rouge
+- Suites
 
 ## Attaque
 
-### Attaque generique niveau 4
+### Leeching Strike
 
-- 4 symboles jaunes et 1 symbole rouge : inflige 9 degats.`n- Amelioration possible : inflige 12 degats.
+- Micro suite : inflige 2 Bleed et 3 degats imparables.
+- Petite suite : inflige Bleed, puis inflige 6 degats. Ajoute 1 degat par Bleed sur le plateau du hero.
+- Grande suite : inflige Bleed, puis inflige 8 degats. Ajoute 2 degats par Bleed sur le plateau du hero.
 
 ## Defense
 
-### Defense generique niveau 4
+### Defense roll 3 dice
 
-- Jet defensif 4 des : previent 4 degats.
+- Sur 2 symboles blancs : inflige Bleed.

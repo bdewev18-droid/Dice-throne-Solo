@@ -1,44 +1,46 @@
-# ORANGE-004
-
-## Statut
-
-Fiche generee automatiquement pour rendre la carte jouable dans l'application. Les valeurs ci-dessous sont un profil generique de niveau 4 a remplacer quand la carte sera lue precisement.
+# Orange-004 - Umbra
 
 ## Image
 
-- Fichier : ssets/orange/orange-004.png
+- Fichier : `assets/orange/orange-004.png`
 
 ## Couleur
 
-orange, niveau 4.
+- Orange
+- Niveau : 4
 
 ## Points de vie et PC
 
-- Points de vie : 20
-- PC : 5
+- Points de vie : 25
+- PC : 10
 
-## Tokens
+## Tokens initiaux
 
-- Aucun token initial connu.
+- Carte Promo
+- Main du roi
 
 ## Recompense
 
-- Recompense : 1 lance de D20 orange.
+- 1 coffre orange
 
 ## Jet a faire
 
-Objectif de lancer :
-
-- 4 symboles jaunes et 1 symbole rouge
+- 4 symboles jaunes
 
 ## Attaque
 
-### Attaque generique niveau 4
+### Silhouette
 
-- 4 symboles jaunes et 1 symbole rouge : inflige 9 degats.`n- Amelioration possible : inflige 12 degats.
+- 3 symboles jaunes : inflige 3 degats imparables.
+- 4 symboles jaunes : inflige 5 degats imparables.
+- Si Umbra possede Ombre, toutes ses attaques infligent 4 degats supplementaires.
+
+## Passif
+
+- Si son lancer offensif echoue, gagne Ombre.
 
 ## Defense
 
-### Defense generique niveau 4
+### Jet defensif 3 des
 
-- Jet defensif 4 des : previent 4 degats.
+- Sur symbole rouge : gagne Ombre.

@@ -2,6 +2,36 @@
 
 Ce fichier liste les tokens connus pour alimenter la section dediee dans l'application.
 
+## Liste complete importee
+
+| Token | Limite max | Effet detaille dans le moteur |
+| --- | ---: | --- |
+| A terre | 1 | A documenter |
+| Brulure | 1 | A documenter |
+| Chaos | 6 | A documenter |
+| Commotion | 1 | A documenter |
+| Dégat Bonus | 2 | Ajoute via certains gains de coffre D20 |
+| Dépérissement | 2 | A documenter |
+| Domination | 1 | A documenter |
+| Eboulissement | 1 | A documenter |
+| Enchevêtrement | 1 | A documenter |
+| Evitement | 3 | A documenter |
+| Hémorragie | 2 | Voir detail ci-dessous |
+| Main du roi | infinie | A documenter |
+| Ombre | 1 | A documenter |
+| Parasite | 1 | A documenter |
+| Poison | 3 | Voir detail ci-dessous |
+| Première Frappe | 1 | Voir detail ci-dessous |
+| Prime | 1 | A documenter |
+| Pris pour cible | 1 | A documenter |
+| Riposte | 1 | Voir detail ci-dessous |
+| Ronces | 1 | Voir detail ci-dessous |
+| Salve | infinie | A documenter |
+| Silence | 1 | Voir detail ci-dessous |
+| Siphon vital | 2 | A documenter |
+| Sort | 1 | A documenter |
+| Vol | 3 | Ajoute via certains gains de coffre D20 |
+
 ## Poison
 
 - Type : negatif.

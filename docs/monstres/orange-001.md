@@ -1,44 +1,47 @@
-# ORANGE-001
-
-## Statut
-
-Fiche generee automatiquement pour rendre la carte jouable dans l'application. Les valeurs ci-dessous sont un profil generique de niveau 4 a remplacer quand la carte sera lue precisement.
+# Orange-001 - Renegate Vereuse
 
 ## Image
 
-- Fichier : ssets/orange/orange-001.png
+- Fichier : `assets/orange/orange-001.png`
 
 ## Couleur
 
-orange, niveau 4.
+- Orange
+- Niveau : 4
 
 ## Points de vie et PC
 
-- Points de vie : 20
-- PC : 5
+- Points de vie : 30
+- PC : 8
 
-## Tokens
+## Tokens initiaux
 
-- Aucun token initial connu.
+- Premiere Frappe
+- Main du roi
 
 ## Recompense
 
-- Recompense : 1 lance de D20 orange.
+- 1 coffre orange
 
 ## Jet a faire
 
-Objectif de lancer :
-
-- 4 symboles jaunes et 1 symbole rouge
+- Suites
 
 ## Attaque
 
-### Attaque generique niveau 4
+### Frappe Fourbe
 
-- 4 symboles jaunes et 1 symbole rouge : inflige 9 degats.`n- Amelioration possible : inflige 12 degats.
+- Petite suite : inflige la moitie des PC du minion en degats, arrondie au chiffre superieur.
+- Grande suite : inflige les PC du minion en degats.
+
+## Passif
+
+- Au debut de son tour, gagne 2 PC.
+- Si son lancer offensif echoue, gagne 3 Degats Bonus et Ombre.
 
 ## Defense
 
-### Defense generique niveau 4
+### Jet defensif 5 des
 
-- Jet defensif 4 des : previent 4 degats.
+- Sur 2 symboles rouges : ignore tous les degats.
+- Sur tout autre resultat : vole 2 PC.

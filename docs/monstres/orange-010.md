@@ -1,44 +1,42 @@
-# ORANGE-010
-
-## Statut
-
-Fiche generee automatiquement pour rendre la carte jouable dans l'application. Les valeurs ci-dessous sont un profil generique de niveau 4 a remplacer quand la carte sera lue precisement.
+# Orange-010 - The Ashen King
 
 ## Image
 
-- Fichier : ssets/orange/orange-010.png
+- Fichier : `assets/orange/orange-010.png`
 
 ## Couleur
 
-orange, niveau 4.
+- Orange
+- Niveau : 4
 
 ## Points de vie et PC
 
-- Points de vie : 20
-- PC : 5
+- Points de vie : 35
+- PC : 6
 
-## Tokens
+## Tokens initiaux
 
-- Aucun token initial connu.
+- Main du roi
 
 ## Recompense
 
-- Recompense : 1 lance de D20 orange.
+- 1 coffre orange
 
 ## Jet a faire
 
-Objectif de lancer :
-
-- 4 symboles jaunes et 1 symbole rouge
+- 1 symbole blanc, 3 symboles jaunes et 1 symbole rouge
 
 ## Attaque
 
-### Attaque generique niveau 4
+### Profane Command
 
-- 4 symboles jaunes et 1 symbole rouge : inflige 9 degats.`n- Amelioration possible : inflige 12 degats.
+- 1 blanc + 2 jaunes : inflige 7 degats.
+- 1 blanc + 2 jaunes + 1 rouge : inflige Domination et 9 degats.
+- 1 blanc + 3 jaunes + 1 rouge : inflige Domination et 13 degats.
 
 ## Defense
 
-### Defense generique niveau 4
+### Defense roll 2 dice
 
-- Jet defensif 4 des : previent 4 degats.
+- Sur symbole jaune : inflige Brulure.
+- Si l'adversaire est deja a la limite d'empilement de Brulure, inflige 2 degats a la place.

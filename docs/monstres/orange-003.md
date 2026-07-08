@@ -1,44 +1,42 @@
-# ORANGE-003
-
-## Statut
-
-Fiche generee automatiquement pour rendre la carte jouable dans l'application. Les valeurs ci-dessous sont un profil generique de niveau 4 a remplacer quand la carte sera lue precisement.
+# Orange-003 - Atlas
 
 ## Image
 
-- Fichier : ssets/orange/orange-003.png
+- Fichier : `assets/orange/orange-003.png`
 
 ## Couleur
 
-orange, niveau 4.
+- Orange
+- Niveau : 4
 
 ## Points de vie et PC
 
-- Points de vie : 20
-- PC : 5
+- Points de vie : 30
+- PC : 8
 
-## Tokens
+## Tokens initiaux
 
-- Aucun token initial connu.
+- Heritage
+- Main du roi
 
 ## Recompense
 
-- Recompense : 1 lance de D20 orange.
+- Recompense visible a confirmer : 1 coffre orange et une icone doree avec valeur 2.
 
 ## Jet a faire
 
-Objectif de lancer :
-
-- 4 symboles jaunes et 1 symbole rouge
+- Suites
 
 ## Attaque
 
-### Attaque generique niveau 4
+### Frappe Titanique
 
-- 4 symboles jaunes et 1 symbole rouge : inflige 9 degats.`n- Amelioration possible : inflige 12 degats.
+- Micro suite : inflige 2 degats collateraux a tous les adversaires engages.
+- Petite suite : inflige A Terre et 4 degats collateraux.
+- Grande suite : inflige Commotion et 7 degats collateraux.
 
 ## Defense
 
-### Defense generique niveau 4
+### Jet defensif unique 1 de
 
-- Jet defensif 4 des : previent 4 degats.
+- Previent un nombre de degats egal a la valeur du de.

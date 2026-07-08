@@ -1,44 +1,46 @@
-# ORANGE-007
-
-## Statut
-
-Fiche generee automatiquement pour rendre la carte jouable dans l'application. Les valeurs ci-dessous sont un profil generique de niveau 4 a remplacer quand la carte sera lue precisement.
+# Orange-007 - Berserker Enrage
 
 ## Image
 
-- Fichier : ssets/orange/orange-007.png
+- Fichier : `assets/orange/orange-007.png`
 
 ## Couleur
 
-orange, niveau 4.
+- Orange
+- Niveau : 4
 
 ## Points de vie et PC
 
-- Points de vie : 20
-- PC : 5
+- Points de vie : 30
+- PC : 4
 
-## Tokens
+## Tokens initiaux
 
-- Aucun token initial connu.
+- Premiere Frappe
+- Main du roi
 
 ## Recompense
 
-- Recompense : 1 lance de D20 orange.
+- 1 coffre orange
 
 ## Jet a faire
 
-Objectif de lancer :
-
-- 4 symboles jaunes et 1 symbole rouge
+- 3 symboles blancs et 1 symbole rouge
 
 ## Attaque
 
-### Attaque generique niveau 4
+### Colere Dechainee
 
-- 4 symboles jaunes et 1 symbole rouge : inflige 9 degats.`n- Amelioration possible : inflige 12 degats.
+- Lance 2 des, plus 1 de pour chaque Chaos possede, jusqu'a 5 des maximum.
+- Inflige autant de degats que la valeur totale du jet.
+
+## Passif
+
+- Si son lancer offensif echoue, gagne Chaos.
 
 ## Defense
 
-### Defense generique niveau 4
+### Defense unique
 
-- Jet defensif 4 des : previent 4 degats.
+- Si le Berserker subit des degats lors de la phase de lancer offensif d'un adversaire, il gagne Chaos.
+- Cette defense s'applique aussi lors d'une attaque avec une capacite ultime.

@@ -1,44 +1,44 @@
-# ORANGE-002
-
-## Statut
-
-Fiche generee automatiquement pour rendre la carte jouable dans l'application. Les valeurs ci-dessous sont un profil generique de niveau 4 a remplacer quand la carte sera lue precisement.
+# Orange-002 - Mort Murmurante
 
 ## Image
 
-- Fichier : ssets/orange/orange-002.png
+- Fichier : `assets/orange/orange-002.png`
 
 ## Couleur
 
-orange, niveau 4.
+- Orange
+- Niveau : 4
 
 ## Points de vie et PC
 
-- Points de vie : 20
-- PC : 5
+- Points de vie : 30
+- PC : 2
 
-## Tokens
+## Tokens initiaux
 
-- Aucun token initial connu.
+- Main du roi
 
 ## Recompense
 
-- Recompense : 1 lance de D20 orange.
+- 1 coffre orange
 
 ## Jet a faire
 
-Objectif de lancer :
-
-- 4 symboles jaunes et 1 symbole rouge
+- 5 symboles rouges
 
 ## Attaque
 
-### Attaque generique niveau 4
+### Chant Mortuaire
 
-- 4 symboles jaunes et 1 symbole rouge : inflige 9 degats.`n- Amelioration possible : inflige 12 degats.
+- 2 symboles rouges : inflige 3 degats collateraux.
+- 3 symboles rouges : inflige 4 degats collateraux.
+- 4 symboles rouges : inflige 5 degats collateraux.
+- 5 symboles rouges : inflige 6 degats collateraux.
+- Ces degats touchent tous les adversaires.
+- S'il n'y a qu'un seul adversaire, inflige aussi Deperissement et Silence.
 
 ## Defense
 
-### Defense generique niveau 4
+### Jet defensif 2 des
 
-- Jet defensif 4 des : previent 4 degats.
+- Sur symbole rouge : ignore tous les degats.

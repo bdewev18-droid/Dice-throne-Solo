@@ -1,44 +1,44 @@
-# ORANGE-008
-
-## Statut
-
-Fiche generee automatiquement pour rendre la carte jouable dans l'application. Les valeurs ci-dessous sont un profil generique de niveau 4 a remplacer quand la carte sera lue precisement.
+# Orange-008 - Swamp Dweller
 
 ## Image
 
-- Fichier : ssets/orange/orange-008.png
+- Fichier : `assets/orange/orange-008.png`
 
 ## Couleur
 
-orange, niveau 4.
+- Orange
+- Niveau : 4
 
 ## Points de vie et PC
 
-- Points de vie : 20
-- PC : 5
+- Points de vie : 30
+- PC : 6
 
-## Tokens
+## Tokens initiaux
 
-- Aucun token initial connu.
+- Main du roi
 
 ## Recompense
 
-- Recompense : 1 lance de D20 orange.
+- 1 coffre orange
 
 ## Jet a faire
 
-Objectif de lancer :
-
-- 4 symboles jaunes et 1 symbole rouge
+- 1 symbole blanc et 3 symboles jaunes
 
 ## Attaque
 
-### Attaque generique niveau 4
+### Toxic Touch
 
-- 4 symboles jaunes et 1 symbole rouge : inflige 9 degats.`n- Amelioration possible : inflige 12 degats.
+- Inflige Poison.
+- Puis inflige un Poison supplementaire.
+
+## Passif
+
+- Quand un adversaire engage devrait recevoir un token Poison, meme s'il est deja a la limite d'empilement, inflige aussi 2 degats imparables comme source isolee de degats.
 
 ## Defense
 
-### Defense generique niveau 4
+### Defense roll 2 dice
 
-- Jet defensif 4 des : previent 4 degats.
+- Sur symbole jaune : inflige Poison.

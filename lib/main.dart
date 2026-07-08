@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.6';
+const String appVersionLabel = 'Version 1.2.8';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -118,6 +118,16 @@ enum EnemyRank {
   final int points;
   final Color color;
   final String asset;
+
+  String get rewardChestKey {
+    return switch (this) {
+      EnemyRank.green => 'green',
+      EnemyRank.blue => 'blue',
+      EnemyRank.violet => 'violet',
+      EnemyRank.orange => 'orange',
+      EnemyRank.viseer => 'orange',
+    };
+  }
 }
 
 class EnemyProfile {
@@ -293,9 +303,111 @@ class StatusTokenRule {
 
 const List<StatusTokenRule> statusTokenRules = [
   StatusTokenRule(
+    label: 'A terre',
+    kind: StatusTokenKind.negative,
+    maxStack: 1,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Brulure',
+    kind: StatusTokenKind.negative,
+    maxStack: 1,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Chaos',
+    kind: StatusTokenKind.negative,
+    maxStack: 6,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Commotion',
+    kind: StatusTokenKind.negative,
+    maxStack: 1,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Dégat Bonus',
+    kind: StatusTokenKind.positive,
+    maxStack: 2,
+    persistent: false,
+  ),
+  StatusTokenRule(
+    label: 'Dépérissement',
+    kind: StatusTokenKind.negative,
+    maxStack: 2,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Domination',
+    kind: StatusTokenKind.negative,
+    maxStack: 1,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Eboulissement',
+    kind: StatusTokenKind.negative,
+    maxStack: 1,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Enchevêtrement',
+    kind: StatusTokenKind.negative,
+    maxStack: 1,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Evitement',
+    kind: StatusTokenKind.positive,
+    maxStack: 3,
+    persistent: false,
+  ),
+  StatusTokenRule(
+    label: 'Hémorragie',
+    kind: StatusTokenKind.negative,
+    maxStack: 2,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Main du roi',
+    kind: StatusTokenKind.positive,
+    maxStack: 99,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Ombre',
+    kind: StatusTokenKind.positive,
+    maxStack: 1,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Parasite',
+    kind: StatusTokenKind.negative,
+    maxStack: 1,
+    persistent: true,
+  ),
+  StatusTokenRule(
     label: 'Poison',
     kind: StatusTokenKind.negative,
     maxStack: 3,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Première Frappe',
+    kind: StatusTokenKind.unique,
+    maxStack: 1,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Prime',
+    kind: StatusTokenKind.positive,
+    maxStack: 1,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Pris pour cible',
+    kind: StatusTokenKind.negative,
+    maxStack: 1,
     persistent: true,
   ),
   StatusTokenRule(
@@ -305,9 +417,15 @@ const List<StatusTokenRule> statusTokenRules = [
     persistent: false,
   ),
   StatusTokenRule(
-    label: 'Première Frappe',
-    kind: StatusTokenKind.unique,
+    label: 'Ronces',
+    kind: StatusTokenKind.negative,
     maxStack: 1,
+    persistent: false,
+  ),
+  StatusTokenRule(
+    label: 'Salve',
+    kind: StatusTokenKind.positive,
+    maxStack: 99,
     persistent: true,
   ),
   StatusTokenRule(
@@ -318,26 +436,27 @@ const List<StatusTokenRule> statusTokenRules = [
     minionAllowed: false,
   ),
   StatusTokenRule(
-    label: 'Ronces',
-    kind: StatusTokenKind.negative,
-    maxStack: 1,
-    persistent: false,
-  ),
-  StatusTokenRule(
-    label: 'Hémorragie',
-    kind: StatusTokenKind.negative,
+    label: 'Siphon vital',
+    kind: StatusTokenKind.positive,
     maxStack: 2,
     persistent: true,
   ),
+  StatusTokenRule(
+    label: 'Sort',
+    kind: StatusTokenKind.positive,
+    maxStack: 1,
+    persistent: true,
+  ),
+  StatusTokenRule(
+    label: 'Vol',
+    kind: StatusTokenKind.positive,
+    maxStack: 3,
+    persistent: false,
+  ),
 ];
 
-const List<String> knownStatusTokens = [
-  'Poison',
-  'Riposte',
-  'Première Frappe',
-  'Silence',
-  'Ronces',
-  'Hémorragie',
+final List<String> knownStatusTokens = [
+  for (final rule in statusTokenRules) rule.label,
 ];
 
 StatusTokenRule _tokenRule(String label) {
@@ -523,101 +642,1209 @@ const List<EnemyProfile> greenEnemyProfiles = [
   ),
 ];
 
-final List<EnemyProfile> generatedGreenEnemyProfiles = _genericAssetProfiles(
-  rank: EnemyRank.green,
-  folder: 'vert',
-  files: const [
-    'vert-011.png',
-    'vert-012.png',
-    'vert-013.png',
-    'vert-014.png',
-    'vert-015.png',
-    'vert-016.png',
-    'vert-017.png',
-    'vert-018.png',
-    'vert-019.png',
-    'vert-020.png',
-    'vert-021.png',
-  ],
-);
+const List<EnemyProfile> generatedGreenEnemyProfiles = [
+  EnemyProfile(
+    key: 'vert-vert-011',
+    name: 'Roi Vautour',
+    rank: EnemyRank.green,
+    maxHealth: 8,
+    pc: 2,
+    cardAsset: 'assets/vert/vert-011.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Descente en Pique: 3 jaunes = 4 degats imparables.',
+      '4 jaunes = 5 degats imparables. 5 jaunes = 6 degats imparables.',
+    ],
+    defense:
+        'Jet defensif 3 des: sur jaune, previent la moitie des degats arrondie au superieur.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(yellow: 3),
+      SymbolGoal(yellow: 4),
+      SymbolGoal(yellow: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'vert-vert-012',
+    name: 'Roc',
+    rank: EnemyRank.green,
+    maxHealth: 15,
+    pc: 2,
+    cardAsset: 'assets/vert/vert-012.png',
+    attacks: [
+      'Rocalanche: lance 2 des et inflige la valeur totale du jet.',
+      'Passif: si le lancer offensif echoue, inflige 1 degat imparable.',
+    ],
+    defense: 'Jet defensif 5 des: previent 1 degat par symbole jaune.',
+    defenseDice: 5,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(yellow: 4)]),
+  ),
+  EnemyProfile(
+    key: 'vert-vert-013',
+    name: 'Serpentyne',
+    rank: EnemyRank.green,
+    maxHealth: 9,
+    pc: 2,
+    cardAsset: 'assets/vert/vert-013.png',
+    attacks: [
+      'Baiser Venimeux: 3 blancs = 6 degats.',
+      '3 blancs + 1 rouge = Poison et 6 degats.',
+    ],
+    defense: 'Jet defensif 3 des: sur rouge, inflige Poison.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 3),
+      SymbolGoal(white: 3, red: 1),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'vert-vert-014',
+    name: 'Druide Tenebreux',
+    rank: EnemyRank.green,
+    maxHealth: 11,
+    pc: 3,
+    cardAsset: 'assets/vert/vert-014.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Frappe Spirituelle: 3 jaunes.',
+      'Forme Ours: A Terre et 6 degats. Forme Elan: Ronces et 6 degats.',
+      'Passif: debut de tour, 1-3 Ours, 4-6 Elan.',
+    ],
+    defense:
+        'Jet defensif 4 des: Ours inflige 1 par jaune + 2 par rouge; Elan previent 1 par jaune + 2 par rouge.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(yellow: 3)]),
+  ),
+  EnemyProfile(
+    key: 'vert-vert-015',
+    name: 'Disciple',
+    rank: EnemyRank.green,
+    maxHealth: 12,
+    pc: 2,
+    cardAsset: 'assets/vert/vert-015.png',
+    attacks: [
+      'Abnegation: 2 blancs + 3 jaunes = 5 degats imparables et lance 1 de.',
+      'Sur jaune, vole 1 CP. Sur rouge, retire ce minion et engage un minion niveau 3.',
+    ],
+    defense:
+        'Jet defensif 2 des: sur rouge, renvoie la moitie des degats subis arrondie au superieur.',
+    defenseDice: 2,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(white: 2, yellow: 3)]),
+  ),
+  EnemyProfile(
+    key: 'vert-vert-016',
+    name: 'Valet Maraud',
+    rank: EnemyRank.green,
+    maxHealth: 12,
+    pc: 0,
+    cardAsset: 'assets/vert/vert-016.png',
+    attacks: [
+      'Volonte du Maitre: 1 blanc + 2 jaunes + 1 rouge = 5 degats imparables.',
+    ],
+    defense:
+        'Jet defensif 3 des: previent 1 par jaune; sur rouge les heros perdent 1 or.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 1, yellow: 2, red: 1),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'vert-vert-017',
+    name: 'Homme Lezard',
+    rank: EnemyRank.green,
+    maxHealth: 15,
+    pc: 2,
+    cardAsset: 'assets/vert/vert-017.png',
+    attacks: [
+      'Claquement de Crocs: 2 blancs + 1 rouge, lance 1 de, inflige sa valeur en degats et A Terre.',
+    ],
+    defense: 'Jet defensif 1 de: sur blanc, inflige 2 degats.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(white: 2, red: 1)]),
+  ),
+  EnemyProfile(
+    key: 'vert-vert-018',
+    name: 'Satyre',
+    rank: EnemyRank.green,
+    maxHealth: 9,
+    pc: 1,
+    cardAsset: 'assets/vert/vert-018.png',
+    attacks: [
+      'Belier: 2 blancs + 1 jaune = 4 degats.',
+      '2 blancs + 2 jaunes = 5 degats. Avec rouge = 6 degats et Enchevetrement.',
+    ],
+    defense: 'Jet defensif 2 des: sur jaune A Terre; sur rouge previent 2.',
+    defenseDice: 2,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 2, yellow: 1),
+      SymbolGoal(white: 2, yellow: 2),
+      SymbolGoal(white: 2, yellow: 2, red: 1),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'vert-vert-019',
+    name: 'Jeune Fille Melodieuse',
+    rank: EnemyRank.green,
+    maxHealth: 12,
+    pc: 2,
+    cardAsset: 'assets/vert/vert-019.png',
+    attacks: [
+      'Transe: 2 rouges = 4 degats imparables.',
+      'Le joueur actif choisit un coequipier pour 2 degats collateraux, sinon defausse 1 carte au hasard.',
+    ],
+    defense: 'Jet defensif 2 des: sur rouge, previent 3 degats.',
+    defenseDice: 2,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(red: 2)]),
+  ),
+  EnemyProfile(
+    key: 'vert-vert-020',
+    name: 'Guerrier Ogrun',
+    rank: EnemyRank.green,
+    maxHealth: 11,
+    pc: 0,
+    cardAsset: 'assets/vert/vert-020.png',
+    attacks: [
+      'Fleau: micro suite = 4 degats.',
+      'Petite suite = 7 degats. Grande suite = 7 degats et A Terre.',
+    ],
+    defense:
+        'Jet defensif 4 des: sur blanc inflige 1; previent 1 par jaune + 1 par rouge.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.suite(),
+  ),
+  EnemyProfile(
+    key: 'vert-vert-021',
+    name: 'Mage Lezard',
+    rank: EnemyRank.green,
+    maxHealth: 10,
+    pc: 2,
+    cardAsset: 'assets/vert/vert-021.png',
+    attacks: [
+      'Sorcellerie Ophique: 2 jaunes + 1 rouge, lance 1 de.',
+      'Blanc: gagne 2 Chaos. Jaune: inflige Eboulissement. Puis inflige 6 + 1 par Chaos.',
+    ],
+    defense:
+        'Jet defensif 3 des: gagne 1 Chaos par jaune puis inflige 1 degat par Chaos.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(yellow: 2, red: 1)]),
+  ),
+  EnemyProfile(
+    key: 'bleu-vert-022',
+    name: 'Plague Bearer',
+    rank: EnemyRank.green,
+    maxHealth: 10,
+    pc: 2,
+    cardAsset: 'assets/bleu/vert-022.png',
+    attacks: [
+      'Scurry: 2 blancs + jaune = 4 degats.',
+      '2 blancs + 2 jaunes = Parasite et 5 degats. Avec rouge = Poison et 6 degats.',
+    ],
+    defense:
+        'Defense roll 2 dice: on yellow prevent 2; on red inflict Parasite.',
+    defenseDice: 2,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 2, yellow: 1),
+      SymbolGoal(white: 2, yellow: 2),
+      SymbolGoal(white: 2, yellow: 2, red: 1),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-vert-023',
+    name: 'Corrupted Ghoul',
+    rank: EnemyRank.green,
+    maxHealth: 7,
+    pc: 2,
+    cardAsset: 'assets/bleu/vert-023.png',
+    initialTokens: ['Première Frappe'],
+    attacks: ['Gnaw: 2 blancs + jaune + rouge = vole 2 points de vie.'],
+    defense: 'Defense roll 3 dice: on red, steal 1 health.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 2, yellow: 1, red: 1),
+    ]),
+  ),
+];
 
-final List<EnemyProfile> blueEnemyProfiles = _genericAssetProfiles(
-  rank: EnemyRank.blue,
-  folder: 'bleu',
-  files: const [
-    'bleu-001.png',
-    'bleu-002.png',
-    'bleu-003.png',
-    'bleu-004.png',
-    'bleu-005.png',
-    'bleu-006.png',
-    'bleu-007.png',
-    'bleu-008.png',
-    'bleu-009.png',
-    'bleu-010.png',
-    'bleu-011.png',
-    'bleu-012.png',
-    'bleu-013.png',
-    'bleu-014.png',
-    'bleu-015.png',
-    'bleu-016.png',
-    'bleu-017.png',
-    'bleu-018.png',
-    'bleu-019.png',
-    'bleu-020.png',
-    'bleu-021.png',
-    'bleu-022.png',
-    'bleu-023.png',
-    'vert-022.png',
-    'vert-023.png',
-  ],
-);
+const List<EnemyProfile> blueEnemyProfiles = [
+  EnemyProfile(
+    key: 'bleu-bleu-001',
+    name: 'Maraud Bestial',
+    rank: EnemyRank.blue,
+    maxHealth: 15,
+    pc: 1,
+    cardAsset: 'assets/bleu/bleu-001.png',
+    attacks: [
+      'Sauvagerie de l Ame: 2 blancs + 2 jaunes + rouge = 6 degats imparables.',
+    ],
+    defense:
+        'Jet defensif 4 des: previent 1 par jaune; sur rouge les heros perdent 1 or.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 2, yellow: 2, red: 1),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-002',
+    name: 'Archer Aveugle',
+    rank: EnemyRank.blue,
+    maxHealth: 12,
+    pc: 3,
+    cardAsset: 'assets/bleu/bleu-002.png',
+    attacks: [
+      'Vraie Vision: 3/4/5 jaunes = 4/5/6 degats imparables.',
+      'Si 3 chiffres identiques, inflige Eboulissement.',
+    ],
+    defense: 'Jet defensif 4 des: sur 2 jaunes, previent 4 degats.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(yellow: 3),
+      SymbolGoal(yellow: 4),
+      SymbolGoal(yellow: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-003',
+    name: 'Mage de l Entropie',
+    rank: EnemyRank.blue,
+    maxHealth: 13,
+    pc: 2,
+    cardAsset: 'assets/bleu/bleu-003.png',
+    attacks: [
+      'Sorcellerie Chaotique: 2 jaunes + rouge, lance 1 de puis inflige 7 + 1 par Chaos.',
+      'Blanc: gagne 2 Chaos. Jaune: inflige Sort.',
+    ],
+    defense:
+        'Jet defensif 4 des: gagne 1 Chaos par jaune puis inflige 1 degat par Chaos.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(yellow: 2, red: 1)]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-004',
+    name: 'Mage de Sang',
+    rank: EnemyRank.blue,
+    maxHealth: 12,
+    pc: 2,
+    cardAsset: 'assets/bleu/bleu-004.png',
+    attacks: [
+      'Hemo-Siphon: 3/4/5 jaunes = vole 3/4/5 points de vie.',
+      'Passif: debut de tour gagne Chaos; a 3 Chaos, les depense pour voler 3 PV.',
+    ],
+    defense: 'Jet defensif 3 des: vole 1 PV par jaune; sur rouge gagne Chaos.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(yellow: 3),
+      SymbolGoal(yellow: 4),
+      SymbolGoal(yellow: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-005',
+    name: 'Sorciere d Os',
+    rank: EnemyRank.blue,
+    maxHealth: 10,
+    pc: 2,
+    cardAsset: 'assets/bleu/bleu-005.png',
+    attacks: [
+      'Magie Noire: blanc + 2 jaunes + rouge = Deperissement, Silence, Parasite et 3 degats imparables.',
+      'Passif upkeep: gagne Siphon Vital.',
+    ],
+    defense:
+        'Jet defensif 4 des: vole 1 PV par jaune; inflige Hemorragie par rouge.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 1, yellow: 2, red: 1),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-006',
+    name: 'Cyclope Brutal',
+    rank: EnemyRank.blue,
+    maxHealth: 14,
+    pc: 3,
+    cardAsset: 'assets/bleu/bleu-006.png',
+    attacks: [
+      'Ecrasement: 4 blancs + rouge = 6 degats et lance 1 de; ajoute sa valeur en degats.',
+      'Passif: si echec offensif, inflige 2 degats imparables.',
+    ],
+    defense: 'Jet defensif 1 de: sur blanc inflige 3; sur jaune soigne 2.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(white: 4, red: 1)]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-007',
+    name: 'The Hermit',
+    rank: EnemyRank.blue,
+    maxHealth: 12,
+    pc: 5,
+    cardAsset: 'assets/bleu/bleu-007.png',
+    attacks: [
+      'Deep Magic: blanc + 3 jaunes = 3 degats imparables et lance 1 de.',
+      'Blanc: +2 degats. Jaune: Deperissement. Rouge: Brulure.',
+    ],
+    defense: 'Defense roll 5 dice: on 2 yellow, prevent 3.',
+    defenseDice: 5,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(white: 1, yellow: 3)]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-008',
+    name: 'Dark Specter',
+    rank: EnemyRank.blue,
+    maxHealth: 13,
+    pc: 1,
+    cardAsset: 'assets/bleu/bleu-008.png',
+    attacks: [
+      'Bane: micro suite = Enchevetrement + 4 degats.',
+      'Petite suite = Silence + 6. Grande suite = Sort + 8.',
+    ],
+    defense: 'Jet defensif 3 des: previent 2 degats par jaune.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.suite(),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-009',
+    name: 'The Butcher',
+    rank: EnemyRank.blue,
+    maxHealth: 12,
+    pc: 3,
+    cardAsset: 'assets/bleu/bleu-009.png',
+    attacks: [
+      'Carve: blanc + 2 jaunes + rouge = 3 degats imparables et lance 1 de.',
+      'Sur jaune, inflige Commotion. Passif echec: soigne 2.',
+    ],
+    defense: 'Defense roll 1 die: on yellow, deal 3.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 1, yellow: 2, red: 1),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-010',
+    name: 'Vipere Vicieuse',
+    rank: EnemyRank.blue,
+    maxHealth: 12,
+    pc: 2,
+    cardAsset: 'assets/bleu/bleu-010.png',
+    attacks: [
+      'Envenimation: 3 blancs = 7 degats; 3 blancs + rouge = Poison et 7 degats.',
+    ],
+    defense: 'Jet defensif 4 des: sur rouge, inflige Poison.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 3),
+      SymbolGoal(white: 3, red: 1),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-011',
+    name: 'Vaurien',
+    rank: EnemyRank.blue,
+    maxHealth: 14,
+    pc: 5,
+    cardAsset: 'assets/bleu/bleu-011.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Ruelle Dangereuse: petite suite = moitie des PC en degats.',
+      'Grande suite = PC en degats. Debut de tour gagne 2 PC.',
+    ],
+    defense:
+        'Jet defensif 4 des: sur 2 jaunes vole 1 PC; sur 2 rouges ignore tous les degats.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.suite(),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-012',
+    name: 'Epee Fantome',
+    rank: EnemyRank.blue,
+    maxHealth: 14,
+    pc: 3,
+    cardAsset: 'assets/bleu/bleu-012.png',
+    attacks: [
+      'Feinte de l Ombre: 3/4/5 blancs = 5/6/7 degats.',
+      'Si 3 chiffres identiques, inflige Parasite.',
+    ],
+    defense:
+        'Jet defensif 1 de: inflige la moitie de la valeur en degats arrondie au superieur.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 3),
+      SymbolGoal(white: 4),
+      SymbolGoal(white: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-013',
+    name: 'Elfe Fletri',
+    rank: EnemyRank.blue,
+    maxHealth: 13,
+    pc: 2,
+    cardAsset: 'assets/bleu/bleu-013.png',
+    attacks: [
+      'Racine Fletrie: micro suite = 5 degats.',
+      'Petite suite = Parasite + 7. Grande suite = Deperissement + 9.',
+    ],
+    defense:
+        'Jet defensif 5 des: sur 2 jaunes, previent la moitie des degats arrondie au superieur.',
+    defenseDice: 5,
+    attackPlan: MinionAttackPlan.suite(),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-014',
+    name: 'Banshie Hurlante',
+    rank: EnemyRank.blue,
+    maxHealth: 12,
+    pc: 2,
+    cardAsset: 'assets/bleu/bleu-014.png',
+    attacks: [
+      'Hurlement Sonique: 2/3/4/5 rouges = 2/3/4/5 degats collateraux a tous les adversaires.',
+      'Si un seul adversaire, inflige Silence.',
+    ],
+    defense: 'Jet defensif 2 des: sur rouge, ignore tous les degats.',
+    defenseDice: 2,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(red: 2),
+      SymbolGoal(red: 3),
+      SymbolGoal(red: 4),
+      SymbolGoal(red: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-015',
+    name: 'Centaure Enrage',
+    rank: EnemyRank.blue,
+    maxHealth: 15,
+    pc: 2,
+    cardAsset: 'assets/bleu/bleu-015.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Charge: 2 blancs + 1/2 jaunes = 4/5 degats; avec rouge = 6 degats.',
+      'Le joueur actif defausse un token positif au hasard.',
+    ],
+    defense: 'Jet defensif 3 des: sur jaune, inflige A Terre.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 2, yellow: 1),
+      SymbolGoal(white: 2, yellow: 2),
+      SymbolGoal(white: 2, yellow: 2, red: 1),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-016',
+    name: 'Chevalier a la Hache',
+    rank: EnemyRank.blue,
+    maxHealth: 13,
+    pc: 1,
+    cardAsset: 'assets/bleu/bleu-016.png',
+    attacks: [
+      'Decoupage: petite suite = soigne 2 et 6 degats.',
+      'Grande suite = soigne 2 et 9 degats. Echec: gagne 3 Degats Bonus.',
+    ],
+    defense:
+        'Jet defensif 4 des: blanc inflige 1; previent 2 par jaune + 1 par rouge.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.suite(),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-017',
+    name: 'Panthere Tenebreuse',
+    rank: EnemyRank.blue,
+    maxHealth: 9,
+    pc: 4,
+    cardAsset: 'assets/bleu/bleu-017.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Dechiquetage: 3/4/5 blancs = 6/7/8 degats.',
+      'Si 3 chiffres identiques, inflige Hemorragie.',
+    ],
+    defense:
+        'Jet defensif 1 de: blanc inflige Hemorragie; rouge inflige 2 Hemorragie.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 3),
+      SymbolGoal(white: 4),
+      SymbolGoal(white: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-018',
+    name: 'Harpie Cornue',
+    rank: EnemyRank.blue,
+    maxHealth: 10,
+    pc: 3,
+    cardAsset: 'assets/bleu/bleu-018.png',
+    initialTokens: ['Première Frappe'],
+    attacks: ['Frappe en Pique: 2/3/4/5 jaunes = 3/4/5/6 degats imparables.'],
+    defense:
+        'Jet defensif 3 des: sur jaune previent la moitie; sur 2 jaunes ignore tous les degats.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(yellow: 2),
+      SymbolGoal(yellow: 3),
+      SymbolGoal(yellow: 4),
+      SymbolGoal(yellow: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-019',
+    name: 'Elfe Agile',
+    rank: EnemyRank.blue,
+    maxHealth: 13,
+    pc: 3,
+    cardAsset: 'assets/bleu/bleu-019.png',
+    attacks: [
+      'Velocite Magique: 3 blancs + 2 jaunes = Eboulissement et 6 degats.',
+      'Debut de tour: retire toutes les alterations positives du joueur actif.',
+    ],
+    defense:
+        'Jet defensif 1 de: soigne selon la valeur du de et le nombre de minions en jeu.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(white: 3, yellow: 2)]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-020',
+    name: 'Farceur',
+    rank: EnemyRank.blue,
+    maxHealth: 8,
+    pc: 4,
+    cardAsset: 'assets/bleu/bleu-020.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Recreation: blanc + 2 jaunes + rouge = 4 degats imparables et lance 1 de.',
+      'Blanc: vole 2 CP. Jaune: defausse 1 carte. Rouge: les deux.',
+    ],
+    defense: 'Jet defensif 5 des: sur 2 jaunes, previent 3.',
+    defenseDice: 5,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 1, yellow: 2, red: 1),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-021',
+    name: 'Bandit sans Ame',
+    rank: EnemyRank.blue,
+    maxHealth: 10,
+    pc: 2,
+    cardAsset: 'assets/bleu/bleu-021.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Lame de l Esprit: 3/4/5 blancs = 5/6/7 degats.',
+      'Si 3 chiffres identiques, tous les adversaires engages perdent 1 CP.',
+    ],
+    defense: 'Jet defensif 3 des: inflige 1 par blanc + 1 par rouge.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 3),
+      SymbolGoal(white: 4),
+      SymbolGoal(white: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-022',
+    name: 'Vibra l Esoterique',
+    rank: EnemyRank.blue,
+    maxHealth: 14,
+    pc: 3,
+    cardAsset: 'assets/bleu/bleu-022.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Sanguinolame: 2 blancs + 1/2/3 jaunes = 4/5/6 degats.',
+      'Debut de tour gagne Chaos; avec 3 Chaos, les depense pour se soigner du montant des degats.',
+    ],
+    defense: 'Jet defensif 4 des: vole 1 PV par jaune.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 2, yellow: 1),
+      SymbolGoal(white: 2, yellow: 2),
+      SymbolGoal(white: 2, yellow: 3),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'bleu-bleu-023',
+    name: 'Yokai',
+    rank: EnemyRank.blue,
+    maxHealth: 11,
+    pc: 1,
+    cardAsset: 'assets/bleu/bleu-023.png',
+    attacks: [
+      'Attraction: 4 jaunes, lance 1 de.',
+      'Blanc: 4 degats imparables. Jaune: vole 3 PV. Rouge: vole 4 PV.',
+      'Echec offensif: inflige Silence et Sort.',
+    ],
+    defense: 'Jet defensif 3 des: vole 1 PV par jaune.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(yellow: 4)]),
+  ),
+];
 
-final List<EnemyProfile> violetEnemyProfiles = _genericAssetProfiles(
-  rank: EnemyRank.violet,
-  folder: 'violet',
-  files: const [
-    'violet-001.png',
-    'violet-002.png',
-    'violet-003.png',
-    'violet-004.png',
-    'violet-005.png',
-    'violet-006.png',
-    'violet-007.png',
-    'violet-008.png',
-    'violet-009.png',
-    'violet-010.png',
-    'violet-011.png',
-    'violet-012.png',
-    'violet-013.png',
-    'violet-014.png',
-    'violet-015.png',
-    'violet-016.png',
-    'violet-017.png',
-    'violet-018.png',
-    'violet-019.png',
-    'violet-020.png',
-    'violet-021.png',
-  ],
-);
+const List<EnemyProfile> violetEnemyProfiles = [
+  EnemyProfile(
+    key: 'violet-violet-001',
+    name: 'Guivre Noire',
+    rank: EnemyRank.violet,
+    maxHealth: 20,
+    pc: 10,
+    cardAsset: 'assets/violet/violet-001.png',
+    attacks: [
+      'Souffle Acide: 2 rouges = Poison, Brulure et 3 degats imparables.',
+      'Passif: si moins de 5 PV au debut du tour, fuit.',
+    ],
+    defense: 'Jet defensif 1 de: blanc perd 1 PV; jaune ou rouge soigne 1.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(red: 2)]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-002',
+    name: 'Wyverne',
+    rank: EnemyRank.violet,
+    maxHealth: 16,
+    pc: 10,
+    cardAsset: 'assets/violet/violet-002.png',
+    attacks: [
+      'Brasier: 2 rouges = 7 degats et lance 1 de.',
+      'Blanc: Brulure. Jaune: Brulure a 2 adversaires. Rouge: Brulure a tous.',
+    ],
+    defense:
+        'Defense unique: si attaquee, lance 1 de; sur 5-6 l attaque adverse echoue.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(red: 2)]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-003',
+    name: 'Diablotin',
+    rank: EnemyRank.violet,
+    maxHealth: 13,
+    pc: 4,
+    cardAsset: 'assets/violet/violet-003.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Malice: micro suite = 5 degats.',
+      'Petite suite = Enchevetrement + 7. Grande suite = Enchevetrement + vole 2 CP + 8.',
+    ],
+    defense: 'Jet defensif 5 des: sur 2 jaunes, previent 3 degats.',
+    defenseDice: 5,
+    attackPlan: MinionAttackPlan.suite(),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-004',
+    name: 'Elfe Sombresource',
+    rank: EnemyRank.violet,
+    maxHealth: 15,
+    pc: 2,
+    cardAsset: 'assets/violet/violet-004.png',
+    attacks: [
+      'Ardillon Mystique: micro suite = 6 degats.',
+      'Petite suite = Ronces + 8. Grande suite = Deperissement + 10.',
+    ],
+    defense:
+        'Jet defensif 5 des: sur 2 jaunes, previent la moitie des degats arrondie au superieur.',
+    defenseDice: 5,
+    attackPlan: MinionAttackPlan.suite(),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-005',
+    name: 'Iron Maiden',
+    rank: EnemyRank.violet,
+    maxHealth: 20,
+    pc: 1,
+    cardAsset: 'assets/violet/violet-005.png',
+    attacks: [
+      'Heavy Metal: micro suite = 6 degats.',
+      'Petite suite = Ronces + 7. Grande suite = Ronces + Hemorragie + 9.',
+    ],
+    defense: 'Jet defensif 3 des: previent 2 degats par jaune.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.suite(),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-006',
+    name: 'Carrion Golem',
+    rank: EnemyRank.violet,
+    maxHealth: 18,
+    pc: 2,
+    cardAsset: 'assets/violet/violet-006.png',
+    attacks: [
+      'Corpse Wave: 3 jaunes, lance 2 des et inflige la valeur totale.',
+      'Si total inferieur a 6, inflige Parasite. Echec offensif: Poison.',
+    ],
+    defense: 'Jet defensif 5 des: previent 1 degat par jaune.',
+    defenseDice: 5,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(yellow: 3)]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-007',
+    name: 'Fell Summoner',
+    rank: EnemyRank.violet,
+    maxHealth: 20,
+    pc: 2,
+    cardAsset: 'assets/violet/violet-007.png',
+    attacks: [
+      'Ritual: 1/2/3 blancs + 2 jaunes = 3/4/5 degats imparables et gagne Chaos.',
+      'Avec 3 Chaos fin de tour: se retire et engage un niveau 3 avec Premiere Frappe.',
+    ],
+    defense: 'Defense roll 2 dice: on yellow, gain Chaos.',
+    defenseDice: 2,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 1, yellow: 2),
+      SymbolGoal(white: 2, yellow: 2),
+      SymbolGoal(white: 3, yellow: 2),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-008',
+    name: 'Devin de Mort',
+    rank: EnemyRank.violet,
+    maxHealth: 15,
+    pc: 2,
+    cardAsset: 'assets/violet/violet-008.png',
+    attacks: [
+      'Baiser de la Mort: blanc + jaune + rouge, lance 2 des.',
+      'Blanc gagne 2 Chaos; jaune Silence; rouge Sort; puis 7 + 1 par Chaos.',
+    ],
+    defense:
+        'Jet defensif 5 des: gagne 1 Chaos par jaune puis inflige 1 degat par Chaos.',
+    defenseDice: 5,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 1, yellow: 1, red: 1),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-009',
+    name: 'Basilic',
+    rank: EnemyRank.violet,
+    maxHealth: 14,
+    pc: 2,
+    cardAsset: 'assets/violet/violet-009.png',
+    attacks: [
+      'Morsure Venimeuse: 3 blancs = 7 degats.',
+      '3 blancs + rouge = Poison + 8. 3 blancs + 2 rouges = Poison + 9.',
+    ],
+    defense: 'Jet defensif 4 des: inflige Poison par rouge.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 3),
+      SymbolGoal(white: 3, red: 1),
+      SymbolGoal(white: 3, red: 2),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-010',
+    name: 'Golem Concasseur',
+    rank: EnemyRank.violet,
+    maxHealth: 16,
+    pc: 4,
+    cardAsset: 'assets/violet/violet-010.png',
+    attacks: [
+      'Castagne: 3 jaunes, lance 2 des et inflige la valeur totale.',
+      'Si total inferieur a 7, inflige Commotion. Echec offensif: Commotion.',
+    ],
+    defense: 'Jet defensif 5 des: previent 1 par jaune + 1 par rouge.',
+    defenseDice: 5,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(yellow: 3)]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-011',
+    name: 'Hydre Feroce',
+    rank: EnemyRank.violet,
+    maxHealth: 8,
+    pc: 10,
+    cardAsset: 'assets/violet/violet-011.png',
+    attacks: [
+      'Plurimorsure: 2 rouges = 6 degats + 3 par tete.',
+      'Fin de lancer offensif: lance 1 de; sur rouge gagne 1 tete.',
+    ],
+    defense:
+        'Defense unique: si les PV tombent a 0 et qu il reste des tetes, retire 1 tete et remet les PV.',
+    defenseDice: 0,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(red: 2)]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-012',
+    name: 'Pillard Gobelin',
+    rank: EnemyRank.violet,
+    maxHealth: 25,
+    pc: 4,
+    cardAsset: 'assets/violet/violet-012.png',
+    attacks: [
+      'La Rixe ou la Fuite: 5 jaunes, lance 1 de.',
+      '1-3: 4 degats imparables. 4-6: fuit. Echec offensif: les heros perdent 1 or.',
+    ],
+    defense: 'Jet defensif 1 de: 1-5 vole 1 CP et inflige 1; rouge fuit.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(yellow: 5)]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-013',
+    name: 'Onibaba',
+    rank: EnemyRank.violet,
+    maxHealth: 14,
+    pc: 2,
+    cardAsset: 'assets/violet/violet-013.png',
+    attacks: [
+      'Malice: 4 jaunes, lance 1 de.',
+      'Blanc: 6 imparables. Jaune: vole 4 PV. Rouge: vole 5 PV. Echec: Sort + vole 1 PV.',
+    ],
+    defense: 'Jet defensif 3 des: vole 1 PV par jaune.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(yellow: 4)]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-014',
+    name: 'Chimere',
+    rank: EnemyRank.violet,
+    maxHealth: 20,
+    pc: 4,
+    cardAsset: 'assets/violet/violet-014.png',
+    attacks: [
+      'Triple Attaque: 3 rouges = 3 degats imparables et lance 1 de.',
+      '1-2 Brulure, 3-4 A Terre, 5-6 deux Hemorragie.',
+    ],
+    defense: 'Jet defensif 1 de: blanc 1 degat; jaune 3 degats; rouge Poison.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(red: 3)]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-015',
+    name: 'Chaman Orque',
+    rank: EnemyRank.violet,
+    maxHealth: 15,
+    pc: 3,
+    cardAsset: 'assets/violet/violet-015.png',
+    attacks: [
+      'Terre Feu Tempetes: 2 blancs + 2 rouges = Poison, defausse 1 carte aleatoire et 4 degats imparables.',
+      'Echec: Parasite + Sort.',
+    ],
+    defense:
+        'Jet defensif 5 des: soigne 2 par jaune; sur rouge inflige Parasite.',
+    defenseDice: 5,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(white: 2, red: 2)]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-016',
+    name: 'Fanatique Sacre',
+    rank: EnemyRank.violet,
+    maxHealth: 16,
+    pc: 4,
+    cardAsset: 'assets/violet/violet-016.png',
+    attacks: [
+      'Combat Fervent: 2 blancs + 3 jaunes = 7 degats et lance 3 des.',
+      'Ajoute 1 par blanc + 2 par jaune; soigne 2 par rouge. Echec: 2 imparables et soigne 1.',
+    ],
+    defense:
+        'Jet defensif 4 des: blanc inflige 1; previent 2 par jaune + 2 par rouge.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(white: 2, yellow: 3)]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-017',
+    name: 'Lame Maudite',
+    rank: EnemyRank.violet,
+    maxHealth: 13,
+    pc: 4,
+    cardAsset: 'assets/violet/violet-017.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Lame Corrompue: 3/4/5 blancs = 6/7/8 degats.',
+      'Si 3 chiffres identiques, gagne Riposte.',
+    ],
+    defense:
+        'Jet defensif 1 de: inflige et previent la moitie de la valeur du de arrondie au superieur.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 3),
+      SymbolGoal(white: 4),
+      SymbolGoal(white: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-018',
+    name: 'Succube',
+    rank: EnemyRank.violet,
+    maxHealth: 13,
+    pc: 4,
+    cardAsset: 'assets/violet/violet-018.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Seduction: 2 blancs + 1/2/3 jaunes = 4/5/6 degats.',
+      'Avec 2 Chaos, les depense pour se soigner du montant des degats. Debut de tour gagne Chaos.',
+    ],
+    defense:
+        'Jet defensif 4 des: vole 1 PV par jaune; sur 2 blancs inflige Parasite.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 2, yellow: 1),
+      SymbolGoal(white: 2, yellow: 2),
+      SymbolGoal(white: 2, yellow: 3),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-019',
+    name: 'Archer Pourpre',
+    rank: EnemyRank.violet,
+    maxHealth: 14,
+    pc: 3,
+    cardAsset: 'assets/violet/violet-019.png',
+    attacks: [
+      'Tir Diabolique: 2/3/4/5 jaunes = 6/7/8/9 degats.',
+      'Si 3 chiffres identiques, inflige Ronces a tous les adversaires.',
+    ],
+    defense:
+        'Jet defensif 4 des: inflige 1 par blanc + 1 par jaune; sur rouge a tous les adversaires engages.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(yellow: 2),
+      SymbolGoal(yellow: 3),
+      SymbolGoal(yellow: 4),
+      SymbolGoal(yellow: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-020',
+    name: 'Lion Obscur',
+    rank: EnemyRank.violet,
+    maxHealth: 14,
+    pc: 4,
+    cardAsset: 'assets/violet/violet-020.png',
+    initialTokens: ['Première Frappe'],
+    attacks: [
+      'Evisceration: 3/4/5 blancs = 6/7/8 degats.',
+      'Si 3 chiffres identiques, inflige Hemorragie + Silence.',
+    ],
+    defense:
+        'Jet defensif 1 de: blanc ou jaune inflige Hemorragie; rouge inflige 2 Hemorragie.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 3),
+      SymbolGoal(white: 4),
+      SymbolGoal(white: 5),
+    ]),
+  ),
+  EnemyProfile(
+    key: 'violet-violet-021',
+    name: 'Chevalier du Chaos',
+    rank: EnemyRank.violet,
+    maxHealth: 16,
+    pc: 2,
+    cardAsset: 'assets/violet/violet-021.png',
+    attacks: [
+      'Assaut Impie: petite suite = soigne 1 et 8 degats.',
+      'Grande suite = soigne 2 et 10 degats. Echec: gagne 3 Degats Bonus.',
+    ],
+    defense:
+        'Jet defensif 4 des: blanc inflige 1; previent 2 par jaune + 2 par rouge.',
+    defenseDice: 4,
+    attackPlan: MinionAttackPlan.suite(),
+  ),
+];
 
-final List<EnemyProfile> orangeEnemyProfiles = _genericAssetProfiles(
-  rank: EnemyRank.orange,
-  folder: 'orange',
-  files: const [
-    'orange-001.png',
-    'orange-002.png',
-    'orange-003.png',
-    'orange-004.png',
-    'orange-005.png',
-    'orange-006.png',
-    'orange-007.png',
-    'orange-008.png',
-    'orange-009.png',
-    'orange-010.png',
-    'orange-011.png',
-  ],
-);
+const List<EnemyProfile> orangeEnemyProfiles = [
+  EnemyProfile(
+    key: 'orange-orange-001',
+    name: 'Renegate Vereuse',
+    rank: EnemyRank.orange,
+    maxHealth: 30,
+    pc: 8,
+    cardAsset: 'assets/orange/orange-001.png',
+    attacks: [
+      'Frappe Fourbe: petite suite = degats egaux a la moitie des PC du minion, arrondie au superieur.',
+      'Frappe Fourbe: grande suite = degats egaux aux PC du minion.',
+      'Passif: au debut de son tour, gagne 2 PC.',
+      'Passif: si le lancer offensif echoue, gagne 3 Degats Bonus et Ombre.',
+    ],
+    defense:
+        'Jet defensif 5 des: sur 2 rouges, ignore tous les degats; sinon vole 2 PC.',
+    defenseDice: 5,
+    attackPlan: MinionAttackPlan.suite(),
+    initialTokens: ['Première Frappe', 'Main du roi'],
+  ),
+  EnemyProfile(
+    key: 'orange-orange-002',
+    name: 'Mort Murmurante',
+    rank: EnemyRank.orange,
+    maxHealth: 30,
+    pc: 2,
+    cardAsset: 'assets/orange/orange-002.png',
+    attacks: [
+      'Chant Mortuaire: 2 rouges = 3 degats collateraux.',
+      'Chant Mortuaire: 3 rouges = 4 degats collateraux.',
+      'Chant Mortuaire: 4 rouges = 5 degats collateraux.',
+      'Chant Mortuaire: 5 rouges = 6 degats collateraux.',
+      'Si un seul adversaire est engage, inflige aussi Deperissement et Silence.',
+    ],
+    defense: 'Jet defensif 2 des: sur rouge, ignore tous les degats.',
+    defenseDice: 2,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(red: 2),
+      SymbolGoal(red: 3),
+      SymbolGoal(red: 4),
+      SymbolGoal(red: 5),
+    ]),
+    initialTokens: ['Main du roi'],
+  ),
+  EnemyProfile(
+    key: 'orange-orange-003',
+    name: 'Atlas',
+    rank: EnemyRank.orange,
+    maxHealth: 30,
+    pc: 8,
+    cardAsset: 'assets/orange/orange-003.png',
+    attacks: [
+      'Frappe Titanique: micro suite = 2 degats collateraux a tous les adversaires engages.',
+      'Frappe Titanique: petite suite = A Terre et 4 degats collateraux.',
+      'Frappe Titanique: grande suite = Commotion et 7 degats collateraux.',
+    ],
+    defense:
+        'Jet defensif unique 1 de: previent un nombre de degats egal a la valeur du de.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.suite(),
+    initialTokens: ['Main du roi'],
+  ),
+  EnemyProfile(
+    key: 'orange-orange-004',
+    name: 'Umbra',
+    rank: EnemyRank.orange,
+    maxHealth: 25,
+    pc: 10,
+    cardAsset: 'assets/orange/orange-004.png',
+    attacks: [
+      'Silhouette: 3 jaunes = 3 degats imparables.',
+      'Silhouette: 4 jaunes = 5 degats imparables.',
+      'Si Umbra possede Ombre, toutes ses attaques infligent 4 degats supplementaires.',
+      'Passif: si le lancer offensif echoue, gagne Ombre.',
+    ],
+    defense: 'Jet defensif 3 des: sur rouge, gagne Ombre.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(yellow: 3),
+      SymbolGoal(yellow: 4),
+    ]),
+    initialTokens: ['Main du roi'],
+  ),
+  EnemyProfile(
+    key: 'orange-orange-005',
+    name: 'Horde de Gobelins',
+    rank: EnemyRank.orange,
+    maxHealth: 25,
+    pc: 6,
+    cardAsset: 'assets/orange/orange-005.png',
+    attacks: [
+      'Nuee: inflige autant de degats que la moitie de ses points de vie, arrondie au superieur.',
+      'Si les degats sont inferieurs ou egaux a 5, cette attaque devient imparable.',
+      'Passif: si le lancer offensif echoue, soigne 3 PV et retire toutes les alterations positives du joueur actif.',
+    ],
+    defense:
+        'Defense unique: les degats subis lors de l attaque d un adversaire sont reduits a un maximum de 5.',
+    defenseDice: 0,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(white: 5)]),
+    initialTokens: ['Main du roi'],
+  ),
+  EnemyProfile(
+    key: 'orange-orange-006',
+    name: 'Empereur Cobra',
+    rank: EnemyRank.orange,
+    maxHealth: 30,
+    pc: 8,
+    cardAsset: 'assets/orange/orange-006.png',
+    attacks: [
+      'Frappe Venimeuse: inflige Poison, Enchevetrement et 2 Hemorragie.',
+      'Passif: a la fin de son tour, l adversaire subit 1 degat par alteration negative qui l affecte.',
+    ],
+    defense: 'Jet defensif 1 de: sur blanc, inflige Hemorragie.',
+    defenseDice: 1,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(yellow: 3)]),
+    initialTokens: ['Main du roi'],
+  ),
+  EnemyProfile(
+    key: 'orange-orange-007',
+    name: 'Berserker Enrage',
+    rank: EnemyRank.orange,
+    maxHealth: 30,
+    pc: 4,
+    cardAsset: 'assets/orange/orange-007.png',
+    attacks: [
+      'Colere Dechainee: lance 2 des, plus 1 de par Chaos, jusqu a 5 des maximum.',
+      'Inflige autant de degats que la valeur totale du jet.',
+      'Passif: si le lancer offensif echoue, gagne Chaos.',
+    ],
+    defense:
+        'Defense unique: si le Berserker subit des degats pendant un lancer offensif adverse, il gagne Chaos.',
+    defenseDice: 0,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(white: 3, red: 1)]),
+    initialTokens: ['Première Frappe', 'Main du roi'],
+  ),
+  EnemyProfile(
+    key: 'orange-orange-008',
+    name: 'Swamp Dweller',
+    rank: EnemyRank.orange,
+    maxHealth: 30,
+    pc: 6,
+    cardAsset: 'assets/orange/orange-008.png',
+    attacks: [
+      'Toxic Touch: inflige Poison, puis inflige un Poison supplementaire.',
+      'Passif: quand un adversaire engage devrait recevoir Poison, inflige aussi 2 degats imparables.',
+    ],
+    defense: 'Defense roll 2 dice: on yellow, inflict Poison.',
+    defenseDice: 2,
+    attackPlan: MinionAttackPlan.symbols([SymbolGoal(white: 1, yellow: 3)]),
+    initialTokens: ['Main du roi'],
+  ),
+  EnemyProfile(
+    key: 'orange-orange-009',
+    name: 'Bloodseeker',
+    rank: EnemyRank.orange,
+    maxHealth: 30,
+    pc: 5,
+    cardAsset: 'assets/orange/orange-009.png',
+    attacks: [
+      'Leeching Strike: micro straight = inflict 2 Bleed and deal 3 undefendable damage.',
+      'Leeching Strike: small straight = inflict Bleed, deal 6 damage, plus 1 per Bleed on the hero board.',
+      'Leeching Strike: large straight = inflict Bleed, deal 8 damage, plus 2 per Bleed on the hero board.',
+    ],
+    defense: 'Defense roll 3 dice: on 2 white symbols, inflict Bleed.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.suite(),
+    initialTokens: ['Première Frappe', 'Main du roi'],
+  ),
+  EnemyProfile(
+    key: 'orange-orange-010',
+    name: 'The Ashen King',
+    rank: EnemyRank.orange,
+    maxHealth: 35,
+    pc: 6,
+    cardAsset: 'assets/orange/orange-010.png',
+    attacks: [
+      'Profane Command: 1 blanc + 2 jaunes = 7 degats.',
+      'Profane Command: 1 blanc + 2 jaunes + 1 rouge = Domination et 9 degats.',
+      'Profane Command: 1 blanc + 3 jaunes + 1 rouge = Domination et 13 degats.',
+    ],
+    defense:
+        'Defense roll 2 dice: on yellow, inflict Burn. If already at stack limit, deal 2 damage instead.',
+    defenseDice: 2,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 1, yellow: 2),
+      SymbolGoal(white: 1, yellow: 2, red: 1),
+      SymbolGoal(white: 1, yellow: 3, red: 1),
+    ]),
+    initialTokens: ['Main du roi'],
+  ),
+  EnemyProfile(
+    key: 'orange-orange-011',
+    name: 'Fallen Pharaoh',
+    rank: EnemyRank.orange,
+    maxHealth: 25,
+    pc: 5,
+    cardAsset: 'assets/orange/orange-011.png',
+    attacks: [
+      'Ancient Curse: inflige 5 degats imparables et lance 1 de.',
+      'Sur blanc: inflige Silence. Sur jaune: inflige Sort. Sur rouge: inflige Sort et Silence.',
+      'Passif: au debut de son tour, gagne Siphon Vital; si deja a la limite, soigne 3 PV.',
+    ],
+    defense: 'Defense roll 3 dice: on red, steal 2 health.',
+    defenseDice: 3,
+    attackPlan: MinionAttackPlan.symbols([
+      SymbolGoal(white: 2, yellow: 2, red: 1),
+    ]),
+    initialTokens: ['Main du roi'],
+  ),
+];
 
 const EnemyProfile fallbackGreenProfile = EnemyProfile(
   key: 'green-fallback',
@@ -631,110 +1858,6 @@ const EnemyProfile fallbackGreenProfile = EnemyProfile(
   defenseDice: 1,
   attackPlan: MinionAttackPlan.none(),
 );
-
-List<EnemyProfile> _genericAssetProfiles({
-  required EnemyRank rank,
-  required String folder,
-  required List<String> files,
-}) {
-  return [
-    for (final file in files)
-      EnemyProfile(
-        key: '$folder-${file.replaceAll('.png', '')}',
-        name: '${rank.label} ${file.replaceAll('.png', '').toUpperCase()}',
-        rank: rank,
-        maxHealth: _genericHealthFor(rank),
-        pc: _genericPcFor(rank),
-        cardAsset: 'assets/$folder/$file',
-        attacks: _genericAttacksFor(rank),
-        defense: _genericDefenseFor(rank),
-        defenseDice: _genericDefenseDiceFor(rank),
-        attackPlan: _genericAttackPlanFor(rank),
-      ),
-  ];
-}
-
-int _genericHealthFor(EnemyRank rank) {
-  return switch (rank) {
-    EnemyRank.green => 10,
-    EnemyRank.blue => 13,
-    EnemyRank.violet => 16,
-    EnemyRank.viseer => 20,
-    EnemyRank.orange => 20,
-  };
-}
-
-int _genericPcFor(EnemyRank rank) {
-  return switch (rank) {
-    EnemyRank.green => 1,
-    EnemyRank.blue => 2,
-    EnemyRank.violet => 3,
-    EnemyRank.viseer => 0,
-    EnemyRank.orange => 5,
-  };
-}
-
-int _genericDefenseDiceFor(EnemyRank rank) {
-  return switch (rank) {
-    EnemyRank.green => 2,
-    EnemyRank.blue => 3,
-    EnemyRank.violet => 4,
-    EnemyRank.viseer => 4,
-    EnemyRank.orange => 4,
-  };
-}
-
-List<String> _genericAttacksFor(EnemyRank rank) {
-  return switch (rank) {
-    EnemyRank.green => const [
-      'Level 1 assault',
-      '3 matching symbols: inflige 4 dégâts.',
-      '4 matching symbols: inflige 5 dégâts.',
-    ],
-    EnemyRank.blue => const [
-      'Level 2 assault',
-      '3 matching symbols: inflige 5 dégâts.',
-      '4 matching symbols: inflige 7 dégâts.',
-    ],
-    EnemyRank.violet => const [
-      'Level 3 assault',
-      '3 matching symbols: inflige 6 dégâts.',
-      '4 matching symbols: inflige 8 dégâts.',
-      '5 matching symbols: inflige 10 dégâts.',
-    ],
-    EnemyRank.viseer => const ['Special rules'],
-    EnemyRank.orange => const [
-      'Level 4 assault',
-      '4 matching symbols: inflige 9 dégâts.',
-      '5 matching symbols: inflige 12 dégâts.',
-    ],
-  };
-}
-
-String _genericDefenseFor(EnemyRank rank) {
-  return switch (rank) {
-    EnemyRank.green => 'Jet défensif 2 dés: prévient 1 dégât.',
-    EnemyRank.blue => 'Jet défensif 3 dés: prévient 2 dégâts.',
-    EnemyRank.violet => 'Jet défensif 4 dés: prévient 3 dégâts.',
-    EnemyRank.viseer => 'Defense roll 4 dice.',
-    EnemyRank.orange => 'Jet défensif 4 dés: prévient 4 dégâts.',
-  };
-}
-
-MinionAttackPlan _genericAttackPlanFor(EnemyRank rank) {
-  return switch (rank) {
-    EnemyRank.green => const MinionAttackPlan.symbols([SymbolGoal(yellow: 3)]),
-    EnemyRank.blue => const MinionAttackPlan.symbols([SymbolGoal(yellow: 4)]),
-    EnemyRank.violet => const MinionAttackPlan.symbols([
-      SymbolGoal(yellow: 4),
-      SymbolGoal(yellow: 5),
-    ]),
-    EnemyRank.viseer => const MinionAttackPlan.none(),
-    EnemyRank.orange => const MinionAttackPlan.symbols([
-      SymbolGoal(yellow: 4, red: 1),
-    ]),
-  };
-}
 
 List<EnemyProfile> _recipeProfilesFor(EnemyRank rank) {
   final profiles = _profilesForRank(rank);
@@ -1204,8 +2327,8 @@ class AdventureState {
     _refreshAvailability();
   }
 
-  void applyReward(int d20) {
-    final outcome = GameEngine.rewardForD20(d20);
+  void applyReward(int d20, EnemyRank rank) {
+    final outcome = GameEngine.rewardForD20(d20, chest: rank.rewardChestKey);
     if (outcome.healthDelta != 0) {
       health = (health + outcome.healthDelta).clamp(0, 99);
     }
@@ -3123,8 +4246,7 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   static double _savedMapScale = 0.52;
   late final TransformationController _mapController =
-      TransformationController()
-        ..value = Matrix4.diagonal3Values(_savedMapScale, _savedMapScale, 1);
+      TransformationController();
   final ScrollController _mapScrollController = ScrollController();
   final ScrollController _mapHorizontalController = ScrollController();
   int? _selectedEnemyId;
@@ -3133,6 +4255,8 @@ class _MapPageState extends State<MapPage> {
   @override
   void initState() {
     super.initState();
+    _mapController.value = _mapController.value.clone()
+      ..scale(_savedMapScale, _savedMapScale);
     _mapController.addListener(() {
       _savedMapScale = _mapController.value.getMaxScaleOnAxis();
     });
@@ -3996,6 +5120,8 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
               const SizedBox(height: 12),
               DropdownButtonFormField<EnemyProfile>(
                 initialValue: _selected,
+                isExpanded: true,
+                menuMaxHeight: 420,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   labelText: 'Minion',
@@ -4004,7 +5130,10 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
                     .map(
                       (profile) => DropdownMenuItem(
                         value: profile,
-                        child: Text(_recipeProfileLabel(profile)),
+                        child: Text(
+                          _recipeProfileLabel(profile),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     )
                     .toList(),
@@ -4283,7 +5412,10 @@ class EnemyMapTile extends StatelessWidget {
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
-                  child: Image.asset(enemy.rank.asset, fit: BoxFit.cover),
+                  child: Image.asset(
+                    enemy.defeated ? enemy.cardAsset : enemy.rank.asset,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               Container(color: Colors.black.withValues(alpha: 0.1)),
@@ -4661,27 +5793,19 @@ class _FightPageState extends State<FightPage> {
         body: SafeArea(
           child: Column(
             children: [
-              MapHeader(
-                adventure: widget.adventure,
-                onDetails: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => AdventureDetailsPage(
-                      adventure: widget.adventure,
-                      combatEnemy: enemy,
-                      combatPhase: _phase,
-                      combatDice: _dice,
-                      aiMode: _aiMode,
-                      rollCount: _rollCount,
-                    ),
-                  ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: TurnPhasePanel(
+                  phase: _phase,
+                  adventure: widget.adventure,
+                  enemy: enemy,
+                  upkeepApplied: _upkeepApplied,
+                  heroUpkeepApplied: _heroUpkeepApplied,
+                  onPhaseChanged: _setPhase,
+                  onNext: _advancePhase,
+                  onApplyUpkeep: _applyUpkeep,
+                  onApplyHeroUpkeep: _applyHeroUpkeep,
                 ),
-                onChanged: () {
-                  widget.onChanged();
-                  setState(() {});
-                },
-                onPause: _openPauseDialog,
-                showRewards: false,
-                showVitals: false,
               ),
               FightStatusPanel(
                 adventure: widget.adventure,
@@ -4697,18 +5821,6 @@ class _FightPageState extends State<FightPage> {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    TurnPhasePanel(
-                      phase: _phase,
-                      adventure: widget.adventure,
-                      enemy: enemy,
-                      upkeepApplied: _upkeepApplied,
-                      heroUpkeepApplied: _heroUpkeepApplied,
-                      onPhaseChanged: _setPhase,
-                      onNext: _advancePhase,
-                      onApplyUpkeep: _applyUpkeep,
-                      onApplyHeroUpkeep: _applyHeroUpkeep,
-                    ),
-                    const SizedBox(height: 12),
                     EnemyRulesPanel(
                       enemy: enemy,
                       phase: _phase,
@@ -4731,8 +5843,7 @@ class _FightPageState extends State<FightPage> {
                         dice: _dice,
                         adventure: widget.adventure,
                         rollCount: _rollCount,
-                        onNextStep: _handleAiNextStep,
-                        onInteract: _openAiInteraction,
+                        onDetails: _openAdventureDetails,
                       ),
                     ] else ...[
                       const SizedBox(height: 12),
@@ -4758,7 +5869,9 @@ class _FightPageState extends State<FightPage> {
                       dice: _dice,
                       diceToRoll: _diceToRoll,
                       visibleDiceCount: _visibleDiceCount,
+                      maxDiceCount: _diceMenuMax,
                       rollCount: _rollCount,
+                      maxRolls: _maxRolls,
                       editMode: _editMode,
                       rerollOneMode: _rerollOneMode,
                       editingDieId: _editingDieId,
@@ -4780,6 +5893,12 @@ class _FightPageState extends State<FightPage> {
                         _editMode = false;
                         _editingDieId = null;
                       }),
+                      rollLabel: _phase == CombatPhase.hero
+                          ? 'Roll defense'
+                          : (_rollCount == 0 ? 'Roll' : 'Reroll'),
+                      rollColor: _phase == CombatPhase.hero
+                          ? enemy.rank.color
+                          : const Color(0xff8f43ff),
                     ),
                     if (_specialAttackReady) ...[
                       const SizedBox(height: 12),
@@ -4800,7 +5919,7 @@ class _FightPageState extends State<FightPage> {
   }
 
   void _rollDice() {
-    if (_rollCount >= 3) {
+    if (_rollCount >= _maxRolls) {
       return;
     }
     if (_phase == CombatPhase.minionAttack &&
@@ -4834,102 +5953,25 @@ class _FightPageState extends State<FightPage> {
         _applyMinionDiceStrategy();
       }
       widget.onChanged();
-      if (_rollCount == 3) {
+      if (_rollCount == _maxRolls) {
         _specialAttackReady = _shouldResolveSpecialAttack();
       }
     });
   }
 
-  Future<void> _handleAiNextStep() async {
-    if (_phase == CombatPhase.heroUpkeep) {
-      if (!_heroUpkeepApplied) {
-        _applyHeroUpkeep();
-      }
-      _advancePhase();
-      return;
-    }
-    if (_phase == CombatPhase.minionUpkeep) {
-      if (!_upkeepApplied) {
-        _applyUpkeep();
-      }
-      _advancePhase();
-      return;
-    }
-    if (_phase == CombatPhase.minionAttack && _rollCount < 3) {
-      _rollDice();
-      return;
-    }
-    _advancePhase();
-  }
-
-  Future<void> _openAiInteraction() async {
-    final controller = TextEditingController();
-    final text = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('AI interaction'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          minLines: 3,
-          maxLines: 5,
-          decoration: const InputDecoration(
-            hintText: 'Example: -1 CP, change 2 to 3',
-          ),
+  void _openAdventureDetails() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => AdventureDetailsPage(
+          adventure: widget.adventure,
+          combatEnemy: enemy,
+          combatPhase: _phase,
+          combatDice: _dice,
+          aiMode: _aiMode,
+          rollCount: _rollCount,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Apply'),
-          ),
-        ],
       ),
     );
-    if (text == null || text.trim().isEmpty || !mounted) {
-      return;
-    }
-    setState(() {
-      _applyAiInteraction(text);
-      widget.adventure.log('AI interaction: $text');
-      widget.onChanged();
-    });
-  }
-
-  void _applyAiInteraction(String text) {
-    final lower = text.toLowerCase();
-    if (lower.contains('cp') &&
-        (lower.contains('-1') || lower.contains('moins 1'))) {
-      widget.adventure.setHeroPc(widget.adventure.combatPoints - 1);
-    }
-    final changeMatch = RegExp(
-      r'(?:change|changer|modifie|modifier)[^\d]*(\d)[^\d]+(?:en|to)[^\d]*(\d)',
-      caseSensitive: false,
-    ).firstMatch(text);
-    if (changeMatch != null) {
-      final from = int.tryParse(changeMatch.group(1) ?? '');
-      final to = int.tryParse(changeMatch.group(2) ?? '');
-      if (from != null && to != null) {
-        GameDie? die;
-        for (final candidate in _dice) {
-          if (candidate.value == from) {
-            die = candidate;
-            break;
-          }
-        }
-        if (die != null) {
-          die
-            ..value = to.clamp(1, 6)
-            ..reserved = false;
-        }
-      }
-    }
-    if (_phase == CombatPhase.minionAttack && _aiMode) {
-      _applyMinionDiceStrategy();
-    }
   }
 
   void _tapDie(GameDie die) {
@@ -4972,6 +6014,7 @@ class _FightPageState extends State<FightPage> {
       _specialAttackMode = false;
       _configureDiceForPhase(
         autoRollAttack: _aiMode && phase == CombatPhase.minionAttack,
+        autoRollDefense: _aiMode && phase == CombatPhase.hero,
       );
     });
     if (phase == CombatPhase.heroUpkeep) {
@@ -4989,15 +6032,25 @@ class _FightPageState extends State<FightPage> {
     _setPhase(next);
   }
 
-  void _configureDiceForPhase({required bool autoRollAttack}) {
+  void _configureDiceForPhase({
+    required bool autoRollAttack,
+    bool autoRollDefense = false,
+  }) {
     _resetDice();
     if (_phase == CombatPhase.hero) {
-      _diceToRoll = enemy.defenseDice.clamp(1, 6);
+      _diceToRoll = enemy.defenseDice.clamp(0, 5);
+      if (autoRollDefense && _diceToRoll > 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _phase == CombatPhase.hero && _rollCount == 0) {
+            _rollDice();
+          }
+        });
+      }
     } else if (_phase == CombatPhase.heroUpkeep ||
         _phase == CombatPhase.minionUpkeep) {
       _diceToRoll = 0;
     } else if (_phase == CombatPhase.minionAttack) {
-      _diceToRoll = 6;
+      _diceToRoll = 5;
       if (autoRollAttack) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted &&
@@ -5029,10 +6082,19 @@ class _FightPageState extends State<FightPage> {
       return 1;
     }
     if (_phase == CombatPhase.minionAttack) {
-      return 6;
+      return 5;
     }
-    return _diceToRoll.clamp(0, 6);
+    return _diceToRoll.clamp(0, 5);
   }
+
+  int get _diceMenuMax {
+    if (_phase == CombatPhase.hero) {
+      return 5;
+    }
+    return _visibleDiceCount.clamp(0, 5);
+  }
+
+  int get _maxRolls => _phase == CombatPhase.hero ? 1 : 3;
 
   void _applyHeroUpkeep() {
     if (!mounted || _heroUpkeepApplied || _phase != CombatPhase.heroUpkeep) {
@@ -5285,7 +6347,13 @@ class CompactItemStrip extends StatelessWidget {
     final displayItems = compactDuplicates
         ? _compactItemModels(items)
         : items
-              .map((value) => CompactItemModel(label: value, tooltip: value))
+              .map(
+                (value) => CompactItemModel(
+                  label: value,
+                  tooltip: value,
+                  rewardCardColor: _rewardCardColor(value),
+                ),
+              )
               .toList();
     final displayLabel = items.isEmpty ? emptyText : '';
     return Container(
@@ -5298,7 +6366,7 @@ class CompactItemStrip extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final showLabel = constraints.maxWidth >= 190;
+          final showLabel = items.isEmpty || constraints.maxWidth >= 190;
 
           return Row(
             children: [
@@ -5320,11 +6388,24 @@ class CompactItemStrip extends StatelessWidget {
                             ...displayItems.map(
                               (item) => Padding(
                                 padding: const EdgeInsets.only(right: 4),
-                                child: Tooltip(
-                                  message: item.tooltip,
-                                  child: CompactItemBadge(
-                                    value: item.label,
-                                    color: accent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(6),
+                                  onTap: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(item.tooltip)),
+                                    );
+                                  },
+                                  child: Tooltip(
+                                    message: item.tooltip,
+                                    child: item.rewardCardColor == null
+                                        ? CompactItemBadge(
+                                            value: item.label,
+                                            color: accent,
+                                          )
+                                        : RewardCardBadge(
+                                            color: item.rewardCardColor!,
+                                            tooltip: item.tooltip,
+                                          ),
                                   ),
                                 ),
                               ),
@@ -5368,10 +6449,51 @@ class HeroTokenStrip extends StatelessWidget {
 }
 
 class CompactItemModel {
-  const CompactItemModel({required this.label, required this.tooltip});
+  const CompactItemModel({
+    required this.label,
+    required this.tooltip,
+    this.rewardCardColor,
+  });
 
   final String label;
   final String tooltip;
+  final Color? rewardCardColor;
+}
+
+class RewardCardBadge extends StatelessWidget {
+  const RewardCardBadge({
+    required this.color,
+    required this.tooltip,
+    super.key,
+  });
+
+  final Color color;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 32,
+      height: 28,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(Icons.style, color: color, size: 20),
+          const Positioned(
+            right: 3,
+            bottom: 2,
+            child: Icon(Icons.add_circle, color: Colors.white, size: 10),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class CompactItemBadge extends StatelessWidget {
@@ -5418,9 +6540,30 @@ List<CompactItemModel> _compactItemModels(List<String> values) {
           tooltip: entry.value == 1
               ? entry.key
               : '${entry.key} x${entry.value}',
+          rewardCardColor: _rewardCardColor(entry.key),
         ),
       )
       .toList();
+}
+
+Color? _rewardCardColor(String value) {
+  final normalized = value.toLowerCase();
+  if (!normalized.contains('carte')) {
+    return null;
+  }
+  if (normalized.contains('verte')) {
+    return EnemyRank.green.color;
+  }
+  if (normalized.contains('bleue')) {
+    return EnemyRank.blue.color;
+  }
+  if (normalized.contains('violette')) {
+    return EnemyRank.violet.color;
+  }
+  if (normalized.contains('orange')) {
+    return EnemyRank.orange.color;
+  }
+  return Colors.white;
 }
 
 String _compactItemCode(String value, [int count = 1]) {
@@ -5784,16 +6927,6 @@ class MinionAttackSummary extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _ObjectiveRow(
-            label: 'Roll target',
-            symbols: [
-              DieSymbol.yellow,
-              DieSymbol.yellow,
-              DieSymbol.yellow,
-              DieSymbol.yellow,
-            ],
-          ),
-          const SizedBox(height: 8),
           const Text(
             'If successful, roll 1 die',
             style: TextStyle(fontWeight: FontWeight.w900),
@@ -5820,11 +6953,6 @@ class MinionAttackSummary extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Roll target',
-              style: TextStyle(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 6),
             ...enemy.attackPlan.goals.map((goal) {
               final damage = _damageForSymbolGoal(enemy, goal);
               return Padding(
@@ -5848,11 +6976,6 @@ class MinionAttackSummary extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Suite targets',
-              style: TextStyle(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 6),
             _SuiteLine(
               label: 'Micro',
               length: 3,
@@ -5998,6 +7121,15 @@ class RewardChestBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (count > 1) {
+      return Wrap(
+        spacing: 4,
+        children: [
+          for (var i = 0; i < count; i++)
+            RewardChestBadge(rank: rank, count: 1),
+        ],
+      );
+    }
     return Container(
       width: 34,
       height: 30,
@@ -6011,15 +7143,16 @@ class RewardChestBadge extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           Icon(Icons.inventory_2, color: rank.color, size: 24),
-          Text(
-            count.toString(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              shadows: [Shadow(color: Colors.black, blurRadius: 4)],
+          if (count > 1)
+            Text(
+              count.toString(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                shadows: [Shadow(color: Colors.black, blurRadius: 4)],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -6056,8 +7189,7 @@ class MinionAiPanel extends StatelessWidget {
     required this.dice,
     required this.adventure,
     required this.rollCount,
-    required this.onNextStep,
-    required this.onInteract,
+    required this.onDetails,
     super.key,
   });
 
@@ -6066,21 +7198,11 @@ class MinionAiPanel extends StatelessWidget {
   final List<GameDie> dice;
   final AdventureState adventure;
   final int rollCount;
-  final VoidCallback onNextStep;
-  final VoidCallback onInteract;
+  final VoidCallback onDetails;
 
   @override
   Widget build(BuildContext context) {
     final message = _aiMessageFor(enemy, phase, dice, rollCount);
-    final sortedDice = [...dice]
-      ..sort((a, b) {
-        final left = a.value ?? 99;
-        final right = b.value ?? 99;
-        if (left != right) {
-          return left.compareTo(right);
-        }
-        return a.id.compareTo(b.id);
-      });
     return InfoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -6095,20 +7217,12 @@ class MinionAiPanel extends StatelessWidget {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              for (final die in sortedDice.take(6))
-                DieTile(
-                  die: die,
-                  onTap: () {},
-                  compact: true,
-                  highlight: die.reserved,
-                  highlightColor: enemy.rank.color,
-                ),
+              IconButton(
+                tooltip: 'Run log',
+                onPressed: onDetails,
+                icon: const Icon(Icons.receipt_long),
+                color: heroAccent,
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -6134,34 +7248,6 @@ class MinionAiPanel extends StatelessWidget {
                 Text(message),
               ],
             ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: heroAccent,
-                    foregroundColor: Colors.black,
-                  ),
-                  onPressed: onInteract,
-                  icon: const Icon(Icons.touch_app),
-                  label: const Text('Intervene'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: enemy.rank.color,
-                    foregroundColor: Colors.black,
-                  ),
-                  onPressed: onNextStep,
-                  icon: const Icon(Icons.skip_next),
-                  label: const Text('Next AI step'),
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -6317,24 +7403,6 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ObjectiveRow extends StatelessWidget {
-  const _ObjectiveRow({required this.label, required this.symbols});
-
-  final String label;
-  final List<DieSymbol> symbols;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w900)),
-        const SizedBox(width: 8),
-        ...symbols.map((symbol) => DieSymbolMark(symbol: symbol)),
-      ],
     );
   }
 }
@@ -6618,37 +7686,6 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CombatantStatusRow.hero(
-            adventure: widget.adventure,
-            onHp: () => _openEditor('heroHp', widget.adventure.health),
-            onCp: () => _openEditor('heroCp', widget.adventure.combatPoints),
-            onEditTokens: _editHeroTokens,
-          ),
-          if (_editing.contains('heroHp')) ...[
-            const SizedBox(height: 6),
-            _buildEditorRow('heroHp'),
-          ],
-          if (_editing.contains('heroCp')) ...[
-            const SizedBox(height: 6),
-            _buildEditorRow('heroCp'),
-          ],
-          const SizedBox(height: 8),
-          if (widget.onFinish != null) ...[
-            Row(
-              children: [
-                const Spacer(),
-                SizedBox(
-                  width: 150,
-                  child: FilledButton.icon(
-                    onPressed: widget.onFinish,
-                    icon: const Icon(Icons.flag),
-                    label: const Text('Finish'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-          ],
           CombatantStatusRow.enemy(
             enemy: widget.enemy,
             onHp: () => _openEditor('enemyHp', widget.enemy.health),
@@ -6663,6 +7700,42 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
             const SizedBox(height: 6),
             _buildEditorRow('enemyCp'),
           ],
+          if (widget.onFinish != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Spacer(),
+                SizedBox(
+                  width: 150,
+                  child: FilledButton.icon(
+                    onPressed: widget.onFinish,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xff8f43ff),
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.flag),
+                    label: const Text('Finish'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+          ],
+          const SizedBox(height: 8),
+          CombatantStatusRow.hero(
+            adventure: widget.adventure,
+            onHp: () => _openEditor('heroHp', widget.adventure.health),
+            onCp: () => _openEditor('heroCp', widget.adventure.combatPoints),
+            onEditTokens: _editHeroTokens,
+          ),
+          if (_editing.contains('heroHp')) ...[
+            const SizedBox(height: 6),
+            _buildEditorRow('heroHp'),
+          ],
+          if (_editing.contains('heroCp')) ...[
+            const SizedBox(height: 6),
+            _buildEditorRow('heroCp'),
+          ],
         ],
       ),
     );
@@ -6675,11 +7748,6 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
     final value = _draftValues[key] ?? 0;
     return Row(
       children: [
-        if (isHero)
-          HeroAvatar(hero: widget.adventure.hero, size: 38)
-        else
-          EnemyRankAvatar(enemy: widget.enemy, size: 38),
-        const SizedBox(width: 8),
         SizedBox(
           width: 34,
           child: Center(
@@ -6701,15 +7769,16 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
           color: accent,
           onPressed: () => setState(() => _draftValues[key] = value - 1),
         ),
-        SizedBox(
-          width: 54,
-          child: Text(
-            value.toString(),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: accent,
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
+        Expanded(
+          child: Center(
+            child: Text(
+              value.toString(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: accent,
+                fontSize: 26,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ),
@@ -6870,8 +7939,13 @@ class CombatantStatusRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        if (hero != null)
+          HeroAvatar(hero: hero!, size: 36)
+        else if (enemy != null)
+          EnemyRankAvatar(enemy: enemy!, size: 36),
+        const SizedBox(width: 7),
         SizedBox(
-          width: 74,
+          width: 68,
           child: MapStatChip(
             icon: Icons.favorite,
             label: '',
@@ -6881,9 +7955,9 @@ class CombatantStatusRow extends StatelessWidget {
             onTap: onHp,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         SizedBox(
-          width: 74,
+          width: 68,
           child: MapStatChip(
             label: 'CP',
             value: cp.toString(),
@@ -6892,8 +7966,9 @@ class CombatantStatusRow extends StatelessWidget {
             onTap: onCp,
           ),
         ),
-        const SizedBox(width: 8),
-        Expanded(
+        const SizedBox(width: 6),
+        Flexible(
+          flex: 2,
           child: CompactItemStrip(
             label: 'Tokens',
             emptyText: 'Tokens',
@@ -7344,7 +8419,9 @@ class DicePanel extends StatelessWidget {
     required this.dice,
     required this.diceToRoll,
     required this.visibleDiceCount,
+    required this.maxDiceCount,
     required this.rollCount,
+    required this.maxRolls,
     required this.editMode,
     required this.rerollOneMode,
     required this.editingDieId,
@@ -7356,13 +8433,17 @@ class DicePanel extends StatelessWidget {
     required this.onValidateEdit,
     required this.onToggleEdit,
     required this.onToggleRerollOne,
+    required this.rollLabel,
+    required this.rollColor,
     super.key,
   });
 
   final List<GameDie> dice;
   final int diceToRoll;
   final int visibleDiceCount;
+  final int maxDiceCount;
   final int rollCount;
+  final int maxRolls;
   final bool editMode;
   final bool rerollOneMode;
   final int? editingDieId;
@@ -7374,6 +8455,8 @@ class DicePanel extends StatelessWidget {
   final VoidCallback onValidateEdit;
   final VoidCallback onToggleEdit;
   final VoidCallback onToggleRerollOne;
+  final String rollLabel;
+  final Color rollColor;
 
   @override
   Widget build(BuildContext context) {
@@ -7400,7 +8483,7 @@ class DicePanel extends StatelessWidget {
               ),
               DropdownButton<int>(
                 value: diceToRoll,
-                items: [0, 1, 2, 3, 4, 5, 6]
+                items: List.generate(maxDiceCount.clamp(0, 5) + 1, (i) => i)
                     .map(
                       (count) => DropdownMenuItem(
                         value: count,
@@ -7421,12 +8504,20 @@ class DicePanel extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              OutlinedButton.icon(
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: heroAccent,
+                  foregroundColor: Colors.black,
+                ),
                 onPressed: onToggleEdit,
                 icon: const Icon(Icons.tune),
                 label: Text(editMode ? 'Stop edit' : 'Edit a die'),
               ),
-              OutlinedButton.icon(
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: heroAccent,
+                  foregroundColor: Colors.black,
+                ),
                 onPressed: onToggleRerollOne,
                 icon: const Icon(Icons.refresh),
                 label: Text(rerollOneMode ? 'Choose a die' : 'Reroll one die'),
@@ -7438,19 +8529,35 @@ class DicePanel extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              Text(
-                '$rollCount / 3',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
+              if (maxRolls > 1) ...[
+                Text(
+                  '$rollCount / $maxRolls',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
+                const SizedBox(width: 10),
+              ],
               Expanded(
-                child: ImageActionButton(
-                  label: rollCount == 0 ? 'Roll' : 'Reroll',
-                  icon: Icons.casino,
-                  onPressed: rollCount < 3 && diceToRoll > 0 ? onRoll : null,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: rollColor,
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size.fromHeight(56),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  onPressed: rollCount < maxRolls && diceToRoll > 0
+                      ? onRoll
+                      : null,
+                  icon: const Icon(Icons.casino),
+                  label: Text(rollLabel),
                 ),
               ),
             ],
@@ -7581,9 +8688,9 @@ class DieTile extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Container(
-            width: compact ? 34 : 42,
-            height: compact ? 34 : 42,
-            constraints: BoxConstraints(maxWidth: compact ? 34 : 42),
+            width: compact ? 40 : 50,
+            height: compact ? 40 : 50,
+            constraints: BoxConstraints(maxWidth: compact ? 40 : 50),
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: value == null ? Colors.white24 : color,
@@ -7607,7 +8714,7 @@ class DieTile extends StatelessWidget {
               value?.toString() ?? '-',
               style: TextStyle(
                 color: value == null ? Colors.white : textColor,
-                fontSize: compact ? 18 : 22,
+                fontSize: compact ? 20 : 24,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -7619,7 +8726,7 @@ class DieTile extends StatelessWidget {
               child: Icon(
                 Icons.check_circle,
                 color: highlightColor ?? heroAccent,
-                size: compact ? 14 : 16,
+                size: compact ? 16 : 18,
               ),
             ),
         ],
@@ -7645,6 +8752,9 @@ class _RewardPageState extends State<RewardPage> {
   @override
   Widget build(BuildContext context) {
     final d20 = _d20;
+    final outcome = d20 == null
+        ? null
+        : GameEngine.rewardForD20(d20, chest: widget.enemy.rank.rewardChestKey);
     return Scaffold(
       appBar: AppBar(title: const Text('Reward')),
       body: SafeArea(
@@ -7677,11 +8787,9 @@ class _RewardPageState extends State<RewardPage> {
                       ),
                     ),
                     Text(
-                      d20 == null
-                          ? 'Lance le de'
-                          : d20 <= 10
-                          ? '+1 HP'
-                          : '+1 CP',
+                      d20 == null ? 'Roll the die' : outcome!.label,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -7689,11 +8797,11 @@ class _RewardPageState extends State<RewardPage> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        FilledButton.icon(
+                        ImageActionButton(
+                          label: d20 == null ? 'Roll' : 'Reroll',
+                          icon: Icons.casino,
                           onPressed: () =>
                               setState(() => _d20 = _random.nextInt(20) + 1),
-                          icon: const Icon(Icons.casino),
-                          label: Text(d20 == null ? 'Roll' : 'Reroll'),
                         ),
                         OutlinedButton.icon(
                           onPressed: d20 == null ? null : _modifyD20,
@@ -7710,9 +8818,13 @@ class _RewardPageState extends State<RewardPage> {
                 onPressed: d20 == null
                     ? null
                     : () {
-                        widget.adventure.applyReward(d20);
+                        widget.adventure.applyReward(d20, widget.enemy.rank);
                         Navigator.of(context).pop();
                       },
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xff8f43ff),
+                  foregroundColor: Colors.white,
+                ),
                 icon: const Icon(Icons.check),
                 label: const Text('Confirm reward'),
               ),

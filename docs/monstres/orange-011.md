@@ -1,44 +1,47 @@
-# ORANGE-011
-
-## Statut
-
-Fiche generee automatiquement pour rendre la carte jouable dans l'application. Les valeurs ci-dessous sont un profil generique de niveau 4 a remplacer quand la carte sera lue precisement.
+# Orange-011 - Fallen Pharaoh
 
 ## Image
 
-- Fichier : ssets/orange/orange-011.png
+- Fichier : `assets/orange/orange-011.png`
 
 ## Couleur
 
-orange, niveau 4.
+- Orange
+- Niveau : 4
 
 ## Points de vie et PC
 
-- Points de vie : 20
+- Points de vie : 25
 - PC : 5
 
-## Tokens
+## Tokens initiaux
 
-- Aucun token initial connu.
+- Main du roi
 
 ## Recompense
 
-- Recompense : 1 lance de D20 orange.
+- 1 coffre orange
 
 ## Jet a faire
 
-Objectif de lancer :
-
-- 4 symboles jaunes et 1 symbole rouge
+- 2 symboles blancs, 2 symboles jaunes et 1 symbole rouge
 
 ## Attaque
 
-### Attaque generique niveau 4
+### Ancient Curse
 
-- 4 symboles jaunes et 1 symbole rouge : inflige 9 degats.`n- Amelioration possible : inflige 12 degats.
+- Inflige 5 degats imparables et lance 1 de :
+  - Sur symbole blanc : inflige Silence.
+  - Sur symbole jaune : inflige Sort.
+  - Sur symbole rouge : inflige Sort et Silence.
+
+## Passif
+
+- Au debut de son tour, gagne Siphon Vital.
+- Si Fallen Pharaoh est deja a la limite d'empilement de Siphon Vital, soigne 3 points de vie a la place.
 
 ## Defense
 
-### Defense generique niveau 4
+### Defense roll 3 dice
 
-- Jet defensif 4 des : previent 4 degats.
+- Sur symbole rouge : vole 2 points de vie.
