@@ -7911,15 +7911,14 @@ class CombatantStatusRow extends StatelessWidget {
        accent = heroAccent;
 
   CombatantStatusRow.enemy({
-    required EnemyNode enemy,
+    required this.enemy,
     required this.onHp,
     required this.onCp,
     required this.onEditTokens,
     super.key,
-  }) : enemy = enemy,
-       hero = null,
+  }) : hero = null,
        title = 'Enemy',
-       hp = enemy.health,
+       hp = enemy!.health,
        cp = enemy.combatPoints,
        tokens = enemy.alterations,
        accent = enemy.rank.color;
