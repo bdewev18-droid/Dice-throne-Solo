@@ -4256,7 +4256,7 @@ class _MapPageState extends State<MapPage> {
   void initState() {
     super.initState();
     _mapController.value = _mapController.value.clone()
-      ..scale(_savedMapScale, _savedMapScale);
+      ..scaleByDouble(_savedMapScale, _savedMapScale, 1, 1);
     _mapController.addListener(() {
       _savedMapScale = _mapController.value.getMaxScaleOnAxis();
     });
