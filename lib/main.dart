@@ -5844,6 +5844,27 @@ class _FightPageState extends State<FightPage> {
                         adventure: widget.adventure,
                         rollCount: _rollCount,
                         onDetails: _openAdventureDetails,
+                        diceToRoll: _diceToRoll,
+                        visibleDiceCount: _visibleDiceCount,
+                        maxRolls: _maxRolls,
+                        editMode: _editMode,
+                        rerollOneMode: _rerollOneMode,
+                        editingDieId: _editingDieId,
+                        onRoll: _rollDice,
+                        onTapDie: _tapDie,
+                        onSelectFace: _selectFace,
+                        onValidateEdit: () =>
+                            setState(() => _editingDieId = null),
+                        onToggleEdit: () => setState(() {
+                          _editMode = !_editMode;
+                          _rerollOneMode = false;
+                          _editingDieId = null;
+                        }),
+                        onToggleRerollOne: () => setState(() {
+                          _rerollOneMode = !_rerollOneMode;
+                          _editMode = false;
+                          _editingDieId = null;
+                        }),
                       ),
                     ] else ...[
                       const SizedBox(height: 12),
@@ -5864,42 +5885,44 @@ class _FightPageState extends State<FightPage> {
                         const ManualExtraDicePhasePanel(),
                       ],
                     ],
-                    const SizedBox(height: 12),
-                    DicePanel(
-                      dice: _dice,
-                      diceToRoll: _diceToRoll,
-                      visibleDiceCount: _visibleDiceCount,
-                      maxDiceCount: _diceMenuMax,
-                      rollCount: _rollCount,
-                      maxRolls: _maxRolls,
-                      editMode: _editMode,
-                      rerollOneMode: _rerollOneMode,
-                      editingDieId: _editingDieId,
-                      specialAttackMode: _specialAttackMode,
-                      onDiceToRollChanged: (value) =>
-                          setState(() => _diceToRoll = value),
-                      onRoll: _rollDice,
-                      onTapDie: _tapDie,
-                      onSelectFace: _selectFace,
-                      onValidateEdit: () =>
-                          setState(() => _editingDieId = null),
-                      onToggleEdit: () => setState(() {
-                        _editMode = !_editMode;
-                        _rerollOneMode = false;
-                        _editingDieId = null;
-                      }),
-                      onToggleRerollOne: () => setState(() {
-                        _rerollOneMode = !_rerollOneMode;
-                        _editMode = false;
-                        _editingDieId = null;
-                      }),
-                      rollLabel: _phase == CombatPhase.hero
-                          ? 'Roll defense'
-                          : (_rollCount == 0 ? 'Roll' : 'Reroll'),
-                      rollColor: _phase == CombatPhase.hero
-                          ? enemy.rank.color
-                          : const Color(0xff8f43ff),
-                    ),
+                    if (!_aiMode) ...[
+                      const SizedBox(height: 12),
+                      DicePanel(
+                        dice: _dice,
+                        diceToRoll: _diceToRoll,
+                        visibleDiceCount: _visibleDiceCount,
+                        maxDiceCount: _diceMenuMax,
+                        rollCount: _rollCount,
+                        maxRolls: _maxRolls,
+                        editMode: _editMode,
+                        rerollOneMode: _rerollOneMode,
+                        editingDieId: _editingDieId,
+                        specialAttackMode: _specialAttackMode,
+                        onDiceToRollChanged: (value) =>
+                            setState(() => _diceToRoll = value),
+                        onRoll: _rollDice,
+                        onTapDie: _tapDie,
+                        onSelectFace: _selectFace,
+                        onValidateEdit: () =>
+                            setState(() => _editingDieId = null),
+                        onToggleEdit: () => setState(() {
+                          _editMode = !_editMode;
+                          _rerollOneMode = false;
+                          _editingDieId = null;
+                        }),
+                        onToggleRerollOne: () => setState(() {
+                          _rerollOneMode = !_rerollOneMode;
+                          _editMode = false;
+                          _editingDieId = null;
+                        }),
+                        rollLabel: _phase == CombatPhase.hero
+                            ? 'Roll defense'
+                            : (_rollCount == 0 ? 'Roll' : 'Reroll'),
+                        rollColor: _phase == CombatPhase.hero
+                            ? enemy.rank.color
+                            : const Color(0xff8f43ff),
+                      ),
+                    ],
                     if (_specialAttackReady) ...[
                       const SizedBox(height: 12),
                       ImageActionButton(
@@ -6014,7 +6037,6 @@ class _FightPageState extends State<FightPage> {
       _specialAttackMode = false;
       _configureDiceForPhase(
         autoRollAttack: _aiMode && phase == CombatPhase.minionAttack,
-        autoRollDefense: _aiMode && phase == CombatPhase.hero,
       );
     });
     if (phase == CombatPhase.heroUpkeep) {
@@ -6032,20 +6054,10 @@ class _FightPageState extends State<FightPage> {
     _setPhase(next);
   }
 
-  void _configureDiceForPhase({
-    required bool autoRollAttack,
-    bool autoRollDefense = false,
-  }) {
+  void _configureDiceForPhase({required bool autoRollAttack}) {
     _resetDice();
     if (_phase == CombatPhase.hero) {
       _diceToRoll = enemy.defenseDice.clamp(0, 5);
-      if (autoRollDefense && _diceToRoll > 0) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && _phase == CombatPhase.hero && _rollCount == 0) {
-            _rollDice();
-          }
-        });
-      }
     } else if (_phase == CombatPhase.heroUpkeep ||
         _phase == CombatPhase.minionUpkeep) {
       _diceToRoll = 0;
@@ -7190,6 +7202,18 @@ class MinionAiPanel extends StatelessWidget {
     required this.adventure,
     required this.rollCount,
     required this.onDetails,
+    required this.diceToRoll,
+    required this.visibleDiceCount,
+    required this.maxRolls,
+    required this.editMode,
+    required this.rerollOneMode,
+    required this.editingDieId,
+    required this.onRoll,
+    required this.onTapDie,
+    required this.onSelectFace,
+    required this.onValidateEdit,
+    required this.onToggleEdit,
+    required this.onToggleRerollOne,
     super.key,
   });
 
@@ -7199,10 +7223,28 @@ class MinionAiPanel extends StatelessWidget {
   final AdventureState adventure;
   final int rollCount;
   final VoidCallback onDetails;
+  final int diceToRoll;
+  final int visibleDiceCount;
+  final int maxRolls;
+  final bool editMode;
+  final bool rerollOneMode;
+  final int? editingDieId;
+  final VoidCallback onRoll;
+  final ValueChanged<GameDie> onTapDie;
+  final void Function(GameDie die, int face) onSelectFace;
+  final VoidCallback onValidateEdit;
+  final VoidCallback onToggleEdit;
+  final VoidCallback onToggleRerollOne;
 
   @override
   Widget build(BuildContext context) {
     final message = _aiMessageFor(enemy, phase, dice, rollCount);
+    final visibleDice = dice.take(visibleDiceCount.clamp(0, 5)).toList()
+      ..sort(_compareDice);
+    final editingDie = editingDieId == null
+        ? null
+        : dice.firstWhere((die) => die.id == editingDieId);
+    final isDefensePhase = phase == CombatPhase.hero;
     return InfoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -7249,6 +7291,94 @@ class MinionAiPanel extends StatelessWidget {
               ],
             ),
           ),
+          if (visibleDice.isNotEmpty || isDefensePhase) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: enemy.rank.color,
+                      foregroundColor: Colors.black,
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                    onPressed: rollCount < maxRolls && diceToRoll > 0
+                        ? onRoll
+                        : null,
+                    icon: const Icon(Icons.shield),
+                    label: Text(
+                      isDefensePhase
+                          ? 'Roll defense'
+                          : (rollCount == 0 ? 'Roll' : 'Reroll'),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: heroAccent,
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size(0, 48),
+                  ),
+                  onPressed: onToggleEdit,
+                  icon: const Icon(Icons.tune),
+                  label: Text(editMode ? 'Stop edit' : 'Edit a die'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: heroAccent,
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size(0, 48),
+                  ),
+                  onPressed: onToggleRerollOne,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(rerollOneMode ? 'Choose' : 'Reroll a die'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final die in visibleDice)
+                  DieTile(
+                    die: die,
+                    onTap: () => onTapDie(die),
+                    compact: true,
+                    highlight: die.reserved || editingDieId == die.id,
+                    highlightColor: editingDieId == die.id
+                        ? heroAccent
+                        : enemy.rank.color,
+                  ),
+              ],
+            ),
+            if (editingDie != null) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    'Edit die ${editingDie.id + 1}',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  for (final face in [1, 2, 3, 4, 5, 6])
+                    if (face != editingDie.value)
+                      ActionChip(
+                        label: Text(face.toString()),
+                        onPressed: () => onSelectFace(editingDie, face),
+                      ),
+                  FilledButton(
+                    onPressed: onValidateEdit,
+                    child: const Text('Confirm'),
+                  ),
+                ],
+              ),
+            ],
+          ],
         ],
       ),
     );
