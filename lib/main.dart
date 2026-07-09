@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.10';
+const String appVersionLabel = 'Version 1.2.11';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -110,7 +110,8 @@ enum EnemyRank {
   blue('Level 2', 2, Color(0xff3bb9ff), 'assets/map_blue.png'),
   violet('Level 3', 3, Color(0xff9b58ff), 'assets/map_violet.png'),
   viseer('Viseer', 4, Color(0xff8a5a2c), 'assets/enemy_viseer.jpg'),
-  orange('Level 4', 6, Color(0xffff8a2b), 'assets/map_orange.png');
+  orange('Level 4', 6, Color(0xffff8a2b), 'assets/map_orange.png'),
+  naraxus('Naraxus', 0, Color(0xffd51f2a), 'assets/home_background_v4.png');
 
   const EnemyRank(this.label, this.points, this.color, this.asset);
 
@@ -126,6 +127,7 @@ enum EnemyRank {
       EnemyRank.violet => 'violet',
       EnemyRank.orange => 'orange',
       EnemyRank.viseer => 'orange',
+      EnemyRank.naraxus => 'orange',
     };
   }
 }
@@ -451,6 +453,12 @@ const List<StatusTokenRule> statusTokenRules = [
     label: 'Vol',
     kind: StatusTokenKind.positive,
     maxStack: 3,
+    persistent: false,
+  ),
+  StatusTokenRule(
+    label: 'Hoarding',
+    kind: StatusTokenKind.negative,
+    maxStack: 99,
     persistent: false,
   ),
 ];
@@ -1859,6 +1867,27 @@ const EnemyProfile fallbackGreenProfile = EnemyProfile(
   attackPlan: MinionAttackPlan.none(),
 );
 
+const EnemyProfile naraxusProfile = EnemyProfile(
+  key: 'naraxus',
+  name: 'Naxarus',
+  rank: EnemyRank.naraxus,
+  maxHealth: 65,
+  pc: 0,
+  cardAsset: 'assets/home_background_v4.png',
+  initialTokens: ['Première Frappe'],
+  attacks: [
+    'Swoop: 1 = remove 1 random Naxarus token, heal 4 HP, deal 3 undefendable damage.',
+    'Ember Spark: 2 = hero moves top 3 deck cards to discard, then takes 8 damage.',
+    'Gashing Bite: 3 = roll 4 dice, deal damage equal to the 2 highest dice.',
+    'Hoarding: 4 = hero loses 1 die next battle phase, then takes 9 damage.',
+    'Thundering Roar: 5 = hero discards 1 card and takes 8 undefendable damage.',
+    "Dragon's Might: 6 = deal 10 damage and roll 1 extra die; on 5-6 also Swoop.",
+  ],
+  defense: 'Defense roll 1 die: 1 prevents 1, 2-5 prevents 3, 6 prevents 5.',
+  defenseDice: 1,
+  attackPlan: MinionAttackPlan.none(),
+);
+
 List<EnemyProfile> _recipeProfilesFor(EnemyRank rank) {
   final profiles = _profilesForRank(rank);
   profiles.sort(
@@ -1874,6 +1903,7 @@ List<EnemyProfile> _profilesForRank(EnemyRank rank) {
     EnemyRank.violet => [...violetEnemyProfiles],
     EnemyRank.viseer => [_defaultProfileFor(EnemyRank.viseer)],
     EnemyRank.orange => [...orangeEnemyProfiles],
+    EnemyRank.naraxus => [naraxusProfile],
   };
 }
 
@@ -1916,6 +1946,7 @@ EnemyProfile? _profileByKey(String? key) {
     ...blueEnemyProfiles,
     ...violetEnemyProfiles,
     ...orangeEnemyProfiles,
+    naraxusProfile,
     fallbackGreenProfile,
   ]) {
     if (profile.key == key) {
@@ -1926,6 +1957,7 @@ EnemyProfile? _profileByKey(String? key) {
     'blue-generic' => _defaultProfileFor(EnemyRank.blue),
     'violet-generic' => _defaultProfileFor(EnemyRank.violet),
     'viseer' => _defaultProfileFor(EnemyRank.viseer),
+    'naraxus' => naraxusProfile,
     'orange-generic' => _defaultProfileFor(EnemyRank.orange),
     _ => null,
   };
@@ -2525,7 +2557,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
               }
             },
             onStopCampaign: _stopActiveCampaign,
-            onNaraxus: () => _showNaraxusComingSoon(context),
+            onNaraxus: () => _openNaraxusHeroChoice(context),
           );
         },
       ),
@@ -2613,6 +2645,22 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
     );
   }
 
+  void _openNaraxusHeroChoice(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => HeroChoicePage(
+          onNext: (hero) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute<void>(
+                builder: (_) => NaraxusBattlePage(hero: hero),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   void _replaceWithMap(
     BuildContext context,
     AdventureState adventure,
@@ -2688,22 +2736,6 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
       _recordAdventure(adventure);
     }
     await _clearActiveAdventure();
-  }
-
-  void _showNaraxusComingSoon(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Naraxus Battle'),
-        content: const Text('This mode will arrive in a next version.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -4243,6 +4275,60 @@ class MapPage extends StatefulWidget {
   State<MapPage> createState() => _MapPageState();
 }
 
+class NaraxusBattlePage extends StatefulWidget {
+  const NaraxusBattlePage({required this.hero, super.key});
+
+  final HeroType hero;
+
+  @override
+  State<NaraxusBattlePage> createState() => _NaraxusBattlePageState();
+}
+
+class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
+  late final AdventureState _adventure = _createAdventure();
+
+  AdventureState _createAdventure() {
+    final adventure = AdventureState(
+      hero: widget.hero,
+      config: const SurvivalConfig(mode: SurvivalMode.free, targetScore: 0),
+    );
+    final naraxus = EnemyNode(
+      id: 0,
+      label: naraxusProfile.name,
+      rank: EnemyRank.naraxus,
+      maxHealth: naraxusProfile.maxHealth,
+      pc: naraxusProfile.pc,
+      attacks: naraxusProfile.attacks,
+      defense: naraxusProfile.defense,
+      defenseDice: naraxusProfile.defenseDice,
+      attackPlan: naraxusProfile.attackPlan,
+      cardAsset: naraxusProfile.cardAsset,
+      profileKey: naraxusProfile.key,
+      initialTokens: naraxusProfile.initialTokens,
+    );
+    adventure
+      ..health = 50
+      ..combatPoints = 2;
+    adventure.enemies
+      ..clear()
+      ..add(naraxus);
+    adventure.log('Naxarus battle started.');
+    return adventure;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FightPage(
+      adventure: _adventure,
+      enemyId: 0,
+      onChanged: () => setState(() {}),
+      onPauseExit: () =>
+          Navigator.of(context).popUntil((route) => route.isFirst),
+      onAbandon: () => Navigator.of(context).popUntil((route) => route.isFirst),
+    );
+  }
+}
+
 class _MapPageState extends State<MapPage> {
   static double _savedMapScale = 0.52;
   late final TransformationController _mapController =
@@ -5545,6 +5631,32 @@ class EnemyRankAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (enemy.profileKey == 'naraxus') {
+      return Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xffb91622),
+          border: Border.all(color: heroAccent, width: 3),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xffd51f2a).withValues(alpha: 0.55),
+              blurRadius: 14,
+            ),
+          ],
+        ),
+        child: Text(
+          'NX',
+          style: TextStyle(
+            color: heroAccent,
+            fontSize: size * 0.34,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      );
+    }
     return Container(
       width: size,
       height: size,
@@ -5798,12 +5910,15 @@ class _FightPageState extends State<FightPage> {
   int _battleDefenseValue = 0;
   int _battleReturnDamage = 0;
   int _battleLifeSteal = 0;
+  int _battleEnemyHeal = 0;
   int _battleCpSteal = 0;
   final List<String> _battleHeroTokens = [];
   final List<String> _battleMinionTokens = [];
   final List<String> _battleNotes = [];
 
   EnemyNode get enemy => widget.adventure.enemyById(widget.enemyId);
+
+  bool get _isNaraxus => enemy.profileKey == 'naraxus';
 
   @override
   void initState() {
@@ -5886,6 +6001,7 @@ class _FightPageState extends State<FightPage> {
                         defenseValue: _battleDefenseValue,
                         returnDamage: _battleReturnDamage,
                         lifeSteal: _battleLifeSteal,
+                        enemyHeal: _battleEnemyHeal,
                         cpSteal: _battleCpSteal,
                         heroTokens: _battleHeroTokens,
                         minionTokens: _battleMinionTokens,
@@ -6133,7 +6249,7 @@ class _FightPageState extends State<FightPage> {
         _phase == CombatPhase.minionUpkeep) {
       _diceToRoll = 0;
     } else if (_phase == CombatPhase.minionAttack) {
-      _diceToRoll = 5;
+      _diceToRoll = _isNaraxus ? 1 : 5;
       if (autoRollAttack) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted &&
@@ -6165,7 +6281,7 @@ class _FightPageState extends State<FightPage> {
       return 1;
     }
     if (_phase == CombatPhase.minionAttack) {
-      return 5;
+      return _isNaraxus ? 1 : 5;
     }
     return _diceToRoll.clamp(0, 5);
   }
@@ -6177,7 +6293,7 @@ class _FightPageState extends State<FightPage> {
     return _visibleDiceCount.clamp(0, 5);
   }
 
-  int get _maxRolls => _phase == CombatPhase.hero ? 1 : 3;
+  int get _maxRolls => _phase == CombatPhase.hero || _isNaraxus ? 1 : 3;
 
   bool get _isBattlePhase =>
       _phase == CombatPhase.hero || _phase == CombatPhase.minionAttack;
@@ -6187,6 +6303,7 @@ class _FightPageState extends State<FightPage> {
     _battleDefenseValue = 0;
     _battleReturnDamage = 0;
     _battleLifeSteal = 0;
+    _battleEnemyHeal = 0;
     _battleCpSteal = 0;
     _battleHeroTokens.clear();
     _battleMinionTokens.clear();
@@ -6242,6 +6359,14 @@ class _FightPageState extends State<FightPage> {
     final heroTokens = <String>[];
 
     switch (enemy.profileKey) {
+      case 'naraxus':
+        final value = rolled.first.value ?? 0;
+        prevented = switch (value) {
+          1 => 1,
+          6 => 5,
+          _ => 3,
+        };
+        notes.add('Naxarus defense: D6 $value prevents $prevented damage.');
       case 'fee':
         if (yellow >= 2) {
           prevented = 3;
@@ -6296,6 +6421,7 @@ class _FightPageState extends State<FightPage> {
     _battleDefenseValue = prevented.clamp(0, 99);
     _battleReturnDamage = returnDamage.clamp(0, 99);
     _battleLifeSteal = lifeSteal.clamp(0, 99);
+    _battleEnemyHeal = 0;
     _battleHeroTokens
       ..clear()
       ..addAll(heroTokens);
@@ -6305,6 +6431,10 @@ class _FightPageState extends State<FightPage> {
   }
 
   void _resolveMinionAttackFromDice() {
+    if (_isNaraxus) {
+      _resolveNaraxusAttackFromDice();
+      return;
+    }
     final result = _currentMinionAttackResult();
     final notes = <String>[];
     final heroTokens = <String>[];
@@ -6372,6 +6502,7 @@ class _FightPageState extends State<FightPage> {
 
     _battleAttackValue = attack.clamp(0, 99);
     _battleLifeSteal = lifeSteal.clamp(0, 99);
+    _battleEnemyHeal = 0;
     _battleCpSteal = cpSteal.clamp(0, 99);
     _battleHeroTokens
       ..clear()
@@ -6382,6 +6513,77 @@ class _FightPageState extends State<FightPage> {
     _battleNotes
       ..clear()
       ..addAll(notes);
+  }
+
+  void _resolveNaraxusAttackFromDice() {
+    final first = _dice.first.value;
+    if (first == null) {
+      return;
+    }
+    final notes = <String>['Naxarus rolls $first.'];
+    var attack = 0;
+    var enemyHeal = 0;
+    final heroTokens = <String>[];
+
+    switch (first) {
+      case 1:
+        attack = 3;
+        enemyHeal = 4;
+        _removeRandomEnemyToken();
+        notes.add('Swoop: Naxarus removes 1 random token and heals 4 HP.');
+        notes.add('Swoop: 3 undefendable damage.');
+      case 2:
+        attack = 8;
+        notes.add('Ember Spark: hero moves top 3 deck cards to discard.');
+        notes.add('Ember Spark: 8 damage.');
+      case 3:
+        final rolls = List.generate(4, (_) => _random.nextInt(6) + 1)..sort();
+        attack = rolls.reversed.take(2).fold(0, (sum, value) => sum + value);
+        notes.add('Gashing Bite: 4 dice ${rolls.join('/')}.');
+        notes.add('Damage equals the 2 highest dice: $attack.');
+      case 4:
+        attack = 9;
+        heroTokens.add('Hoarding');
+        notes.add('Hoarding: hero loses 1 die on the next battle roll.');
+        notes.add('Hoarding: 9 damage.');
+      case 5:
+        attack = 8;
+        notes.add('Thundering Roar: hero discards 1 card.');
+        notes.add('Thundering Roar: 8 undefendable damage.');
+      case 6:
+        attack = 10;
+        final extra = _random.nextInt(6) + 1;
+        notes.add("Dragon's Might: 10 damage.");
+        notes.add("Dragon's Might extra die: $extra.");
+        if (extra >= 5) {
+          attack += 3;
+          enemyHeal = 4;
+          _removeRandomEnemyToken();
+          notes.add('Extra 5-6: Swoop also triggers.');
+          notes.add(
+            'Naxarus removes 1 random token, heals 4 HP, and adds 3 undefendable damage.',
+          );
+        }
+    }
+
+    _battleAttackValue = attack.clamp(0, 99);
+    _battleLifeSteal = 0;
+    _battleEnemyHeal = enemyHeal.clamp(0, 99);
+    _battleCpSteal = 0;
+    _battleHeroTokens
+      ..clear()
+      ..addAll(heroTokens);
+    _battleMinionTokens.clear();
+    _battleNotes
+      ..clear()
+      ..addAll(notes);
+  }
+
+  void _removeRandomEnemyToken() {
+    if (enemy.alterations.isEmpty) {
+      return;
+    }
+    enemy.alterations.removeAt(_random.nextInt(enemy.alterations.length));
   }
 
   _AttackDamage? _currentMinionAttackResult() {
@@ -6444,6 +6646,12 @@ class _FightPageState extends State<FightPage> {
             enemy.maxHealth,
           );
         }
+        if (_battleEnemyHeal > 0) {
+          enemy.health = (enemy.health + _battleEnemyHeal).clamp(
+            0,
+            enemy.maxHealth,
+          );
+        }
         enemy.alterations.addAll(_battleMinionTokens);
         widget.adventure.alterations.addAll(_battleHeroTokens);
         widget.adventure.log(
@@ -6457,6 +6665,12 @@ class _FightPageState extends State<FightPage> {
             widget.adventure.health - _battleLifeSteal,
           );
           enemy.health = (enemy.health + _battleLifeSteal).clamp(
+            0,
+            enemy.maxHealth,
+          );
+        }
+        if (_battleEnemyHeal > 0) {
+          enemy.health = (enemy.health + _battleEnemyHeal).clamp(
             0,
             enemy.maxHealth,
           );
@@ -6505,13 +6719,18 @@ class _FightPageState extends State<FightPage> {
         tokens: enemy.alterations,
         rollD6: () => _random.nextInt(6) + 1,
       );
-      enemy.combatPoints = (enemy.combatPoints + outcome.cpDelta).clamp(0, 99);
+      final cpDelta = _isNaraxus ? 0 : outcome.cpDelta;
+      enemy.combatPoints = (enemy.combatPoints + cpDelta).clamp(0, 99);
       enemy.health = (enemy.health + outcome.healthDelta).clamp(0, 99);
       for (final token in outcome.removedTokens) {
         enemy.alterations.remove(token);
       }
       _upkeepApplied = true;
-      widget.adventure.log('Minion upkeep: ${outcome.log}.');
+      widget.adventure.log(
+        _isNaraxus
+            ? 'Naxarus upkeep: ${outcome.log.replaceFirst('+1 CP', 'no CP gain')}.'
+            : 'Minion upkeep: ${outcome.log}.',
+      );
       widget.onChanged();
     });
   }
@@ -7576,6 +7795,7 @@ class BattleResolutionPanel extends StatelessWidget {
     required this.defenseValue,
     required this.returnDamage,
     required this.lifeSteal,
+    required this.enemyHeal,
     required this.cpSteal,
     required this.heroTokens,
     required this.minionTokens,
@@ -7593,6 +7813,7 @@ class BattleResolutionPanel extends StatelessWidget {
   final int defenseValue;
   final int returnDamage;
   final int lifeSteal;
+  final int enemyHeal;
   final int cpSteal;
   final List<String> heroTokens;
   final List<String> minionTokens;
@@ -7611,6 +7832,7 @@ class BattleResolutionPanel extends StatelessWidget {
       if (minionTokens.isNotEmpty) 'Minion: ${minionTokens.join(', ')}',
       if (returnDamage > 0) 'Return damage: $returnDamage',
       if (lifeSteal > 0) 'Life steal: $lifeSteal',
+      if (enemyHeal > 0) 'Enemy heals: $enemyHeal',
       if (cpSteal > 0) 'CP steal: $cpSteal',
       ...notes,
     ];
@@ -8025,6 +8247,9 @@ String _minionAttackAiMessage(
   int rollCount,
 ) {
   final rolled = dice.where((die) => die.value != null).toList();
+  if (enemy.profileKey == 'naraxus') {
+    return _naraxusAiMessage(enemy, rolled);
+  }
   if (rollCount == 0 || rolled.isEmpty) {
     if (enemy.attackPlan.style == MinionAttackStyle.suite) {
       return 'Minion battle phase.\n'
@@ -8073,6 +8298,43 @@ String _minionAttackAiMessage(
   return kept.isEmpty
       ? 'No valid symbol set yet.\nI reroll toward the first attack.'
       : 'I keep ${kept.join('/')}.\nI try to improve the attack.$symbolDamageText';
+}
+
+String _naraxusAiMessage(EnemyNode enemy, List<GameDie> rolled) {
+  if (rolled.isEmpty || rolled.first.value == null) {
+    return 'Naxarus battle phase.\n'
+        'Roll 1 die to choose the dragon attack.\n'
+        'The result will feed the sword counter.';
+  }
+  final value = rolled.first.value!;
+  return switch (value) {
+    1 =>
+      'Swoop.\n'
+          'Naxarus removes 1 random token.\n'
+          'Naxarus heals 4 HP.\n'
+          'Hero takes 3 undefendable damage.',
+    2 =>
+      'Ember Spark.\n'
+          'Hero moves the top 3 deck cards to discard.\n'
+          'Hero takes 8 damage.',
+    3 =>
+      'Gashing Bite.\n'
+          'Naxarus rolls 4 dice.\n'
+          'Damage equals the 2 highest dice.',
+    4 =>
+      'Hoarding.\n'
+          'Hero loses 1 die on the next battle phase.\n'
+          'Hero takes 9 damage.',
+    5 =>
+      'Thundering Roar.\n'
+          'Hero discards 1 card.\n'
+          'Hero takes 8 undefendable damage.',
+    6 =>
+      "Dragon's Might.\n"
+          'Hero takes 10 damage.\n'
+          'Naxarus rolls 1 extra die; on 5-6, Swoop also triggers.',
+    _ => 'Naxarus waits.',
+  };
 }
 
 _AttackDamage? _bestSymbolAttackDamage(EnemyNode enemy, List<GameDie> dice) {
@@ -10366,6 +10628,7 @@ EnemyProfile _defaultProfileFor(EnemyRank rank) {
       defenseDice: 4,
       attackPlan: MinionAttackPlan.none(),
     ),
+    EnemyRank.naraxus => naraxusProfile,
   };
 }
 
