@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.8';
+const String appVersionLabel = 'Version 1.2.10';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -4438,13 +4438,30 @@ class _MapPageState extends State<MapPage> {
   }
 
   void _selectEnemy(EnemyNode enemy) {
-    if (!enemy.current || enemy.defeated || widget.adventure.finished) {
+    if (enemy.defeated) {
+      _openDefeatedEnemyPreview(enemy);
+      return;
+    }
+    if (!enemy.current || widget.adventure.finished) {
       return;
     }
     setState(() => _selectedEnemyId = enemy.id);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _centerOnEnemy(enemy);
     });
+  }
+
+  Future<void> _openDefeatedEnemyPreview(EnemyNode enemy) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => EnemyIntroPage(
+          adventure: widget.adventure,
+          enemy: enemy,
+          showNext: false,
+          onNext: () async {},
+        ),
+      ),
+    );
   }
 
   Map<int, Offset> _positionsFor(Size size) {
@@ -5173,12 +5190,14 @@ class EnemyIntroPage extends StatefulWidget {
     required this.adventure,
     required this.enemy,
     required this.onNext,
+    this.showNext = true,
     super.key,
   });
 
   final AdventureState adventure;
   final EnemyNode enemy;
   final Future<void> Function() onNext;
+  final bool showNext;
 
   @override
   State<EnemyIntroPage> createState() => _EnemyIntroPageState();
@@ -5202,6 +5221,19 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
             alignment: Alignment.centerLeft,
           ),
           Container(color: Colors.black.withValues(alpha: 0.58)),
+          if (!widget.showNext)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: IconButton.filled(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ),
+              ),
+            ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -5265,7 +5297,8 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                       ],
                     ),
                   ),
-                  if (enemy.alterations.contains('Première Frappe')) ...[
+                  if (widget.showNext &&
+                      enemy.alterations.contains('Première Frappe')) ...[
                     const SizedBox(height: 18),
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -5301,22 +5334,23 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                     ),
                   ],
                   const Spacer(),
-                  ImageActionButton(
-                    label: 'Next',
-                    icon: Icons.arrow_forward,
-                    onPressed: () {
-                      if (_keepFirstStrike) {
-                        if (!enemy.alterations.contains('Première Frappe')) {
-                          enemy.alterations.add('Première Frappe');
+                  if (widget.showNext)
+                    ImageActionButton(
+                      label: 'Next',
+                      icon: Icons.arrow_forward,
+                      onPressed: () {
+                        if (_keepFirstStrike) {
+                          if (!enemy.alterations.contains('Première Frappe')) {
+                            enemy.alterations.add('Première Frappe');
+                          }
+                        } else {
+                          enemy.alterations.removeWhere(
+                            (token) => token == 'Première Frappe',
+                          );
                         }
-                      } else {
-                        enemy.alterations.removeWhere(
-                          (token) => token == 'Première Frappe',
-                        );
-                      }
-                      widget.onNext();
-                    },
-                  ),
+                        widget.onNext();
+                      },
+                    ),
                 ],
               ),
             ),
@@ -5760,6 +5794,14 @@ class _FightPageState extends State<FightPage> {
   bool _specialAttackMode = false;
   bool _aiMode = true;
   bool _showManualExtraDicePhase = false;
+  int _battleAttackValue = 0;
+  int _battleDefenseValue = 0;
+  int _battleReturnDamage = 0;
+  int _battleLifeSteal = 0;
+  int _battleCpSteal = 0;
+  final List<String> _battleHeroTokens = [];
+  final List<String> _battleMinionTokens = [];
+  final List<String> _battleNotes = [];
 
   EnemyNode get enemy => widget.adventure.enemyById(widget.enemyId);
 
@@ -5835,6 +5877,31 @@ class _FightPageState extends State<FightPage> {
                         });
                       },
                     ),
+                    if (_isBattlePhase) ...[
+                      const SizedBox(height: 12),
+                      BattleResolutionPanel(
+                        phase: _phase,
+                        enemy: enemy,
+                        attackValue: _battleAttackValue,
+                        defenseValue: _battleDefenseValue,
+                        returnDamage: _battleReturnDamage,
+                        lifeSteal: _battleLifeSteal,
+                        cpSteal: _battleCpSteal,
+                        heroTokens: _battleHeroTokens,
+                        minionTokens: _battleMinionTokens,
+                        notes: _battleNotes,
+                        onAttackChanged: (delta) => setState(() {
+                          _battleAttackValue = (_battleAttackValue + delta)
+                              .clamp(0, 99);
+                        }),
+                        onDefenseChanged: (delta) => setState(() {
+                          _battleDefenseValue = (_battleDefenseValue + delta)
+                              .clamp(0, 99);
+                        }),
+                        onAddToken: _addBattleToken,
+                        onApply: _applyBattleResolution,
+                      ),
+                    ],
                     if (_aiMode) ...[
                       const SizedBox(height: 12),
                       MinionAiPanel(
@@ -5975,6 +6042,7 @@ class _FightPageState extends State<FightPage> {
       if (_phase == CombatPhase.minionAttack && _aiMode) {
         _applyMinionDiceStrategy();
       }
+      _refreshBattleResolutionFromDice();
       widget.onChanged();
       if (_rollCount == _maxRolls) {
         _specialAttackReady = _shouldResolveSpecialAttack();
@@ -6006,6 +6074,7 @@ class _FightPageState extends State<FightPage> {
       if (_rerollOneMode) {
         die.value = _random.nextInt(6) + 1;
         _rerollOneMode = false;
+        _refreshBattleResolutionFromDice();
         widget.adventure.log(
           'Special reroll for die ${die.id + 1}: ${die.value}.',
         );
@@ -6021,6 +6090,7 @@ class _FightPageState extends State<FightPage> {
   void _selectFace(GameDie die, int face) {
     setState(() {
       die.value = face;
+      _refreshBattleResolutionFromDice();
       widget.adventure.log('Die ${die.id + 1} changed to $face.');
       widget.onChanged();
     });
@@ -6035,6 +6105,7 @@ class _FightPageState extends State<FightPage> {
       _upkeepApplied = false;
       _specialAttackReady = false;
       _specialAttackMode = false;
+      _resetBattleResolution();
       _configureDiceForPhase(
         autoRollAttack: _aiMode && phase == CombatPhase.minionAttack,
       );
@@ -6107,6 +6178,309 @@ class _FightPageState extends State<FightPage> {
   }
 
   int get _maxRolls => _phase == CombatPhase.hero ? 1 : 3;
+
+  bool get _isBattlePhase =>
+      _phase == CombatPhase.hero || _phase == CombatPhase.minionAttack;
+
+  void _resetBattleResolution() {
+    _battleAttackValue = 0;
+    _battleDefenseValue = 0;
+    _battleReturnDamage = 0;
+    _battleLifeSteal = 0;
+    _battleCpSteal = 0;
+    _battleHeroTokens.clear();
+    _battleMinionTokens.clear();
+    _battleNotes.clear();
+  }
+
+  Future<void> _addBattleToken() async {
+    final current = _phase == CombatPhase.hero
+        ? _battleMinionTokens
+        : _battleHeroTokens;
+    final values = await showAlterationDialog(
+      context,
+      current,
+      forMinion: _phase == CombatPhase.hero,
+    );
+    if (values == null || !mounted) {
+      return;
+    }
+    setState(() {
+      if (_phase == CombatPhase.hero) {
+        _battleMinionTokens
+          ..clear()
+          ..addAll(values);
+      } else {
+        _battleHeroTokens
+          ..clear()
+          ..addAll(values);
+      }
+    });
+  }
+
+  void _refreshBattleResolutionFromDice() {
+    if (_phase == CombatPhase.hero) {
+      _resolveMinionDefenseFromDice();
+    } else if (_phase == CombatPhase.minionAttack) {
+      _resolveMinionAttackFromDice();
+    }
+  }
+
+  void _resolveMinionDefenseFromDice() {
+    final rolled = _dice.where((die) => die.value != null).toList();
+    if (rolled.isEmpty) {
+      return;
+    }
+    final counts = _symbolCounts();
+    final white = counts[DieSymbol.white] ?? 0;
+    final yellow = counts[DieSymbol.yellow] ?? 0;
+    final red = counts[DieSymbol.red] ?? 0;
+    var prevented = 0;
+    var returnDamage = 0;
+    var lifeSteal = 0;
+    final notes = <String>[];
+    final heroTokens = <String>[];
+
+    switch (enemy.profileKey) {
+      case 'fee':
+        if (yellow >= 2) {
+          prevented = 3;
+          notes.add('Defense: 2 yellow symbols prevent 3 damage.');
+        }
+      case 'ronin-vagabond':
+        final value = rolled.first.value ?? 0;
+        returnDamage = (value / 2).ceil();
+        notes.add('Defense: returns $returnDamage damage.');
+      case 'enchanteur-gobelin':
+        if (yellow > 0) {
+          returnDamage = 1;
+          notes.add('Defense: yellow symbol returns 1 damage.');
+        }
+        if (red > 0) {
+          heroTokens.add('Poison');
+          notes.add('Defense: red symbol gives Poison to the hero.');
+        }
+      case 'archer-de-lombre':
+        if (yellow > 0) {
+          prevented = 3;
+          notes.add('Defense: yellow symbol prevents 3 damage.');
+        }
+      case 'ombre-feline':
+        if (white > 0) {
+          heroTokens.add('Hémorragie');
+          notes.add('Defense: white symbol gives Hemorragie to the hero.');
+        }
+      case 'epeiste-egare':
+        prevented = yellow;
+        returnDamage = white + red;
+        if (prevented > 0) {
+          notes.add('Defense: prevents $prevented damage.');
+        }
+        if (returnDamage > 0) {
+          notes.add('Defense: returns $returnDamage damage.');
+        }
+      case 'elfe-du-chaos':
+        if (yellow >= 2) {
+          prevented = (_battleAttackValue / 2).ceil();
+          notes.add('Defense: 2 yellow symbols prevent half the damage.');
+        }
+      case 'oni-delirant':
+        lifeSteal = yellow;
+        if (lifeSteal > 0) {
+          notes.add('Defense: steals $lifeSteal HP.');
+        }
+      default:
+        notes.add('Defense rolled. Check the minion card for exact effects.');
+    }
+
+    _battleDefenseValue = prevented.clamp(0, 99);
+    _battleReturnDamage = returnDamage.clamp(0, 99);
+    _battleLifeSteal = lifeSteal.clamp(0, 99);
+    _battleHeroTokens
+      ..clear()
+      ..addAll(heroTokens);
+    _battleNotes
+      ..clear()
+      ..addAll(notes);
+  }
+
+  void _resolveMinionAttackFromDice() {
+    final result = _currentMinionAttackResult();
+    final notes = <String>[];
+    final heroTokens = <String>[];
+    final minionTokens = <String>[];
+    var attack = result?.value ?? 0;
+    var lifeSteal = 0;
+    var cpSteal = 0;
+
+    if (enemy.profileKey == 'oni-delirant' &&
+        _symbolGoalMet(const SymbolGoal(yellow: 4))) {
+      notes.add('Attack ready: roll 1 die to choose the Oni effect.');
+    } else if (result != null) {
+      notes.add(
+        result.imparable
+            ? 'Attack result: ${result.value} imparable damage.'
+            : 'Attack result: ${result.value} damage.',
+      );
+    } else if (_rollCount > 0) {
+      notes.add('No valid attack yet.');
+    }
+
+    final values = _dice
+        .where((die) => die.value != null)
+        .map((die) => die.value!)
+        .toList();
+    final symbols = _dice
+        .where((die) => die.symbol != null)
+        .map((die) => die.symbol!)
+        .toList();
+    final hasThreeSameValue = _hasRepeatedValue(values, 3);
+    final hasFourSameSymbol = _hasRepeatedSymbol(symbols, 4);
+
+    switch (enemy.profileKey) {
+      case 'fee':
+        if (_bestSuiteLength(values) >= 5) {
+          cpSteal = 1;
+          notes.add('Large suite: steal 1 CP.');
+        }
+      case 'elfe-du-chaos':
+        if (_bestSuiteLength(values) >= 5) {
+          heroTokens.add('Ronces');
+          notes.add('Large suite: hero receives Ronces.');
+        }
+      case 'archer-de-lombre':
+        if (hasThreeSameValue) {
+          heroTokens.add('Silence');
+          notes.add('3 identical values: hero receives Silence.');
+        }
+      case 'ombre-feline':
+        if (hasThreeSameValue) {
+          heroTokens.add('Hémorragie');
+          notes.add('3 identical values: hero receives Hemorragie.');
+        }
+      case 'ronin-vagabond':
+        if (hasFourSameSymbol) {
+          minionTokens.add('Riposte');
+          notes.add('4 identical symbols: minion gains Riposte.');
+        }
+      case 'oni-delirant':
+        if (_symbolGoalMet(const SymbolGoal(yellow: 4))) {
+          attack = 0;
+          lifeSteal = 0;
+        }
+    }
+
+    _battleAttackValue = attack.clamp(0, 99);
+    _battleLifeSteal = lifeSteal.clamp(0, 99);
+    _battleCpSteal = cpSteal.clamp(0, 99);
+    _battleHeroTokens
+      ..clear()
+      ..addAll(heroTokens);
+    _battleMinionTokens
+      ..clear()
+      ..addAll(minionTokens);
+    _battleNotes
+      ..clear()
+      ..addAll(notes);
+  }
+
+  _AttackDamage? _currentMinionAttackResult() {
+    switch (enemy.attackPlan.style) {
+      case MinionAttackStyle.symbols:
+        _AttackDamage? result;
+        for (final goal in enemy.attackPlan.goals) {
+          if (_symbolGoalMet(goal)) {
+            result = _damageForSymbolGoal(enemy, goal);
+          }
+        }
+        return result;
+      case MinionAttackStyle.suite:
+        final values = _dice
+            .where((die) => die.value != null)
+            .map((die) => die.value!)
+            .toList();
+        return _suiteDamage(enemy, _bestSuiteLength(values));
+      case MinionAttackStyle.none:
+        return null;
+    }
+  }
+
+  bool _hasRepeatedValue(List<int> values, int count) {
+    final counts = <int, int>{};
+    for (final value in values) {
+      counts[value] = (counts[value] ?? 0) + 1;
+    }
+    return counts.values.any((value) => value >= count);
+  }
+
+  bool _hasRepeatedSymbol(List<DieSymbol> symbols, int count) {
+    final counts = <DieSymbol, int>{};
+    for (final symbol in symbols) {
+      counts[symbol] = (counts[symbol] ?? 0) + 1;
+    }
+    return counts.values.any((value) => value >= count);
+  }
+
+  void _applyBattleResolution() {
+    if (!_isBattlePhase) {
+      return;
+    }
+    late final CombatPhase nextPhase;
+    setState(() {
+      final netDamage = max(0, _battleAttackValue - _battleDefenseValue);
+      if (_phase == CombatPhase.hero) {
+        enemy.health = (enemy.health - netDamage).clamp(0, 99);
+        if (_battleReturnDamage > 0) {
+          widget.adventure.setHeroHealth(
+            widget.adventure.health - _battleReturnDamage,
+          );
+        }
+        if (_battleLifeSteal > 0) {
+          widget.adventure.setHeroHealth(
+            widget.adventure.health - _battleLifeSteal,
+          );
+          enemy.health = (enemy.health + _battleLifeSteal).clamp(
+            0,
+            enemy.maxHealth,
+          );
+        }
+        enemy.alterations.addAll(_battleMinionTokens);
+        widget.adventure.alterations.addAll(_battleHeroTokens);
+        widget.adventure.log(
+          'Hero battle applied: $netDamage damage to ${enemy.label}.',
+        );
+        nextPhase = CombatPhase.minionUpkeep;
+      } else {
+        widget.adventure.setHeroHealth(widget.adventure.health - netDamage);
+        if (_battleLifeSteal > 0) {
+          widget.adventure.setHeroHealth(
+            widget.adventure.health - _battleLifeSteal,
+          );
+          enemy.health = (enemy.health + _battleLifeSteal).clamp(
+            0,
+            enemy.maxHealth,
+          );
+        }
+        if (_battleCpSteal > 0) {
+          widget.adventure.setHeroPc(
+            widget.adventure.combatPoints - _battleCpSteal,
+          );
+          enemy.combatPoints = (enemy.combatPoints + _battleCpSteal).clamp(
+            0,
+            99,
+          );
+        }
+        widget.adventure.alterations.addAll(_battleHeroTokens);
+        enemy.alterations.addAll(_battleMinionTokens);
+        widget.adventure.log(
+          'Minion battle applied: $netDamage damage to hero.',
+        );
+        nextPhase = CombatPhase.heroUpkeep;
+      }
+      widget.onChanged();
+    });
+    _setPhase(nextPhase);
+  }
 
   void _applyHeroUpkeep() {
     if (!mounted || _heroUpkeepApplied || _phase != CombatPhase.heroUpkeep) {
@@ -7194,6 +7568,239 @@ class MinionDefenseSummary extends StatelessWidget {
   }
 }
 
+class BattleResolutionPanel extends StatelessWidget {
+  const BattleResolutionPanel({
+    required this.phase,
+    required this.enemy,
+    required this.attackValue,
+    required this.defenseValue,
+    required this.returnDamage,
+    required this.lifeSteal,
+    required this.cpSteal,
+    required this.heroTokens,
+    required this.minionTokens,
+    required this.notes,
+    required this.onAttackChanged,
+    required this.onDefenseChanged,
+    required this.onAddToken,
+    required this.onApply,
+    super.key,
+  });
+
+  final CombatPhase phase;
+  final EnemyNode enemy;
+  final int attackValue;
+  final int defenseValue;
+  final int returnDamage;
+  final int lifeSteal;
+  final int cpSteal;
+  final List<String> heroTokens;
+  final List<String> minionTokens;
+  final List<String> notes;
+  final ValueChanged<int> onAttackChanged;
+  final ValueChanged<int> onDefenseChanged;
+  final VoidCallback onAddToken;
+  final VoidCallback onApply;
+
+  @override
+  Widget build(BuildContext context) {
+    final isHeroBattle = phase == CombatPhase.hero;
+    final accent = isHeroBattle ? heroAccent : enemy.rank.color;
+    final tokenText = [
+      if (heroTokens.isNotEmpty) 'Hero: ${heroTokens.join(', ')}',
+      if (minionTokens.isNotEmpty) 'Minion: ${minionTokens.join(', ')}',
+      if (returnDamage > 0) 'Return damage: $returnDamage',
+      if (lifeSteal > 0) 'Life steal: $lifeSteal',
+      if (cpSteal > 0) 'CP steal: $cpSteal',
+      ...notes,
+    ];
+
+    return InfoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _BattleCounter(
+                  icon: Icons.sports_martial_arts,
+                  label: 'Attack',
+                  value: attackValue,
+                  color: accent,
+                  editable: isHeroBattle,
+                  onChanged: onAttackChanged,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _BattleCounter(
+                  icon: Icons.shield,
+                  label: 'Defense',
+                  value: defenseValue,
+                  color: accent,
+                  editable: !isHeroBattle,
+                  onChanged: onDefenseChanged,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 104),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: accent.withValues(alpha: 0.65)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.auto_awesome, size: 16, color: accent),
+                          const SizedBox(width: 6),
+                          const Expanded(
+                            child: Text(
+                              'Tokens / notes',
+                              style: TextStyle(fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Add token',
+                            visualDensity: VisualDensity.compact,
+                            onPressed: onAddToken,
+                            icon: const Icon(Icons.edit, size: 18),
+                            color: accent,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      if (tokenText.isEmpty)
+                        const Text(
+                          'No battle effect yet.',
+                          style: TextStyle(color: Colors.white70),
+                        )
+                      else
+                        ...tokenText.map(
+                          (value) => Padding(
+                            padding: const EdgeInsets.only(bottom: 3),
+                            child: Text(
+                              value,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ImageActionButton(
+            label: 'Apply',
+            icon: Icons.check,
+            onPressed: onApply,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BattleCounter extends StatelessWidget {
+  const _BattleCounter({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.editable,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String label;
+  final int value;
+  final Color color;
+  final bool editable;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 104),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.65)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (editable)
+            _CounterStepButton(
+              icon: Icons.add,
+              color: color,
+              onPressed: () => onChanged(1),
+            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(width: 6),
+              Text(
+                value.toString(),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+          ),
+          if (editable)
+            _CounterStepButton(
+              icon: Icons.remove,
+              color: color,
+              onPressed: () => onChanged(-1),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CounterStepButton extends StatelessWidget {
+  const _CounterStepButton({
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 34,
+      height: 26,
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        color: color,
+      ),
+    );
+  }
+}
+
 class MinionAiPanel extends StatelessWidget {
   const MinionAiPanel({
     required this.enemy,
@@ -7238,7 +7845,7 @@ class MinionAiPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final message = _aiMessageFor(enemy, phase, dice, rollCount);
+    final message = _aiMessageFor(enemy, phase, dice, rollCount, adventure);
     final visibleDice = dice.take(visibleDiceCount.clamp(0, 5)).toList()
       ..sort(_compareDice);
     final editingDie = editingDieId == null
@@ -7268,7 +7875,26 @@ class MinionAiPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+          if (visibleDice.isNotEmpty || isDefensePhase) ...[
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final die in visibleDice)
+                  DieTile(
+                    die: die,
+                    onTap: () => onTapDie(die),
+                    highlight: die.reserved || editingDieId == die.id,
+                    highlightColor: editingDieId == die.id
+                        ? heroAccent
+                        : enemy.rank.color,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
           Container(
+            constraints: const BoxConstraints(minHeight: 120),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.35),
@@ -7287,71 +7913,54 @@ class MinionAiPanel extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                 ],
-                Text(message),
+                Text(message, style: const TextStyle(height: 1.25)),
               ],
             ),
           ),
           if (visibleDice.isNotEmpty || isDefensePhase) ...[
             const SizedBox(height: 10),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: enemy.rank.color,
+                foregroundColor: Colors.black,
+                minimumSize: const Size.fromHeight(48),
+              ),
+              onPressed: rollCount < maxRolls && diceToRoll > 0 ? onRoll : null,
+              icon: Icon(isDefensePhase ? Icons.shield : Icons.casino),
+              label: Text(
+                isDefensePhase
+                    ? 'Roll defense'
+                    : (rollCount == 0 ? 'Roll' : 'Reroll'),
+              ),
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(
-                      backgroundColor: enemy.rank.color,
+                      backgroundColor: heroAccent,
                       foregroundColor: Colors.black,
-                      minimumSize: const Size.fromHeight(48),
+                      minimumSize: const Size(0, 46),
                     ),
-                    onPressed: rollCount < maxRolls && diceToRoll > 0
-                        ? onRoll
-                        : null,
-                    icon: const Icon(Icons.shield),
-                    label: Text(
-                      isDefensePhase
-                          ? 'Roll defense'
-                          : (rollCount == 0 ? 'Roll' : 'Reroll'),
-                    ),
+                    onPressed: onToggleEdit,
+                    icon: const Icon(Icons.tune),
+                    label: Text(editMode ? 'Stop edit' : 'Edit a die'),
                   ),
                 ),
                 const SizedBox(width: 8),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: heroAccent,
-                    foregroundColor: Colors.black,
-                    minimumSize: const Size(0, 48),
+                Expanded(
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: heroAccent,
+                      foregroundColor: Colors.black,
+                      minimumSize: const Size(0, 46),
+                    ),
+                    onPressed: onToggleRerollOne,
+                    icon: const Icon(Icons.refresh),
+                    label: Text(rerollOneMode ? 'Choose' : 'Reroll a die'),
                   ),
-                  onPressed: onToggleEdit,
-                  icon: const Icon(Icons.tune),
-                  label: Text(editMode ? 'Stop edit' : 'Edit a die'),
                 ),
-                const SizedBox(width: 8),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: heroAccent,
-                    foregroundColor: Colors.black,
-                    minimumSize: const Size(0, 48),
-                  ),
-                  onPressed: onToggleRerollOne,
-                  icon: const Icon(Icons.refresh),
-                  label: Text(rerollOneMode ? 'Choose' : 'Reroll a die'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final die in visibleDice)
-                  DieTile(
-                    die: die,
-                    onTap: () => onTapDie(die),
-                    compact: true,
-                    highlight: die.reserved || editingDieId == die.id,
-                    highlightColor: editingDieId == die.id
-                        ? heroAccent
-                        : enemy.rank.color,
-                  ),
               ],
             ),
             if (editingDie != null) ...[
@@ -7390,14 +7999,22 @@ String _aiMessageFor(
   CombatPhase phase,
   List<GameDie> dice,
   int rollCount,
+  AdventureState adventure,
 ) {
   return switch (phase) {
     CombatPhase.heroUpkeep =>
-      'Hero upkeep is automated for CP. No minion dice action.',
+      'Hero upkeep phase.\n'
+          '+1 CP for ${adventure.hero.label}.\n'
+          '${adventure.hero.label} is now at ${adventure.combatPoints} CP.\n'
+          'Resolve hero upkeep tokens if needed, then move to battle.',
     CombatPhase.hero =>
-      'Hero attack phase: AI is idle. Roll minion defense if needed.',
+      'Hero battle phase.\n'
+          'Enter the hero attack damage with the sword counter.\n'
+          'If the attack is defendable, roll ${enemy.label} defense and I will summarize the result.',
     CombatPhase.minionUpkeep =>
-      'Minion upkeep is automated for CP. Token dice will appear here when required.',
+      'Minion upkeep phase.\n'
+          '${enemy.label} gains +1 CP automatically.\n'
+          'Resolve persistent tokens here if present, then move to minion battle.',
     CombatPhase.minionAttack => _minionAttackAiMessage(enemy, dice, rollCount),
   };
 }
@@ -7410,9 +8027,13 @@ String _minionAttackAiMessage(
   final rolled = dice.where((die) => die.value != null).toList();
   if (rollCount == 0 || rolled.isEmpty) {
     if (enemy.attackPlan.style == MinionAttackStyle.suite) {
-      return 'I use ${enemy.attacks.first}. First target: micro suite, then I will try to improve.';
+      return 'Minion battle phase.\n'
+          'I use ${enemy.attacks.first}.\n'
+          'First target: micro suite, then I will try to improve.';
     }
-    return 'I use ${enemy.attacks.first}. First target: the smallest valid symbol attack.';
+    return 'Minion battle phase.\n'
+        'I use ${enemy.attacks.first}.\n'
+        'First target: the smallest valid symbol attack.';
   }
 
   final values = rolled.map((die) => die.value!).toList()..sort();
@@ -7423,21 +8044,61 @@ String _minionAttackAiMessage(
   if (enemy.attackPlan.style == MinionAttackStyle.suite) {
     final decision = MinionDiceEngine.chooseSuiteHold(dice);
     final best = _bestSuiteLength(values);
+    final damage = _suiteDamage(enemy, best);
+    final damageText = damage == null
+        ? ''
+        : '\nResult: ${damage.value}${damage.imparable ? ' imparable' : ''} damage.';
     if (best >= 5) {
-      return 'Large suite validated with ${values.join('/')}. I can apply the strongest suite result.';
+      return 'Large suite validated with ${values.join('/')}.\n'
+          'I can apply the strongest suite result.$damageText';
     }
     if (best == 4) {
-      return 'Small suite validated with ${values.join('/')}. I can hit, then try to improve if one roll remains.';
+      return 'Small suite validated with ${values.join('/')}.\n'
+          'I can hit, then try to improve if one roll remains.$damageText';
     }
     if (best == 3) {
-      return 'Micro suite validated. Kept dice: ${kept.join('/')}. I can keep rolling to improve.';
+      return 'Micro suite validated.\n'
+          'Kept dice: ${kept.join('/')}.\n'
+          'I can keep rolling to improve.$damageText';
     }
-    return 'No suite yet. ${decision.reason} Kept dice: ${kept.isEmpty ? 'nothing' : kept.join('/')}.';
+    return 'No suite yet.\n'
+        '${decision.reason}\n'
+        'Kept dice: ${kept.isEmpty ? 'nothing' : kept.join('/')}.';
   }
 
+  final symbolDamage = _bestSymbolAttackDamage(enemy, dice);
+  final symbolDamageText = symbolDamage == null
+      ? ''
+      : '\nCurrent result: ${symbolDamage.value}${symbolDamage.imparable ? ' imparable' : ''} damage.';
   return kept.isEmpty
-      ? 'No valid symbol set yet. I reroll toward the first attack.'
-      : 'I keep ${kept.join('/')} and try to improve the attack.';
+      ? 'No valid symbol set yet.\nI reroll toward the first attack.'
+      : 'I keep ${kept.join('/')}.\nI try to improve the attack.$symbolDamageText';
+}
+
+_AttackDamage? _bestSymbolAttackDamage(EnemyNode enemy, List<GameDie> dice) {
+  if (enemy.attackPlan.style != MinionAttackStyle.symbols) {
+    return null;
+  }
+  _AttackDamage? result;
+  for (final goal in enemy.attackPlan.goals) {
+    if (_symbolGoalMetDice(dice, goal)) {
+      result = _damageForSymbolGoal(enemy, goal);
+    }
+  }
+  return result;
+}
+
+bool _symbolGoalMetDice(List<GameDie> dice, SymbolGoal goal) {
+  final counts = <DieSymbol, int>{};
+  for (final die in dice) {
+    final symbol = die.symbol;
+    if (symbol != null) {
+      counts[symbol] = (counts[symbol] ?? 0) + 1;
+    }
+  }
+  return (counts[DieSymbol.white] ?? 0) >= goal.white &&
+      (counts[DieSymbol.yellow] ?? 0) >= goal.yellow &&
+      (counts[DieSymbol.red] ?? 0) >= goal.red;
 }
 
 int _bestSuiteLength(List<int> values) {
@@ -7728,6 +8389,7 @@ class _AttackDamage {
 
 _AttackDamage? _damageForSymbolGoal(EnemyNode enemy, SymbolGoal goal) {
   final key = enemy.profileKey;
+  final goalIndex = _goalIndex(enemy.attackPlan.goals, goal);
   if (key == 'ronin-vagabond') {
     return _AttackDamage(goal.white + 2);
   }
@@ -7743,7 +8405,7 @@ _AttackDamage? _damageForSymbolGoal(EnemyNode enemy, SymbolGoal goal) {
   if (key == 'epeiste-egare') {
     return _AttackDamage(goal.white + 2);
   }
-  return null;
+  return _damageFromAttackText(enemy, goalIndex);
 }
 
 _AttackDamage? _suiteDamage(EnemyNode enemy, int length) {
@@ -7764,7 +8426,101 @@ _AttackDamage? _suiteDamage(EnemyNode enemy, int length) {
       _ => null,
     };
   }
-  return null;
+  return _suiteDamageFromAttackText(enemy, length);
+}
+
+int _goalIndex(List<SymbolGoal> goals, SymbolGoal goal) {
+  return goals.indexWhere(
+    (candidate) =>
+        candidate.white == goal.white &&
+        candidate.yellow == goal.yellow &&
+        candidate.red == goal.red,
+  );
+}
+
+_AttackDamage? _damageFromAttackText(EnemyNode enemy, int goalIndex) {
+  if (goalIndex < 0) {
+    return null;
+  }
+  final damageValues = _attackDamageValues(enemy.attacks);
+  if (goalIndex >= damageValues.length) {
+    return null;
+  }
+  final value = damageValues[goalIndex];
+  return _AttackDamage(value, imparable: _attackTextIsImparable(enemy.attacks));
+}
+
+_AttackDamage? _suiteDamageFromAttackText(EnemyNode enemy, int length) {
+  final index = switch (length) {
+    3 => 0,
+    4 => 1,
+    5 => 2,
+    _ => -1,
+  };
+  if (index < 0) {
+    return null;
+  }
+  final damageValues = _attackDamageValues(enemy.attacks);
+  if (index >= damageValues.length) {
+    return null;
+  }
+  return _AttackDamage(
+    damageValues[index],
+    imparable: _attackTextIsImparable(enemy.attacks),
+  );
+}
+
+List<int> _attackDamageValues(List<String> attacks) {
+  final values = <int>[];
+  for (final line in attacks.skip(1)) {
+    final normalized = _normalizeAttackText(line);
+    for (final match in RegExp(
+      r'(\d+(?:\s*/\s*\d+)*)\s*(?:degats|damage)',
+    ).allMatches(normalized)) {
+      final raw = match.group(1);
+      if (raw == null) {
+        continue;
+      }
+      values.addAll(
+        raw
+            .split('/')
+            .map((value) => int.tryParse(value.trim()))
+            .whereType<int>(),
+      );
+    }
+    if (!normalized.contains('degats') && !normalized.contains('damage')) {
+      final afterEquals = normalized.split('=').last;
+      final fallbackValues = RegExp(r'\d+')
+          .allMatches(afterEquals)
+          .map((match) => int.tryParse(match.group(0) ?? ''))
+          .whereType<int>()
+          .toList();
+      if (fallbackValues.isNotEmpty) {
+        values.add(fallbackValues.last);
+      }
+    }
+  }
+  return values;
+}
+
+bool _attackTextIsImparable(List<String> attacks) {
+  final text = _normalizeAttackText(attacks.join(' '));
+  return text.contains('imparable') || text.contains('undefendable');
+}
+
+String _normalizeAttackText(String value) {
+  return value
+      .toLowerCase()
+      .replaceAll('é', 'e')
+      .replaceAll('è', 'e')
+      .replaceAll('ê', 'e')
+      .replaceAll('à', 'a')
+      .replaceAll('â', 'a')
+      .replaceAll('ù', 'u')
+      .replaceAll('û', 'u')
+      .replaceAll('ï', 'i')
+      .replaceAll('î', 'i')
+      .replaceAll('ô', 'o');
 }
 
 String _compactDefenseText(String value) {
@@ -7816,6 +8572,21 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          CombatantStatusRow.hero(
+            adventure: widget.adventure,
+            onHp: () => _openEditor('heroHp', widget.adventure.health),
+            onCp: () => _openEditor('heroCp', widget.adventure.combatPoints),
+            onEditTokens: _editHeroTokens,
+          ),
+          if (_editing.contains('heroHp')) ...[
+            const SizedBox(height: 6),
+            _buildEditorRow('heroHp'),
+          ],
+          if (_editing.contains('heroCp')) ...[
+            const SizedBox(height: 6),
+            _buildEditorRow('heroCp'),
+          ],
+          const SizedBox(height: 8),
           CombatantStatusRow.enemy(
             enemy: widget.enemy,
             onHp: () => _openEditor('enemyHp', widget.enemy.health),
@@ -7849,22 +8620,6 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-          ],
-          const SizedBox(height: 8),
-          CombatantStatusRow.hero(
-            adventure: widget.adventure,
-            onHp: () => _openEditor('heroHp', widget.adventure.health),
-            onCp: () => _openEditor('heroCp', widget.adventure.combatPoints),
-            onEditTokens: _editHeroTokens,
-          ),
-          if (_editing.contains('heroHp')) ...[
-            const SizedBox(height: 6),
-            _buildEditorRow('heroHp'),
-          ],
-          if (_editing.contains('heroCp')) ...[
-            const SizedBox(height: 6),
-            _buildEditorRow('heroCp'),
           ],
         ],
       ),
