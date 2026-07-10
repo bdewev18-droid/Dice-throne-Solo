@@ -25,11 +25,18 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("dtSoloQuest") {
+            storeFile = file("dt-solo-quest-release.jks")
+            storePassword = "dtsoloquest"
+            keyAlias = "dt-solo-quest"
+            keyPassword = "dtsoloquest"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("dtSoloQuest")
         }
     }
 }

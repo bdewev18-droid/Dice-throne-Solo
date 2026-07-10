@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.11';
+const String appVersionLabel = 'Version 1.2.12';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -1988,7 +1988,8 @@ enum SurvivalMode {
   mediumRandom('Medium random route', mediumTarget, RunDifficulty.medium, true),
   hardFixed('Hard fixed route', hardTarget, RunDifficulty.hard, false),
   hardRandom('Hard random route', hardTarget, RunDifficulty.hard, true),
-  free('Free mode', mediumTarget, RunDifficulty.free, true);
+  free('Free mode', mediumTarget, RunDifficulty.free, true),
+  naraxus('Naxarus Battle', 100, RunDifficulty.naraxus, false);
 
   const SurvivalMode(
     this.label,
@@ -2006,7 +2007,8 @@ enum SurvivalMode {
 enum RunDifficulty {
   medium('Medium'),
   hard('Hard'),
-  free('Free');
+  free('Free'),
+  naraxus('Naxarus');
 
   const RunDifficulty(this.label);
 
@@ -2059,6 +2061,7 @@ class GameRecord {
     required this.score,
     this.mode = SurvivalMode.mediumFixed,
     this.healthRemaining,
+    this.bossHealthRemaining,
     this.enemiesDefeated = 0,
     this.duration = Duration.zero,
   });
@@ -2068,6 +2071,7 @@ class GameRecord {
   final int score;
   final SurvivalMode mode;
   final int? healthRemaining;
+  final int? bossHealthRemaining;
   final int enemiesDefeated;
   final Duration duration;
 }
@@ -2108,6 +2112,7 @@ class SurvivalConfig {
     SurvivalMode.mediumFixed || SurvivalMode.mediumRandom => 'Medium mode',
     SurvivalMode.hardFixed || SurvivalMode.hardRandom => 'Hard mode',
     SurvivalMode.free => 'Free mode',
+    SurvivalMode.naraxus => 'Naxarus Battle',
   };
 }
 
@@ -2652,7 +2657,11 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
           onNext: (hero) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute<void>(
-                builder: (_) => NaraxusBattlePage(hero: hero),
+                builder: (_) => NaraxusBattlePage(
+                  hero: hero,
+                  onRecord: (record) =>
+                      setState(() => _history.insert(0, record)),
+                ),
               ),
             );
           },
@@ -4276,9 +4285,14 @@ class MapPage extends StatefulWidget {
 }
 
 class NaraxusBattlePage extends StatefulWidget {
-  const NaraxusBattlePage({required this.hero, super.key});
+  const NaraxusBattlePage({
+    required this.hero,
+    required this.onRecord,
+    super.key,
+  });
 
   final HeroType hero;
+  final ValueChanged<GameRecord> onRecord;
 
   @override
   State<NaraxusBattlePage> createState() => _NaraxusBattlePageState();
@@ -4286,11 +4300,15 @@ class NaraxusBattlePage extends StatefulWidget {
 
 class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
   late final AdventureState _adventure = _createAdventure();
+  bool _recorded = false;
 
   AdventureState _createAdventure() {
     final adventure = AdventureState(
       hero: widget.hero,
-      config: const SurvivalConfig(mode: SurvivalMode.free, targetScore: 0),
+      config: const SurvivalConfig(
+        mode: SurvivalMode.naraxus,
+        targetScore: 100,
+      ),
     );
     final naraxus = EnemyNode(
       id: 0,
@@ -4325,7 +4343,29 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
       onPauseExit: () =>
           Navigator.of(context).popUntil((route) => route.isFirst),
       onAbandon: () => Navigator.of(context).popUntil((route) => route.isFirst),
+      onFinished: _finishBattle,
     );
+  }
+
+  void _finishBattle() {
+    if (!_recorded) {
+      final naraxus = _adventure.enemyById(0);
+      final success = naraxus.health <= 0;
+      widget.onRecord(
+        GameRecord(
+          hero: widget.hero,
+          date: DateTime.now(),
+          score: success ? 100 : 0,
+          mode: SurvivalMode.naraxus,
+          healthRemaining: _adventure.health,
+          bossHealthRemaining: naraxus.health,
+          enemiesDefeated: success ? 1 : 0,
+          duration: _adventure.elapsed,
+        ),
+      );
+      _recorded = true;
+    }
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 }
 
@@ -5878,6 +5918,7 @@ class FightPage extends StatefulWidget {
     required this.onChanged,
     required this.onPauseExit,
     required this.onAbandon,
+    this.onFinished,
     super.key,
   });
 
@@ -5886,6 +5927,7 @@ class FightPage extends StatefulWidget {
   final VoidCallback onChanged;
   final VoidCallback onPauseExit;
   final VoidCallback onAbandon;
+  final VoidCallback? onFinished;
 
   @override
   State<FightPage> createState() => _FightPageState();
@@ -5915,6 +5957,7 @@ class _FightPageState extends State<FightPage> {
   final List<String> _battleHeroTokens = [];
   final List<String> _battleMinionTokens = [];
   final List<String> _battleNotes = [];
+  final List<String> _naraxusRollHistory = [];
 
   EnemyNode get enemy => widget.adventure.enemyById(widget.enemyId);
 
@@ -5968,7 +6011,12 @@ class _FightPageState extends State<FightPage> {
                 adventure: widget.adventure,
                 enemy: enemy,
                 phase: _phase,
-                onFinish: enemy.health <= 0 ? _finishCombat : null,
+                naraxusRollHistory: _naraxusRollHistory,
+                onFinish:
+                    enemy.health <= 0 ||
+                        (_isNaraxus && widget.adventure.health <= 0)
+                    ? _finishCombat
+                    : null,
                 onChanged: () {
                   widget.onChanged();
                   setState(() {});
@@ -6150,6 +6198,15 @@ class _FightPageState extends State<FightPage> {
           .toList();
       for (final die in rollable) {
         die.value = _random.nextInt(6) + 1;
+      }
+      if (_isNaraxus) {
+        final values = rollable
+            .where((die) => die.value != null)
+            .map((die) => die.value!)
+            .join('/');
+        if (values.isNotEmpty) {
+          _naraxusRollHistory.add(values);
+        }
       }
       _rollCount++;
       widget.adventure.log(
@@ -6898,6 +6955,10 @@ class _FightPageState extends State<FightPage> {
   }
 
   void _finishCombat() {
+    if (_isNaraxus) {
+      widget.onFinished?.call();
+      return;
+    }
     widget.adventure.completeCombat(enemy);
     widget.onChanged();
     if (enemy.defeated && widget.adventure.health > 0) {
@@ -8804,6 +8865,7 @@ class FightStatusPanel extends StatefulWidget {
     required this.adventure,
     required this.enemy,
     required this.phase,
+    required this.naraxusRollHistory,
     required this.onFinish,
     required this.onChanged,
     super.key,
@@ -8812,6 +8874,7 @@ class FightStatusPanel extends StatefulWidget {
   final AdventureState adventure;
   final EnemyNode enemy;
   final CombatPhase phase;
+  final List<String> naraxusRollHistory;
   final VoidCallback? onFinish;
   final VoidCallback onChanged;
 
@@ -8836,6 +8899,10 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
         children: [
           CombatantStatusRow.hero(
             adventure: widget.adventure,
+            hideCp: widget.enemy.profileKey == 'naraxus',
+            rollHistory: widget.enemy.profileKey == 'naraxus'
+                ? widget.naraxusRollHistory
+                : const [],
             onHp: () => _openEditor('heroHp', widget.adventure.health),
             onCp: () => _openEditor('heroCp', widget.adventure.combatPoints),
             onEditTokens: _editHeroTokens,
@@ -8851,6 +8918,10 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
           const SizedBox(height: 8),
           CombatantStatusRow.enemy(
             enemy: widget.enemy,
+            hideCp: widget.enemy.profileKey == 'naraxus',
+            rollHistory: widget.enemy.profileKey == 'naraxus'
+                ? widget.naraxusRollHistory
+                : const [],
             onHp: () => _openEditor('enemyHp', widget.enemy.health),
             onCp: () => _openEditor('enemyCp', widget.enemy.combatPoints),
             onEditTokens: _editEnemyTokens,
@@ -9048,6 +9119,8 @@ class CombatantStatusRow extends StatelessWidget {
     required this.onHp,
     required this.onCp,
     required this.onEditTokens,
+    this.hideCp = false,
+    this.rollHistory = const [],
     super.key,
   }) : hero = adventure.hero,
        enemy = null,
@@ -9062,6 +9135,8 @@ class CombatantStatusRow extends StatelessWidget {
     required this.onHp,
     required this.onCp,
     required this.onEditTokens,
+    this.hideCp = false,
+    this.rollHistory = const [],
     super.key,
   }) : hero = null,
        title = 'Enemy',
@@ -9080,6 +9155,8 @@ class CombatantStatusRow extends StatelessWidget {
   final VoidCallback onHp;
   final VoidCallback onCp;
   final VoidCallback onEditTokens;
+  final bool hideCp;
+  final List<String> rollHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -9102,19 +9179,21 @@ class CombatantStatusRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        SizedBox(
-          width: 68,
-          child: MapStatChip(
-            label: 'CP',
-            value: cp.toString(),
-            color: accent,
-            accent: accent,
-            onTap: onCp,
+        if (!hideCp) ...[
+          SizedBox(
+            width: 68,
+            child: MapStatChip(
+              label: 'CP',
+              value: cp.toString(),
+              color: accent,
+              accent: accent,
+              onTap: onCp,
+            ),
           ),
-        ),
-        const SizedBox(width: 6),
+          const SizedBox(width: 6),
+        ],
         Flexible(
-          flex: 2,
+          flex: hideCp ? 1 : 2,
           child: CompactItemStrip(
             label: 'Tokens',
             emptyText: 'Tokens',
@@ -9130,7 +9209,66 @@ class CombatantStatusRow extends StatelessWidget {
             ),
           ),
         ),
+        if (hideCp) ...[
+          const SizedBox(width: 6),
+          Expanded(
+            child: _RollHistoryStrip(values: rollHistory, accent: accent),
+          ),
+        ],
       ],
+    );
+  }
+}
+
+class _RollHistoryStrip extends StatelessWidget {
+  const _RollHistoryStrip({required this.values, required this.accent});
+
+  final List<String> values;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final recent = values.length <= 4
+        ? values
+        : values.sublist(values.length - 4);
+    return InkWell(
+      onTap: values.isEmpty
+          ? null
+          : () => showDialog<void>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Naxarus rolls'),
+                content: Text(values.join(' / ')),
+                actions: [
+                  FilledButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            ),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.32),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: accent),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.history, color: accent, size: 18),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                recent.isEmpty ? 'Rolls' : recent.join(' / '),
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: accent, fontWeight: FontWeight.w900),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -10363,6 +10501,7 @@ List<EnemyRank> _ranksForMode(SurvivalConfig config) {
     SurvivalMode.mediumRandom => _randomRanks(config.targetScore, hard: false),
     SurvivalMode.hardRandom => _randomRanks(config.targetScore, hard: true),
     SurvivalMode.free => _freeModeRanks(config.freeCounts),
+    SurvivalMode.naraxus => [EnemyRank.naraxus],
   };
 }
 
@@ -10373,6 +10512,7 @@ SurvivalMode _randomModeFor(SurvivalMode mode) {
     SurvivalMode.hardFixed ||
     SurvivalMode.hardRandom => SurvivalMode.hardRandom,
     SurvivalMode.free => SurvivalMode.free,
+    SurvivalMode.naraxus => SurvivalMode.naraxus,
   };
 }
 
