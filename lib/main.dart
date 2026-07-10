@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.12';
+const String appVersionLabel = 'Version 1.2.13';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -6024,7 +6024,7 @@ class _FightPageState extends State<FightPage> {
               ),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 220),
                   children: [
                     EnemyRulesPanel(
                       enemy: enemy,
@@ -6040,32 +6040,6 @@ class _FightPageState extends State<FightPage> {
                         });
                       },
                     ),
-                    if (_isBattlePhase) ...[
-                      const SizedBox(height: 12),
-                      BattleResolutionPanel(
-                        phase: _phase,
-                        enemy: enemy,
-                        attackValue: _battleAttackValue,
-                        defenseValue: _battleDefenseValue,
-                        returnDamage: _battleReturnDamage,
-                        lifeSteal: _battleLifeSteal,
-                        enemyHeal: _battleEnemyHeal,
-                        cpSteal: _battleCpSteal,
-                        heroTokens: _battleHeroTokens,
-                        minionTokens: _battleMinionTokens,
-                        notes: _battleNotes,
-                        onAttackChanged: (delta) => setState(() {
-                          _battleAttackValue = (_battleAttackValue + delta)
-                              .clamp(0, 99);
-                        }),
-                        onDefenseChanged: (delta) => setState(() {
-                          _battleDefenseValue = (_battleDefenseValue + delta)
-                              .clamp(0, 99);
-                        }),
-                        onAddToken: _addBattleToken,
-                        onApply: _applyBattleResolution,
-                      ),
-                    ],
                     if (_aiMode) ...[
                       const SizedBox(height: 12),
                       MinionAiPanel(
@@ -6165,6 +6139,43 @@ class _FightPageState extends State<FightPage> {
                   ],
                 ),
               ),
+              if (_isBattlePhase)
+                BattleBottomDock(
+                  aiMode: _aiMode,
+                  aiMessage: _aiMode
+                      ? _aiMessageFor(
+                          enemy,
+                          _phase,
+                          _dice,
+                          _rollCount,
+                          widget.adventure,
+                        )
+                      : '',
+                  phase: _phase,
+                  enemy: enemy,
+                  attackValue: _battleAttackValue,
+                  defenseValue: _battleDefenseValue,
+                  returnDamage: _battleReturnDamage,
+                  lifeSteal: _battleLifeSteal,
+                  enemyHeal: _battleEnemyHeal,
+                  cpSteal: _battleCpSteal,
+                  heroTokens: _battleHeroTokens,
+                  minionTokens: _battleMinionTokens,
+                  notes: _battleNotes,
+                  onAttackChanged: (delta) => setState(() {
+                    _battleAttackValue = (_battleAttackValue + delta).clamp(
+                      0,
+                      99,
+                    );
+                  }),
+                  onDefenseChanged: (delta) => setState(() {
+                    _battleDefenseValue = (_battleDefenseValue + delta).clamp(
+                      0,
+                      99,
+                    );
+                  }),
+                  onApply: _applyBattleResolution,
+                ),
             ],
           ),
         ),
@@ -6365,31 +6376,6 @@ class _FightPageState extends State<FightPage> {
     _battleHeroTokens.clear();
     _battleMinionTokens.clear();
     _battleNotes.clear();
-  }
-
-  Future<void> _addBattleToken() async {
-    final current = _phase == CombatPhase.hero
-        ? _battleMinionTokens
-        : _battleHeroTokens;
-    final values = await showAlterationDialog(
-      context,
-      current,
-      forMinion: _phase == CombatPhase.hero,
-    );
-    if (values == null || !mounted) {
-      return;
-    }
-    setState(() {
-      if (_phase == CombatPhase.hero) {
-        _battleMinionTokens
-          ..clear()
-          ..addAll(values);
-      } else {
-        _battleHeroTokens
-          ..clear()
-          ..addAll(values);
-      }
-    });
   }
 
   void _refreshBattleResolutionFromDice() {
@@ -7848,8 +7834,10 @@ class MinionDefenseSummary extends StatelessWidget {
   }
 }
 
-class BattleResolutionPanel extends StatelessWidget {
-  const BattleResolutionPanel({
+class BattleBottomDock extends StatelessWidget {
+  const BattleBottomDock({
+    required this.aiMode,
+    required this.aiMessage,
     required this.phase,
     required this.enemy,
     required this.attackValue,
@@ -7863,11 +7851,12 @@ class BattleResolutionPanel extends StatelessWidget {
     required this.notes,
     required this.onAttackChanged,
     required this.onDefenseChanged,
-    required this.onAddToken,
     required this.onApply,
     super.key,
   });
 
+  final bool aiMode;
+  final String aiMessage;
   final CombatPhase phase;
   final EnemyNode enemy;
   final int attackValue;
@@ -7881,7 +7870,6 @@ class BattleResolutionPanel extends StatelessWidget {
   final List<String> notes;
   final ValueChanged<int> onAttackChanged;
   final ValueChanged<int> onDefenseChanged;
-  final VoidCallback onAddToken;
   final VoidCallback onApply;
 
   @override
@@ -7898,10 +7886,35 @@ class BattleResolutionPanel extends StatelessWidget {
       ...notes,
     ];
 
-    return InfoCard(
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      decoration: const BoxDecoration(
+        color: Color(0xf2121212),
+        border: Border(top: BorderSide(color: Colors.white12)),
+      ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (aiMode) ...[
+            Container(
+              constraints: const BoxConstraints(minHeight: 54, maxHeight: 260),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: accent.withValues(alpha: 0.7)),
+              ),
+              child: SingleChildScrollView(
+                reverse: true,
+                child: Text(
+                  _battleChatText(aiMessage, tokenText),
+                  style: const TextStyle(height: 1.25),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           Row(
             children: [
               Expanded(
@@ -7926,69 +7939,33 @@ class BattleResolutionPanel extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: Container(
-                  constraints: const BoxConstraints(minHeight: 104),
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: accent.withValues(alpha: 0.65)),
+              SizedBox(
+                width: 104,
+                child: FilledButton.icon(
+                  onPressed: onApply,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xff8f43ff),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 58),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.auto_awesome, size: 16, color: accent),
-                          const SizedBox(width: 6),
-                          const Expanded(
-                            child: Text(
-                              'Tokens / notes',
-                              style: TextStyle(fontWeight: FontWeight.w900),
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'Add token',
-                            visualDensity: VisualDensity.compact,
-                            onPressed: onAddToken,
-                            icon: const Icon(Icons.edit, size: 18),
-                            color: accent,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      if (tokenText.isEmpty)
-                        const Text(
-                          'No battle effect yet.',
-                          style: TextStyle(color: Colors.white70),
-                        )
-                      else
-                        ...tokenText.map(
-                          (value) => Padding(
-                            padding: const EdgeInsets.only(bottom: 3),
-                            child: Text(
-                              value,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                  icon: const Icon(Icons.check),
+                  label: const Text('Apply'),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 10),
-          ImageActionButton(
-            label: 'Apply',
-            icon: Icons.check,
-            onPressed: onApply,
           ),
         ],
       ),
     );
   }
+}
+
+String _battleChatText(String aiMessage, List<String> effects) {
+  final lines = [
+    if (aiMessage.trim().isNotEmpty) aiMessage.trim(),
+    if (effects.isNotEmpty) effects.join('\n'),
+  ];
+  return lines.isEmpty ? 'Manual battle resolution.' : lines.join('\n');
 }
 
 class _BattleCounter extends StatelessWidget {
@@ -8128,7 +8105,6 @@ class MinionAiPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final message = _aiMessageFor(enemy, phase, dice, rollCount, adventure);
     final visibleDice = dice.take(visibleDiceCount.clamp(0, 5)).toList()
       ..sort(_compareDice);
     final editingDie = editingDieId == null
@@ -8141,14 +8117,24 @@ class MinionAiPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.smart_toy, color: enemy.rank.color),
+              Icon(Icons.casino, color: enemy.rank.color),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
-                  'Minion AI',
+                  'Dice',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                 ),
               ),
+              if (enemy.profileKey != 'naraxus') ...[
+                Text(
+                  '$rollCount/$maxRolls',
+                  style: TextStyle(
+                    color: enemy.rank.color,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               IconButton(
                 tooltip: 'Run log',
                 onPressed: onDetails,
@@ -8176,32 +8162,7 @@ class MinionAiPanel extends StatelessWidget {
             ),
             const SizedBox(height: 10),
           ],
-          Container(
-            constraints: const BoxConstraints(minHeight: 120),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: enemy.rank.color.withValues(alpha: 0.7),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (phase == CombatPhase.minionAttack) ...[
-                  Text(
-                    '${enemy.label}: ${enemy.health} HP, ${enemy.combatPoints} CP, ${enemy.alterations.length} tokens.',
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 6),
-                ],
-                Text(message, style: const TextStyle(height: 1.25)),
-              ],
-            ),
-          ),
           if (visibleDice.isNotEmpty || isDefensePhase) ...[
-            const SizedBox(height: 10),
             FilledButton.icon(
               style: FilledButton.styleFrom(
                 backgroundColor: enemy.rank.color,
@@ -8335,17 +8296,26 @@ String _minionAttackAiMessage(
         ? ''
         : '\nResult: ${damage.value}${damage.imparable ? ' imparable' : ''} damage.';
     if (best >= 5) {
-      return 'Large suite validated with ${values.join('/')}.\n'
-          'I can apply the strongest suite result.$damageText';
+      return rollCount >= 3
+          ? 'Final attack after 3 rolls.\n'
+                'Large suite validated with ${_bestSuiteValues(values, 5).join('/')}.$damageText'
+          : 'Large suite validated with ${_bestSuiteValues(values, 5).join('/')}.\n'
+                'I can apply the strongest suite result.$damageText';
     }
     if (best == 4) {
-      return 'Small suite validated with ${values.join('/')}.\n'
-          'I can hit, then try to improve if one roll remains.$damageText';
+      return rollCount >= 3
+          ? 'Final attack after 3 rolls.\n'
+                'Small suite validated with ${_bestSuiteValues(values, 4).join('/')}.$damageText'
+          : 'Small suite validated with ${_bestSuiteValues(values, 4).join('/')}.\n'
+                'I can hit, then try to improve if one roll remains.$damageText';
     }
     if (best == 3) {
-      return 'Micro suite validated.\n'
-          'Kept dice: ${kept.join('/')}.\n'
-          'I can keep rolling to improve.$damageText';
+      return rollCount >= 3
+          ? 'Final attack after 3 rolls.\n'
+                'Micro suite validated with ${_bestSuiteValues(values, 3).join('/')}.$damageText'
+          : 'Micro suite validated.\n'
+                'Kept dice: ${kept.join('/')}.\n'
+                'I can keep rolling to improve.$damageText';
     }
     return 'No suite yet.\n'
         '${decision.reason}\n'
@@ -8356,9 +8326,50 @@ String _minionAttackAiMessage(
   final symbolDamageText = symbolDamage == null
       ? ''
       : '\nCurrent result: ${symbolDamage.value}${symbolDamage.imparable ? ' imparable' : ''} damage.';
+  if (rollCount >= 3) {
+    return symbolDamage == null
+        ? 'Final attack after 3 rolls.\nNo valid attack combination.'
+        : 'Final attack after 3 rolls.\n'
+              'Validated dice: ${_reservedDiceText(dice)}.$symbolDamageText';
+  }
   return kept.isEmpty
       ? 'No valid symbol set yet.\nI reroll toward the first attack.'
       : 'I keep ${kept.join('/')}.\nI try to improve the attack.$symbolDamageText';
+}
+
+List<int> _bestSuiteValues(List<int> values, int length) {
+  final unique = values.toSet();
+  final suites = switch (length) {
+    5 => const [
+      [1, 2, 3, 4, 5],
+      [2, 3, 4, 5, 6],
+    ],
+    4 => const [
+      [1, 2, 3, 4],
+      [2, 3, 4, 5],
+      [3, 4, 5, 6],
+    ],
+    _ => const [
+      [1, 2, 3],
+      [2, 3, 4],
+      [3, 4, 5],
+      [4, 5, 6],
+    ],
+  };
+  return suites.firstWhere(
+    (suite) => suite.every(unique.contains),
+    orElse: () => const [],
+  );
+}
+
+String _reservedDiceText(List<GameDie> dice) {
+  final values =
+      dice
+          .where((die) => die.reserved && die.value != null)
+          .map((die) => die.value!)
+          .toList()
+        ..sort();
+  return values.isEmpty ? 'none' : values.join('/');
 }
 
 String _naraxusAiMessage(EnemyNode enemy, List<GameDie> rolled) {
@@ -9635,10 +9646,10 @@ class _CompactPhaseSelector extends StatelessWidget {
                     ),
                     child: Icon(
                       switch (value) {
-                        CombatPhase.heroUpkeep => Icons.autorenew,
-                        CombatPhase.hero => Icons.gps_fixed,
-                        CombatPhase.minionUpkeep => Icons.autorenew,
-                        CombatPhase.minionAttack => Icons.gps_fixed,
+                        CombatPhase.heroUpkeep => Icons.accessibility_new,
+                        CombatPhase.hero => Icons.casino,
+                        CombatPhase.minionUpkeep => Icons.accessibility_new,
+                        CombatPhase.minionAttack => Icons.casino,
                       },
                       color: Colors.white,
                       size: 19,
