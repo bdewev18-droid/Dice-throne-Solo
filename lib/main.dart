@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.15';
+const String appVersionLabel = 'Version 1.2.16';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -6062,6 +6062,10 @@ class _FightPageState extends State<FightPage> {
   int _battleLifeSteal = 0;
   int _battleEnemyHeal = 0;
   int _battleCpSteal = 0;
+  int _heroAttackCount = 0;
+  int _heroAttackTotal = 0;
+  int _lastHeroAttack = 0;
+  String _lastBattleOutcomeMessage = '';
   final List<String> _battleHeroTokens = [];
   final List<String> _battleMinionTokens = [];
   final List<String> _battleNotes = [];
@@ -6252,6 +6256,10 @@ class _FightPageState extends State<FightPage> {
                         _dice,
                         _rollCount,
                         widget.adventure,
+                        _lastBattleOutcomeMessage,
+                        _heroAttackCount,
+                        _lastHeroAttack,
+                        _heroAttackTotal,
                       )
                     : '',
                 phase: _phase,
@@ -6827,6 +6835,22 @@ class _FightPageState extends State<FightPage> {
         widget.adventure.log(
           'Hero battle applied: $netDamage damage to ${enemy.label}.',
         );
+        if (_battleAttackValue == 0) {
+          _lastBattleOutcomeMessage =
+              '${widget.adventure.hero.label} attack failed.';
+        } else {
+          _lastBattleOutcomeMessage =
+              '${widget.adventure.hero.label} dealt $_battleAttackValue damage. '
+              '${enemy.label} prevented $_battleDefenseValue damage. '
+              'Net damage: $netDamage.'
+              '${_battleReturnDamage > 0 ? ' Return damage: $_battleReturnDamage.' : ''}'
+              '${_battleLifeSteal > 0 ? ' Life steal: $_battleLifeSteal.' : ''}'
+              '${_battleHeroTokens.isNotEmpty ? ' Hero receives ${_battleHeroTokens.join(', ')}.' : ''}'
+              '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_battleMinionTokens.join(', ')}.' : ''}';
+        }
+        _heroAttackCount++;
+        _heroAttackTotal += _battleAttackValue;
+        _lastHeroAttack = _battleAttackValue;
         nextPhase = CombatPhase.minionUpkeep;
       } else {
         widget.adventure.setHeroHealth(widget.adventure.health - netDamage);
@@ -6859,6 +6883,14 @@ class _FightPageState extends State<FightPage> {
         widget.adventure.log(
           'Minion battle applied: $netDamage damage to hero.',
         );
+        _lastBattleOutcomeMessage =
+            '${enemy.label} dealt $_battleAttackValue damage. '
+            '${widget.adventure.hero.label} prevented $_battleDefenseValue damage. '
+            'Net damage: $netDamage.'
+            '${_battleHeroTokens.isNotEmpty ? ' ${widget.adventure.hero.label} receives ${_battleHeroTokens.join(', ')}.' : ''}'
+            '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_battleMinionTokens.join(', ')}.' : ''}'
+            '${_battleEnemyHeal > 0 ? ' ${enemy.label} heals $_battleEnemyHeal HP.' : ''}'
+            '${_battleCpSteal > 0 ? ' ${enemy.label} steals $_battleCpSteal CP.' : ''}';
         nextPhase = CombatPhase.heroUpkeep;
       }
       widget.onChanged();
@@ -8623,41 +8655,167 @@ String _aiMessageFor(
   List<GameDie> dice,
   int rollCount,
   AdventureState adventure,
+  String lastBattleOutcome,
+  int heroAttackCount,
+  int lastHeroAttack,
+  int heroAttackTotal,
 ) {
   return switch (phase) {
-    CombatPhase.heroUpkeep =>
-      'Hero upkeep phase.\n'
-          '+1 CP for ${adventure.hero.label}.\n'
-          '${adventure.hero.label} is now at ${adventure.combatPoints} CP.\n'
-          'Resolve hero upkeep tokens if needed, then move to battle.',
-    CombatPhase.hero =>
-      'Hero battle phase.\n'
-          'Enter the hero attack damage with the sword counter.\n'
-          'If the attack is defendable, roll ${enemy.label} defense and I will summarize the result.',
-    CombatPhase.minionUpkeep =>
-      'Minion upkeep phase.\n'
-          '${enemy.label} gains +1 CP automatically.\n'
-          'Resolve persistent tokens here if present, then move to minion battle.',
-    CombatPhase.minionAttack => _minionAttackAiMessage(enemy, dice, rollCount),
+    CombatPhase.heroUpkeep => _heroUpkeepAiMessage(
+      adventure,
+      lastBattleOutcome,
+    ),
+    CombatPhase.hero => _heroBattleAiMessage(
+      enemy,
+      adventure,
+      heroAttackCount,
+      lastHeroAttack,
+      heroAttackTotal,
+    ),
+    CombatPhase.minionUpkeep => _minionUpkeepAiMessage(
+      enemy,
+      lastBattleOutcome,
+    ),
+    CombatPhase.minionAttack => _minionAttackAiMessage(
+      enemy,
+      dice,
+      rollCount,
+      adventure,
+    ),
   };
+}
+
+String _combatIntroLine(AdventureState adventure, EnemyNode enemy) {
+  return 'Battle: ${adventure.hero.label} versus ${enemy.label}.';
+}
+
+String _heroUpkeepAiMessage(
+  AdventureState adventure,
+  String lastBattleOutcome,
+) {
+  final lines = <String>[
+    if (lastBattleOutcome.isNotEmpty) lastBattleOutcome,
+    'Start of turn for ${adventure.hero.label}.',
+    '${adventure.hero.label} gains 1 CP and is now at ${adventure.combatPoints} CP.',
+    _tokenUpkeepSummary(
+      owner: adventure.hero.label,
+      tokens: adventure.alterations,
+      isHero: true,
+    ),
+    if (!adventure.alterations.contains('Commotion'))
+      '${adventure.hero.label} should draw 1 card before the battle phase.',
+  ];
+  return lines.join('\n');
+}
+
+String _minionUpkeepAiMessage(EnemyNode enemy, String lastBattleOutcome) {
+  final lines = <String>[
+    if (lastBattleOutcome.isNotEmpty) lastBattleOutcome,
+    'Start of turn for ${enemy.label}.',
+    enemy.profileKey == 'naraxus'
+        ? 'Naxarus does not gain CP; the dragon has unlimited CP.'
+        : '${enemy.label} gains 1 CP and is now at ${enemy.combatPoints} CP.',
+    _tokenUpkeepSummary(
+      owner: enemy.label,
+      tokens: enemy.alterations,
+      isHero: false,
+    ),
+  ];
+  return lines.join('\n');
+}
+
+String _heroBattleAiMessage(
+  EnemyNode enemy,
+  AdventureState adventure,
+  int heroAttackCount,
+  int lastHeroAttack,
+  int heroAttackTotal,
+) {
+  final intro = heroAttackCount == 0
+      ? '${adventure.hero.label} enters the fight. How much damage will the first attack deal?'
+      : heroAttackCount == 1
+      ? 'The first attack dealt $lastHeroAttack damage. Can ${adventure.hero.label} do better?'
+      : '${adventure.hero.label} averages ${(heroAttackTotal / heroAttackCount).toStringAsFixed(1)} damage per attack. Can this turn beat that?';
+  return [
+    _combatIntroLine(adventure, enemy),
+    intro,
+    '${enemy.label} is waiting for the hero attack result.',
+    'If the attack is defendable, roll ${enemy.label} defense.',
+    'Maximum prevention: ${_maxDefensePrevention(enemy)} damage. Maximum return damage: ${_maxDefenseReturnDamage(enemy)} damage.',
+    if (adventure.alterations.contains('Silence'))
+      'Silence is active: ${adventure.hero.label} cannot validate a suite this turn.',
+  ].join('\n');
+}
+
+String _tokenUpkeepSummary({
+  required String owner,
+  required List<String> tokens,
+  required bool isHero,
+}) {
+  if (tokens.isEmpty) {
+    return 'No upkeep token found. The game continues.';
+  }
+  final counts = _tokenCounts(tokens);
+  final lines = <String>[];
+  var poisonDamage = 0;
+  for (final entry in counts.entries) {
+    final token = entry.key;
+    final count = entry.value;
+    final lower = token.toLowerCase();
+    if (lower.contains('poison')) {
+      poisonDamage += count;
+      lines.add('$count Poison token${count > 1 ? 's' : ''} found on $owner.');
+      lines.add(
+        '$owner will receive ${List.filled(count, '1 poison damage').join(' and ')}. Total: $count HP will be removed at the end of upkeep.',
+      );
+    } else if (lower.contains('hémorragie') || lower.contains('hemorragie')) {
+      lines.add('$count Bleed token${count > 1 ? 's' : ''} found on $owner.');
+      lines.add(
+        isHero
+            ? '$owner must roll for Bleed during upkeep, then update HP and tokens.'
+            : 'I have Bleed. I am ready to roll to see if the token stays; confirm with OK when this token is resolved.',
+      );
+    } else if (lower.contains('brûlure') || lower.contains('brulure')) {
+      lines.add('$count Burn token${count > 1 ? 's' : ''} found on $owner.');
+      lines.add('Resolve Burn damage before moving to battle.');
+    }
+  }
+  if (lines.isEmpty) {
+    return 'Tokens are present, but none are automated for upkeep yet.';
+  }
+  if (poisonDamage > 0) {
+    lines.add('The upkeep damage may defeat $owner if HP is too low.');
+  }
+  return lines.join('\n');
+}
+
+Map<String, int> _tokenCounts(List<String> tokens) {
+  final counts = <String, int>{};
+  for (final token in tokens) {
+    counts[token] = (counts[token] ?? 0) + 1;
+  }
+  return counts;
 }
 
 String _minionAttackAiMessage(
   EnemyNode enemy,
   List<GameDie> dice,
   int rollCount,
+  AdventureState adventure,
 ) {
   final rolled = dice.where((die) => die.value != null).toList();
   if (enemy.profileKey == 'naraxus') {
-    return _naraxusAiMessage(enemy, rolled);
+    return _naraxusAiMessage(enemy, rolled, adventure);
   }
   if (rollCount == 0 || rolled.isEmpty) {
     if (enemy.attackPlan.style == MinionAttackStyle.suite) {
-      return 'Minion battle phase.\n'
+      return '${enemy.label} battle phase.\n'
+          '${enemy.label} has ${enemy.health} HP, ${enemy.combatPoints} CP and ${enemy.alterations.length} token(s).\n'
           'I use ${enemy.attacks.first}.\n'
-          'First target: micro suite, then I will try to improve.';
+          'First target: micro suite. If it succeeds, I will try to improve.';
     }
-    return 'Minion battle phase.\n'
+    return '${enemy.label} battle phase.\n'
+        '${enemy.label} has ${enemy.health} HP, ${enemy.combatPoints} CP and ${enemy.alterations.length} token(s).\n'
         'I use ${enemy.attacks.first}.\n'
         'First target: the smallest valid symbol attack.';
   }
@@ -8671,49 +8829,58 @@ String _minionAttackAiMessage(
     final decision = MinionDiceEngine.chooseSuiteHold(dice);
     final best = _bestSuiteLength(values);
     final damage = _suiteDamage(enemy, best);
+    final rollLabel = _rollLabel(rollCount);
     final damageText = damage == null
         ? ''
-        : '\nResult: ${damage.value}${damage.imparable ? ' imparable' : ''} damage.';
+        : '\nI deal ${damage.value}${damage.imparable ? ' undefendable' : ''} damage with this roll.';
     if (best >= 5) {
       return rollCount >= 3
-          ? 'Final attack after 3 rolls.\n'
-                'Large suite validated with ${_bestSuiteValues(values, 5).join('/')}.$damageText'
-          : 'Large suite validated with ${_bestSuiteValues(values, 5).join('/')}.\n'
-                'I can apply the strongest suite result.$damageText';
+          ? 'After my 3 attack rolls, I deal ${damage?.value ?? 0} damage with the large suite ${_bestSuiteValues(values, 5).join('/')}.\n'
+                '${adventure.hero.label} may still try to make my attack fail before pressing OK.'
+          : 'On my $rollLabel roll, large suite validated with ${_bestSuiteValues(values, 5).join('/')}.$damageText';
     }
     if (best == 4) {
       return rollCount >= 3
-          ? 'Final attack after 3 rolls.\n'
-                'Small suite validated with ${_bestSuiteValues(values, 4).join('/')}.$damageText'
-          : 'Small suite validated with ${_bestSuiteValues(values, 4).join('/')}.\n'
-                'I can hit, then try to improve if one roll remains.$damageText';
+          ? 'After my 3 attack rolls, I deal ${damage?.value ?? 0} damage with the small suite ${_bestSuiteValues(values, 4).join('/')}.\n'
+                '${adventure.hero.label} must perform a defensive phase if the attack is defendable.'
+          : 'On my $rollLabel roll, small suite validated with ${_bestSuiteValues(values, 4).join('/')}.$damageText\n'
+                'I can hit, then try to improve if one roll remains.';
     }
     if (best == 3) {
       return rollCount >= 3
-          ? 'Final attack after 3 rolls.\n'
-                'Micro suite validated with ${_bestSuiteValues(values, 3).join('/')}.$damageText'
-          : 'Micro suite validated.\n'
-                'Kept dice: ${kept.join('/')}.\n'
-                'I can keep rolling to improve.$damageText';
+          ? 'After my 3 attack rolls, I deal ${damage?.value ?? 0} damage with the micro suite ${_bestSuiteValues(values, 3).join('/')}.\n'
+                '${adventure.hero.label} must perform a defensive phase if the attack is defendable.'
+          : 'On my $rollLabel roll, micro suite validated.\n'
+                'I keep ${kept.join('/')} and can keep rolling to improve.$damageText';
     }
-    return 'No suite yet.\n'
+    return 'On my $rollLabel roll, I deal no damage yet.\n'
         '${decision.reason}\n'
         'Kept dice: ${kept.isEmpty ? 'nothing' : kept.join('/')}.';
   }
 
   final symbolDamage = _bestSymbolAttackDamage(enemy, dice);
+  final rollLabel = _rollLabel(rollCount);
   final symbolDamageText = symbolDamage == null
       ? ''
-      : '\nCurrent result: ${symbolDamage.value}${symbolDamage.imparable ? ' imparable' : ''} damage.';
+      : '\nI deal ${symbolDamage.value}${symbolDamage.imparable ? ' undefendable' : ''} damage with the validated dice.';
   if (rollCount >= 3) {
     return symbolDamage == null
-        ? 'Final attack after 3 rolls.\nNo valid attack combination.'
-        : 'Final attack after 3 rolls.\n'
-              'Validated dice: ${_reservedDiceText(dice)}.$symbolDamageText';
+        ? 'After my 3 attack rolls, no valid attack combination was made.'
+        : 'After my 3 attack rolls, I deal ${symbolDamage.value} damage with ${_reservedDiceText(dice)}.\n'
+              '${adventure.hero.label} must perform a defensive phase if the attack is defendable.';
   }
   return kept.isEmpty
-      ? 'No valid symbol set yet.\nI reroll toward the first attack.'
-      : 'I keep ${kept.join('/')}.\nI try to improve the attack.$symbolDamageText';
+      ? 'On my $rollLabel roll, I deal no damage yet.\nI reroll toward the first attack.'
+      : 'On my $rollLabel roll, I keep ${kept.join('/')}.\nI try to improve the attack.$symbolDamageText';
+}
+
+String _rollLabel(int rollCount) {
+  return switch (rollCount) {
+    1 => 'first',
+    2 => 'second',
+    3 => 'third and final',
+    _ => '${rollCount}th',
+  };
 }
 
 List<int> _bestSuiteValues(List<int> values, int length) {
@@ -8751,7 +8918,11 @@ String _reservedDiceText(List<GameDie> dice) {
   return values.isEmpty ? 'none' : values.join('/');
 }
 
-String _naraxusAiMessage(EnemyNode enemy, List<GameDie> rolled) {
+String _naraxusAiMessage(
+  EnemyNode enemy,
+  List<GameDie> rolled,
+  AdventureState adventure,
+) {
   if (rolled.isEmpty || rolled.first.value == null) {
     return 'Naxarus battle phase.\n'
         'Roll 1 die to choose the dragon attack.\n'
@@ -8760,29 +8931,34 @@ String _naraxusAiMessage(EnemyNode enemy, List<GameDie> rolled) {
   final value = rolled.first.value!;
   return switch (value) {
     1 =>
-      'Swoop.\n'
+      'I use Swoop with die result 1.\n'
+          'I deal 3 undefendable damage.\n'
           'Naxarus removes 1 random token.\n'
           'Naxarus heals 4 HP.\n'
-          'Hero takes 3 undefendable damage.',
+          '${adventure.hero.label} has no defense unless a card changes the attack.',
     2 =>
-      'Ember Spark.\n'
+      'I use Ember Spark with die result 2.\n'
+          'I deal 8 damage.\n'
           'Hero moves the top 3 deck cards to discard.\n'
-          'Hero takes 8 damage.',
+          '${adventure.hero.label} must perform a defensive phase.',
     3 =>
-      'Gashing Bite.\n'
+      'I use Gashing Bite with die result 3.\n'
           'Naxarus rolls 4 dice.\n'
-          'Damage equals the 2 highest dice.',
+          'Damage equals the 2 highest dice.\n'
+          '${adventure.hero.label} must perform a defensive phase.',
     4 =>
-      'Hoarding.\n'
+      'I use Hoarding with die result 4.\n'
+          'I deal 9 damage.\n'
           'Hero loses 1 die on the next battle phase.\n'
-          'Hero takes 9 damage.',
+          '${adventure.hero.label} must perform a defensive phase.',
     5 =>
-      'Thundering Roar.\n'
+      'I use Thundering Roar with die result 5.\n'
+          'I deal 8 undefendable damage.\n'
           'Hero discards 1 card.\n'
-          'Hero takes 8 undefendable damage.',
+          '${adventure.hero.label} has no defense unless a card changes the attack.',
     6 =>
-      "Dragon's Might.\n"
-          'Hero takes 10 damage.\n'
+      "I use Dragon's Might with die result 6.\n"
+          'I deal 10 damage.\n'
           'Naxarus rolls 1 extra die; on 5-6, Swoop also triggers.',
     _ => 'Naxarus waits.',
   };
@@ -8812,6 +8988,37 @@ bool _symbolGoalMetDice(List<GameDie> dice, SymbolGoal goal) {
   return (counts[DieSymbol.white] ?? 0) >= goal.white &&
       (counts[DieSymbol.yellow] ?? 0) >= goal.yellow &&
       (counts[DieSymbol.red] ?? 0) >= goal.red;
+}
+
+int _maxDefensePrevention(EnemyNode enemy) {
+  return switch (enemy.profileKey) {
+    'naraxus' => 5,
+    'fee' => 3,
+    'archer-de-lombre' => 3,
+    'epeiste-egare' => enemy.defenseDice.clamp(0, 5),
+    'elfe-du-chaos' => 99,
+    _ => _numberAfter(enemy.defense, ['previent', 'prevent']) ?? 0,
+  };
+}
+
+int _maxDefenseReturnDamage(EnemyNode enemy) {
+  return switch (enemy.profileKey) {
+    'ronin-vagabond' => 3,
+    'enchanteur-gobelin' => 1,
+    'epeiste-egare' => 2,
+    _ => _numberAfter(enemy.defense, ['inflige', 'deal']) ?? 0,
+  };
+}
+
+int? _numberAfter(String text, List<String> words) {
+  final lower = text.toLowerCase();
+  for (final word in words) {
+    final match = RegExp('$word ([0-9]+)').firstMatch(lower);
+    if (match != null) {
+      return int.tryParse(match.group(1) ?? '');
+    }
+  }
+  return null;
 }
 
 int _bestSuiteLength(List<int> values) {
