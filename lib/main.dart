@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.13';
+const String appVersionLabel = 'Version 1.2.15';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -2611,11 +2611,12 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
     }
   }
 
-  void _openHistory(BuildContext context) {
+  void _openHistory(BuildContext context, {RunDifficulty? initialDifficulty}) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => HistoryPage(
           records: _history,
+          initialDifficulty: initialDifficulty,
           onAddRecord: (record) => setState(() => _history.insert(0, record)),
           onDeleteRecord: (record) => setState(() => _history.remove(record)),
         ),
@@ -2661,6 +2662,10 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
                   hero: hero,
                   onRecord: (record) =>
                       setState(() => _history.insert(0, record)),
+                  onOpenHistory: () => _openHistory(
+                    appNavigatorKey.currentContext ?? context,
+                    initialDifficulty: RunDifficulty.naraxus,
+                  ),
                 ),
               ),
             );
@@ -2691,6 +2696,10 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
             appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
           },
           onAbandon: () => _abandonAdventure(adventure),
+          onOpenHistory: () => _openHistory(
+            appNavigatorKey.currentContext ?? context,
+            initialDifficulty: adventure.config.mode.difficulty,
+          ),
           onChangeHero: () => _openHeroChoice(context),
           onReplay: () {
             final next = AdventureState(hero: hero, config: config);
@@ -3017,12 +3026,14 @@ class HistoryPage extends StatefulWidget {
     required this.records,
     required this.onAddRecord,
     required this.onDeleteRecord,
+    this.initialDifficulty,
     super.key,
   });
 
   final List<GameRecord> records;
   final ValueChanged<GameRecord> onAddRecord;
   final ValueChanged<GameRecord> onDeleteRecord;
+  final RunDifficulty? initialDifficulty;
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -3030,7 +3041,8 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   HistorySort _sort = HistorySort.average;
-  RunDifficulty _difficulty = RunDifficulty.medium;
+  late RunDifficulty _difficulty =
+      widget.initialDifficulty ?? RunDifficulty.medium;
   RandomFilter _randomFilter = RandomFilter.both;
   bool _deleteMode = false;
   final Set<GameRecord> _selectedForDelete = {};
@@ -3132,25 +3144,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                   ),
                 const SizedBox(height: 16),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4),
-                  child: Row(
-                    children: [
-                      Expanded(flex: 3, child: Text('Hero')),
-                      Expanded(
-                        child: Text('Runs', textAlign: TextAlign.center),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text('Enemies', textAlign: TextAlign.center),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text('Avg pts', textAlign: TextAlign.right),
-                      ),
-                    ],
-                  ),
-                ),
+                const _HistoryHeaderRow(),
                 const Divider(),
                 Expanded(
                   child: records.isEmpty
@@ -3253,7 +3247,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         : HeroAvatar(hero: hero, size: 42),
                     const SizedBox(width: 10),
                     Expanded(
-                      flex: 3,
+                      flex: 4,
                       child: Text(
                         hero.label,
                         style: const TextStyle(fontWeight: FontWeight.w900),
@@ -3266,16 +3260,26 @@ class _HistoryPageState extends State<HistoryPage> {
                       ),
                     ),
                     Expanded(
-                      flex: 2,
                       child: Text(
-                        runs.map((run) => run.enemiesDefeated).join('/'),
+                        _averageEnemies(runs).toStringAsFixed(1),
                         textAlign: TextAlign.center,
                       ),
                     ),
                     Expanded(
-                      flex: 2,
                       child: Text(
-                        '${_averageScore(runs).toStringAsFixed(1)} pts',
+                        _averageHealthLabel(runs),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        _averageDurationLabel(runs),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        _averageScore(runs).toStringAsFixed(1),
                         textAlign: TextAlign.right,
                       ),
                     ),
@@ -3321,6 +3325,37 @@ class _HistoryPageState extends State<HistoryPage> {
 
   double _averageScore(List<GameRecord> runs) =>
       runs.fold<int>(0, (total, run) => total + run.score) / runs.length;
+
+  double _averageEnemies(List<GameRecord> runs) =>
+      runs.fold<int>(0, (total, run) => total + run.enemiesDefeated) /
+      runs.length;
+
+  String _averageHealthLabel(List<GameRecord> runs) {
+    final values = runs
+        .map((run) => run.healthRemaining)
+        .whereType<int>()
+        .toList();
+    if (values.isEmpty) {
+      return 'n/a';
+    }
+    final average =
+        values.fold<int>(0, (total, value) => total + value) / values.length;
+    return average.toStringAsFixed(1);
+  }
+
+  String _averageDurationLabel(List<GameRecord> runs) {
+    final values = runs
+        .map((run) => run.duration)
+        .where((duration) => duration.inSeconds > 0)
+        .toList();
+    if (values.isEmpty) {
+      return 'n/a';
+    }
+    final seconds =
+        values.fold<int>(0, (total, duration) => total + duration.inSeconds) ~/
+        values.length;
+    return _formatDuration(Duration(seconds: seconds));
+  }
 
   void _toggleRun(GameRecord run, bool? value) {
     setState(() {
@@ -3384,6 +3419,42 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 }
 
+class _HistoryHeaderRow extends StatelessWidget {
+  const _HistoryHeaderRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(flex: 4, child: Text('Hero / run')),
+          Expanded(child: _HistoryHeaderIcon(Icons.flag, 'Runs')),
+          Expanded(child: _HistoryHeaderIcon(Icons.casino, 'Enemies')),
+          Expanded(child: _HistoryHeaderIcon(Icons.favorite, 'HP')),
+          Expanded(child: _HistoryHeaderIcon(Icons.timer, 'Time')),
+          Expanded(child: _HistoryHeaderIcon(Icons.emoji_events, 'Points')),
+        ],
+      ),
+    );
+  }
+}
+
+class _HistoryHeaderIcon extends StatelessWidget {
+  const _HistoryHeaderIcon(this.icon, this.tooltip);
+
+  final IconData icon;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Icon(icon, size: 18, color: Color(0xffffe22d)),
+    );
+  }
+}
+
 class _RunDetailRow extends StatelessWidget {
   const _RunDetailRow({
     required this.record,
@@ -3409,9 +3480,10 @@ class _RunDetailRow extends StatelessWidget {
           HeroAvatar(hero: record.hero, size: 34),
         if (showHero || deleteMode) const SizedBox(width: 8),
         Expanded(
-          flex: 2,
+          flex: 4,
           child: Text(showHero ? record.hero.label : _formatDate(record.date)),
         ),
+        Expanded(child: Text('1', textAlign: TextAlign.center)),
         Expanded(
           child: Text(
             record.enemiesDefeated.toString(),
@@ -3419,13 +3491,10 @@ class _RunDetailRow extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: Text('${record.score} pts', textAlign: TextAlign.center),
-        ),
-        Expanded(
           child: Text(
             record.healthRemaining == null
-                ? 'HP n/a'
-                : '${record.healthRemaining} HP',
+                ? 'n/a'
+                : record.healthRemaining.toString(),
             textAlign: TextAlign.center,
           ),
         ),
@@ -3434,6 +3503,9 @@ class _RunDetailRow extends StatelessWidget {
             _formatDuration(record.duration),
             textAlign: TextAlign.right,
           ),
+        ),
+        Expanded(
+          child: Text(record.score.toString(), textAlign: TextAlign.right),
         ),
       ],
     );
@@ -4267,6 +4339,7 @@ class MapPage extends StatefulWidget {
     required this.onChanged,
     required this.onPauseExit,
     required this.onAbandon,
+    required this.onOpenHistory,
     required this.onChangeHero,
     required this.onReplay,
     super.key,
@@ -4277,6 +4350,7 @@ class MapPage extends StatefulWidget {
   final VoidCallback onChanged;
   final VoidCallback onPauseExit;
   final VoidCallback onAbandon;
+  final VoidCallback onOpenHistory;
   final VoidCallback onChangeHero;
   final VoidCallback onReplay;
 
@@ -4288,11 +4362,13 @@ class NaraxusBattlePage extends StatefulWidget {
   const NaraxusBattlePage({
     required this.hero,
     required this.onRecord,
+    required this.onOpenHistory,
     super.key,
   });
 
   final HeroType hero;
   final ValueChanged<GameRecord> onRecord;
+  final VoidCallback onOpenHistory;
 
   @override
   State<NaraxusBattlePage> createState() => _NaraxusBattlePageState();
@@ -4344,10 +4420,16 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
           Navigator.of(context).popUntil((route) => route.isFirst),
       onAbandon: () => Navigator.of(context).popUntil((route) => route.isFirst),
       onFinished: _finishBattle,
+      onGameOverHome: _finishBattle,
+      onGameOverHistory: () {
+        _recordBattle();
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        widget.onOpenHistory();
+      },
     );
   }
 
-  void _finishBattle() {
+  void _recordBattle() {
     if (!_recorded) {
       final naraxus = _adventure.enemyById(0);
       final success = naraxus.health <= 0;
@@ -4365,6 +4447,10 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
       );
       _recorded = true;
     }
+  }
+
+  void _finishBattle() {
+    _recordBattle();
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 }
@@ -4654,6 +4740,21 @@ class _MapPageState extends State<MapPage> {
                       onChanged: widget.onChanged,
                       onPauseExit: widget.onPauseExit,
                       onAbandon: widget.onAbandon,
+                      onGameOverHome: () {
+                        widget.onRecordScore(widget.adventure);
+                        widget.onChanged();
+                        Navigator.of(
+                          context,
+                        ).popUntil((route) => route.isFirst);
+                      },
+                      onGameOverHistory: () {
+                        widget.onRecordScore(widget.adventure);
+                        widget.onChanged();
+                        Navigator.of(
+                          context,
+                        ).popUntil((route) => route.isFirst);
+                        widget.onOpenHistory();
+                      },
                     ),
                   ),
                 );
@@ -5919,6 +6020,8 @@ class FightPage extends StatefulWidget {
     required this.onPauseExit,
     required this.onAbandon,
     this.onFinished,
+    this.onGameOverHome,
+    this.onGameOverHistory,
     super.key,
   });
 
@@ -5928,6 +6031,8 @@ class FightPage extends StatefulWidget {
   final VoidCallback onPauseExit;
   final VoidCallback onAbandon;
   final VoidCallback? onFinished;
+  final VoidCallback? onGameOverHome;
+  final VoidCallback? onGameOverHistory;
 
   @override
   State<FightPage> createState() => _FightPageState();
@@ -5935,6 +6040,8 @@ class FightPage extends StatefulWidget {
 
 class _FightPageState extends State<FightPage> {
   final Random _random = Random();
+  final ScrollController _combatScrollController = ScrollController();
+  final GlobalKey _defenseRulesKey = GlobalKey();
   final List<GameDie> _dice = [];
   int _diceToRoll = 6;
   int _rollCount = 0;
@@ -5948,6 +6055,7 @@ class _FightPageState extends State<FightPage> {
   bool _specialAttackMode = false;
   bool _aiMode = true;
   bool _showManualExtraDicePhase = false;
+  bool _gameOverDialogShown = false;
   int _battleAttackValue = 0;
   int _battleDefenseValue = 0;
   int _battleReturnDamage = 0;
@@ -5981,6 +6089,12 @@ class _FightPageState extends State<FightPage> {
   }
 
   @override
+  void dispose() {
+    _combatScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return PopScope<void>(
       canPop: false,
@@ -5993,43 +6107,32 @@ class _FightPageState extends State<FightPage> {
         body: SafeArea(
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: TurnPhasePanel(
-                  phase: _phase,
-                  adventure: widget.adventure,
-                  enemy: enemy,
-                  upkeepApplied: _upkeepApplied,
-                  heroUpkeepApplied: _heroUpkeepApplied,
-                  onPhaseChanged: _setPhase,
-                  onNext: _advancePhase,
-                  onApplyUpkeep: _applyUpkeep,
-                  onApplyHeroUpkeep: _applyHeroUpkeep,
-                ),
-              ),
-              FightStatusPanel(
-                adventure: widget.adventure,
-                enemy: enemy,
-                phase: _phase,
-                naraxusRollHistory: _naraxusRollHistory,
-                onFinish:
-                    enemy.health <= 0 ||
-                        (_isNaraxus && widget.adventure.health <= 0)
-                    ? _finishCombat
-                    : null,
-                onChanged: () {
-                  widget.onChanged();
-                  setState(() {});
-                },
-              ),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 220),
+                  controller: _combatScrollController,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 300),
                   children: [
+                    FightStatusPanel(
+                      adventure: widget.adventure,
+                      enemy: enemy,
+                      phase: _phase,
+                      naraxusRollHistory: _naraxusRollHistory,
+                      onFinish:
+                          enemy.health <= 0 ||
+                              (_isNaraxus && widget.adventure.health <= 0)
+                          ? _finishCombat
+                          : null,
+                      onChanged: () {
+                        widget.onChanged();
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 12),
                     EnemyRulesPanel(
                       enemy: enemy,
                       phase: _phase,
                       aiMode: _aiMode,
+                      defenseKey: _defenseRulesKey,
                       onAiModeChanged: (value) {
                         setState(() {
                           _aiMode = value;
@@ -6139,43 +6242,53 @@ class _FightPageState extends State<FightPage> {
                   ],
                 ),
               ),
-              if (_isBattlePhase)
-                BattleBottomDock(
-                  aiMode: _aiMode,
-                  aiMessage: _aiMode
-                      ? _aiMessageFor(
-                          enemy,
-                          _phase,
-                          _dice,
-                          _rollCount,
-                          widget.adventure,
-                        )
-                      : '',
-                  phase: _phase,
-                  enemy: enemy,
-                  attackValue: _battleAttackValue,
-                  defenseValue: _battleDefenseValue,
-                  returnDamage: _battleReturnDamage,
-                  lifeSteal: _battleLifeSteal,
-                  enemyHeal: _battleEnemyHeal,
-                  cpSteal: _battleCpSteal,
-                  heroTokens: _battleHeroTokens,
-                  minionTokens: _battleMinionTokens,
-                  notes: _battleNotes,
-                  onAttackChanged: (delta) => setState(() {
-                    _battleAttackValue = (_battleAttackValue + delta).clamp(
-                      0,
-                      99,
-                    );
-                  }),
-                  onDefenseChanged: (delta) => setState(() {
-                    _battleDefenseValue = (_battleDefenseValue + delta).clamp(
-                      0,
-                      99,
-                    );
-                  }),
-                  onApply: _applyBattleResolution,
-                ),
+              CombatBottomDock(
+                aiMode: _aiMode,
+                showResolution: _isBattlePhase,
+                aiMessage: _aiMode
+                    ? _aiMessageFor(
+                        enemy,
+                        _phase,
+                        _dice,
+                        _rollCount,
+                        widget.adventure,
+                      )
+                    : '',
+                phase: _phase,
+                adventure: widget.adventure,
+                enemy: enemy,
+                upkeepApplied: _upkeepApplied,
+                heroUpkeepApplied: _heroUpkeepApplied,
+                canAdvancePhase:
+                    _phase != CombatPhase.minionAttack &&
+                    (_phase != CombatPhase.hero || _battleAttackValue == 0),
+                attackValue: _battleAttackValue,
+                defenseValue: _battleDefenseValue,
+                returnDamage: _battleReturnDamage,
+                lifeSteal: _battleLifeSteal,
+                enemyHeal: _battleEnemyHeal,
+                cpSteal: _battleCpSteal,
+                heroTokens: _battleHeroTokens,
+                minionTokens: _battleMinionTokens,
+                notes: _battleNotes,
+                onPhaseChanged: _setPhase,
+                onNext: _advancePhase,
+                onApplyUpkeep: _applyUpkeep,
+                onApplyHeroUpkeep: _applyHeroUpkeep,
+                onAttackChanged: (delta) => setState(() {
+                  _battleAttackValue = (_battleAttackValue + delta).clamp(
+                    0,
+                    99,
+                  );
+                }),
+                onDefenseChanged: (delta) => setState(() {
+                  _battleDefenseValue = (_battleDefenseValue + delta).clamp(
+                    0,
+                    99,
+                  );
+                }),
+                onApply: _applyBattleResolution,
+              ),
             ],
           ),
         ),
@@ -6296,6 +6409,20 @@ class _FightPageState extends State<FightPage> {
     });
     if (phase == CombatPhase.heroUpkeep) {
       _applyHeroUpkeep();
+    }
+    if (phase == CombatPhase.hero) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final context = _defenseRulesKey.currentContext;
+        if (context == null) {
+          return;
+        }
+        Scrollable.ensureVisible(
+          context,
+          alignment: 0.02,
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOut,
+        );
+      });
     }
   }
 
@@ -6736,6 +6863,10 @@ class _FightPageState extends State<FightPage> {
       }
       widget.onChanged();
     });
+    _maybeShowGameOverDialog();
+    if (widget.adventure.health <= 0 || (_isNaraxus && enemy.health <= 0)) {
+      return;
+    }
     _setPhase(nextPhase);
   }
 
@@ -6938,6 +7069,7 @@ class _FightPageState extends State<FightPage> {
       widget.adventure.log('Oni attack choice: D6 $roll, $effect.');
       widget.onChanged();
     });
+    _maybeShowGameOverDialog();
   }
 
   void _finishCombat() {
@@ -6952,6 +7084,75 @@ class _FightPageState extends State<FightPage> {
       return;
     }
     Navigator.of(context).pop(false);
+  }
+
+  void _maybeShowGameOverDialog() {
+    if (_gameOverDialogShown || !mounted) {
+      return;
+    }
+    final isGameOver =
+        widget.adventure.health <= 0 || (_isNaraxus && enemy.health <= 0);
+    if (!isGameOver) {
+      return;
+    }
+    _gameOverDialogShown = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        return;
+      }
+      final action = await showDialog<_GameOverAction>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: Text(_isNaraxus ? 'Battle finished' : 'Run finished'),
+          content: Text(
+            widget.adventure.health <= 0
+                ? '${widget.adventure.hero.label} has no HP left.'
+                : '${enemy.label} has no HP left.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(_GameOverAction.newGame),
+              child: const Text('New game'),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(_GameOverAction.history),
+              child: const Text('History'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(_GameOverAction.quit),
+              child: const Text('Quit'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || action == null) {
+        return;
+      }
+      switch (action) {
+        case _GameOverAction.newGame:
+          if (_isNaraxus) {
+            widget.onFinished?.call();
+          } else {
+            widget.onGameOverHome?.call();
+          }
+        case _GameOverAction.history:
+          if (_isNaraxus) {
+            widget.onGameOverHistory?.call();
+          } else {
+            widget.onGameOverHistory?.call();
+          }
+        case _GameOverAction.quit:
+          if (_isNaraxus) {
+            widget.onFinished?.call();
+          } else {
+            widget.onGameOverHome?.call();
+          }
+          SystemNavigator.pop();
+      }
+    });
   }
 
   Future<void> _openPauseDialog() async {
@@ -6969,6 +7170,8 @@ class _FightPageState extends State<FightPage> {
     }
   }
 }
+
+enum _GameOverAction { newGame, history, quit }
 
 class CompactItemStrip extends StatelessWidget {
   const CompactItemStrip({
@@ -7327,6 +7530,7 @@ class EnemyRulesPanel extends StatefulWidget {
     required this.phase,
     required this.aiMode,
     required this.onAiModeChanged,
+    this.defenseKey,
     super.key,
   });
 
@@ -7334,6 +7538,7 @@ class EnemyRulesPanel extends StatefulWidget {
   final CombatPhase phase;
   final bool aiMode;
   final ValueChanged<bool> onAiModeChanged;
+  final Key? defenseKey;
 
   @override
   State<EnemyRulesPanel> createState() => _EnemyRulesPanelState();
@@ -7344,6 +7549,20 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
   bool _showDefense = false;
 
   EnemyNode get enemy => widget.enemy;
+
+  @override
+  void initState() {
+    super.initState();
+    _showDefense = widget.phase == CombatPhase.hero;
+  }
+
+  @override
+  void didUpdateWidget(covariant EnemyRulesPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.phase != widget.phase && widget.phase == CombatPhase.hero) {
+      _showDefense = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -7408,6 +7627,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                 ),
                 const SizedBox(height: 8),
                 _CollapsibleRulesLine(
+                  key: widget.defenseKey,
                   label: 'Defense',
                   icon: Icons.shield,
                   color: enemy.rank.color,
@@ -7511,6 +7731,7 @@ class _CollapsibleRulesLine extends StatelessWidget {
     required this.expanded,
     required this.onTap,
     required this.child,
+    super.key,
   });
 
   final String label;
@@ -7818,28 +8039,181 @@ class MinionDefenseSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(Icons.shield, color: enemy.rank.color),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            '${enemy.defenseDice} defense dice\n${_compactDefenseText(enemy.defense)}',
-            style: const TextStyle(height: 1.25),
-          ),
-        ),
-      ],
+    final lines = _defenseEffectLines(enemy);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: lines.isEmpty
+          ? [
+              Text(
+                _compactDefenseText(enemy.defense),
+                style: const TextStyle(height: 1.25),
+              ),
+            ]
+          : lines,
     );
   }
 }
 
-class BattleBottomDock extends StatelessWidget {
-  const BattleBottomDock({
+List<Widget> _defenseEffectLines(EnemyNode enemy) {
+  final text = enemy.defense.toLowerCase();
+  final lines = <Widget>[];
+
+  void symbol(SymbolGoal goal, List<Widget> result) {
+    lines.add(
+      _DefenseEffectLine(
+        left: SymbolGoalView(goal: goal),
+        right: result,
+      ),
+    );
+  }
+
+  void dieValueLine(int dieValue, List<Widget> result) {
+    lines.add(
+      _DefenseEffectLine(
+        left: DieValueBadge(value: dieValue),
+        right: result,
+      ),
+    );
+  }
+
+  switch (enemy.profileKey) {
+    case 'naraxus':
+      dieValueLine(1, const [PreventBadge(value: 1)]);
+      for (final dieValue in [2, 3, 4, 5]) {
+        dieValueLine(dieValue, const [PreventBadge(value: 3)]);
+      }
+      dieValueLine(6, const [PreventBadge(value: 5)]);
+      return lines;
+    case 'fee':
+      symbol(const SymbolGoal(yellow: 2), const [PreventBadge(value: 3)]);
+      return lines;
+    case 'ronin-vagabond':
+      dieValueLine(1, const [DamageBadge(value: 1, imparable: false)]);
+      dieValueLine(2, const [DamageBadge(value: 1, imparable: false)]);
+      dieValueLine(3, const [DamageBadge(value: 2, imparable: false)]);
+      dieValueLine(4, const [DamageBadge(value: 2, imparable: false)]);
+      dieValueLine(5, const [DamageBadge(value: 3, imparable: false)]);
+      dieValueLine(6, const [DamageBadge(value: 3, imparable: false)]);
+      return lines;
+    case 'enchanteur-gobelin':
+      symbol(const SymbolGoal(yellow: 1), const [
+        DamageBadge(value: 1, imparable: false),
+      ]);
+      symbol(const SymbolGoal(red: 1), [
+        TokenBadge(label: 'PO', color: enemy.rank.color),
+      ]);
+      return lines;
+    case 'archer-de-lombre':
+      symbol(const SymbolGoal(yellow: 1), const [PreventBadge(value: 3)]);
+      return lines;
+    case 'ombre-feline':
+      symbol(const SymbolGoal(white: 1), [
+        TokenBadge(label: 'HEM', color: enemy.rank.color),
+      ]);
+      return lines;
+    case 'epeiste-egare':
+      symbol(const SymbolGoal(white: 1), const [
+        DamageBadge(value: 1, imparable: false),
+      ]);
+      symbol(const SymbolGoal(red: 1), const [
+        DamageBadge(value: 1, imparable: false),
+      ]);
+      symbol(const SymbolGoal(yellow: 1), const [PreventBadge(value: 1)]);
+      return lines;
+    case 'elfe-du-chaos':
+      symbol(const SymbolGoal(yellow: 2), const [PreventBadge(value: 1)]);
+      lines.add(
+        const Text(
+          'Prevents half the incoming damage, rounded up.',
+          style: TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
+        ),
+      );
+      return lines;
+    case 'oni-delirant':
+      symbol(const SymbolGoal(yellow: 1), [
+        LifeStealBadge(value: 1, color: enemy.rank.color),
+      ]);
+      return lines;
+  }
+
+  final preventMatch = RegExp(
+    r'previent ([0-9]+)|prevent ([0-9]+)',
+  ).firstMatch(text);
+  final damageMatch = RegExp(
+    r'inflige ([0-9]+)|deal ([0-9]+)',
+  ).firstMatch(text);
+  final number =
+      preventMatch?.group(1) ??
+      preventMatch?.group(2) ??
+      damageMatch?.group(1) ??
+      damageMatch?.group(2);
+  final value = int.tryParse(number ?? '');
+  if (text.contains('jaune') || text.contains('yellow')) {
+    symbol(
+      SymbolGoal(
+        yellow: text.contains('2 yellow') || text.contains('2 jaunes') ? 2 : 1,
+      ),
+      [
+        if (value != null && preventMatch != null)
+          PreventBadge(value: value)
+        else if (value != null)
+          DamageBadge(value: value, imparable: false)
+        else
+          Text(_compactDefenseText(enemy.defense)),
+      ],
+    );
+  } else if (text.contains('rouge') || text.contains('red')) {
+    symbol(const SymbolGoal(red: 1), [
+      if (value != null && preventMatch != null)
+        PreventBadge(value: value)
+      else if (value != null)
+        DamageBadge(value: value, imparable: false)
+      else
+        Text(_compactDefenseText(enemy.defense)),
+    ]);
+  }
+  return lines;
+}
+
+class _DefenseEffectLine extends StatelessWidget {
+  const _DefenseEffectLine({required this.left, required this.right});
+
+  final Widget left;
+  final List<Widget> right;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 7),
+      child: Row(
+        children: [
+          SizedBox(width: 116, child: left),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: right,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CombatBottomDock extends StatelessWidget {
+  const CombatBottomDock({
     required this.aiMode,
+    required this.showResolution,
     required this.aiMessage,
     required this.phase,
+    required this.adventure,
     required this.enemy,
+    required this.upkeepApplied,
+    required this.heroUpkeepApplied,
+    required this.canAdvancePhase,
     required this.attackValue,
     required this.defenseValue,
     required this.returnDamage,
@@ -7849,6 +8223,10 @@ class BattleBottomDock extends StatelessWidget {
     required this.heroTokens,
     required this.minionTokens,
     required this.notes,
+    required this.onPhaseChanged,
+    required this.onNext,
+    required this.onApplyUpkeep,
+    required this.onApplyHeroUpkeep,
     required this.onAttackChanged,
     required this.onDefenseChanged,
     required this.onApply,
@@ -7856,9 +8234,14 @@ class BattleBottomDock extends StatelessWidget {
   });
 
   final bool aiMode;
+  final bool showResolution;
   final String aiMessage;
   final CombatPhase phase;
+  final AdventureState adventure;
   final EnemyNode enemy;
+  final bool upkeepApplied;
+  final bool heroUpkeepApplied;
+  final bool canAdvancePhase;
   final int attackValue;
   final int defenseValue;
   final int returnDamage;
@@ -7868,6 +8251,10 @@ class BattleBottomDock extends StatelessWidget {
   final List<String> heroTokens;
   final List<String> minionTokens;
   final List<String> notes;
+  final ValueChanged<CombatPhase> onPhaseChanged;
+  final VoidCallback onNext;
+  final VoidCallback onApplyUpkeep;
+  final VoidCallback onApplyHeroUpkeep;
   final ValueChanged<int> onAttackChanged;
   final ValueChanged<int> onDefenseChanged;
   final VoidCallback onApply;
@@ -7875,7 +8262,12 @@ class BattleBottomDock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isHeroBattle = phase == CombatPhase.hero;
-    final accent = isHeroBattle ? heroAccent : enemy.rank.color;
+    final attackColor = isHeroBattle ? heroAccent : enemy.rank.color;
+    final defenseColor = isHeroBattle ? enemy.rank.color : heroAccent;
+    final chatAccent =
+        phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
+        ? heroAccent
+        : enemy.rank.color;
     final tokenText = [
       if (heroTokens.isNotEmpty) 'Hero: ${heroTokens.join(', ')}',
       if (minionTokens.isNotEmpty) 'Minion: ${minionTokens.join(', ')}',
@@ -7903,7 +8295,7 @@ class BattleBottomDock extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: accent.withValues(alpha: 0.7)),
+                border: Border.all(color: chatAccent.withValues(alpha: 0.7)),
               ),
               child: SingleChildScrollView(
                 reverse: true,
@@ -7915,44 +8307,58 @@ class BattleBottomDock extends StatelessWidget {
             ),
             const SizedBox(height: 8),
           ],
-          Row(
-            children: [
-              Expanded(
-                child: _BattleCounter(
-                  icon: Icons.sports_martial_arts,
-                  label: 'Attack',
-                  value: attackValue,
-                  color: accent,
-                  editable: isHeroBattle,
-                  onChanged: onAttackChanged,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _BattleCounter(
-                  icon: Icons.shield,
-                  label: 'Defense',
-                  value: defenseValue,
-                  color: accent,
-                  editable: !isHeroBattle,
-                  onChanged: onDefenseChanged,
-                ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 104,
-                child: FilledButton.icon(
-                  onPressed: onApply,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xff8f43ff),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(0, 58),
+          if (showResolution) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _BattleCounter(
+                    label: 'ATK',
+                    value: attackValue,
+                    color: attackColor,
+                    onChanged: onAttackChanged,
                   ),
-                  icon: const Icon(Icons.check),
-                  label: const Text('Apply'),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _BattleCounter(
+                    label: 'DEF',
+                    value: defenseValue,
+                    color: defenseColor,
+                    onChanged: onDefenseChanged,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 56,
+                  height: 52,
+                  child: FilledButton(
+                    onPressed: onApply,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xff8f43ff),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.zero,
+                    ),
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+          TurnPhasePanel(
+            phase: phase,
+            adventure: adventure,
+            enemy: enemy,
+            upkeepApplied: upkeepApplied,
+            heroUpkeepApplied: heroUpkeepApplied,
+            canAdvance: canAdvancePhase,
+            onPhaseChanged: onPhaseChanged,
+            onNext: onNext,
+            onApplyUpkeep: onApplyUpkeep,
+            onApplyHeroUpkeep: onApplyHeroUpkeep,
           ),
         ],
       ),
@@ -7970,92 +8376,65 @@ String _battleChatText(String aiMessage, List<String> effects) {
 
 class _BattleCounter extends StatelessWidget {
   const _BattleCounter({
-    required this.icon,
     required this.label,
     required this.value,
     required this.color,
-    required this.editable,
     required this.onChanged,
   });
 
-  final IconData icon;
   final String label;
   final int value;
   final Color color;
-  final bool editable;
   final ValueChanged<int> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 104),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.65)),
       ),
-      child: Column(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (editable)
-            _CounterStepButton(
-              icon: Icons.add,
-              color: color,
-              onPressed: () => onChanged(1),
-            ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 22),
-              const SizedBox(width: 6),
-              Text(
-                value.toString(),
-                style: TextStyle(
-                  color: color,
-                  fontSize: 30,
-                  fontWeight: FontWeight.w900,
+          RoundIconButton(
+            icon: Icons.remove,
+            tooltip: 'Remove',
+            color: color,
+            onPressed: () => onChanged(-1),
+          ),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-          ),
-          if (editable)
-            _CounterStepButton(
-              icon: Icons.remove,
-              color: color,
-              onPressed: () => onChanged(-1),
+                Text(
+                  value.toString(),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
             ),
+          ),
+          RoundIconButton(
+            icon: Icons.add,
+            tooltip: 'Add',
+            color: color,
+            onPressed: () => onChanged(1),
+          ),
         ],
-      ),
-    );
-  }
-}
-
-class _CounterStepButton extends StatelessWidget {
-  const _CounterStepButton({
-    required this.icon,
-    required this.color,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final Color color;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 34,
-      height: 26,
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        visualDensity: VisualDensity.compact,
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18),
-        color: color,
       ),
     );
   }
@@ -8692,6 +9071,86 @@ class DamageBadge extends StatelessWidget {
   }
 }
 
+class PreventBadge extends StatelessWidget {
+  const PreventBadge({required this.value, super.key});
+
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 30,
+      height: 30,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.blueAccent.withValues(alpha: 0.85),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.lightBlueAccent, width: 2),
+      ),
+      child: Text(
+        value.toString(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class DieValueBadge extends StatelessWidget {
+  const DieValueBadge({required this.value, super.key});
+
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 28,
+      height: 28,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.white, width: 1.5),
+      ),
+      child: Text(
+        value.toString(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class TokenBadge extends StatelessWidget {
+  const TokenBadge({required this.label, required this.color, super.key});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w900,
+          fontSize: 11,
+        ),
+      ),
+    );
+  }
+}
+
 class LifeStealBadge extends StatelessWidget {
   const LifeStealBadge({required this.value, required this.color, super.key});
 
@@ -8910,10 +9369,8 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
         children: [
           CombatantStatusRow.hero(
             adventure: widget.adventure,
-            hideCp: widget.enemy.profileKey == 'naraxus',
-            rollHistory: widget.enemy.profileKey == 'naraxus'
-                ? widget.naraxusRollHistory
-                : const [],
+            hideCp: false,
+            rollHistory: const [],
             onHp: () => _openEditor('heroHp', widget.adventure.health),
             onCp: () => _openEditor('heroCp', widget.adventure.combatPoints),
             onEditTokens: _editHeroTokens,
@@ -9496,6 +9953,7 @@ class TurnPhasePanel extends StatelessWidget {
     required this.enemy,
     required this.upkeepApplied,
     required this.heroUpkeepApplied,
+    this.canAdvance = true,
     required this.onPhaseChanged,
     required this.onNext,
     required this.onApplyUpkeep,
@@ -9508,6 +9966,7 @@ class TurnPhasePanel extends StatelessWidget {
   final EnemyNode enemy;
   final bool upkeepApplied;
   final bool heroUpkeepApplied;
+  final bool canAdvance;
   final ValueChanged<CombatPhase> onPhaseChanged;
   final VoidCallback onNext;
   final VoidCallback onApplyUpkeep;
@@ -9547,6 +10006,7 @@ class TurnPhasePanel extends StatelessWidget {
               Expanded(
                 child: _CompactPhaseSelector(
                   phase: phase,
+                  adventure: adventure,
                   enemy: enemy,
                   onPhaseChanged: onPhaseChanged,
                 ),
@@ -9566,15 +10026,19 @@ class TurnPhasePanel extends StatelessWidget {
                               !heroUpkeepApplied)
                       ? 'Apply upkeep and continue'
                       : 'Next phase',
-                  onPressed: () {
-                    if (phase == CombatPhase.heroUpkeep && !heroUpkeepApplied) {
-                      onApplyHeroUpkeep();
-                    }
-                    if (phase == CombatPhase.minionUpkeep && !upkeepApplied) {
-                      onApplyUpkeep();
-                    }
-                    onNext();
-                  },
+                  onPressed: canAdvance
+                      ? () {
+                          if (phase == CombatPhase.heroUpkeep &&
+                              !heroUpkeepApplied) {
+                            onApplyHeroUpkeep();
+                          }
+                          if (phase == CombatPhase.minionUpkeep &&
+                              !upkeepApplied) {
+                            onApplyUpkeep();
+                          }
+                          onNext();
+                        }
+                      : null,
                   icon: const Icon(Icons.arrow_forward),
                 ),
               ),
@@ -9601,11 +10065,13 @@ class TurnPhasePanel extends StatelessWidget {
 class _CompactPhaseSelector extends StatelessWidget {
   const _CompactPhaseSelector({
     required this.phase,
+    required this.adventure,
     required this.enemy,
     required this.onPhaseChanged,
   });
 
   final CombatPhase phase;
+  final AdventureState adventure;
   final EnemyNode enemy;
   final ValueChanged<CombatPhase> onPhaseChanged;
 
@@ -9644,16 +10110,21 @@ class _CompactPhaseSelector extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: accent),
                     ),
-                    child: Icon(
-                      switch (value) {
-                        CombatPhase.heroUpkeep => Icons.accessibility_new,
-                        CombatPhase.hero => Icons.casino,
-                        CombatPhase.minionUpkeep => Icons.accessibility_new,
-                        CombatPhase.minionAttack => Icons.casino,
-                      },
-                      color: Colors.white,
-                      size: 19,
-                    ),
+                    child: switch (value) {
+                      CombatPhase.heroUpkeep => HeroAvatar(
+                        hero: adventure.hero,
+                        size: 28,
+                      ),
+                      CombatPhase.minionUpkeep => EnemyRankAvatar(
+                        enemy: enemy,
+                        size: 28,
+                      ),
+                      _ => const Icon(
+                        Icons.casino,
+                        color: Colors.white,
+                        size: 19,
+                      ),
+                    },
                   ),
                 ],
               ),
