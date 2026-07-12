@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.16';
+const String appVersionLabel = 'Version 1.2.17';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -2660,6 +2660,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
               MaterialPageRoute<void>(
                 builder: (_) => NaraxusBattlePage(
                   hero: hero,
+                  historyRecords: _history,
                   onRecord: (record) =>
                       setState(() => _history.insert(0, record)),
                   onOpenHistory: () => _openHistory(
@@ -2685,6 +2686,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
       MaterialPageRoute<void>(
         builder: (_) => MapPage(
           adventure: adventure,
+          historyRecords: _history,
           onRecordScore: _recordAdventure,
           onChanged: () {
             _activeAdventure = adventure;
@@ -4335,6 +4337,7 @@ class RoundIconButton extends StatelessWidget {
 class MapPage extends StatefulWidget {
   const MapPage({
     required this.adventure,
+    required this.historyRecords,
     required this.onRecordScore,
     required this.onChanged,
     required this.onPauseExit,
@@ -4346,6 +4349,7 @@ class MapPage extends StatefulWidget {
   });
 
   final AdventureState adventure;
+  final List<GameRecord> historyRecords;
   final ValueChanged<AdventureState> onRecordScore;
   final VoidCallback onChanged;
   final VoidCallback onPauseExit;
@@ -4361,12 +4365,14 @@ class MapPage extends StatefulWidget {
 class NaraxusBattlePage extends StatefulWidget {
   const NaraxusBattlePage({
     required this.hero,
+    required this.historyRecords,
     required this.onRecord,
     required this.onOpenHistory,
     super.key,
   });
 
   final HeroType hero;
+  final List<GameRecord> historyRecords;
   final ValueChanged<GameRecord> onRecord;
   final VoidCallback onOpenHistory;
 
@@ -4414,6 +4420,7 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
   Widget build(BuildContext context) {
     return FightPage(
       adventure: _adventure,
+      historyRecords: widget.historyRecords,
       enemyId: 0,
       onChanged: () => setState(() {}),
       onPauseExit: () =>
@@ -4736,6 +4743,7 @@ class _MapPageState extends State<MapPage> {
                   MaterialPageRoute<bool>(
                     builder: (_) => FightPage(
                       adventure: widget.adventure,
+                      historyRecords: widget.historyRecords,
                       enemyId: enemy.id,
                       onChanged: widget.onChanged,
                       onPauseExit: widget.onPauseExit,
@@ -6015,6 +6023,7 @@ class StepperStat extends StatelessWidget {
 class FightPage extends StatefulWidget {
   const FightPage({
     required this.adventure,
+    required this.historyRecords,
     required this.enemyId,
     required this.onChanged,
     required this.onPauseExit,
@@ -6026,6 +6035,7 @@ class FightPage extends StatefulWidget {
   });
 
   final AdventureState adventure;
+  final List<GameRecord> historyRecords;
   final int enemyId;
   final VoidCallback onChanged;
   final VoidCallback onPauseExit;
@@ -6256,6 +6266,7 @@ class _FightPageState extends State<FightPage> {
                         _dice,
                         _rollCount,
                         widget.adventure,
+                        widget.historyRecords,
                         _lastBattleOutcomeMessage,
                         _heroAttackCount,
                         _lastHeroAttack,
@@ -6908,12 +6919,28 @@ class _FightPageState extends State<FightPage> {
     }
     setState(() {
       _heroUpkeepApplied = true;
+      final poisonCount = widget.adventure.alterations
+          .where((token) => token == 'Poison')
+          .length;
       widget.adventure.setHeroPc(
         widget.adventure.combatPoints + GameEngine.combatPointStartGain(),
       );
-      widget.adventure.log('Hero upkeep: +1 CP.');
+      if (poisonCount > 0) {
+        widget.adventure.setHeroHealth(widget.adventure.health - poisonCount);
+        _lastBattleOutcomeMessage =
+            '${widget.adventure.hero.label} upkeep resolved: +1 CP, -$poisonCount HP from Poison.';
+      } else {
+        _lastBattleOutcomeMessage =
+            '${widget.adventure.hero.label} upkeep resolved: +1 CP.';
+      }
+      if (widget.adventure.alterations.contains('Hémorragie')) {
+        _lastBattleOutcomeMessage +=
+            ' Hémorragie requires a manual upkeep roll.';
+      }
+      widget.adventure.log(_lastBattleOutcomeMessage);
       widget.onChanged();
     });
+    _maybeShowGameOverDialog();
   }
 
   void _applyUpkeep() {
@@ -6937,8 +6964,17 @@ class _FightPageState extends State<FightPage> {
             ? 'Naxarus upkeep: ${outcome.log.replaceFirst('+1 CP', 'no CP gain')}.'
             : 'Minion upkeep: ${outcome.log}.',
       );
+      _lastBattleOutcomeMessage =
+          '${enemy.label} upkeep resolved: ${_isNaraxus ? outcome.log.replaceFirst('+1 CP', 'no CP gain') : outcome.log}.';
       widget.onChanged();
     });
+    if (enemy.health <= 0) {
+      if (!_isNaraxus) {
+        _finishCombat();
+      } else {
+        _maybeShowGameOverDialog();
+      }
+    }
   }
 
   void _applyMinionDiceStrategy() {
@@ -8655,6 +8691,7 @@ String _aiMessageFor(
   List<GameDie> dice,
   int rollCount,
   AdventureState adventure,
+  List<GameRecord> historyRecords,
   String lastBattleOutcome,
   int heroAttackCount,
   int lastHeroAttack,
@@ -8663,17 +8700,22 @@ String _aiMessageFor(
   return switch (phase) {
     CombatPhase.heroUpkeep => _heroUpkeepAiMessage(
       adventure,
+      enemy,
+      historyRecords,
       lastBattleOutcome,
     ),
     CombatPhase.hero => _heroBattleAiMessage(
       enemy,
       adventure,
+      historyRecords,
       heroAttackCount,
       lastHeroAttack,
       heroAttackTotal,
     ),
     CombatPhase.minionUpkeep => _minionUpkeepAiMessage(
+      adventure,
       enemy,
+      historyRecords,
       lastBattleOutcome,
     ),
     CombatPhase.minionAttack => _minionAttackAiMessage(
@@ -8689,12 +8731,97 @@ String _combatIntroLine(AdventureState adventure, EnemyNode enemy) {
   return 'Battle: ${adventure.hero.label} versus ${enemy.label}.';
 }
 
+String _openingAiLines(
+  AdventureState adventure,
+  EnemyNode enemy,
+  List<GameRecord> historyRecords,
+) {
+  final lines = <String>[_combatIntroLine(adventure, enemy)];
+  final runs =
+      historyRecords
+          .where(
+            (record) =>
+                record.hero == adventure.hero &&
+                record.mode.difficulty == adventure.config.mode.difficulty,
+          )
+          .toList()
+        ..sort((a, b) => b.date.compareTo(a.date));
+
+  if (adventure.config.mode == SurvivalMode.naraxus) {
+    if (runs.isEmpty) {
+      lines.add(
+        '${adventure.hero.label} enters Naxarus mode for the first time. Can this hero defeat the dragon?',
+      );
+    } else if (runs.length == 1) {
+      final won = (runs.first.bossHealthRemaining ?? 1) <= 0;
+      lines.add(
+        won
+            ? '${adventure.hero.label} is challenging Naxarus for the second time. Can the dragon be defeated twice?'
+            : '${adventure.hero.label} is challenging Naxarus for the second time. Can the dragon fall this time?',
+      );
+    } else {
+      final wins = runs
+          .where((record) => (record.bossHealthRemaining ?? 1) <= 0)
+          .length;
+      final losses = runs.length - wins;
+      final winRate = (wins / runs.length * 100).round();
+      lines.add(
+        '${adventure.hero.label} has a $winRate% win rate in Naxarus mode: $wins win(s), $losses defeat(s). Can these stats improve?',
+      );
+    }
+    return lines.join('\n');
+  }
+
+  if (runs.isEmpty) {
+    lines.add(
+      '${adventure.hero.label} starts Minion Rush for the first time. Can this hero beat every enemy on the path?',
+    );
+  } else if (runs.length == 1) {
+    final last = runs.first;
+    lines.add(
+      'In ${adventure.config.label}, ${adventure.hero.label} scored ${last.score} points in the last run and defeated ${last.enemiesDefeated} enemy/enemies. Can you do better this time?',
+    );
+  } else {
+    final averageScore =
+        runs.fold<int>(0, (sum, record) => sum + record.score) / runs.length;
+    final averageEnemies =
+        runs.fold<int>(0, (sum, record) => sum + record.enemiesDefeated) /
+        runs.length;
+    lines.add(
+      'In ${adventure.config.label}, ${adventure.hero.label} averages ${averageScore.toStringAsFixed(1)} points and ${averageEnemies.toStringAsFixed(1)} defeated enemies. Can you improve the run?',
+    );
+  }
+  final encounter = adventure.defeatedEnemies.length + 1;
+  lines.add('This is the ${_ordinal(encounter)} Minion Rush encounter.');
+  lines.add(
+    '${enemy.label} starts with ${enemy.health} HP, ${enemy.combatPoints} CP and ${enemy.alterations.length} token(s).',
+  );
+  return lines.join('\n');
+}
+
+String _ordinal(int value) {
+  if (value % 100 >= 11 && value % 100 <= 13) {
+    return '${value}th';
+  }
+  return switch (value % 10) {
+    1 => '${value}st',
+    2 => '${value}nd',
+    3 => '${value}rd',
+    _ => '${value}th',
+  };
+}
+
 String _heroUpkeepAiMessage(
   AdventureState adventure,
+  EnemyNode enemy,
+  List<GameRecord> historyRecords,
   String lastBattleOutcome,
 ) {
   final lines = <String>[
-    if (lastBattleOutcome.isNotEmpty) lastBattleOutcome,
+    if (lastBattleOutcome.isNotEmpty)
+      lastBattleOutcome
+    else
+      _openingAiLines(adventure, enemy, historyRecords),
     'Start of turn for ${adventure.hero.label}.',
     '${adventure.hero.label} gains 1 CP and is now at ${adventure.combatPoints} CP.',
     _tokenUpkeepSummary(
@@ -8708,9 +8835,17 @@ String _heroUpkeepAiMessage(
   return lines.join('\n');
 }
 
-String _minionUpkeepAiMessage(EnemyNode enemy, String lastBattleOutcome) {
+String _minionUpkeepAiMessage(
+  AdventureState adventure,
+  EnemyNode enemy,
+  List<GameRecord> historyRecords,
+  String lastBattleOutcome,
+) {
   final lines = <String>[
-    if (lastBattleOutcome.isNotEmpty) lastBattleOutcome,
+    if (lastBattleOutcome.isNotEmpty)
+      lastBattleOutcome
+    else
+      _openingAiLines(adventure, enemy, historyRecords),
     'Start of turn for ${enemy.label}.',
     enemy.profileKey == 'naraxus'
         ? 'Naxarus does not gain CP; the dragon has unlimited CP.'
@@ -8727,6 +8862,7 @@ String _minionUpkeepAiMessage(EnemyNode enemy, String lastBattleOutcome) {
 String _heroBattleAiMessage(
   EnemyNode enemy,
   AdventureState adventure,
+  List<GameRecord> historyRecords,
   int heroAttackCount,
   int lastHeroAttack,
   int heroAttackTotal,
@@ -8737,7 +8873,10 @@ String _heroBattleAiMessage(
       ? 'The first attack dealt $lastHeroAttack damage. Can ${adventure.hero.label} do better?'
       : '${adventure.hero.label} averages ${(heroAttackTotal / heroAttackCount).toStringAsFixed(1)} damage per attack. Can this turn beat that?';
   return [
-    _combatIntroLine(adventure, enemy),
+    if (heroAttackCount == 0)
+      _openingAiLines(adventure, enemy, historyRecords)
+    else
+      _combatIntroLine(adventure, enemy),
     intro,
     '${enemy.label} is waiting for the hero attack result.',
     'If the attack is defendable, roll ${enemy.label} defense.',
