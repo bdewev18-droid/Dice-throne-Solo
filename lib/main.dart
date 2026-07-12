@@ -145,6 +145,8 @@ class EnemyProfile {
     required this.defenseDice,
     required this.attackPlan,
     this.initialTokens = const [],
+    this.rewardChests = 1,
+    this.rewardRank,
   });
 
   final String key;
@@ -158,6 +160,8 @@ class EnemyProfile {
   final int defenseDice;
   final MinionAttackPlan attackPlan;
   final List<String> initialTokens;
+  final int rewardChests;
+  final EnemyRank? rewardRank;
 }
 
 enum MinionAttackStyle { symbols, suite, none }
@@ -696,7 +700,7 @@ const List<EnemyProfile> generatedGreenEnemyProfiles = [
     cardAsset: 'assets/vert/vert-013.png',
     attacks: [
       'Baiser Venimeux: 3 blancs = 6 degats.',
-      '3 blancs + 1 rouge = Poison et 6 degats.',
+      '3 blancs + 1 rouge = 6 degats et Poison.',
     ],
     defense: 'Jet defensif 3 des: sur rouge, inflige Poison.',
     defenseDice: 3,
@@ -738,6 +742,7 @@ const List<EnemyProfile> generatedGreenEnemyProfiles = [
         'Jet defensif 2 des: sur rouge, renvoie la moitie des degats subis arrondie au superieur.',
     defenseDice: 2,
     attackPlan: MinionAttackPlan.symbols([SymbolGoal(white: 2, yellow: 3)]),
+    rewardChests: 2,
   ),
   EnemyProfile(
     key: 'vert-vert-016',
@@ -764,7 +769,8 @@ const List<EnemyProfile> generatedGreenEnemyProfiles = [
     pc: 2,
     cardAsset: 'assets/vert/vert-017.png',
     attacks: [
-      'Claquement de Crocs: 2 blancs + 1 rouge, lance 1 de, inflige sa valeur en degats et A Terre.',
+      'Claquement de Crocs: 2 blancs + 1 rouge, lance 1 de et applique son effet.',
+      'Sur blanc: inflige 2 degats imparables. Sur jaune ou rouge: inflige A Terre.',
     ],
     defense: 'Jet defensif 1 de: sur blanc, inflige 2 degats.',
     defenseDice: 1,
@@ -779,7 +785,8 @@ const List<EnemyProfile> generatedGreenEnemyProfiles = [
     cardAsset: 'assets/vert/vert-018.png',
     attacks: [
       'Belier: 2 blancs + 1 jaune = 4 degats.',
-      '2 blancs + 2 jaunes = 5 degats. Avec rouge = 6 degats et Enchevetrement.',
+      '2 blancs + 2 jaunes = 5 degats et Enchevetrement.',
+      '2 blancs + 2 jaunes + rouge = 7 degats et Enchevetrement.',
     ],
     defense: 'Jet defensif 2 des: sur jaune A Terre; sur rouge previent 2.',
     defenseDice: 2,
@@ -803,6 +810,7 @@ const List<EnemyProfile> generatedGreenEnemyProfiles = [
     defense: 'Jet defensif 2 des: sur rouge, previent 3 degats.',
     defenseDice: 2,
     attackPlan: MinionAttackPlan.symbols([SymbolGoal(red: 2)]),
+    rewardRank: EnemyRank.blue,
   ),
   EnemyProfile(
     key: 'vert-vert-020',
@@ -845,7 +853,8 @@ const List<EnemyProfile> generatedGreenEnemyProfiles = [
     cardAsset: 'assets/bleu/vert-022.png',
     attacks: [
       'Scurry: 2 blancs + jaune = 4 degats.',
-      '2 blancs + 2 jaunes = Parasite et 5 degats. Avec rouge = Poison et 6 degats.',
+      '2 blancs + 2 jaunes = 5 degats et Parasite.',
+      '2 blancs + 2 jaunes + rouge = 6 degats et Poison.',
     ],
     defense:
         'Defense roll 2 dice: on yellow prevent 2; on red inflict Parasite.',
@@ -2130,10 +2139,13 @@ class EnemyNode {
     required this.cardAsset,
     this.profileKey,
     List<String> initialTokens = const [],
+    this.rewardChests = 1,
+    EnemyRank? rewardRank,
     this.branch,
     this.step = 0,
   }) : health = maxHealth,
-       combatPoints = pc {
+       combatPoints = pc,
+       rewardRank = rewardRank ?? rank {
     alterations.addAll(initialTokens);
   }
 
@@ -2148,6 +2160,8 @@ class EnemyNode {
   MinionAttackPlan attackPlan;
   String cardAsset;
   String? profileKey;
+  int rewardChests;
+  EnemyRank rewardRank;
   final BranchSide? branch;
   final int step;
   int health;
@@ -2163,6 +2177,8 @@ class EnemyNode {
     'alterations': alterations,
     'defeated': defeated,
     'profileKey': profileKey,
+    'rewardChests': rewardChests,
+    'rewardRank': rewardRank.name,
   };
 
   void applyJson(Map<String, dynamic> json) {
@@ -2177,7 +2193,14 @@ class EnemyNode {
       attackPlan = restoredProfile.attackPlan;
       cardAsset = restoredProfile.cardAsset;
       profileKey = restoredProfile.key;
+      rewardChests = restoredProfile.rewardChests;
+      rewardRank = restoredProfile.rewardRank ?? restoredProfile.rank;
     }
+    rewardChests = ((json['rewardChests'] as num?)?.toInt() ?? rewardChests)
+        .clamp(1, 4);
+    rewardRank =
+        _enumByName(EnemyRank.values, json['rewardRank'] as String?) ??
+        rewardRank;
     health = ((json['health'] as num?)?.toInt() ?? health).clamp(0, maxHealth);
     combatPoints = ((json['combatPoints'] as num?)?.toInt() ?? combatPoints)
         .clamp(0, 99);
@@ -2200,6 +2223,8 @@ class EnemyNode {
     attackPlan = profile.attackPlan;
     cardAsset = profile.cardAsset;
     profileKey = profile.key;
+    rewardChests = profile.rewardChests;
+    rewardRank = profile.rewardRank ?? profile.rank;
     health = maxHealth;
     combatPoints = pc;
     alterations
@@ -4405,6 +4430,8 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
       cardAsset: naraxusProfile.cardAsset,
       profileKey: naraxusProfile.key,
       initialTokens: naraxusProfile.initialTokens,
+      rewardChests: naraxusProfile.rewardChests,
+      rewardRank: naraxusProfile.rewardRank,
     );
     adventure
       ..health = 50
@@ -5524,7 +5551,10 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                               ),
                             ),
                             const SizedBox(width: 18),
-                            RewardChestBadge(rank: enemy.rank, count: 1),
+                            RewardChestBadge(
+                              rank: enemy.rewardRank,
+                              count: enemy.rewardChests,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 10),
@@ -6051,7 +6081,9 @@ class FightPage extends StatefulWidget {
 class _FightPageState extends State<FightPage> {
   final Random _random = Random();
   final ScrollController _combatScrollController = ScrollController();
+  final GlobalKey _attackRulesKey = GlobalKey();
   final GlobalKey _defenseRulesKey = GlobalKey();
+  final GlobalKey _extraDicePhaseKey = GlobalKey();
   final List<GameDie> _dice = [];
   int _diceToRoll = 6;
   int _rollCount = 0;
@@ -6140,12 +6172,14 @@ class _FightPageState extends State<FightPage> {
                         widget.onChanged();
                         setState(() {});
                       },
+                      onAbandon: _openPauseDialog,
                     ),
                     const SizedBox(height: 12),
                     EnemyRulesPanel(
                       enemy: enemy,
                       phase: _phase,
                       aiMode: _aiMode,
+                      attackKey: _attackRulesKey,
                       defenseKey: _defenseRulesKey,
                       onAiModeChanged: (value) {
                         setState(() {
@@ -6188,6 +6222,16 @@ class _FightPageState extends State<FightPage> {
                           _editingDieId = null;
                         }),
                       ),
+                      if (_showAiExtraDicePhase) ...[
+                        const SizedBox(height: 12),
+                        ManualExtraDicePhasePanel(
+                          key: _extraDicePhaseKey,
+                          title: _extraDicePhaseTitle,
+                          initialDiceCount: _extraDiceCount,
+                          accent: enemy.rank.color,
+                          autoRoll: true,
+                        ),
+                      ],
                     ] else ...[
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
@@ -6245,7 +6289,7 @@ class _FightPageState extends State<FightPage> {
                             : const Color(0xff8f43ff),
                       ),
                     ],
-                    if (_specialAttackReady) ...[
+                    if (_specialAttackReady && !_aiMode) ...[
                       const SizedBox(height: 12),
                       ImageActionButton(
                         label: 'Next',
@@ -6290,6 +6334,10 @@ class _FightPageState extends State<FightPage> {
                 heroTokens: _battleHeroTokens,
                 minionTokens: _battleMinionTokens,
                 notes: _battleNotes,
+                onChanged: () {
+                  widget.onChanged();
+                  setState(() {});
+                },
                 onPhaseChanged: _setPhase,
                 onNext: _advancePhase,
                 onApplyUpkeep: _applyUpkeep,
@@ -6364,6 +6412,9 @@ class _FightPageState extends State<FightPage> {
         _specialAttackReady = _shouldResolveSpecialAttack();
       }
     });
+    if (_showAiExtraDicePhase) {
+      _scrollToRulesKey(_extraDicePhaseKey);
+    }
   }
 
   void _openAdventureDetails() {
@@ -6430,19 +6481,25 @@ class _FightPageState extends State<FightPage> {
       _applyHeroUpkeep();
     }
     if (phase == CombatPhase.hero) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final context = _defenseRulesKey.currentContext;
-        if (context == null) {
-          return;
-        }
-        Scrollable.ensureVisible(
-          context,
-          alignment: 0.02,
-          duration: const Duration(milliseconds: 260),
-          curve: Curves.easeOut,
-        );
-      });
+      _scrollToRulesKey(_defenseRulesKey);
+    } else if (phase == CombatPhase.minionAttack) {
+      _scrollToRulesKey(_attackRulesKey);
     }
+  }
+
+  void _scrollToRulesKey(GlobalKey key) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = key.currentContext;
+      if (context == null) {
+        return;
+      }
+      Scrollable.ensureVisible(
+        context,
+        alignment: 0.02,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   void _advancePhase() {
@@ -6498,6 +6555,37 @@ class _FightPageState extends State<FightPage> {
       return _isNaraxus ? 1 : 5;
     }
     return _diceToRoll.clamp(0, 5);
+  }
+
+  bool get _showAiExtraDicePhase {
+    if (!_aiMode || _phase != CombatPhase.minionAttack || _rollCount == 0) {
+      return false;
+    }
+    if (_specialAttackReady) {
+      return true;
+    }
+    if (_isNaraxus) {
+      final value = _dice.first.value;
+      return value == 3 || value == 6;
+    }
+    return _attackNeedsExtraDice(enemy) && _currentAttackGoalMet();
+  }
+
+  int get _extraDiceCount {
+    if (_isNaraxus && _dice.first.value == 3) {
+      return 4;
+    }
+    return _extraDiceCountFor(enemy);
+  }
+
+  String get _extraDicePhaseTitle {
+    if (_isNaraxus && _dice.first.value == 3) {
+      return 'Gashing Bite extra roll';
+    }
+    if (_isNaraxus && _dice.first.value == 6) {
+      return "Dragon's Might extra roll";
+    }
+    return '${enemy.label} extra roll';
   }
 
   int get _diceMenuMax {
@@ -6603,6 +6691,69 @@ class _FightPageState extends State<FightPage> {
         if (lifeSteal > 0) {
           notes.add('Defense: steals $lifeSteal HP.');
         }
+      case 'vert-vert-011':
+        if (yellow > 0) {
+          prevented = (_battleAttackValue / 2).ceil();
+          notes.add('Defense: yellow prevents half the damage.');
+        }
+      case 'vert-vert-012':
+      case 'vert-vert-016':
+        prevented = yellow;
+        if (prevented > 0) {
+          notes.add('Defense: prevents $prevented damage.');
+        }
+      case 'vert-vert-013':
+        if (red > 0) {
+          heroTokens.add('Poison');
+          notes.add('Defense: red gives Poison to the hero.');
+        }
+      case 'vert-vert-015':
+        if (red > 0) {
+          returnDamage = (_battleAttackValue / 2).ceil();
+          notes.add('Defense: red returns half the damage.');
+        }
+      case 'vert-vert-017':
+        if (white > 0) {
+          returnDamage = 2;
+          notes.add('Defense: white returns 2 imparable damage.');
+        }
+      case 'vert-vert-018':
+        if (yellow > 0) {
+          heroTokens.add('À Terre');
+          notes.add('Defense: yellow gives À Terre to the hero.');
+        }
+        if (red > 0) {
+          prevented = 2;
+          notes.add('Defense: red prevents 2 damage.');
+        }
+      case 'vert-vert-019':
+        if (red > 0) {
+          prevented = 3;
+          notes.add('Defense: red prevents 3 damage.');
+        }
+      case 'vert-vert-020':
+        returnDamage = white;
+        prevented = yellow + red;
+        if (returnDamage > 0) {
+          notes.add('Defense: white returns $returnDamage damage.');
+        }
+        if (prevented > 0) {
+          notes.add('Defense: prevents $prevented damage.');
+        }
+      case 'bleu-vert-022':
+        if (yellow > 0) {
+          prevented = 2;
+          notes.add('Defense: yellow prevents 2 damage.');
+        }
+        if (red > 0) {
+          heroTokens.add('Parasite');
+          notes.add('Defense: red gives Parasite to the hero.');
+        }
+      case 'bleu-vert-023':
+        lifeSteal = red;
+        if (lifeSteal > 0) {
+          notes.add('Defense: steals $lifeSteal HP.');
+        }
       default:
         notes.add('Defense rolled. Check the minion card for exact effects.');
     }
@@ -6632,7 +6783,9 @@ class _FightPageState extends State<FightPage> {
     var lifeSteal = 0;
     var cpSteal = 0;
 
-    if (enemy.profileKey == 'oni-delirant' &&
+    if (_attackNeedsExtraDice(enemy) && _currentAttackGoalMet()) {
+      notes.add('Attack ready: resolve the extra dice phase before applying.');
+    } else if (enemy.profileKey == 'oni-delirant' &&
         _symbolGoalMet(const SymbolGoal(yellow: 4))) {
       notes.add('Attack ready: roll 1 die to choose the Oni effect.');
     } else if (result != null) {
@@ -6687,6 +6840,35 @@ class _FightPageState extends State<FightPage> {
           attack = 0;
           lifeSteal = 0;
         }
+      case 'vert-vert-013':
+        if (_symbolGoalMet(const SymbolGoal(white: 3, red: 1))) {
+          heroTokens.add('Poison');
+          notes.add('Validated attack: hero receives Poison.');
+        }
+      case 'vert-vert-018':
+        if (_symbolGoalMet(const SymbolGoal(white: 2, yellow: 1))) {
+          heroTokens.add('Enchevêtrement');
+          notes.add('Validated attack: hero receives Enchevêtrement.');
+        }
+      case 'vert-vert-020':
+        if (_bestSuiteLength(values) >= 5) {
+          heroTokens.add('À Terre');
+          notes.add('Large suite: hero receives À Terre.');
+        }
+      case 'bleu-vert-022':
+        if (_symbolGoalMet(const SymbolGoal(white: 2, yellow: 2, red: 1))) {
+          heroTokens.add('Poison');
+          notes.add('Validated attack: hero receives Poison.');
+        } else if (_symbolGoalMet(const SymbolGoal(white: 2, yellow: 2))) {
+          heroTokens.add('Parasite');
+          notes.add('Validated attack: hero receives Parasite.');
+        }
+      case 'bleu-vert-023':
+        if (_symbolGoalMet(const SymbolGoal(white: 2, yellow: 1, red: 1))) {
+          attack = 0;
+          lifeSteal = 2;
+          notes.add('Validated attack: steals 2 HP.');
+        }
     }
 
     _battleAttackValue = attack.clamp(0, 99);
@@ -6709,7 +6891,7 @@ class _FightPageState extends State<FightPage> {
     if (first == null) {
       return;
     }
-    final notes = <String>['Naxarus rolls $first.'];
+    final notes = <String>[];
     var attack = 0;
     var enemyHeal = 0;
     final heroTokens = <String>[];
@@ -6726,10 +6908,11 @@ class _FightPageState extends State<FightPage> {
         notes.add('Ember Spark: hero moves top 3 deck cards to discard.');
         notes.add('Ember Spark: 8 damage.');
       case 3:
-        final rolls = List.generate(4, (_) => _random.nextInt(6) + 1)..sort();
-        attack = rolls.reversed.take(2).fold(0, (sum, value) => sum + value);
-        notes.add('Gashing Bite: 4 dice ${rolls.join('/')}.');
-        notes.add('Damage equals the 2 highest dice: $attack.');
+        attack = 0;
+        notes.add('Gashing Bite: roll 4 dice in the extra dice phase.');
+        notes.add(
+          'Damage will equal the 2 highest dice after hero interactions.',
+        );
       case 4:
         attack = 9;
         heroTokens.add('Hoarding');
@@ -6741,18 +6924,10 @@ class _FightPageState extends State<FightPage> {
         notes.add('Thundering Roar: 8 undefendable damage.');
       case 6:
         attack = 10;
-        final extra = _random.nextInt(6) + 1;
         notes.add("Dragon's Might: 10 damage.");
-        notes.add("Dragon's Might extra die: $extra.");
-        if (extra >= 5) {
-          attack += 3;
-          enemyHeal = 4;
-          _removeRandomEnemyToken();
-          notes.add('Extra 5-6: Swoop also triggers.');
-          notes.add(
-            'Naxarus removes 1 random token, heals 4 HP, and adds 3 undefendable damage.',
-          );
-        }
+        notes.add(
+          "Dragon's Might: roll 1 die in the extra dice phase; on 5-6, Swoop also triggers.",
+        );
     }
 
     _battleAttackValue = attack.clamp(0, 99);
@@ -6793,6 +6968,21 @@ class _FightPageState extends State<FightPage> {
         return _suiteDamage(enemy, _bestSuiteLength(values));
       case MinionAttackStyle.none:
         return null;
+    }
+  }
+
+  bool _currentAttackGoalMet() {
+    switch (enemy.attackPlan.style) {
+      case MinionAttackStyle.symbols:
+        return enemy.attackPlan.goals.any(_symbolGoalMet);
+      case MinionAttackStyle.suite:
+        final values = _dice
+            .where((die) => die.value != null)
+            .map((die) => die.value!)
+            .toList();
+        return _bestSuiteLength(values) >= 3;
+      case MinionAttackStyle.none:
+        return false;
     }
   }
 
@@ -7598,6 +7788,7 @@ class EnemyRulesPanel extends StatefulWidget {
     required this.phase,
     required this.aiMode,
     required this.onAiModeChanged,
+    this.attackKey,
     this.defenseKey,
     super.key,
   });
@@ -7606,6 +7797,7 @@ class EnemyRulesPanel extends StatefulWidget {
   final CombatPhase phase;
   final bool aiMode;
   final ValueChanged<bool> onAiModeChanged;
+  final Key? attackKey;
   final Key? defenseKey;
 
   @override
@@ -7621,14 +7813,21 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
   @override
   void initState() {
     super.initState();
+    _showAttack = widget.phase == CombatPhase.minionAttack;
     _showDefense = widget.phase == CombatPhase.hero;
   }
 
   @override
   void didUpdateWidget(covariant EnemyRulesPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.phase != widget.phase && widget.phase == CombatPhase.hero) {
-      _showDefense = true;
+    if (oldWidget.phase != widget.phase) {
+      if (widget.phase == CombatPhase.hero) {
+        _showAttack = false;
+        _showDefense = true;
+      } else if (widget.phase == CombatPhase.minionAttack) {
+        _showAttack = true;
+        _showDefense = false;
+      }
     }
   }
 
@@ -7685,12 +7884,18 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
             Column(
               children: [
                 _CollapsibleRulesLine(
+                  key: widget.attackKey,
                   label: 'Attack',
                   icon: Icons.gps_fixed,
                   color: enemy.rank.color,
                   trailing: AttackObjectiveInline(enemy: enemy),
                   expanded: _showAttack,
-                  onTap: () => setState(() => _showAttack = !_showAttack),
+                  onTap: () => setState(() {
+                    _showAttack = !_showAttack;
+                    if (_showAttack) {
+                      _showDefense = false;
+                    }
+                  }),
                   child: MinionAttackSummary(enemy: enemy),
                 ),
                 const SizedBox(height: 8),
@@ -7701,7 +7906,12 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                   color: enemy.rank.color,
                   trailing: DefenseDiceInline(count: enemy.defenseDice),
                   expanded: _showDefense,
-                  onTap: () => setState(() => _showDefense = !_showDefense),
+                  onTap: () => setState(() {
+                    _showDefense = !_showDefense;
+                    if (_showDefense) {
+                      _showAttack = false;
+                    }
+                  }),
                   child: MinionDefenseSummary(enemy: enemy),
                 ),
               ],
@@ -7864,6 +8074,9 @@ class MinionAttackSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (enemy.profileKey == 'naraxus') {
+      return _NaxarusAttackSummary(enemy: enemy);
+    }
     if (enemy.profileKey == 'oni-delirant') {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -7944,18 +8157,141 @@ class MinionAttackSummary extends StatelessWidget {
     final hints = <Widget>[];
     final text = enemy.attacks.join(' ').toLowerCase();
     if (text.contains('riposte')) {
-      hints.add(const Text('Bonus: Riposte on 4 identical symbols.'));
+      hints.add(const Text('If 4 identical symbols: Riposte.'));
     }
     if (text.contains('silence')) {
-      hints.add(const Text('Bonus: Silence on 3 identical values.'));
+      hints.add(const Text('If 3 identical values: Silence.'));
     }
     if (text.contains('hémorragie')) {
-      hints.add(const Text('Bonus: Hémorragie on 3 identical values.'));
+      hints.add(const Text('If 3 identical values: Hémorragie.'));
     }
     if (text.contains('ronces')) {
-      hints.add(const Text('Large suite also applies Ronces.'));
+      hints.add(const Text('If large suite: Ronces.'));
+    }
+    if (text.contains('poison')) {
+      hints.add(const Text('If condition met: Poison.'));
+    }
+    if (text.contains('parasite')) {
+      hints.add(const Text('If condition met: Parasite.'));
+    }
+    if (text.contains('a terre') || text.contains('à terre')) {
+      hints.add(const Text('If condition met: À Terre.'));
+    }
+    if (text.contains('enchevetrement') || text.contains('enchevêtrement')) {
+      hints.add(const Text('If condition met: Enchevêtrement.'));
     }
     return hints;
+  }
+}
+
+SymbolGoal _strongestSymbolGoal(EnemyNode enemy) {
+  return enemy.attackPlan.goals.isEmpty
+      ? const SymbolGoal()
+      : enemy.attackPlan.goals.last;
+}
+
+class _NaxarusAttackSummary extends StatelessWidget {
+  const _NaxarusAttackSummary({required this.enemy});
+
+  final EnemyNode enemy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _NaxarusAttackLine(
+          value: 1,
+          name: 'Swoop',
+          result: [
+            TokenBadge(label: '-TOK', color: enemy.rank.color),
+            _HealBadge(value: 4, color: enemy.rank.color),
+            const DamageBadge(value: 3, imparable: true),
+          ],
+        ),
+        const _NaxarusAttackLine(
+          value: 2,
+          name: 'Ember Spark',
+          result: [
+            _CardMoveBadge(value: 3),
+            DamageBadge(value: 8, imparable: false),
+          ],
+        ),
+        const _NaxarusAttackLine(
+          value: 3,
+          name: 'Gashing Bite',
+          result: [
+            _RollMoreBadge(label: '4D'),
+            _TopDiceBadge(label: 'Top 2'),
+          ],
+        ),
+        const _NaxarusAttackLine(
+          value: 4,
+          name: 'Hoarding',
+          result: [
+            TokenBadge(label: '-1D', color: Colors.redAccent),
+            DamageBadge(value: 9, imparable: false),
+          ],
+        ),
+        const _NaxarusAttackLine(
+          value: 5,
+          name: 'Thundering Roar',
+          result: [
+            _CardMoveBadge(value: 1),
+            DamageBadge(value: 8, imparable: true),
+          ],
+        ),
+        const _NaxarusAttackLine(
+          value: 6,
+          name: "Dragon's Might",
+          result: [
+            DamageBadge(value: 10, imparable: false),
+            _RollMoreBadge(label: '+1D'),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _NaxarusAttackLine extends StatelessWidget {
+  const _NaxarusAttackLine({
+    required this.value,
+    required this.name,
+    required this.result,
+  });
+
+  final int value;
+  final String name;
+  final List<Widget> result;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 7),
+      child: Row(
+        children: [
+          SizedBox(width: 32, child: _NaxarusDieValueBadge(value: value)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 132,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 5,
+              runSpacing: 4,
+              children: result,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -7975,15 +8311,15 @@ class EnemyObjectivePreview extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Flexible(
-          child: switch (enemy.attackPlan.style) {
-            MinionAttackStyle.suite => const SuiteGoalView(length: 4),
-            MinionAttackStyle.symbols => SymbolGoalView(
-              goal: enemy.attackPlan.goals.isEmpty
-                  ? const SymbolGoal()
-                  : enemy.attackPlan.goals.first,
-            ),
-            MinionAttackStyle.none => const Text('--'),
-          },
+          child: enemy.profileKey == 'naraxus'
+              ? const DieValueBadge(value: 6, showValue: false)
+              : switch (enemy.attackPlan.style) {
+                  MinionAttackStyle.suite => const SuiteGoalView(length: 5),
+                  MinionAttackStyle.symbols => SymbolGoalView(
+                    goal: _strongestSymbolGoal(enemy),
+                  ),
+                  MinionAttackStyle.none => const Text('--'),
+                },
         ),
       ],
     );
@@ -8001,15 +8337,15 @@ class AttackObjectiveInline extends StatelessWidget {
       alignment: Alignment.centerRight,
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        child: switch (enemy.attackPlan.style) {
-          MinionAttackStyle.suite => const SuiteGoalView(length: 3),
-          MinionAttackStyle.symbols => SymbolGoalView(
-            goal: enemy.attackPlan.goals.isEmpty
-                ? const SymbolGoal()
-                : enemy.attackPlan.goals.first,
-          ),
-          MinionAttackStyle.none => const Text('--'),
-        },
+        child: enemy.profileKey == 'naraxus'
+            ? const DieValueBadge(value: 6, showValue: false)
+            : switch (enemy.attackPlan.style) {
+                MinionAttackStyle.suite => const SuiteGoalView(length: 5),
+                MinionAttackStyle.symbols => SymbolGoalView(
+                  goal: _strongestSymbolGoal(enemy),
+                ),
+                MinionAttackStyle.none => const Text('--'),
+              },
       ),
     );
   }
@@ -8107,6 +8443,9 @@ class MinionDefenseSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (enemy.profileKey == 'naraxus') {
+      return const _NaxarusDefenseGrid();
+    }
     final lines = _defenseEffectLines(enemy);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -8118,6 +8457,59 @@ class MinionDefenseSummary extends StatelessWidget {
               ),
             ]
           : lines,
+    );
+  }
+}
+
+class _NaxarusDefenseGrid extends StatelessWidget {
+  const _NaxarusDefenseGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const [
+        Expanded(
+          child: Column(
+            children: [
+              _NaxarusDefenseCell(value: 1, prevention: 1),
+              _NaxarusDefenseCell(value: 2, prevention: 3),
+              _NaxarusDefenseCell(value: 3, prevention: 3),
+            ],
+          ),
+        ),
+        SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            children: [
+              _NaxarusDefenseCell(value: 4, prevention: 3),
+              _NaxarusDefenseCell(value: 5, prevention: 3),
+              _NaxarusDefenseCell(value: 6, prevention: 5),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NaxarusDefenseCell extends StatelessWidget {
+  const _NaxarusDefenseCell({required this.value, required this.prevention});
+
+  final int value;
+  final int prevention;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 7),
+      child: Row(
+        children: [
+          _NaxarusDieValueBadge(value: value),
+          const SizedBox(width: 8),
+          PreventBadge(value: prevention),
+        ],
+      ),
     );
   }
 }
@@ -8199,6 +8591,62 @@ List<Widget> _defenseEffectLines(EnemyNode enemy) {
       return lines;
     case 'oni-delirant':
       symbol(const SymbolGoal(yellow: 1), [
+        LifeStealBadge(value: 1, color: enemy.rank.color),
+      ]);
+      return lines;
+    case 'vert-vert-011':
+      symbol(const SymbolGoal(yellow: 1), const [_HalfPreventBadge()]);
+      return lines;
+    case 'vert-vert-012':
+    case 'vert-vert-016':
+      symbol(const SymbolGoal(yellow: 1), const [
+        _MultiplierBadge(),
+        PreventBadge(value: 1),
+      ]);
+      return lines;
+    case 'vert-vert-013':
+      symbol(const SymbolGoal(red: 1), [
+        TokenBadge(label: 'PO', color: enemy.rank.color),
+      ]);
+      return lines;
+    case 'vert-vert-015':
+      symbol(const SymbolGoal(red: 1), const [_HalfReturnBadge()]);
+      return lines;
+    case 'vert-vert-017':
+      symbol(const SymbolGoal(white: 1), const [
+        DamageBadge(value: 2, imparable: true),
+      ]);
+      return lines;
+    case 'vert-vert-018':
+      symbol(const SymbolGoal(yellow: 1), [
+        TokenBadge(label: 'DOWN', color: enemy.rank.color),
+      ]);
+      symbol(const SymbolGoal(red: 1), const [PreventBadge(value: 2)]);
+      return lines;
+    case 'vert-vert-019':
+      symbol(const SymbolGoal(red: 1), const [PreventBadge(value: 3)]);
+      return lines;
+    case 'vert-vert-020':
+      symbol(const SymbolGoal(white: 1), const [
+        DamageBadge(value: 1, imparable: true),
+      ]);
+      symbol(const SymbolGoal(yellow: 1), const [
+        _MultiplierBadge(),
+        PreventBadge(value: 1),
+      ]);
+      symbol(const SymbolGoal(red: 1), const [
+        _MultiplierBadge(),
+        PreventBadge(value: 1),
+      ]);
+      return lines;
+    case 'bleu-vert-022':
+      symbol(const SymbolGoal(yellow: 1), const [PreventBadge(value: 2)]);
+      symbol(const SymbolGoal(red: 1), [
+        TokenBadge(label: 'PAR', color: enemy.rank.color),
+      ]);
+      return lines;
+    case 'bleu-vert-023':
+      symbol(const SymbolGoal(red: 1), [
         LifeStealBadge(value: 1, color: enemy.rank.color),
       ]);
       return lines;
@@ -8298,6 +8746,7 @@ class CombatBottomDock extends StatelessWidget {
     required this.onAttackChanged,
     required this.onDefenseChanged,
     required this.onApply,
+    required this.onChanged,
     super.key,
   });
 
@@ -8326,6 +8775,7 @@ class CombatBottomDock extends StatelessWidget {
   final ValueChanged<int> onAttackChanged;
   final ValueChanged<int> onDefenseChanged;
   final VoidCallback onApply;
+  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -8357,21 +8807,20 @@ class CombatBottomDock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (aiMode) ...[
-            Container(
-              constraints: const BoxConstraints(minHeight: 54, maxHeight: 260),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: chatAccent.withValues(alpha: 0.7)),
-              ),
-              child: SingleChildScrollView(
-                reverse: true,
-                child: Text(
-                  _battleChatText(aiMessage, tokenText),
-                  style: const TextStyle(height: 1.25),
-                ),
-              ),
+            _AiChatWithHealth(
+              message: _battleChatText(aiMessage, tokenText),
+              accent: chatAccent,
+              heroHp: adventure.health,
+              enemyHp: enemy.health,
+              enemyColor: enemy.rank.color,
+              onHeroHpSaved: (value) {
+                adventure.setHeroHealth(value);
+                onChanged();
+              },
+              onEnemyHpSaved: (value) {
+                enemy.health = value.clamp(0, 99);
+                onChanged();
+              },
             ),
             const SizedBox(height: 8),
           ],
@@ -8440,6 +8889,357 @@ String _battleChatText(String aiMessage, List<String> effects) {
     if (effects.isNotEmpty) effects.join('\n'),
   ];
   return lines.isEmpty ? 'Manual battle resolution.' : lines.join('\n');
+}
+
+enum _HpQuickTarget { hero, enemy }
+
+class _AiChatWithHealth extends StatefulWidget {
+  const _AiChatWithHealth({
+    required this.message,
+    required this.accent,
+    required this.heroHp,
+    required this.enemyHp,
+    required this.enemyColor,
+    required this.onHeroHpSaved,
+    required this.onEnemyHpSaved,
+  });
+
+  final String message;
+  final Color accent;
+  final int heroHp;
+  final int enemyHp;
+  final Color enemyColor;
+  final ValueChanged<int> onHeroHpSaved;
+  final ValueChanged<int> onEnemyHpSaved;
+
+  @override
+  State<_AiChatWithHealth> createState() => _AiChatWithHealthState();
+}
+
+class _AiChatWithHealthState extends State<_AiChatWithHealth> {
+  _HpQuickTarget? _target;
+  late int _draftHp;
+
+  @override
+  void didUpdateWidget(covariant _AiChatWithHealth oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_target == _HpQuickTarget.hero && oldWidget.heroHp != widget.heroHp) {
+      _draftHp = widget.heroHp;
+    } else if (_target == _HpQuickTarget.enemy &&
+        oldWidget.enemyHp != widget.enemyHp) {
+      _draftHp = widget.enemyHp;
+    }
+  }
+
+  void _openEditor(_HpQuickTarget target) {
+    setState(() {
+      _target = target;
+      _draftHp = target == _HpQuickTarget.hero ? widget.heroHp : widget.enemyHp;
+    });
+  }
+
+  void _save() {
+    final target = _target;
+    if (target == null) {
+      return;
+    }
+    final value = _draftHp.clamp(0, 99).toInt();
+    if (target == _HpQuickTarget.hero) {
+      widget.onHeroHpSaved(value);
+    } else {
+      widget.onEnemyHpSaved(value);
+    }
+    setState(() => _target = null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const hpWidth = 58.0;
+    return Column(
+      children: [
+        if (_target != null) ...[
+          Row(
+            children: [
+              const Expanded(child: SizedBox.shrink()),
+              SizedBox(
+                width: hpWidth,
+                child: _HpQuickEditor(
+                  value: _draftHp,
+                  color: _target == _HpQuickTarget.hero
+                      ? heroAccent
+                      : widget.enemyColor,
+                  onChanged: (delta) => setState(
+                    () => _draftHp = (_draftHp + delta).clamp(0, 99).toInt(),
+                  ),
+                  onSave: _save,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+        ],
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Container(
+                constraints: const BoxConstraints(
+                  minHeight: 108,
+                  maxHeight: 260,
+                ),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: widget.accent.withValues(alpha: 0.7),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  reverse: true,
+                  child: RichText(
+                    text: TextSpan(
+                      style: DefaultTextStyle.of(
+                        context,
+                      ).style.copyWith(height: 1.25, color: Colors.white),
+                      children: _chatSpans(widget.message),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: hpWidth,
+              child: _HpSidePanel(
+                heroHp: widget.heroHp,
+                enemyHp: widget.enemyHp,
+                enemyColor: widget.enemyColor,
+                onHeroTap: () => _openEditor(_HpQuickTarget.hero),
+                onEnemyTap: () => _openEditor(_HpQuickTarget.enemy),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _HpSidePanel extends StatelessWidget {
+  const _HpSidePanel({
+    required this.heroHp,
+    required this.enemyHp,
+    required this.enemyColor,
+    required this.onHeroTap,
+    required this.onEnemyTap,
+  });
+
+  final int heroHp;
+  final int enemyHp;
+  final Color enemyColor;
+  final VoidCallback onHeroTap;
+  final VoidCallback onEnemyTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: _HpHeartButton(
+            value: heroHp,
+            color: heroAccent,
+            tooltip: 'Edit hero HP',
+            onTap: onHeroTap,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Expanded(
+          child: _HpHeartButton(
+            value: enemyHp,
+            color: enemyColor,
+            tooltip: 'Edit enemy HP',
+            onTap: onEnemyTap,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HpHeartButton extends StatelessWidget {
+  const _HpHeartButton({
+    required this.value,
+    required this.color,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final int value;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.28),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color.withValues(alpha: 0.75)),
+          ),
+          child: Center(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(Icons.favorite, color: color, size: 42),
+                Text(
+                  value.clamp(0, 99).toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    shadows: [Shadow(color: Colors.black, blurRadius: 3)],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HpQuickEditor extends StatelessWidget {
+  const _HpQuickEditor({
+    required this.value,
+    required this.color,
+    required this.onChanged,
+    required this.onSave,
+  });
+
+  final int value;
+  final Color color;
+  final ValueChanged<int> onChanged;
+  final VoidCallback onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _MiniHpButton(
+            icon: Icons.add,
+            color: color,
+            onPressed: () => onChanged(1),
+          ),
+          Text(
+            value.clamp(0, 99).toString(),
+            style: TextStyle(
+              color: color,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          _MiniHpButton(
+            icon: Icons.remove,
+            color: color,
+            onPressed: () => onChanged(-1),
+          ),
+          const SizedBox(height: 3),
+          SizedBox(
+            height: 24,
+            width: 46,
+            child: FilledButton(
+              onPressed: onSave,
+              style: FilledButton.styleFrom(
+                backgroundColor: color,
+                foregroundColor: Colors.black,
+                padding: EdgeInsets.zero,
+              ),
+              child: const Icon(Icons.check, size: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniHpButton extends StatelessWidget {
+  const _MiniHpButton({
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 34,
+      height: 24,
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 16),
+        color: color,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        style: IconButton.styleFrom(
+          side: BorderSide(color: color.withValues(alpha: 0.8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+        ),
+      ),
+    );
+  }
+}
+
+List<InlineSpan> _chatSpans(String value) {
+  final spans = <InlineSpan>[];
+  final pattern = RegExp(r'(\*\*[^*]+\*\*|_[^_]+_)');
+  var index = 0;
+  for (final match in pattern.allMatches(value)) {
+    if (match.start > index) {
+      spans.add(TextSpan(text: value.substring(index, match.start)));
+    }
+    final token = match.group(0)!;
+    if (token.startsWith('**')) {
+      spans.add(
+        TextSpan(
+          text: token.substring(2, token.length - 2),
+          style: const TextStyle(fontWeight: FontWeight.w900),
+        ),
+      );
+    } else {
+      spans.add(
+        TextSpan(
+          text: token.substring(1, token.length - 1),
+          style: const TextStyle(fontStyle: FontStyle.italic),
+        ),
+      );
+    }
+    index = match.end;
+  }
+  if (index < value.length) {
+    spans.add(TextSpan(text: value.substring(index)));
+  }
+  return spans;
 }
 
 class _BattleCounter extends StatelessWidget {
@@ -8728,7 +9528,7 @@ String _aiMessageFor(
 }
 
 String _combatIntroLine(AdventureState adventure, EnemyNode enemy) {
-  return 'Battle: ${adventure.hero.label} versus ${enemy.label}.';
+  return '**Battle: ${adventure.hero.label} vs ${enemy.label}.**';
 }
 
 String _openingAiLines(
@@ -8750,14 +9550,14 @@ String _openingAiLines(
   if (adventure.config.mode == SurvivalMode.naraxus) {
     if (runs.isEmpty) {
       lines.add(
-        '${adventure.hero.label} enters Naxarus mode for the first time. Can this hero defeat the dragon?',
+        '_${adventure.hero.label} enters Naxarus mode for the first time. Can this hero defeat the dragon?_',
       );
     } else if (runs.length == 1) {
       final won = (runs.first.bossHealthRemaining ?? 1) <= 0;
       lines.add(
         won
-            ? '${adventure.hero.label} is challenging Naxarus for the second time. Can the dragon be defeated twice?'
-            : '${adventure.hero.label} is challenging Naxarus for the second time. Can the dragon fall this time?',
+            ? '_${adventure.hero.label} is challenging Naxarus for the second time. Can the dragon be defeated twice?_'
+            : '_${adventure.hero.label} is challenging Naxarus for the second time. Can the dragon fall this time?_',
       );
     } else {
       final wins = runs
@@ -8766,7 +9566,7 @@ String _openingAiLines(
       final losses = runs.length - wins;
       final winRate = (wins / runs.length * 100).round();
       lines.add(
-        '${adventure.hero.label} has a $winRate% win rate in Naxarus mode: $wins win(s), $losses defeat(s). Can these stats improve?',
+        '_${adventure.hero.label} has a $winRate% win rate in Naxarus mode: $wins win(s), $losses defeat(s). Can these stats improve?_',
       );
     }
     return lines.join('\n');
@@ -8774,12 +9574,12 @@ String _openingAiLines(
 
   if (runs.isEmpty) {
     lines.add(
-      '${adventure.hero.label} starts Minion Rush for the first time. Can this hero beat every enemy on the path?',
+      '_${adventure.hero.label} starts Minion Rush for the first time. Can this hero beat every enemy on the path?_',
     );
   } else if (runs.length == 1) {
     final last = runs.first;
     lines.add(
-      'In ${adventure.config.label}, ${adventure.hero.label} scored ${last.score} points in the last run and defeated ${last.enemiesDefeated} enemy/enemies. Can you do better this time?',
+      '_In ${adventure.config.label}, ${adventure.hero.label} scored ${last.score} points in the last run and defeated ${last.enemiesDefeated} enemy/enemies. Can you do better this time?_',
     );
   } else {
     final averageScore =
@@ -8788,7 +9588,7 @@ String _openingAiLines(
         runs.fold<int>(0, (sum, record) => sum + record.enemiesDefeated) /
         runs.length;
     lines.add(
-      'In ${adventure.config.label}, ${adventure.hero.label} averages ${averageScore.toStringAsFixed(1)} points and ${averageEnemies.toStringAsFixed(1)} defeated enemies. Can you improve the run?',
+      '_In ${adventure.config.label}, ${adventure.hero.label} averages ${averageScore.toStringAsFixed(1)} points and ${averageEnemies.toStringAsFixed(1)} defeated enemies. Can you improve the run?_',
     );
   }
   final encounter = adventure.defeatedEnemies.length + 1;
@@ -8822,6 +9622,7 @@ String _heroUpkeepAiMessage(
       lastBattleOutcome
     else
       _openingAiLines(adventure, enemy, historyRecords),
+    '**Upkeep of hero.**',
     'Start of turn for ${adventure.hero.label}.',
     '${adventure.hero.label} gains 1 CP and is now at ${adventure.combatPoints} CP.',
     _tokenUpkeepSummary(
@@ -8846,6 +9647,7 @@ String _minionUpkeepAiMessage(
       lastBattleOutcome
     else
       _openingAiLines(adventure, enemy, historyRecords),
+    '**Upkeep of minion.**',
     'Start of turn for ${enemy.label}.',
     enemy.profileKey == 'naraxus'
         ? 'Naxarus does not gain CP; the dragon has unlimited CP.'
@@ -8868,7 +9670,7 @@ String _heroBattleAiMessage(
   int heroAttackTotal,
 ) {
   final intro = heroAttackCount == 0
-      ? '${adventure.hero.label} enters the fight. How much damage will the first attack deal?'
+      ? '_${adventure.hero.label} enters the fight. How much damage will the first attack deal?_'
       : heroAttackCount == 1
       ? 'The first attack dealt $lastHeroAttack damage. Can ${adventure.hero.label} do better?'
       : '${adventure.hero.label} averages ${(heroAttackTotal / heroAttackCount).toStringAsFixed(1)} damage per attack. Can this turn beat that?';
@@ -8877,10 +9679,12 @@ String _heroBattleAiMessage(
       _openingAiLines(adventure, enemy, historyRecords)
     else
       _combatIntroLine(adventure, enemy),
+    '**Battle phase.**',
     intro,
     '${enemy.label} is waiting for the hero attack result.',
     'If the attack is defendable, roll ${enemy.label} defense.',
-    'Maximum prevention: ${_maxDefensePrevention(enemy)} damage. Maximum return damage: ${_maxDefenseReturnDamage(enemy)} damage.',
+    if (enemy.profileKey != 'naraxus')
+      'Maximum prevention: ${_maxDefensePrevention(enemy)} damage. Maximum return damage: ${_maxDefenseReturnDamage(enemy)} damage.',
     if (adventure.alterations.contains('Silence'))
       'Silence is active: ${adventure.hero.label} cannot validate a suite this turn.',
   ].join('\n');
@@ -8948,12 +9752,14 @@ String _minionAttackAiMessage(
   }
   if (rollCount == 0 || rolled.isEmpty) {
     if (enemy.attackPlan.style == MinionAttackStyle.suite) {
-      return '${enemy.label} battle phase.\n'
+      return '**Battle phase.**\n'
+          '${enemy.label} battle phase.\n'
           '${enemy.label} has ${enemy.health} HP, ${enemy.combatPoints} CP and ${enemy.alterations.length} token(s).\n'
           'I use ${enemy.attacks.first}.\n'
           'First target: micro suite. If it succeeds, I will try to improve.';
     }
-    return '${enemy.label} battle phase.\n'
+    return '**Battle phase.**\n'
+        '${enemy.label} battle phase.\n'
         '${enemy.label} has ${enemy.health} HP, ${enemy.combatPoints} CP and ${enemy.alterations.length} token(s).\n'
         'I use ${enemy.attacks.first}.\n'
         'First target: the smallest valid symbol attack.';
@@ -8967,30 +9773,27 @@ String _minionAttackAiMessage(
   if (enemy.attackPlan.style == MinionAttackStyle.suite) {
     final decision = MinionDiceEngine.chooseSuiteHold(dice);
     final best = _bestSuiteLength(values);
-    final damage = _suiteDamage(enemy, best);
     final rollLabel = _rollLabel(rollCount);
-    final damageText = damage == null
-        ? ''
-        : '\nI deal ${damage.value}${damage.imparable ? ' undefendable' : ''} damage with this roll.';
     if (best >= 5) {
       return rollCount >= 3
-          ? 'After my 3 attack rolls, I deal ${damage?.value ?? 0} damage with the large suite ${_bestSuiteValues(values, 5).join('/')}.\n'
+          ? 'After my 3 attack rolls, large suite validated with ${_bestSuiteValues(values, 5).join('/')}.\n'
                 '${adventure.hero.label} may still try to make my attack fail before pressing OK.'
-          : 'On my $rollLabel roll, large suite validated with ${_bestSuiteValues(values, 5).join('/')}.$damageText';
+          : 'On my $rollLabel roll, large suite validated with ${_bestSuiteValues(values, 5).join('/')}.\n'
+                'The resolution line is ready; I can still try to improve if one roll remains.';
     }
     if (best == 4) {
       return rollCount >= 3
-          ? 'After my 3 attack rolls, I deal ${damage?.value ?? 0} damage with the small suite ${_bestSuiteValues(values, 4).join('/')}.\n'
+          ? 'After my 3 attack rolls, small suite validated with ${_bestSuiteValues(values, 4).join('/')}.\n'
                 '${adventure.hero.label} must perform a defensive phase if the attack is defendable.'
-          : 'On my $rollLabel roll, small suite validated with ${_bestSuiteValues(values, 4).join('/')}.$damageText\n'
+          : 'On my $rollLabel roll, small suite validated with ${_bestSuiteValues(values, 4).join('/')}.\n'
                 'I can hit, then try to improve if one roll remains.';
     }
     if (best == 3) {
       return rollCount >= 3
-          ? 'After my 3 attack rolls, I deal ${damage?.value ?? 0} damage with the micro suite ${_bestSuiteValues(values, 3).join('/')}.\n'
+          ? 'After my 3 attack rolls, micro suite validated with ${_bestSuiteValues(values, 3).join('/')}.\n'
                 '${adventure.hero.label} must perform a defensive phase if the attack is defendable.'
           : 'On my $rollLabel roll, micro suite validated.\n'
-                'I keep ${kept.join('/')} and can keep rolling to improve.$damageText';
+                'I keep ${kept.join('/')} and can keep rolling to improve.';
     }
     return 'On my $rollLabel roll, I deal no damage yet.\n'
         '${decision.reason}\n'
@@ -8999,18 +9802,15 @@ String _minionAttackAiMessage(
 
   final symbolDamage = _bestSymbolAttackDamage(enemy, dice);
   final rollLabel = _rollLabel(rollCount);
-  final symbolDamageText = symbolDamage == null
-      ? ''
-      : '\nI deal ${symbolDamage.value}${symbolDamage.imparable ? ' undefendable' : ''} damage with the validated dice.';
   if (rollCount >= 3) {
     return symbolDamage == null
         ? 'After my 3 attack rolls, no valid attack combination was made.'
-        : 'After my 3 attack rolls, I deal ${symbolDamage.value} damage with ${_reservedDiceText(dice)}.\n'
+        : 'After my 3 attack rolls, the attack is validated with ${_reservedDiceText(dice)}.\n'
               '${adventure.hero.label} must perform a defensive phase if the attack is defendable.';
   }
   return kept.isEmpty
       ? 'On my $rollLabel roll, I deal no damage yet.\nI reroll toward the first attack.'
-      : 'On my $rollLabel roll, I keep ${kept.join('/')}.\nI try to improve the attack.$symbolDamageText';
+      : 'On my $rollLabel roll, I keep ${kept.join('/')}.\nI try to improve the attack.';
 }
 
 String _rollLabel(int rollCount) {
@@ -9063,44 +9863,39 @@ String _naraxusAiMessage(
   AdventureState adventure,
 ) {
   if (rolled.isEmpty || rolled.first.value == null) {
-    return 'Naxarus battle phase.\n'
+    return '**Battle phase.**\n'
+        'Naxarus battle phase.\n'
         'Roll 1 die to choose the dragon attack.\n'
         'The result will feed the sword counter.';
   }
   final value = rolled.first.value!;
-  return switch (value) {
+  final result = switch (value) {
     1 =>
-      'I use Swoop with die result 1.\n'
-          'I deal 3 undefendable damage.\n'
-          'Naxarus removes 1 random token.\n'
-          'Naxarus heals 4 HP.\n'
+      'D6 1 selects Swoop.\n'
+          'The resolution line is ready.\n'
           '${adventure.hero.label} has no defense unless a card changes the attack.',
     2 =>
-      'I use Ember Spark with die result 2.\n'
-          'I deal 8 damage.\n'
-          'Hero moves the top 3 deck cards to discard.\n'
+      'D6 2 selects Ember Spark.\n'
+          'The resolution line is ready.\n'
           '${adventure.hero.label} must perform a defensive phase.',
     3 =>
-      'I use Gashing Bite with die result 3.\n'
-          'Naxarus rolls 4 dice.\n'
-          'Damage equals the 2 highest dice.\n'
+      'D6 3 selects Gashing Bite.\n'
+          'Use the extra dice phase to roll 4 dice, then keep the 2 highest for damage.\n'
           '${adventure.hero.label} must perform a defensive phase.',
     4 =>
-      'I use Hoarding with die result 4.\n'
-          'I deal 9 damage.\n'
-          'Hero loses 1 die on the next battle phase.\n'
+      'D6 4 selects Hoarding.\n'
+          'The resolution line is ready.\n'
           '${adventure.hero.label} must perform a defensive phase.',
     5 =>
-      'I use Thundering Roar with die result 5.\n'
-          'I deal 8 undefendable damage.\n'
-          'Hero discards 1 card.\n'
+      'D6 5 selects Thundering Roar.\n'
+          'The resolution line is ready.\n'
           '${adventure.hero.label} has no defense unless a card changes the attack.',
     6 =>
-      "I use Dragon's Might with die result 6.\n"
-          'I deal 10 damage.\n'
-          'Naxarus rolls 1 extra die; on 5-6, Swoop also triggers.',
+      "D6 6 selects Dragon's Might.\n"
+          'Use the extra dice phase to check whether Swoop also triggers.',
     _ => 'Naxarus waits.',
   };
+  return '**Battle phase.**\n$result';
 }
 
 _AttackDamage? _bestSymbolAttackDamage(EnemyNode enemy, List<GameDie> dice) {
@@ -9181,7 +9976,18 @@ int _bestSuiteLength(List<int> values) {
 }
 
 class ManualExtraDicePhasePanel extends StatefulWidget {
-  const ManualExtraDicePhasePanel({super.key});
+  const ManualExtraDicePhasePanel({
+    this.title = 'Extra dice phase',
+    this.initialDiceCount = 1,
+    this.accent = const Color(0xff8f43ff),
+    this.autoRoll = false,
+    super.key,
+  });
+
+  final String title;
+  final int initialDiceCount;
+  final Color accent;
+  final bool autoRoll;
 
   @override
   State<ManualExtraDicePhasePanel> createState() =>
@@ -9194,27 +10000,43 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
     6,
     (index) => GameDie(id: index),
   );
-  int _diceToRoll = 1;
+  late int _diceToRoll;
   int _rollCount = 0;
+  bool _editMode = false;
+  bool _rerollMode = false;
+  int? _editingDieId;
+
+  @override
+  void initState() {
+    super.initState();
+    _diceToRoll = widget.initialDiceCount.clamp(0, 5);
+    if (widget.autoRoll && _diceToRoll > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _rollVisibleDice());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final visibleDice = _dice.take(_diceToRoll.clamp(0, 6)).toList();
+    final visibleDice = _dice.take(_diceToRoll.clamp(0, 5)).toList();
     return InfoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Extra dice phase',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  widget.title,
+                  style: TextStyle(
+                    color: widget.accent,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
               DropdownButton<int>(
                 value: _diceToRoll,
-                items: [0, 1, 2, 3, 4, 5, 6]
+                items: [0, 1, 2, 3, 4, 5]
                     .map(
                       (count) => DropdownMenuItem(
                         value: count,
@@ -9235,25 +10057,112 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               for (final die in visibleDice)
-                DieTile(die: die, onTap: () {}, compact: true),
+                DieTile(
+                  die: die,
+                  onTap: () => _tapDie(die),
+                  compact: true,
+                  highlightColor: _editingDieId == die.id
+                      ? heroAccent
+                      : die.reserved
+                      ? widget.accent
+                      : null,
+                ),
             ],
           ),
+          if (_editingDieId != null) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 6,
+              children: [
+                for (var face = 1; face <= 6; face++)
+                  ChoiceChip(
+                    label: Text(face.toString()),
+                    selected: false,
+                    onSelected: (_) => setState(() {
+                      _dice.firstWhere((die) => die.id == _editingDieId).value =
+                          face;
+                      _editingDieId = null;
+                      _editMode = false;
+                    }),
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 10),
-          ImageActionButton(
-            label: _rollCount == 0 ? 'Roll' : 'Reroll',
-            icon: Icons.casino,
-            onPressed: _diceToRoll <= 0
-                ? null
-                : () => setState(() {
-                    for (final die in visibleDice) {
-                      die.value = _random.nextInt(6) + 1;
-                    }
-                    _rollCount++;
+          Row(
+            children: [
+              Expanded(
+                child: ImageActionButton(
+                  label: _rollCount == 0 ? 'Roll' : 'Reroll',
+                  icon: Icons.casino,
+                  onPressed: _diceToRoll <= 0 ? null : _rollVisibleDice,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () => setState(() {
+                    _editMode = !_editMode;
+                    _rerollMode = false;
+                    _editingDieId = null;
                   }),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: heroAccent,
+                    foregroundColor: Colors.black,
+                  ),
+                  icon: const Icon(Icons.tune),
+                  label: Text(_editMode ? 'Stop edit' : 'Edit die'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () => setState(() {
+                    _rerollMode = !_rerollMode;
+                    _editMode = false;
+                    _editingDieId = null;
+                  }),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: heroAccent,
+                    foregroundColor: Colors.black,
+                  ),
+                  icon: const Icon(Icons.refresh),
+                  label: Text(_rerollMode ? 'Cancel' : 'Reroll die'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  void _rollVisibleDice() {
+    setState(() {
+      final visibleDice = _dice.take(_diceToRoll.clamp(0, 5)).toList();
+      for (final die in visibleDice) {
+        die.value = _random.nextInt(6) + 1;
+      }
+      _rollCount++;
+    });
+  }
+
+  void _tapDie(GameDie die) {
+    setState(() {
+      if (_editMode) {
+        _editingDieId = die.id;
+        return;
+      }
+      if (_rerollMode) {
+        die.value = _random.nextInt(6) + 1;
+        _rerollMode = false;
+        return;
+      }
+      if (_rollCount > 0) {
+        die.reserved = !die.reserved;
+      }
+    });
   }
 }
 
@@ -9444,30 +10353,124 @@ class PreventBadge extends StatelessWidget {
   }
 }
 
+class _HalfPreventBadge extends StatelessWidget {
+  const _HalfPreventBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _TextBadge(
+      label: '1/2',
+      color: Colors.lightBlueAccent,
+      icon: Icons.shield,
+    );
+  }
+}
+
+class _HalfReturnBadge extends StatelessWidget {
+  const _HalfReturnBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _TextBadge(
+      label: '1/2',
+      color: Colors.white,
+      icon: Icons.bolt,
+    );
+  }
+}
+
+class _MultiplierBadge extends StatelessWidget {
+  const _MultiplierBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      'x',
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 18,
+        fontWeight: FontWeight.w900,
+      ),
+    );
+  }
+}
+
+class _TextBadge extends StatelessWidget {
+  const _TextBadge({required this.label, required this.color, this.icon});
+
+  final String label;
+  final Color color;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, color: color, size: 13),
+            const SizedBox(width: 3),
+          ],
+          Text(
+            label,
+            style: TextStyle(color: color, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class DieValueBadge extends StatelessWidget {
-  const DieValueBadge({required this.value, super.key});
+  const DieValueBadge({
+    required this.value,
+    this.showValue = true,
+    this.size = 26,
+    super.key,
+  });
+
+  final int value;
+  final bool showValue;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: Colors.white, width: 1.5),
+      ),
+      child: showValue
+          ? Text(
+              value.toString(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
+            )
+          : const Icon(Icons.casino, color: Colors.white, size: 16),
+    );
+  }
+}
+
+class _NaxarusDieValueBadge extends StatelessWidget {
+  const _NaxarusDieValueBadge({required this.value});
 
   final int value;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 28,
-      height: 28,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.white, width: 1.5),
-      ),
-      child: Text(
-        value.toString(),
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-    );
+    return DieValueBadge(value: value, size: 24);
   }
 }
 
@@ -9519,6 +10522,106 @@ class LifeStealBadge extends StatelessWidget {
   }
 }
 
+class _HealBadge extends StatelessWidget {
+  const _HealBadge({required this.value, required this.color});
+
+  final int value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        '+$value',
+        style: TextStyle(color: color, fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
+
+class _CardMoveBadge extends StatelessWidget {
+  const _CardMoveBadge({required this.value});
+
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: Colors.white),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.style, color: Colors.white, size: 14),
+          Text(
+            ' $value',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RollMoreBadge extends StatelessWidget {
+  const _RollMoreBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: Colors.white),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _TopDiceBadge extends StatelessWidget {
+  const _TopDiceBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: Colors.lightBlueAccent),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.lightBlueAccent,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
 class _AttackDamage {
   const _AttackDamage(this.value, {this.imparable = false});
 
@@ -9543,6 +10646,9 @@ _AttackDamage? _damageForSymbolGoal(EnemyNode enemy, SymbolGoal goal) {
   }
   if (key == 'epeiste-egare') {
     return _AttackDamage(goal.white + 2);
+  }
+  if (key == 'vert-vert-012' || key == 'vert-vert-017') {
+    return null;
   }
   return _damageFromAttackText(enemy, goalIndex);
 }
@@ -9607,6 +10713,21 @@ _AttackDamage? _suiteDamageFromAttackText(EnemyNode enemy, int length) {
     damageValues[index],
     imparable: _attackTextIsImparable(enemy.attacks),
   );
+}
+
+bool _attackNeedsExtraDice(EnemyNode enemy) {
+  final text = _normalizeAttackText(enemy.attacks.join(' '));
+  return text.contains('lance ') ||
+      text.contains('roll ') ||
+      text.contains('lancer ');
+}
+
+int _extraDiceCountFor(EnemyNode enemy) {
+  final text = _normalizeAttackText(enemy.attacks.join(' '));
+  final match = RegExp(
+    r'(?:lance|lancer|roll)\s+(\d+)\s+(?:de|des|die|dice)',
+  ).firstMatch(text);
+  return (int.tryParse(match?.group(1) ?? '') ?? 1).clamp(1, 5);
 }
 
 List<int> _attackDamageValues(List<String> attacks) {
@@ -9684,6 +10805,7 @@ class FightStatusPanel extends StatefulWidget {
     required this.naraxusRollHistory,
     required this.onFinish,
     required this.onChanged,
+    required this.onAbandon,
     super.key,
   });
 
@@ -9693,6 +10815,7 @@ class FightStatusPanel extends StatefulWidget {
   final List<String> naraxusRollHistory;
   final VoidCallback? onFinish;
   final VoidCallback onChanged;
+  final VoidCallback onAbandon;
 
   @override
   State<FightStatusPanel> createState() => _FightStatusPanelState();
@@ -9733,9 +10856,9 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
           CombatantStatusRow.enemy(
             enemy: widget.enemy,
             hideCp: widget.enemy.profileKey == 'naraxus',
-            rollHistory: widget.enemy.profileKey == 'naraxus'
-                ? widget.naraxusRollHistory
-                : const [],
+            onAbandon: widget.enemy.profileKey == 'naraxus'
+                ? widget.onAbandon
+                : null,
             onHp: () => _openEditor('enemyHp', widget.enemy.health),
             onCp: () => _openEditor('enemyCp', widget.enemy.combatPoints),
             onEditTokens: _editEnemyTokens,
@@ -9935,6 +11058,7 @@ class CombatantStatusRow extends StatelessWidget {
     required this.onEditTokens,
     this.hideCp = false,
     this.rollHistory = const [],
+    this.onAbandon,
     super.key,
   }) : hero = adventure.hero,
        enemy = null,
@@ -9951,6 +11075,7 @@ class CombatantStatusRow extends StatelessWidget {
     required this.onEditTokens,
     this.hideCp = false,
     this.rollHistory = const [],
+    this.onAbandon,
     super.key,
   }) : hero = null,
        title = 'Enemy',
@@ -9971,6 +11096,7 @@ class CombatantStatusRow extends StatelessWidget {
   final VoidCallback onEditTokens;
   final bool hideCp;
   final List<String> rollHistory;
+  final VoidCallback? onAbandon;
 
   @override
   Widget build(BuildContext context) {
@@ -10025,64 +11151,19 @@ class CombatantStatusRow extends StatelessWidget {
         ),
         if (hideCp) ...[
           const SizedBox(width: 6),
-          Expanded(
-            child: _RollHistoryStrip(values: rollHistory, accent: accent),
+          SizedBox(
+            width: 68,
+            child: MapStatChip(
+              icon: Icons.logout,
+              label: '',
+              value: '',
+              color: accent,
+              accent: accent,
+              onTap: onAbandon,
+            ),
           ),
         ],
       ],
-    );
-  }
-}
-
-class _RollHistoryStrip extends StatelessWidget {
-  const _RollHistoryStrip({required this.values, required this.accent});
-
-  final List<String> values;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final recent = values.length <= 4
-        ? values
-        : values.sublist(values.length - 4);
-    return InkWell(
-      onTap: values.isEmpty
-          ? null
-          : () => showDialog<void>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Naxarus rolls'),
-                content: Text(values.join(' / ')),
-                actions: [
-                  FilledButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-            ),
-      child: Container(
-        height: 44,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.32),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: accent),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.history, color: accent, size: 18),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                recent.isEmpty ? 'Rolls' : recent.join(' / '),
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: accent, fontWeight: FontWeight.w900),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -10860,13 +11941,18 @@ class RewardPage extends StatefulWidget {
 class _RewardPageState extends State<RewardPage> {
   final Random _random = Random();
   int? _d20;
+  int _confirmed = 0;
 
   @override
   Widget build(BuildContext context) {
     final d20 = _d20;
+    final total = widget.enemy.rewardChests.clamp(1, 4);
     final outcome = d20 == null
         ? null
-        : GameEngine.rewardForD20(d20, chest: widget.enemy.rank.rewardChestKey);
+        : GameEngine.rewardForD20(
+            d20,
+            chest: widget.enemy.rewardRank.rewardChestKey,
+          );
     return Scaffold(
       appBar: AppBar(title: const Text('Reward')),
       body: SafeArea(
@@ -10890,6 +11976,16 @@ class _RewardPageState extends State<RewardPage> {
                       'Reward D20',
                       style: TextStyle(fontWeight: FontWeight.w900),
                     ),
+                    if (total > 1) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_confirmed + 1}/$total',
+                        style: TextStyle(
+                          color: widget.enemy.rewardRank.color,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 10),
                     Text(
                       d20?.toString() ?? '-',
@@ -10930,15 +12026,29 @@ class _RewardPageState extends State<RewardPage> {
                 onPressed: d20 == null
                     ? null
                     : () {
-                        widget.adventure.applyReward(d20, widget.enemy.rank);
-                        Navigator.of(context).pop();
+                        widget.adventure.applyReward(
+                          d20,
+                          widget.enemy.rewardRank,
+                        );
+                        if (_confirmed + 1 >= total) {
+                          Navigator.of(context).pop();
+                        } else {
+                          setState(() {
+                            _confirmed++;
+                            _d20 = null;
+                          });
+                        }
                       },
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xff8f43ff),
                   foregroundColor: Colors.white,
                 ),
                 icon: const Icon(Icons.check),
-                label: const Text('Confirm reward'),
+                label: Text(
+                  total > 1 && _confirmed + 1 < total
+                      ? 'Confirm and next'
+                      : 'Confirm reward',
+                ),
               ),
             ],
           ),
@@ -11537,6 +12647,8 @@ EnemyNode _enemy(
     cardAsset: selectedProfile.cardAsset,
     profileKey: selectedProfile.key,
     initialTokens: selectedProfile.initialTokens,
+    rewardChests: selectedProfile.rewardChests,
+    rewardRank: selectedProfile.rewardRank,
   );
 }
 

@@ -1,6 +1,13 @@
 L'objectif de ce fichier et de bien définir ce que doit afficher l application et l'IA dans la zone de bas de page IA. 
 Je nommerai ZBP la zone de bas de page IA dans ce fichier.Ce qui est en Italique est une proposition de ce qu'il faut écrire en français. Cela peut-être être modifié et doit être traduit. 
 
+## Note d'intégration UI - 2026-07-12
+
+- En phase battle du héros, la section défense du minion s'ouvre automatiquement, la section attaque se ferme, puis l'écran se place dessus comme une ancre.
+- En phase battle du minion, la section attaque du minion s'ouvre automatiquement, la section défense se ferme, puis l'écran se place dessus comme une ancre.
+- Dans le chat IA, les noms de phase doivent être mis en évidence en gras, par exemple **Battle phase** ou **Upkeep of minion**.
+- Les phrases d'introduction doivent être rendues en italique et chaque point important doit être placé sur une nouvelle ligne.
+
 Je vais indiquer dans ce fichier des textes avec des dégâts infligé ou prévenu ou en contre attaque / en retour.Il ne faut pas écrire tout ce texte .
 Un dégât infligé par le hero , c'est un rond avec un fond noir, contour blanc et chiffre blanc à l'intérieur. (Déjà prèsent dans le jeu)
 Si les dégâts sont infligé sans faire la défense du minion, c'est que les dégâts sont imparables. Parois le minion a aussi des dégâts imparables (c'est indiqué dans sa fiches) on affiche un dégât imparable avec un rond rouge et un le.chiffre en blanc (égal le nb de dégâts)
