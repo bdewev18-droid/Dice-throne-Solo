@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.17';
+const String appVersionLabel = 'Version 1.2.19';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -8796,88 +8796,94 @@ class CombatBottomDock extends StatelessWidget {
       ...notes,
     ];
 
+    final maxDockHeight = (MediaQuery.sizeOf(
+      context,
+    ).height * 0.58).clamp(240.0, 430.0).toDouble();
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      constraints: BoxConstraints(maxHeight: maxDockHeight),
       decoration: const BoxDecoration(
         color: Color(0xf2121212),
         border: Border(top: BorderSide(color: Colors.white12)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (aiMode) ...[
-            _AiChatWithHealth(
-              message: _battleChatText(aiMessage, tokenText),
-              accent: chatAccent,
-              heroHp: adventure.health,
-              enemyHp: enemy.health,
-              enemyColor: enemy.rank.color,
-              onHeroHpSaved: (value) {
-                adventure.setHeroHealth(value);
-                onChanged();
-              },
-              onEnemyHpSaved: (value) {
-                enemy.health = value.clamp(0, 99);
-                onChanged();
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-          if (showResolution) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: _BattleCounter(
-                    label: 'ATK',
-                    value: attackValue,
-                    color: attackColor,
-                    onChanged: onAttackChanged,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _BattleCounter(
-                    label: 'DEF',
-                    value: defenseValue,
-                    color: defenseColor,
-                    onChanged: onDefenseChanged,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 56,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: onApply,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xff8f43ff),
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.zero,
-                    ),
-                    child: const Text(
-                      'OK',
-                      style: TextStyle(fontWeight: FontWeight.w900),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (aiMode) ...[
+              _AiChatWithHealth(
+                message: _battleChatText(aiMessage, tokenText),
+                accent: chatAccent,
+                heroHp: adventure.health,
+                enemyHp: enemy.health,
+                enemyColor: enemy.rank.color,
+                onHeroHpSaved: (value) {
+                  adventure.setHeroHealth(value);
+                  onChanged();
+                },
+                onEnemyHpSaved: (value) {
+                  enemy.health = value.clamp(0, 99);
+                  onChanged();
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (showResolution) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: _BattleCounter(
+                      label: 'ATK',
+                      value: attackValue,
+                      color: attackColor,
+                      onChanged: onAttackChanged,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _BattleCounter(
+                      label: 'DEF',
+                      value: defenseValue,
+                      color: defenseColor,
+                      onChanged: onDefenseChanged,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 56,
+                    height: 52,
+                    child: FilledButton(
+                      onPressed: onApply,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xff8f43ff),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
+            TurnPhasePanel(
+              phase: phase,
+              adventure: adventure,
+              enemy: enemy,
+              upkeepApplied: upkeepApplied,
+              heroUpkeepApplied: heroUpkeepApplied,
+              canAdvance: canAdvancePhase,
+              onPhaseChanged: onPhaseChanged,
+              onNext: onNext,
+              onApplyUpkeep: onApplyUpkeep,
+              onApplyHeroUpkeep: onApplyHeroUpkeep,
             ),
-            const SizedBox(height: 8),
           ],
-          TurnPhasePanel(
-            phase: phase,
-            adventure: adventure,
-            enemy: enemy,
-            upkeepApplied: upkeepApplied,
-            heroUpkeepApplied: heroUpkeepApplied,
-            canAdvance: canAdvancePhase,
-            onPhaseChanged: onPhaseChanged,
-            onNext: onNext,
-            onApplyUpkeep: onApplyUpkeep,
-            onApplyHeroUpkeep: onApplyHeroUpkeep,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -8978,48 +8984,47 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
           ),
           const SizedBox(height: 6),
         ],
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Container(
-                constraints: const BoxConstraints(
-                  minHeight: 108,
-                  maxHeight: 260,
-                ),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: widget.accent.withValues(alpha: 0.7),
+        SizedBox(
+          height: 118,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: widget.accent.withValues(alpha: 0.7),
+                    ),
                   ),
-                ),
-                child: SingleChildScrollView(
-                  reverse: true,
-                  child: RichText(
-                    text: TextSpan(
-                      style: DefaultTextStyle.of(
-                        context,
-                      ).style.copyWith(height: 1.25, color: Colors.white),
-                      children: _chatSpans(widget.message),
+                  child: SingleChildScrollView(
+                    reverse: true,
+                    child: RichText(
+                      text: TextSpan(
+                        style: DefaultTextStyle.of(
+                          context,
+                        ).style.copyWith(height: 1.25, color: Colors.white),
+                        children: _chatSpans(widget.message),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: hpWidth,
-              child: _HpSidePanel(
-                heroHp: widget.heroHp,
-                enemyHp: widget.enemyHp,
-                enemyColor: widget.enemyColor,
-                onHeroTap: () => _openEditor(_HpQuickTarget.hero),
-                onEnemyTap: () => _openEditor(_HpQuickTarget.enemy),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: hpWidth,
+                child: _HpSidePanel(
+                  heroHp: widget.heroHp,
+                  enemyHp: widget.enemyHp,
+                  enemyColor: widget.enemyColor,
+                  onHeroTap: () => _openEditor(_HpQuickTarget.hero),
+                  onEnemyTap: () => _openEditor(_HpQuickTarget.enemy),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
