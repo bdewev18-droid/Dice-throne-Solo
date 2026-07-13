@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.21';
+const String appVersionLabel = 'Version 1.2.22';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -8288,11 +8288,7 @@ class _NaxarusAttackSummary extends StatelessWidget {
           value: 6,
           name: "Dragon's Might",
           detail: _naraxusAttackDetails[6]!,
-          result: [
-            DamageBadge(value: 10, imparable: false),
-            _OneDieBadge(),
-            _SwoopOnFiveSixBadge(),
-          ],
+          result: const [_DragonMightResultBadge()],
         ),
       ],
     );
@@ -9063,13 +9059,13 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
 
   @override
   Widget build(BuildContext context) {
-    const hpWidth = 66.0;
-    const editorWidth = 58.0;
+    const hpWidth = 78.0;
+    const editorWidth = 78.0;
     final editorColor = _target == _HpQuickTarget.hero
         ? heroAccent
         : widget.enemyColor;
     return SizedBox(
-      height: 132,
+      height: 150,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -9233,16 +9229,16 @@ class _HpQuickEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          RoundIconButton(
+          _CompactRoundIconButton(
             icon: Icons.add,
             tooltip: 'Add HP',
             color: color,
@@ -9256,16 +9252,15 @@ class _HpQuickEditor extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-          RoundIconButton(
+          _CompactRoundIconButton(
             icon: Icons.remove,
             tooltip: 'Remove HP',
             color: color,
             onPressed: () => onChanged(-1),
           ),
-          const SizedBox(height: 3),
           SizedBox(
-            height: 24,
-            width: 46,
+            height: 28,
+            width: 54,
             child: FilledButton(
               onPressed: onSave,
               style: FilledButton.styleFrom(
@@ -9277,6 +9272,40 @@ class _HpQuickEditor extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CompactRoundIconButton extends StatelessWidget {
+  const _CompactRoundIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final Color color;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: 34,
+        height: 34,
+        child: IconButton(
+          onPressed: onPressed,
+          padding: EdgeInsets.zero,
+          style: IconButton.styleFrom(
+            shape: const CircleBorder(),
+            side: BorderSide(color: color, width: 1.4),
+          ),
+          icon: Icon(icon, size: 18, color: color),
+        ),
       ),
     );
   }
@@ -10855,6 +10884,32 @@ class _SwoopOnFiveSixBadge extends StatelessWidget {
     return const Text(
       '5/6 -> Swoop',
       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+    );
+  }
+}
+
+class _DragonMightResultBadge extends StatelessWidget {
+  const _DragonMightResultBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: const [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            _OneDieBadge(),
+            SizedBox(height: 2),
+            _SwoopOnFiveSixBadge(),
+          ],
+        ),
+        SizedBox(width: 6),
+        DamageBadge(value: 10, imparable: false),
+      ],
     );
   }
 }
