@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.19';
+const String appVersionLabel = 'Version 1.2.20';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -8202,50 +8202,54 @@ class _NaxarusAttackSummary extends StatelessWidget {
         _NaxarusAttackLine(
           value: 1,
           name: 'Swoop',
+          detail: _naraxusAttackDetails[1]!,
           result: [
             TokenBadge(label: '-TOK', color: enemy.rank.color),
-            _HealBadge(value: 4, color: enemy.rank.color),
+            const _HealBadge(value: 4),
             const DamageBadge(value: 3, imparable: true),
           ],
         ),
-        const _NaxarusAttackLine(
+        _NaxarusAttackLine(
           value: 2,
           name: 'Ember Spark',
+          detail: _naraxusAttackDetails[2]!,
           result: [
-            _CardMoveBadge(value: 3),
+            _DiscardCardBadge(value: 3),
             DamageBadge(value: 8, imparable: false),
           ],
         ),
-        const _NaxarusAttackLine(
+        _NaxarusAttackLine(
           value: 3,
           name: 'Gashing Bite',
-          result: [
-            _RollMoreBadge(label: '4D'),
-            _TopDiceBadge(label: 'Top 2'),
-          ],
+          detail: _naraxusAttackDetails[3]!,
+          result: [_FourDiceToTopTwoBadge()],
         ),
-        const _NaxarusAttackLine(
+        _NaxarusAttackLine(
           value: 4,
           name: 'Hoarding',
+          detail: _naraxusAttackDetails[4]!,
           result: [
-            TokenBadge(label: '-1D', color: Colors.redAccent),
+            _DiePenaltyBadge(),
             DamageBadge(value: 9, imparable: false),
           ],
         ),
-        const _NaxarusAttackLine(
+        _NaxarusAttackLine(
           value: 5,
           name: 'Thundering Roar',
+          detail: _naraxusAttackDetails[5]!,
           result: [
-            _CardMoveBadge(value: 1),
+            _DiscardCardBadge(value: 1),
             DamageBadge(value: 8, imparable: true),
           ],
         ),
-        const _NaxarusAttackLine(
+        _NaxarusAttackLine(
           value: 6,
           name: "Dragon's Might",
+          detail: _naraxusAttackDetails[6]!,
           result: [
             DamageBadge(value: 10, imparable: false),
-            _RollMoreBadge(label: '+1D'),
+            _OneDieBadge(),
+            _SwoopOnFiveSixBadge(),
           ],
         ),
       ],
@@ -8253,15 +8257,32 @@ class _NaxarusAttackSummary extends StatelessWidget {
   }
 }
 
+const Map<int, String> _naraxusAttackDetails = {
+  1:
+      'Swoop\n\nRemove 1 random status effect token from Naxarus.\nHeal 4 HP.\nDeal 3 undefendable damage.',
+  2:
+      'Ember Spark\n\nThe active hero must place the top 3 cards of their deck into their discard pile.\nDeal 8 damage.',
+  3:
+      'Gashing Bite\n\nRoll 4 dice.\nThen deal damage equal to the total roll value of the two highest value dice that were rolled.',
+  4:
+      'Hoarding\n\nTake one of the active hero dice. They cannot use this die until the end of their turn.\nDeal 9 damage.',
+  5:
+      'Thundering Roar\n\nThe active hero must discard 1 card of their choice.\nDeal 8 undefendable damage.',
+  6:
+      "Dragon's Might\n\nDeal 10 damage and roll 1 die.\nOn 5-6, at the end of the roll phase, activate Swoop.",
+};
+
 class _NaxarusAttackLine extends StatelessWidget {
   const _NaxarusAttackLine({
     required this.value,
     required this.name,
+    required this.detail,
     required this.result,
   });
 
   final int value;
   final String name;
+  final String detail;
   final List<Widget> result;
 
   @override
@@ -8273,10 +8294,21 @@ class _NaxarusAttackLine extends StatelessWidget {
           SizedBox(width: 32, child: _NaxarusDieValueBadge(value: value)),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              name,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w900),
+            child: InkWell(
+              onTap: () => _showDetails(context),
+              borderRadius: BorderRadius.circular(6),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  name,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    decoration: TextDecoration.underline,
+                    decorationColor: Colors.white70,
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -8288,6 +8320,22 @@ class _NaxarusAttackLine extends StatelessWidget {
               runSpacing: 4,
               children: result,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDetails(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(name),
+        content: Text(detail),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
           ),
         ],
       ),
@@ -8338,7 +8386,7 @@ class AttackObjectiveInline extends StatelessWidget {
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: enemy.profileKey == 'naraxus'
-            ? const DieValueBadge(value: 6, showValue: false)
+            ? const SizedBox.shrink()
             : switch (enemy.attackPlan.style) {
                 MinionAttackStyle.suite => const SuiteGoalView(length: 5),
                 MinionAttackStyle.symbols => SymbolGoalView(
@@ -8791,9 +8839,10 @@ class CombatBottomDock extends StatelessWidget {
       if (minionTokens.isNotEmpty) 'Minion: ${minionTokens.join(', ')}',
       if (returnDamage > 0) 'Return damage: $returnDamage',
       if (lifeSteal > 0) 'Life steal: $lifeSteal',
-      if (enemyHeal > 0) 'Enemy heals: $enemyHeal',
+      if (enemyHeal > 0 && enemy.profileKey != 'naraxus')
+        'Enemy heals: $enemyHeal',
       if (cpSteal > 0) 'CP steal: $cpSteal',
-      ...notes,
+      if (enemy.profileKey != 'naraxus') ...notes,
     ];
 
     final maxDockHeight = (MediaQuery.sizeOf(
@@ -9876,28 +9925,29 @@ String _naraxusAiMessage(
   final value = rolled.first.value!;
   final result = switch (value) {
     1 =>
-      'D6 1 selects Swoop.\n'
-          'The resolution line is ready.\n'
+      'Naxarus rolled 1 on his attack die and performs Swoop.\n'
+          'Swoop removes 1 random status token from Naxarus, heals 4 HP, then deals 3 undefendable damage.\n'
           '${adventure.hero.label} has no defense unless a card changes the attack.',
     2 =>
-      'D6 2 selects Ember Spark.\n'
-          'The resolution line is ready.\n'
+      'Naxarus rolled 2 on his attack die and performs Ember Spark.\n'
+          'The active hero places the top 3 cards of their deck into the discard pile, then takes 8 damage.\n'
           '${adventure.hero.label} must perform a defensive phase.',
     3 =>
-      'D6 3 selects Gashing Bite.\n'
-          'Use the extra dice phase to roll 4 dice, then keep the 2 highest for damage.\n'
+      'Naxarus rolled 3 on his attack die and performs Gashing Bite.\n'
+          'Use the extra dice phase to roll 4 dice; damage equals the 2 highest dice.\n'
           '${adventure.hero.label} must perform a defensive phase.',
     4 =>
-      'D6 4 selects Hoarding.\n'
-          'The resolution line is ready.\n'
+      'Naxarus rolled 4 on his attack die and performs Hoarding.\n'
+          'The hero loses 1 die for the next battle roll, then takes 9 damage.\n'
           '${adventure.hero.label} must perform a defensive phase.',
     5 =>
-      'D6 5 selects Thundering Roar.\n'
-          'The resolution line is ready.\n'
+      'Naxarus rolled 5 on his attack die and performs Thundering Roar.\n'
+          'The hero discards 1 card, then takes 8 undefendable damage.\n'
           '${adventure.hero.label} has no defense unless a card changes the attack.',
     6 =>
-      "D6 6 selects Dragon's Might.\n"
-          'Use the extra dice phase to check whether Swoop also triggers.',
+      "Naxarus rolled 6 on his attack die and performs Dragon's Might.\n"
+          'Dragon\'s Might deals 10 damage and rolls 1 extra die.\n'
+          'On 5 or 6, Swoop is added to the attack.',
     _ => 'Naxarus waits.',
   };
   return '**Battle phase.**\n$result';
@@ -10528,22 +10578,28 @@ class LifeStealBadge extends StatelessWidget {
 }
 
 class _HealBadge extends StatelessWidget {
-  const _HealBadge({required this.value, required this.color});
+  const _HealBadge({required this.value});
 
   final int value;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      width: 28,
+      height: 28,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: color),
+        color: Colors.greenAccent,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.green, width: 2),
       ),
       child: Text(
         '+$value',
-        style: TextStyle(color: color, fontWeight: FontWeight.w900),
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+        ),
       ),
     );
   }
@@ -10575,6 +10631,133 @@ class _CardMoveBadge extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _DiscardCardBadge extends StatelessWidget {
+  const _DiscardCardBadge({required this.value});
+
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 28,
+      height: 34,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: Colors.black, width: 1.5),
+      ),
+      child: Text(
+        value.toString(),
+        style: const TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _FourDiceToTopTwoBadge extends StatelessWidget {
+  const _FourDiceToTopTwoBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 3,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: const [
+        Text('4x', style: TextStyle(fontWeight: FontWeight.w900)),
+        _EmptyDieBadge(size: 22),
+        Text('='),
+        _EmptyDieBadge(size: 22, label: '^'),
+        Text('+'),
+        _EmptyDieBadge(size: 22, label: '^'),
+      ],
+    );
+  }
+}
+
+class _DiePenaltyBadge extends StatelessWidget {
+  const _DiePenaltyBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _EmptyDieBadge(
+      size: 30,
+      label: '-1',
+      borderColor: heroAccent,
+      textColor: heroAccent,
+    );
+  }
+}
+
+class _OneDieBadge extends StatelessWidget {
+  const _OneDieBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Wrap(
+      spacing: 3,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text('1x', style: TextStyle(fontWeight: FontWeight.w900)),
+        _EmptyDieBadge(size: 24),
+      ],
+    );
+  }
+}
+
+class _SwoopOnFiveSixBadge extends StatelessWidget {
+  const _SwoopOnFiveSixBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      '5/6 -> Swoop',
+      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+    );
+  }
+}
+
+class _EmptyDieBadge extends StatelessWidget {
+  const _EmptyDieBadge({
+    required this.size,
+    this.label,
+    this.borderColor = Colors.white,
+    this.textColor = Colors.white,
+  });
+
+  final double size;
+  final String? label;
+  final Color borderColor;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: borderColor, width: 1.5),
+      ),
+      child: label == null
+          ? null
+          : Text(
+              label!,
+              style: TextStyle(
+                color: textColor,
+                fontSize: size <= 24 ? 12 : 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
     );
   }
 }
