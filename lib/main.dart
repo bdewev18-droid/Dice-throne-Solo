@@ -10605,36 +10605,6 @@ class _HealBadge extends StatelessWidget {
   }
 }
 
-class _CardMoveBadge extends StatelessWidget {
-  const _CardMoveBadge({required this.value});
-
-  final int value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: Colors.white),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.style, color: Colors.white, size: 14),
-          Text(
-            ' $value',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _DiscardCardBadge extends StatelessWidget {
   const _DiscardCardBadge({required this.value});
 
@@ -10758,54 +10728,6 @@ class _EmptyDieBadge extends StatelessWidget {
                 fontWeight: FontWeight.w900,
               ),
             ),
-    );
-  }
-}
-
-class _RollMoreBadge extends StatelessWidget {
-  const _RollMoreBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: Colors.white),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-    );
-  }
-}
-
-class _TopDiceBadge extends StatelessWidget {
-  const _TopDiceBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: Colors.lightBlueAccent),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.lightBlueAccent,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
     );
   }
 }
