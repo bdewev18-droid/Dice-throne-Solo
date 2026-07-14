@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.23';
+const String appVersionLabel = 'Version 1.2.24';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -6149,6 +6149,24 @@ class _FightPageState extends State<FightPage> {
 
   @override
   Widget build(BuildContext context) {
+    final aiMessage = _aiMode
+        ? _aiMessageFor(
+            enemy,
+            _phase,
+            _dice,
+            _rollCount,
+            widget.adventure,
+            widget.historyRecords,
+            _lastBattleOutcomeMessage,
+            _extraDiceOutcomeMessage,
+            _heroAttackCount,
+            _lastHeroAttack,
+            _heroAttackTotal,
+          )
+        : '';
+    final canAdvancePhase =
+        _phase != CombatPhase.minionAttack &&
+        (_phase != CombatPhase.hero || _battleAttackValue == 0);
     return PopScope<void>(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -6160,27 +6178,49 @@ class _FightPageState extends State<FightPage> {
         body: SafeArea(
           child: Column(
             children: [
+              CombatBottomDock(
+                showResolution: _isBattlePhase,
+                phase: _phase,
+                adventure: widget.adventure,
+                enemy: enemy,
+                naraxusRollHistory: _naraxusRollHistory,
+                onFinish:
+                    enemy.health <= 0 ||
+                        (_isNaraxus && widget.adventure.health <= 0)
+                    ? _finishCombat
+                    : null,
+                upkeepApplied: _upkeepApplied,
+                heroUpkeepApplied: _heroUpkeepApplied,
+                canAdvancePhase: canAdvancePhase,
+                attackValue: _battleAttackValue,
+                defenseValue: _battleDefenseValue,
+                onChanged: () {
+                  widget.onChanged();
+                  setState(() {});
+                },
+                onPhaseChanged: _setPhase,
+                onNext: _advancePhase,
+                onApplyUpkeep: _applyUpkeep,
+                onApplyHeroUpkeep: _applyHeroUpkeep,
+                onAttackChanged: (delta) => setState(() {
+                  _battleAttackValue = (_battleAttackValue + delta).clamp(
+                    0,
+                    99,
+                  );
+                }),
+                onDefenseChanged: (delta) => setState(() {
+                  _battleDefenseValue = (_battleDefenseValue + delta).clamp(
+                    0,
+                    99,
+                  );
+                }),
+                onApply: _applyBattleResolution,
+              ),
               Expanded(
                 child: ListView(
                   controller: _combatScrollController,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 300),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 180),
                   children: [
-                    FightStatusPanel(
-                      adventure: widget.adventure,
-                      enemy: enemy,
-                      phase: _phase,
-                      naraxusRollHistory: _naraxusRollHistory,
-                      onFinish:
-                          enemy.health <= 0 ||
-                              (_isNaraxus && widget.adventure.health <= 0)
-                          ? _finishCombat
-                          : null,
-                      onChanged: () {
-                        widget.onChanged();
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 12),
                     EnemyRulesPanel(
                       enemy: enemy,
                       phase: _phase,
@@ -6308,34 +6348,12 @@ class _FightPageState extends State<FightPage> {
                   ],
                 ),
               ),
-              CombatBottomDock(
+              CombatAiChatDock(
                 aiMode: _aiMode,
-                showResolution: _isBattlePhase,
-                aiMessage: _aiMode
-                    ? _aiMessageFor(
-                        enemy,
-                        _phase,
-                        _dice,
-                        _rollCount,
-                        widget.adventure,
-                        widget.historyRecords,
-                        _lastBattleOutcomeMessage,
-                        _extraDiceOutcomeMessage,
-                        _heroAttackCount,
-                        _lastHeroAttack,
-                        _heroAttackTotal,
-                      )
-                    : '',
+                aiMessage: aiMessage,
                 phase: _phase,
                 adventure: widget.adventure,
                 enemy: enemy,
-                upkeepApplied: _upkeepApplied,
-                heroUpkeepApplied: _heroUpkeepApplied,
-                canAdvancePhase:
-                    _phase != CombatPhase.minionAttack &&
-                    (_phase != CombatPhase.hero || _battleAttackValue == 0),
-                attackValue: _battleAttackValue,
-                defenseValue: _battleDefenseValue,
                 returnDamage: _battleReturnDamage,
                 lifeSteal: _battleLifeSteal,
                 enemyHeal: _battleEnemyHeal,
@@ -6347,23 +6365,6 @@ class _FightPageState extends State<FightPage> {
                   widget.onChanged();
                   setState(() {});
                 },
-                onPhaseChanged: _setPhase,
-                onNext: _advancePhase,
-                onApplyUpkeep: _applyUpkeep,
-                onApplyHeroUpkeep: _applyHeroUpkeep,
-                onAttackChanged: (delta) => setState(() {
-                  _battleAttackValue = (_battleAttackValue + delta).clamp(
-                    0,
-                    99,
-                  );
-                }),
-                onDefenseChanged: (delta) => setState(() {
-                  _battleDefenseValue = (_battleDefenseValue + delta).clamp(
-                    0,
-                    99,
-                  );
-                }),
-                onApply: _applyBattleResolution,
               ),
             ],
           ),
@@ -8891,24 +8892,17 @@ class _DefenseEffectLine extends StatelessWidget {
 
 class CombatBottomDock extends StatelessWidget {
   const CombatBottomDock({
-    required this.aiMode,
     required this.showResolution,
-    required this.aiMessage,
     required this.phase,
     required this.adventure,
     required this.enemy,
+    required this.naraxusRollHistory,
+    required this.onFinish,
     required this.upkeepApplied,
     required this.heroUpkeepApplied,
     required this.canAdvancePhase,
     required this.attackValue,
     required this.defenseValue,
-    required this.returnDamage,
-    required this.lifeSteal,
-    required this.enemyHeal,
-    required this.cpSteal,
-    required this.heroTokens,
-    required this.minionTokens,
-    required this.notes,
     required this.onPhaseChanged,
     required this.onNext,
     required this.onApplyUpkeep,
@@ -8920,24 +8914,17 @@ class CombatBottomDock extends StatelessWidget {
     super.key,
   });
 
-  final bool aiMode;
   final bool showResolution;
-  final String aiMessage;
   final CombatPhase phase;
   final AdventureState adventure;
   final EnemyNode enemy;
+  final List<String> naraxusRollHistory;
+  final VoidCallback? onFinish;
   final bool upkeepApplied;
   final bool heroUpkeepApplied;
   final bool canAdvancePhase;
   final int attackValue;
   final int defenseValue;
-  final int returnDamage;
-  final int lifeSteal;
-  final int enemyHeal;
-  final int cpSteal;
-  final List<String> heroTokens;
-  final List<String> minionTokens;
-  final List<String> notes;
   final ValueChanged<CombatPhase> onPhaseChanged;
   final VoidCallback onNext;
   final VoidCallback onApplyUpkeep;
@@ -8952,57 +8939,40 @@ class CombatBottomDock extends StatelessWidget {
     final isHeroBattle = phase == CombatPhase.hero;
     final attackColor = isHeroBattle ? heroAccent : enemy.rank.color;
     final defenseColor = isHeroBattle ? enemy.rank.color : heroAccent;
-    final chatAccent =
-        phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
-        ? heroAccent
-        : enemy.rank.color;
-    final tokenText = [
-      if (heroTokens.isNotEmpty) 'Hero: ${heroTokens.join(', ')}',
-      if (minionTokens.isNotEmpty) 'Minion: ${minionTokens.join(', ')}',
-      if (returnDamage > 0) 'Return damage: $returnDamage',
-      if (lifeSteal > 0) 'Life steal: $lifeSteal',
-      if (enemyHeal > 0 && enemy.profileKey != 'naraxus')
-        'Enemy heals: $enemyHeal',
-      if (cpSteal > 0) 'CP steal: $cpSteal',
-      if (enemy.profileKey != 'naraxus') ...notes,
-    ];
 
-    final maxDockHeight = (MediaQuery.sizeOf(
-      context,
-    ).height * 0.58).clamp(240.0, 430.0).toDouble();
     return Container(
-      constraints: BoxConstraints(maxHeight: maxDockHeight),
       decoration: const BoxDecoration(
         color: Color(0xf2121212),
-        border: Border(top: BorderSide(color: Colors.white12)),
+        border: Border(bottom: BorderSide(color: Colors.white12)),
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (aiMode) ...[
-              _AiChatWithHealth(
-                message: _battleChatText(aiMessage, tokenText),
-                accent: chatAccent,
-                heroHp: adventure.health,
-                enemyHp: enemy.health,
-                enemyColor: enemy.rank.color,
-                heroName: adventure.hero.label,
-                enemyName: enemy.label,
-                onHeroHpSaved: (value) {
-                  adventure.setHeroHealth(value);
-                  onChanged();
-                },
-                onEnemyHpSaved: (value) {
-                  enemy.health = value.clamp(0, 99);
-                  onChanged();
-                },
-              ),
-              const SizedBox(height: 8),
-            ],
+            TurnPhasePanel(
+              phase: phase,
+              adventure: adventure,
+              enemy: enemy,
+              upkeepApplied: upkeepApplied,
+              heroUpkeepApplied: heroUpkeepApplied,
+              canAdvance: canAdvancePhase,
+              onPhaseChanged: onPhaseChanged,
+              onNext: onNext,
+              onApplyUpkeep: onApplyUpkeep,
+              onApplyHeroUpkeep: onApplyHeroUpkeep,
+            ),
+            FightStatusPanel(
+              adventure: adventure,
+              enemy: enemy,
+              phase: phase,
+              naraxusRollHistory: naraxusRollHistory,
+              onFinish: onFinish,
+              onChanged: onChanged,
+            ),
             if (showResolution) ...[
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
@@ -9041,22 +9011,88 @@ class CombatBottomDock extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
             ],
-            TurnPhasePanel(
-              phase: phase,
-              adventure: adventure,
-              enemy: enemy,
-              upkeepApplied: upkeepApplied,
-              heroUpkeepApplied: heroUpkeepApplied,
-              canAdvance: canAdvancePhase,
-              onPhaseChanged: onPhaseChanged,
-              onNext: onNext,
-              onApplyUpkeep: onApplyUpkeep,
-              onApplyHeroUpkeep: onApplyHeroUpkeep,
-            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class CombatAiChatDock extends StatelessWidget {
+  const CombatAiChatDock({
+    required this.aiMode,
+    required this.aiMessage,
+    required this.phase,
+    required this.adventure,
+    required this.enemy,
+    required this.returnDamage,
+    required this.lifeSteal,
+    required this.enemyHeal,
+    required this.cpSteal,
+    required this.heroTokens,
+    required this.minionTokens,
+    required this.notes,
+    required this.onChanged,
+    super.key,
+  });
+
+  final bool aiMode;
+  final String aiMessage;
+  final CombatPhase phase;
+  final AdventureState adventure;
+  final EnemyNode enemy;
+  final int returnDamage;
+  final int lifeSteal;
+  final int enemyHeal;
+  final int cpSteal;
+  final List<String> heroTokens;
+  final List<String> minionTokens;
+  final List<String> notes;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!aiMode) {
+      return const SizedBox.shrink();
+    }
+    final chatAccent =
+        phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
+        ? heroAccent
+        : enemy.rank.color;
+    final tokenText = [
+      if (heroTokens.isNotEmpty) 'Hero: ${heroTokens.join(', ')}',
+      if (minionTokens.isNotEmpty) 'Minion: ${minionTokens.join(', ')}',
+      if (returnDamage > 0) 'Return damage: $returnDamage',
+      if (lifeSteal > 0) 'Life steal: $lifeSteal',
+      if (enemyHeal > 0 && enemy.profileKey != 'naraxus')
+        'Enemy heals: $enemyHeal',
+      if (cpSteal > 0) 'CP steal: $cpSteal',
+      if (enemy.profileKey != 'naraxus') ...notes,
+    ];
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xf2121212),
+        border: Border(top: BorderSide(color: Colors.white12)),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      child: _AiChatWithHealth(
+        message: _battleChatText(aiMessage, tokenText),
+        accent: chatAccent,
+        heroHp: adventure.health,
+        enemyHp: enemy.health,
+        enemyColor: enemy.rank.color,
+        heroName: adventure.hero.label,
+        enemyName: enemy.label,
+        showHealthControls: false,
+        onHeroHpSaved: (value) {
+          adventure.setHeroHealth(value);
+          onChanged();
+        },
+        onEnemyHpSaved: (value) {
+          enemy.health = value.clamp(0, 99);
+          onChanged();
+        },
       ),
     );
   }
@@ -9081,6 +9117,7 @@ class _AiChatWithHealth extends StatefulWidget {
     required this.enemyColor,
     required this.heroName,
     required this.enemyName,
+    this.showHealthControls = true,
     required this.onHeroHpSaved,
     required this.onEnemyHpSaved,
   });
@@ -9092,6 +9129,7 @@ class _AiChatWithHealth extends StatefulWidget {
   final Color enemyColor;
   final String heroName;
   final String enemyName;
+  final bool showHealthControls;
   final ValueChanged<int> onHeroHpSaved;
   final ValueChanged<int> onEnemyHpSaved;
 
@@ -9142,39 +9180,43 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
     final editorColor = _target == _HpQuickTarget.hero
         ? heroAccent
         : widget.enemyColor;
+    final chat = Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: widget.accent.withValues(alpha: 0.7)),
+      ),
+      child: SingleChildScrollView(
+        reverse: true,
+        child: RichText(
+          text: TextSpan(
+            style: DefaultTextStyle.of(
+              context,
+            ).style.copyWith(height: 1.25, color: Colors.white),
+            children: _chatSpans(
+              widget.message,
+              heroName: widget.heroName,
+              enemyName: widget.enemyName,
+              enemyColor: widget.enemyColor,
+            ),
+          ),
+        ),
+      ),
+    );
+    if (!widget.showHealthControls) {
+      final lineCount = widget.message.trim().isEmpty
+          ? 1
+          : widget.message.trim().split('\n').length;
+      final chatHeight = (56.0 + lineCount * 18.0).clamp(86.0, 210.0);
+      return SizedBox(height: chatHeight, child: chat);
+    }
     return SizedBox(
       height: 150,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: widget.accent.withValues(alpha: 0.7),
-                ),
-              ),
-              child: SingleChildScrollView(
-                reverse: true,
-                child: RichText(
-                  text: TextSpan(
-                    style: DefaultTextStyle.of(
-                      context,
-                    ).style.copyWith(height: 1.25, color: Colors.white),
-                    children: _chatSpans(
-                      widget.message,
-                      heroName: widget.heroName,
-                      enemyName: widget.enemyName,
-                      enemyColor: widget.enemyColor,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          Expanded(child: chat),
           if (_target != null) ...[
             const SizedBox(width: 6),
             SizedBox(
@@ -9536,7 +9578,9 @@ InlineSpan? _chatVisualSpan(String token) {
           alignment: PlaceholderAlignment.middle,
           child: _InlineChatBadge(
             label: number,
-            color: Colors.redAccent,
+            color: lower.contains('heal')
+                ? Colors.greenAccent
+                : Colors.redAccent,
           ),
         ),
       ],
@@ -9986,6 +10030,7 @@ String _heroUpkeepAiMessage(
     isHero: true,
   );
   final lines = <String>[
+    if (lastBattleOutcome.isNotEmpty) lastBattleOutcome,
     '**Upkeep of ${adventure.hero.label}.**',
     '${adventure.hero.label} gains 1 CP and is now at ${adventure.combatPoints} CP.',
     if (tokenSummary.isNotEmpty) tokenSummary,
@@ -10007,6 +10052,7 @@ String _minionUpkeepAiMessage(
     isHero: false,
   );
   final lines = <String>[
+    if (lastBattleOutcome.isNotEmpty) lastBattleOutcome,
     '**Upkeep of ${enemy.label}.**',
     if (enemy.profileKey != 'naraxus')
       '${enemy.label} gains 1 CP and is now at ${enemy.combatPoints} CP.',
