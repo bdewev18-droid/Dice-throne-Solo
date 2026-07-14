@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.22';
+const String appVersionLabel = 'Version 1.2.23';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -5097,9 +5097,9 @@ class _MapHeaderState extends State<MapHeader> {
                         ),
                         const Spacer(),
                         RoundIconButton(
-                          icon: Icons.remove,
-                          tooltip: 'Remove',
-                          onPressed: () => setState(() => _draftValue--),
+                          icon: Icons.add,
+                          tooltip: 'Add',
+                          onPressed: () => setState(() => _draftValue++),
                         ),
                         SizedBox(
                           width: 58,
@@ -5113,9 +5113,9 @@ class _MapHeaderState extends State<MapHeader> {
                           ),
                         ),
                         RoundIconButton(
-                          icon: Icons.add,
-                          tooltip: 'Add',
-                          onPressed: () => setState(() => _draftValue++),
+                          icon: Icons.remove,
+                          tooltip: 'Remove',
+                          onPressed: () => setState(() => _draftValue--),
                         ),
                       ],
                     ),
@@ -6116,6 +6116,7 @@ class _FightPageState extends State<FightPage> {
   int _heroAttackTotal = 0;
   int _lastHeroAttack = 0;
   String _lastBattleOutcomeMessage = '';
+  String _extraDiceOutcomeMessage = '';
   final List<String> _battleHeroTokens = [];
   final List<String> _battleMinionTokens = [];
   final List<String> _battleNotes = [];
@@ -6235,7 +6236,8 @@ class _FightPageState extends State<FightPage> {
                           title: _extraDicePhaseTitle,
                           initialDiceCount: _extraDiceCount,
                           accent: enemy.rank.color,
-                          autoRoll: true,
+                          autoRoll: !_isNaraxus,
+                          onChanged: _resolveExtraDicePhase,
                         ),
                       ],
                     ] else ...[
@@ -6318,6 +6320,7 @@ class _FightPageState extends State<FightPage> {
                         widget.adventure,
                         widget.historyRecords,
                         _lastBattleOutcomeMessage,
+                        _extraDiceOutcomeMessage,
                         _heroAttackCount,
                         _lastHeroAttack,
                         _heroAttackTotal,
@@ -6583,6 +6586,9 @@ class _FightPageState extends State<FightPage> {
     if (_isNaraxus && _dice.first.value == 3) {
       return 4;
     }
+    if (_isNaraxus && _dice.first.value == 6) {
+      return 1;
+    }
     return _extraDiceCountFor(enemy);
   }
 
@@ -6618,6 +6624,7 @@ class _FightPageState extends State<FightPage> {
     _battleHeroTokens.clear();
     _battleMinionTokens.clear();
     _battleNotes.clear();
+    _extraDiceOutcomeMessage = '';
   }
 
   void _refreshBattleResolutionFromDice() {
@@ -6899,6 +6906,7 @@ class _FightPageState extends State<FightPage> {
     if (first == null) {
       return;
     }
+    _extraDiceOutcomeMessage = '';
     final notes = <String>[];
     var attack = 0;
     var enemyHeal = 0;
@@ -6917,7 +6925,7 @@ class _FightPageState extends State<FightPage> {
         notes.add('Ember Spark: 8 damage.');
       case 3:
         attack = 0;
-        notes.add('Gashing Bite: roll 4 dice in the extra dice phase.');
+        notes.add('Gashing Bite: the player rolls 4 dice in the extra dice phase.');
         notes.add(
           'Damage will equal the 2 highest dice after hero interactions.',
         );
@@ -6934,7 +6942,7 @@ class _FightPageState extends State<FightPage> {
         attack = 10;
         notes.add("Dragon's Might: 10 damage.");
         notes.add(
-          "Dragon's Might: roll 1 die in the extra dice phase; on 5-6, Swoop also triggers.",
+          "Dragon's Might: the player rolls 1 die in the extra dice phase; on 5-6, Swoop also triggers.",
         );
     }
 
@@ -6949,6 +6957,63 @@ class _FightPageState extends State<FightPage> {
     _battleNotes
       ..clear()
       ..addAll(notes);
+  }
+
+  void _resolveExtraDicePhase(List<GameDie> extraDice) {
+    if (!_isNaraxus || _phase != CombatPhase.minionAttack) {
+      return;
+    }
+    final baseAttack = _dice.first.value;
+    final values =
+        extraDice
+            .where((die) => die.value != null)
+            .map((die) => die.value!)
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
+    if (values.isEmpty) {
+      return;
+    }
+    setState(() {
+      if (baseAttack == 3) {
+        final topTwo = values.take(2).toList();
+        final damage = topTwo.fold<int>(0, (sum, value) => sum + value);
+        _battleAttackValue = damage.clamp(0, 99);
+        _battleEnemyHeal = 0;
+        _battleHeroTokens.clear();
+        _battleNotes
+          ..clear()
+          ..add(
+            'Gashing Bite: top dice ${topTwo.join(' + ')} deal $damage damage.',
+          );
+        _extraDiceOutcomeMessage =
+            'Gashing Bite extra roll: ${values.reversed.join('/')}.\n'
+            'Naxarus inflicts $damage damage with the 2 highest dice (${topTwo.join(' + ')}).';
+      } else if (baseAttack == 6) {
+        final extra = values.first;
+        var damage = 10;
+        var heal = 0;
+        final notes = <String>["Dragon's Might: 10 damage."];
+        if (extra >= 5) {
+          damage += 3;
+          heal = 4;
+          notes.add('Extra die $extra: Swoop is added.');
+          notes.add('Swoop: Naxarus heals 4 HP and deals 3 undefendable damage.');
+        } else {
+          notes.add('Extra die $extra: no Swoop added.');
+        }
+        _battleAttackValue = damage.clamp(0, 99);
+        _battleEnemyHeal = heal;
+        _battleHeroTokens.clear();
+        _battleNotes
+          ..clear()
+          ..addAll(notes);
+        _extraDiceOutcomeMessage = extra >= 5
+            ? "Dragon's Might extra die: $extra.\n"
+                  'Swoop is added: Naxarus inflicts 13 damage and heals 4 HP.'
+            : "Dragon's Might extra die: $extra.\n"
+                  'No Swoop: Naxarus inflicts 10 defendable damage.';
+      }
+    });
   }
 
   void _removeRandomEnemyToken() {
@@ -7160,8 +7225,10 @@ class _FightPageState extends State<FightPage> {
       final upkeepLog = _isNaraxus
           ? _naxarusUpkeepLog(outcome)
           : outcome.log;
-      widget.adventure.log('${enemy.label} upkeep: $upkeepLog.');
-      _lastBattleOutcomeMessage = '${enemy.label} upkeep resolved: $upkeepLog.';
+      if (upkeepLog.isNotEmpty) {
+        widget.adventure.log('${enemy.label} upkeep: $upkeepLog.');
+      }
+      _lastBattleOutcomeMessage = '';
       widget.onChanged();
     });
     if (enemy.health <= 0) {
@@ -7181,7 +7248,7 @@ class _FightPageState extends State<FightPage> {
     if (outcome.removedTokens.isNotEmpty) {
       parts.add('removed ${outcome.removedTokens.join(', ')}');
     }
-    return parts.isEmpty ? 'no upkeep token found' : parts.join(', ');
+    return parts.join(', ');
   }
 
   void _applyMinionDiceStrategy() {
@@ -8446,12 +8513,17 @@ class DefenseDiceInline extends StatelessWidget {
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.centerRight,
-      child: Wrap(
-        spacing: 3,
-        children: [
-          for (var i = 0; i < count.clamp(0, 6); i++)
-            const SuiteGoalPip(size: 24),
-        ],
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < count.clamp(0, 6); i++) ...[
+              if (i > 0) const SizedBox(width: 2),
+              const SuiteGoalPip(size: 22),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -8917,6 +8989,8 @@ class CombatBottomDock extends StatelessWidget {
                 heroHp: adventure.health,
                 enemyHp: enemy.health,
                 enemyColor: enemy.rank.color,
+                heroName: adventure.hero.label,
+                enemyName: enemy.label,
                 onHeroHpSaved: (value) {
                   adventure.setHeroHealth(value);
                   onChanged();
@@ -9005,6 +9079,8 @@ class _AiChatWithHealth extends StatefulWidget {
     required this.heroHp,
     required this.enemyHp,
     required this.enemyColor,
+    required this.heroName,
+    required this.enemyName,
     required this.onHeroHpSaved,
     required this.onEnemyHpSaved,
   });
@@ -9014,6 +9090,8 @@ class _AiChatWithHealth extends StatefulWidget {
   final int heroHp;
   final int enemyHp;
   final Color enemyColor;
+  final String heroName;
+  final String enemyName;
   final ValueChanged<int> onHeroHpSaved;
   final ValueChanged<int> onEnemyHpSaved;
 
@@ -9059,7 +9137,7 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
 
   @override
   Widget build(BuildContext context) {
-    const hpWidth = 78.0;
+    const hpWidth = 56.0;
     const editorWidth = 78.0;
     final editorColor = _target == _HpQuickTarget.hero
         ? heroAccent
@@ -9086,7 +9164,12 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
                     style: DefaultTextStyle.of(
                       context,
                     ).style.copyWith(height: 1.25, color: Colors.white),
-                    children: _chatSpans(widget.message),
+                    children: _chatSpans(
+                      widget.message,
+                      heroName: widget.heroName,
+                      enemyName: widget.enemyName,
+                      enemyColor: widget.enemyColor,
+                    ),
                   ),
                 ),
               ),
@@ -9311,10 +9394,15 @@ class _CompactRoundIconButton extends StatelessWidget {
   }
 }
 
-List<InlineSpan> _chatSpans(String value) {
+List<InlineSpan> _chatSpans(
+  String value, {
+  required String heroName,
+  required String enemyName,
+  required Color enemyColor,
+}) {
   final spans = <InlineSpan>[];
   final pattern = RegExp(
-    r'(\*\*[^*]+\*\*|_[^_]+_|prevents? \d+ damage|prevented \d+ damage|deals? \d+ undefendable damage|dealt \d+ undefendable damage|deals? \d+ damage|dealt \d+ damage|heals? \d+ HP|healed \d+ HP|\d+ HP)',
+    '(${RegExp.escape(heroName)}|${RegExp.escape(enemyName)}|\\*\\*[^*]+\\*\\*|_[^_]+_|prevents? \\d+ damage|prevented \\d+ damage|prévents? \\d+ damage|prévient \\d+ damage|deals? \\d+ undefendable damage|dealt \\d+ undefendable damage|inflicts? \\d+ undefendable damage|inflige \\d+ undefendable damage|deals? \\d+ defendable damage|dealt \\d+ defendable damage|inflicts? \\d+ defendable damage|inflige \\d+ defendable damage|deals? \\d+ damage|dealt \\d+ damage|inflicts? \\d+ damage|inflige \\d+ damage|heals? \\d+ HP|healed \\d+ HP|\\d+ HP)',
     caseSensitive: false,
   );
   var index = 0;
@@ -9334,6 +9422,23 @@ List<InlineSpan> _chatSpans(String value) {
       final visual = _chatVisualSpan(token);
       if (visual != null) {
         spans.add(visual);
+      } else if (token.toLowerCase() == heroName.toLowerCase()) {
+        spans.add(
+          TextSpan(
+            text: token,
+            style: const TextStyle(
+              color: heroAccent,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        );
+      } else if (token.toLowerCase() == enemyName.toLowerCase()) {
+        spans.add(
+          TextSpan(
+            text: token,
+            style: TextStyle(color: enemyColor, fontWeight: FontWeight.w900),
+          ),
+        );
       } else {
         spans.add(
           TextSpan(
@@ -9360,44 +9465,81 @@ InlineSpan? _chatVisualSpan(String token) {
     return null;
   }
   final lower = token.toLowerCase();
-  if (lower.contains('prevent')) {
-    return WidgetSpan(
-      alignment: PlaceholderAlignment.middle,
-      child: _InlineChatBadge(
-        label: number,
-        color: Colors.blueAccent,
-        icon: Icons.shield,
-      ),
+  if (lower.contains('prevent') || lower.contains('prévient')) {
+    return TextSpan(
+      children: [
+        TextSpan(text: lower.contains('prévient') ? 'prévient ' : 'prevents '),
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: _InlineChatBadge(
+            label: number,
+            color: Colors.blueAccent,
+          ),
+        ),
+      ],
     );
   }
   if (lower.contains('undefendable')) {
-    return WidgetSpan(
-      alignment: PlaceholderAlignment.middle,
-      child: _InlineChatBadge(
-        label: number,
-        color: Colors.redAccent,
-        icon: Icons.gps_fixed,
-      ),
+    final verb = lower.contains('inflige')
+        ? 'inflige '
+        : lower.contains('inflict')
+        ? 'inflicts '
+        : lower.contains('dealt')
+        ? 'dealt '
+        : 'deals ';
+    return TextSpan(
+      children: [
+        TextSpan(text: verb),
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: _InlineChatBadge(
+            label: number,
+            color: Colors.redAccent,
+          ),
+        ),
+      ],
     );
   }
-  if (lower.contains('damage')) {
-    return WidgetSpan(
-      alignment: PlaceholderAlignment.middle,
-      child: _InlineChatBadge(
-        label: number,
-        color: Colors.white,
-        icon: Icons.gps_fixed,
-      ),
+  if (lower.contains('damage') || lower.contains('dégât')) {
+    final verb = lower.contains('inflige')
+        ? 'inflige '
+        : lower.contains('inflict')
+        ? 'inflicts '
+        : lower.contains('dealt')
+        ? 'dealt '
+        : lower.contains('return')
+        ? 'return '
+        : 'deals ';
+    return TextSpan(
+      children: [
+        TextSpan(text: verb),
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: _InlineChatBadge(
+            label: number,
+            color: Colors.white,
+          ),
+        ),
+      ],
     );
   }
   if (lower.contains('hp')) {
-    return WidgetSpan(
-      alignment: PlaceholderAlignment.middle,
-      child: _InlineChatBadge(
-        label: number,
-        color: Colors.redAccent,
-        icon: Icons.favorite,
-      ),
+    final verb = lower.contains('heal')
+        ? lower.contains('healed')
+              ? 'healed '
+              : 'heals '
+        : '';
+    return TextSpan(
+      children: [
+        if (verb.isNotEmpty) TextSpan(text: verb),
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: _InlineChatBadge(
+            label: number,
+            color: Colors.redAccent,
+          ),
+        ),
+      ],
     );
   }
   return null;
@@ -9407,12 +9549,10 @@ class _InlineChatBadge extends StatelessWidget {
   const _InlineChatBadge({
     required this.label,
     required this.color,
-    required this.icon,
   });
 
   final String label;
   final Color color;
-  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -9420,26 +9560,21 @@ class _InlineChatBadge extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        width: 25,
+        height: 25,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isWhite ? Colors.transparent : color.withValues(alpha: 0.85),
-          borderRadius: BorderRadius.circular(99),
+          color: isWhite ? Colors.transparent : color.withValues(alpha: 0.9),
+          shape: BoxShape.circle,
           border: Border.all(color: color, width: 1.5),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 11, color: isWhite ? Colors.white : Colors.white),
-            const SizedBox(width: 2),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isWhite ? Colors.white : Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+          ),
         ),
       ),
     );
@@ -9472,10 +9607,10 @@ class _BattleCounter extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           RoundIconButton(
-            icon: Icons.remove,
-            tooltip: 'Remove',
+            icon: Icons.add,
+            tooltip: 'Add',
             color: color,
-            onPressed: () => onChanged(-1),
+            onPressed: () => onChanged(1),
           ),
           Expanded(
             child: Column(
@@ -9501,10 +9636,10 @@ class _BattleCounter extends StatelessWidget {
             ),
           ),
           RoundIconButton(
-            icon: Icons.add,
-            tooltip: 'Add',
+            icon: Icons.remove,
+            tooltip: 'Remove',
             color: color,
-            onPressed: () => onChanged(1),
+            onPressed: () => onChanged(-1),
           ),
         ],
       ),
@@ -9705,6 +9840,7 @@ String _aiMessageFor(
   AdventureState adventure,
   List<GameRecord> historyRecords,
   String lastBattleOutcome,
+  String extraDiceOutcome,
   int heroAttackCount,
   int lastHeroAttack,
   int heroAttackTotal,
@@ -9736,6 +9872,7 @@ String _aiMessageFor(
       dice,
       rollCount,
       adventure,
+      extraDiceOutcome,
     ),
   };
 }
@@ -9796,10 +9933,13 @@ String _openingAiLines(
     return lines.join('\n');
   }
 
+  final encounter = adventure.defeatedEnemies.length + 1;
   if (runs.isEmpty) {
-    lines.add(
-      '_${adventure.hero.label} starts Minion Rush for the first time. Can this hero beat every enemy on the path?_',
-    );
+    if (encounter == 1 && enemy.rank == EnemyRank.green) {
+      lines.add(
+        '_${adventure.hero.label} starts Minion Rush for the first time. Can this hero beat every enemy on the path?_',
+      );
+    }
   } else if (runs.length == 1) {
     final last = runs.first;
     lines.add(
@@ -9815,7 +9955,6 @@ String _openingAiLines(
       '_In ${adventure.config.label}, ${adventure.hero.label} averages ${averageScore.toStringAsFixed(1)} points and ${averageEnemies.toStringAsFixed(1)} defeated enemies. Can you improve the run?_',
     );
   }
-  final encounter = adventure.defeatedEnemies.length + 1;
   lines.add('This is the ${_ordinal(encounter)} Minion Rush encounter.');
   lines.add(
     '${enemy.label} starts with ${enemy.health} HP, ${enemy.combatPoints} CP and ${enemy.alterations.length} token(s).',
@@ -9841,19 +9980,15 @@ String _heroUpkeepAiMessage(
   List<GameRecord> historyRecords,
   String lastBattleOutcome,
 ) {
+  final tokenSummary = _tokenUpkeepSummary(
+    owner: adventure.hero.label,
+    tokens: adventure.alterations,
+    isHero: true,
+  );
   final lines = <String>[
-    if (lastBattleOutcome.isNotEmpty)
-      lastBattleOutcome
-    else
-      _openingAiLines(adventure, enemy, historyRecords),
-    '**Upkeep of hero.**',
-    'Start of turn for ${adventure.hero.label}.',
+    '**Upkeep of ${adventure.hero.label}.**',
     '${adventure.hero.label} gains 1 CP and is now at ${adventure.combatPoints} CP.',
-    _tokenUpkeepSummary(
-      owner: adventure.hero.label,
-      tokens: adventure.alterations,
-      isHero: true,
-    ),
+    if (tokenSummary.isNotEmpty) tokenSummary,
     if (!adventure.alterations.contains('Commotion'))
       '${adventure.hero.label} should draw 1 card before the battle phase.',
   ];
@@ -9866,20 +10001,16 @@ String _minionUpkeepAiMessage(
   List<GameRecord> historyRecords,
   String lastBattleOutcome,
 ) {
+  final tokenSummary = _tokenUpkeepSummary(
+    owner: enemy.label,
+    tokens: enemy.alterations,
+    isHero: false,
+  );
   final lines = <String>[
-    if (lastBattleOutcome.isNotEmpty)
-      lastBattleOutcome
-    else
-      _openingAiLines(adventure, enemy, historyRecords),
-    '**Upkeep of minion.**',
-    'Start of turn for ${enemy.label}.',
+    '**Upkeep of ${enemy.label}.**',
     if (enemy.profileKey != 'naraxus')
       '${enemy.label} gains 1 CP and is now at ${enemy.combatPoints} CP.',
-    _tokenUpkeepSummary(
-      owner: enemy.label,
-      tokens: enemy.alterations,
-      isHero: false,
-    ),
+    if (tokenSummary.isNotEmpty) tokenSummary,
   ];
   return lines.join('\n');
 }
@@ -9906,8 +10037,6 @@ String _heroBattleAiMessage(
     intro,
     '${enemy.label} is waiting for the hero attack result.',
     'If the attack is defendable, roll ${enemy.label} defense.',
-    if (enemy.profileKey != 'naraxus')
-      'Maximum prevention: ${_maxDefensePrevention(enemy)} damage. Maximum return damage: ${_maxDefenseReturnDamage(enemy)} damage.',
     if (adventure.alterations.contains('Silence'))
       'Silence is active: ${adventure.hero.label} cannot validate a suite this turn.',
   ].join('\n');
@@ -9919,7 +10048,7 @@ String _tokenUpkeepSummary({
   required bool isHero,
 }) {
   if (tokens.isEmpty) {
-    return 'No upkeep token found. The game continues.';
+    return '';
   }
   final counts = _tokenCounts(tokens);
   final lines = <String>[];
@@ -9947,7 +10076,7 @@ String _tokenUpkeepSummary({
     }
   }
   if (lines.isEmpty) {
-    return 'Tokens are present, but none are automated for upkeep yet.';
+    return '';
   }
   if (poisonDamage > 0) {
     lines.add('The upkeep damage may defeat $owner if HP is too low.');
@@ -9968,10 +10097,11 @@ String _minionAttackAiMessage(
   List<GameDie> dice,
   int rollCount,
   AdventureState adventure,
+  String extraDiceOutcome,
 ) {
   final rolled = dice.where((die) => die.value != null).toList();
   if (enemy.profileKey == 'naraxus') {
-    return _naraxusAiMessage(enemy, rolled, adventure);
+    return _naraxusAiMessage(enemy, rolled, adventure, extraDiceOutcome);
   }
   if (rollCount == 0 || rolled.isEmpty) {
     if (enemy.attackPlan.style == MinionAttackStyle.suite) {
@@ -10084,6 +10214,7 @@ String _naraxusAiMessage(
   EnemyNode enemy,
   List<GameDie> rolled,
   AdventureState adventure,
+  String extraDiceOutcome,
 ) {
   if (rolled.isEmpty || rolled.first.value == null) {
     return '**Battle phase.**\n'
@@ -10095,28 +10226,35 @@ String _naraxusAiMessage(
   final result = switch (value) {
     1 =>
       'Naxarus rolled 1 on his attack die and performs Swoop.\n'
-          'Swoop removes 1 random status token from Naxarus, heals 4 HP, then deals 3 undefendable damage.\n'
+          'Swoop removes 1 random status token from Naxarus, heals 4 HP, then inflicts 3 undefendable damage.\n'
           '${adventure.hero.label} has no defense unless a card changes the attack.',
     2 =>
       'Naxarus rolled 2 on his attack die and performs Ember Spark.\n'
-          'The active hero places the top 3 cards of their deck into the discard pile, then takes 8 damage.\n'
+          'The active hero places the top 3 cards of their deck into the discard pile.\n'
+          'Naxarus inflicts 8 damage.\n'
           '${adventure.hero.label} must perform a defensive phase.',
     3 =>
       'Naxarus rolled 3 on his attack die and performs Gashing Bite.\n'
-          'Use the extra dice phase to roll 4 dice; damage equals the 2 highest dice.\n'
+          'The player must roll 4 dice in the extra dice phase.\n'
+          'Damage equals the 2 highest dice.\n'
+          '${extraDiceOutcome.isEmpty ? '' : '$extraDiceOutcome\n'}'
           '${adventure.hero.label} must perform a defensive phase.',
     4 =>
       'Naxarus rolled 4 on his attack die and performs Hoarding.\n'
-          'The hero loses 1 die for the next battle roll, then takes 9 damage.\n'
+          'The hero loses 1 die for the next battle roll.\n'
+          'Naxarus inflicts 9 damage.\n'
           '${adventure.hero.label} must perform a defensive phase.',
     5 =>
       'Naxarus rolled 5 on his attack die and performs Thundering Roar.\n'
-          'The hero discards 1 card, then takes 8 undefendable damage.\n'
+          'The hero discards 1 card.\n'
+          'Naxarus inflicts 8 undefendable damage.\n'
           '${adventure.hero.label} has no defense unless a card changes the attack.',
     6 =>
       "Naxarus rolled 6 on his attack die and performs Dragon's Might.\n"
-          'Dragon\'s Might deals 10 damage and rolls 1 extra die.\n'
-          'On 5 or 6, Swoop is added to the attack.',
+          'Dragon\'s Might inflicts 10 damage.\n'
+          'The player must roll 1 extra die.\n'
+          'On 5 or 6, Swoop is added to the attack.\n'
+          '${extraDiceOutcome.isEmpty ? '' : extraDiceOutcome}',
     _ => 'Naxarus waits.',
   };
   return '**Battle phase.**\n$result';
@@ -10148,37 +10286,6 @@ bool _symbolGoalMetDice(List<GameDie> dice, SymbolGoal goal) {
       (counts[DieSymbol.red] ?? 0) >= goal.red;
 }
 
-int _maxDefensePrevention(EnemyNode enemy) {
-  return switch (enemy.profileKey) {
-    'naraxus' => 5,
-    'fee' => 3,
-    'archer-de-lombre' => 3,
-    'epeiste-egare' => enemy.defenseDice.clamp(0, 5),
-    'elfe-du-chaos' => 99,
-    _ => _numberAfter(enemy.defense, ['previent', 'prevent']) ?? 0,
-  };
-}
-
-int _maxDefenseReturnDamage(EnemyNode enemy) {
-  return switch (enemy.profileKey) {
-    'ronin-vagabond' => 3,
-    'enchanteur-gobelin' => 1,
-    'epeiste-egare' => 2,
-    _ => _numberAfter(enemy.defense, ['inflige', 'deal']) ?? 0,
-  };
-}
-
-int? _numberAfter(String text, List<String> words) {
-  final lower = text.toLowerCase();
-  for (final word in words) {
-    final match = RegExp('$word ([0-9]+)').firstMatch(lower);
-    if (match != null) {
-      return int.tryParse(match.group(1) ?? '');
-    }
-  }
-  return null;
-}
-
 int _bestSuiteLength(List<int> values) {
   final unique = values.toSet();
   for (final suite in const [
@@ -10205,6 +10312,7 @@ class ManualExtraDicePhasePanel extends StatefulWidget {
     this.initialDiceCount = 1,
     this.accent = const Color(0xff8f43ff),
     this.autoRoll = false,
+    this.onChanged,
     super.key,
   });
 
@@ -10212,6 +10320,7 @@ class ManualExtraDicePhasePanel extends StatefulWidget {
   final int initialDiceCount;
   final Color accent;
   final bool autoRoll;
+  final ValueChanged<List<GameDie>>? onChanged;
 
   @override
   State<ManualExtraDicePhasePanel> createState() =>
@@ -10236,6 +10345,24 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
     _diceToRoll = widget.initialDiceCount.clamp(0, 5);
     if (widget.autoRoll && _diceToRoll > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _rollVisibleDice());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ManualExtraDicePhasePanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialDiceCount != widget.initialDiceCount ||
+        oldWidget.title != widget.title) {
+      _diceToRoll = widget.initialDiceCount.clamp(0, 5);
+      _rollCount = 0;
+      _editMode = false;
+      _rerollMode = false;
+      _editingDieId = null;
+      for (final die in _dice) {
+        die
+          ..value = null
+          ..reserved = false;
+      }
     }
   }
 
@@ -10303,27 +10430,32 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
                   ChoiceChip(
                     label: Text(face.toString()),
                     selected: false,
-                    onSelected: (_) => setState(() {
-                      _dice.firstWhere((die) => die.id == _editingDieId).value =
-                          face;
-                      _editingDieId = null;
-                      _editMode = false;
-                    }),
+                    onSelected: (_) {
+                      setState(() {
+                        _dice
+                                .firstWhere((die) => die.id == _editingDieId)
+                                .value =
+                            face;
+                        _editingDieId = null;
+                        _editMode = false;
+                      });
+                      widget.onChanged?.call(
+                        _dice.take(_diceToRoll.clamp(0, 5)).toList(),
+                      );
+                    },
                   ),
               ],
             ),
           ],
           const SizedBox(height: 10),
+          ImageActionButton(
+            label: _rollCount == 0 ? 'Roll' : 'Reroll',
+            icon: Icons.casino,
+            onPressed: _diceToRoll <= 0 ? null : _rollVisibleDice,
+          ),
+          const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(
-                child: ImageActionButton(
-                  label: _rollCount == 0 ? 'Roll' : 'Reroll',
-                  icon: Icons.casino,
-                  onPressed: _diceToRoll <= 0 ? null : _rollVisibleDice,
-                ),
-              ),
-              const SizedBox(width: 8),
               Expanded(
                 child: FilledButton.icon(
                   onPressed: () => setState(() {
@@ -10370,6 +10502,7 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
       }
       _rollCount++;
     });
+    widget.onChanged?.call(_dice.take(_diceToRoll.clamp(0, 5)).toList());
   }
 
   void _tapDie(GameDie die) {
@@ -10381,6 +10514,7 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
       if (_rerollMode) {
         die.value = _random.nextInt(6) + 1;
         _rerollMode = false;
+        widget.onChanged?.call(_dice.take(_diceToRoll.clamp(0, 5)).toList());
         return;
       }
       if (_rollCount > 0) {
@@ -10809,18 +10943,27 @@ class _DiscardCardBadge extends StatelessWidget {
     return Container(
       width: 28,
       height: 34,
-      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(5),
         border: Border.all(color: Colors.black, width: 1.5),
       ),
-      child: Text(
-        value.toString(),
-        style: const TextStyle(
-          color: Colors.black,
-          fontWeight: FontWeight.w900,
-        ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            right: 1,
+            top: 1,
+            child: Icon(Icons.south_east, color: Colors.black, size: 10),
+          ),
+          Text(
+            value.toString(),
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -11244,10 +11387,10 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
         ),
         const SizedBox(width: 8),
         RoundIconButton(
-          icon: Icons.remove,
-          tooltip: 'Remove',
+          icon: Icons.add,
+          tooltip: 'Add',
           color: accent,
-          onPressed: () => setState(() => _draftValues[key] = value - 1),
+          onPressed: () => setState(() => _draftValues[key] = value + 1),
         ),
         Expanded(
           child: Center(
@@ -11263,10 +11406,10 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
           ),
         ),
         RoundIconButton(
-          icon: Icons.add,
-          tooltip: 'Add',
+          icon: Icons.remove,
+          tooltip: 'Remove',
           color: accent,
-          onPressed: () => setState(() => _draftValues[key] = value + 1),
+          onPressed: () => setState(() => _draftValues[key] = value - 1),
         ),
         const SizedBox(width: 8),
         SizedBox(
