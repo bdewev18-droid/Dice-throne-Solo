@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.25';
+const String appVersionLabel = 'Version 1.2.26';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -5513,120 +5513,140 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Text(
-                    enemy.label.isEmpty ? 'Opponent name' : enemy.label,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: enemy.rank.color,
-                      fontSize: 30,
-                      fontWeight: FontWeight.w900,
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: Text(
+                      enemy.label.isEmpty ? 'Opponent name' : enemy.label,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: enemy.rank.color,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
-                  const Expanded(child: SizedBox()),
                   if (widget.showNext &&
-                      enemy.alterations.contains('Première Frappe')) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.55),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: enemy.rank.color),
-                      ),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'First Strike token detected',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Does the minion keep this token for the start of combat?',
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 10),
-                          SegmentedButton<bool>(
-                            segments: const [
-                              ButtonSegment(value: true, label: Text('Yes')),
-                              ButtonSegment(value: false, label: Text('No')),
-                            ],
-                            selected: {_keepFirstStrike},
-                            onSelectionChanged: (values) =>
-                                setState(() => _keepFirstStrike = values.first),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  const SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
+                      enemy.alterations.contains('Première Frappe'))
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 116),
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.56),
+                            color: Colors.black.withValues(alpha: 0.55),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: enemy.rank.color),
                           ),
                           child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.favorite,
-                                    color: enemy.rank.color,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '${enemy.maxHealth} HP',
-                                    style: TextStyle(
-                                      color: enemy.rank.color,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 18),
-                                  RewardChestBadge(
-                                    rank: enemy.rewardRank,
-                                    count: enemy.rewardChests,
-                                  ),
-                                ],
+                              const Text(
+                                'First Strike token detected',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.w900),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Does the minion keep this token for the start of combat?',
+                                textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 10),
-                              EnemyObjectivePreview(enemy: enemy),
+                              SegmentedButton<bool>(
+                                segments: const [
+                                  ButtonSegment(
+                                    value: true,
+                                    label: Text('Yes'),
+                                  ),
+                                  ButtonSegment(
+                                    value: false,
+                                    label: Text('No'),
+                                  ),
+                                ],
+                                selected: {_keepFirstStrike},
+                                onSelectionChanged: (values) => setState(
+                                  () => _keepFirstStrike = values.first,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       ),
-                      if (widget.showNext) ...[
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          width: 58,
-                          child: _IntroPulse(
-                            active: true,
-                            child: IconButton.filled(
-                              style: IconButton.styleFrom(
-                                backgroundColor: const Color(0xff8f43ff),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                    ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SizedBox(
+                      height: 104,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.56),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: enemy.rank.color),
                               ),
-                              tooltip: 'Start fight',
-                              onPressed: _continueToFight,
-                              icon: const Icon(Icons.arrow_forward),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.favorite,
+                                        color: enemy.rank.color,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '${enemy.maxHealth} HP',
+                                        style: TextStyle(
+                                          color: enemy.rank.color,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 18),
+                                      RewardChestBadge(
+                                        rank: enemy.rewardRank,
+                                        count: enemy.rewardChests,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  EnemyObjectivePreview(enemy: enemy),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ],
+                          if (widget.showNext) ...[
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 58,
+                              child: _IntroPulse(
+                                active: true,
+                                child: IconButton.filled(
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: const Color(0xff8f43ff),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  tooltip: 'Start fight',
+                                  onPressed: _continueToFight,
+                                  icon: const Icon(Icons.arrow_forward),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
