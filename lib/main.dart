@@ -9,14 +9,17 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.26';
+const String appVersionLabel = 'Version 1.2.27';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
+const Color panelBorderGrey = Color(0xff3d4a3e);
 const int mediumTarget = 33;
 const int hardTarget = 52;
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await EnemyProfileRepository.load();
   runApp(const DiceThroneSurvieApp());
 }
 
@@ -162,6 +165,123 @@ class EnemyProfile {
   final List<String> initialTokens;
   final int rewardChests;
   final EnemyRank? rewardRank;
+}
+
+class EnemyProfileRepository {
+  const EnemyProfileRepository._();
+
+  static List<EnemyProfile> _profiles = const [];
+
+  static Future<void> load() async {
+    try {
+      final source = await rootBundle.loadString('docs/enemy_profiles.json');
+      final json = jsonDecode(source) as Map<String, dynamic>;
+      final rawProfiles = (json['profiles'] as List<dynamic>? ?? const []);
+      _profiles = rawProfiles
+          .whereType<Map<String, dynamic>>()
+          .map(EnemyProfileJson.fromJson)
+          .toList(growable: false);
+    } catch (error) {
+      debugPrint('Enemy profile JSON load failed: $error');
+      _profiles = const [];
+    }
+  }
+
+  static bool get isLoaded => _profiles.isNotEmpty;
+
+  static List<EnemyProfile> byRank(EnemyRank rank) {
+    return _profiles.where((profile) => profile.rank == rank).toList();
+  }
+
+  static EnemyProfile? byKey(String key) {
+    for (final profile in _profiles) {
+      if (profile.key == key) {
+        return profile;
+      }
+    }
+    return null;
+  }
+}
+
+class EnemyProfileJson {
+  const EnemyProfileJson._();
+
+  static EnemyProfile fromJson(Map<String, dynamic> json) {
+    final rank = _rankFromName(json['rank'] as String?) ?? EnemyRank.green;
+    final rewardRank = _rankFromName(json['rewardRank'] as String?);
+    return EnemyProfile(
+      key: json['key'] as String? ?? 'unknown',
+      name: json['name'] as String? ?? 'Unknown',
+      rank: rank,
+      maxHealth: _intValue(json['maxHealth'], fallback: 1),
+      pc: _intValue(json['cp'] ?? json['pc'], fallback: 0),
+      cardAsset: json['cardAsset'] as String? ?? rank.asset,
+      initialTokens: _stringList(json['initialTokens']),
+      rewardChests: _intValue(json['rewardChests'], fallback: 1),
+      rewardRank: rewardRank,
+      attacks: _stringList(json['attacks']),
+      defense: json['defense'] as String? ?? '',
+      defenseDice: _intValue(json['defenseDice'], fallback: 0),
+      attackPlan: _attackPlanFromJson(json['attackPlan']),
+    );
+  }
+
+  static EnemyRank? _rankFromName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    final normalized = value.trim().toLowerCase();
+    for (final rank in EnemyRank.values) {
+      if (rank.name == normalized) {
+        return rank;
+      }
+    }
+    return null;
+  }
+
+  static List<String> _stringList(Object? value) {
+    if (value is! List) {
+      return const [];
+    }
+    return value.whereType<String>().toList(growable: false);
+  }
+
+  static int _intValue(Object? value, {required int fallback}) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value) ?? fallback;
+    }
+    return fallback;
+  }
+
+  static MinionAttackPlan _attackPlanFromJson(Object? value) {
+    if (value is! Map<String, dynamic>) {
+      return const MinionAttackPlan.none();
+    }
+    final style = value['style'] as String? ?? 'none';
+    if (style == 'suite') {
+      return const MinionAttackPlan.suite();
+    }
+    if (style == 'symbols') {
+      final goals = (value['goals'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (goal) => SymbolGoal(
+              white: _intValue(goal['white'], fallback: 0),
+              yellow: _intValue(goal['orange'] ?? goal['yellow'], fallback: 0),
+              red: _intValue(goal['red'], fallback: 0),
+            ),
+          )
+          .toList(growable: false);
+      return MinionAttackPlan.symbols(goals);
+    }
+    return const MinionAttackPlan.none();
+  }
 }
 
 enum MinionAttackStyle { symbols, suite, none }
@@ -490,6 +610,60 @@ StatusTokenRule _tokenRule(String label) {
       persistent: true,
     ),
   );
+}
+
+String _normalizeTokenKey(String value) {
+  return value
+      .toLowerCase()
+      .replaceAll(RegExp(r'[éèêë]'), 'e')
+      .replaceAll(RegExp(r'[àâä]'), 'a')
+      .replaceAll(RegExp(r'[îï]'), 'i')
+      .replaceAll(RegExp(r'[ôö]'), 'o')
+      .replaceAll(RegExp(r'[ûü]'), 'u')
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '');
+}
+
+StatusTokenRule _tokenRuleFromTag(String value) {
+  final key = _normalizeTokenKey(value);
+  return statusTokenRules.firstWhere(
+    (rule) => _normalizeTokenKey(rule.label) == key,
+    orElse: () => _tokenRule(value),
+  );
+}
+
+String _tokenShortLabel(String label) {
+  return switch (_normalizeTokenKey(label)) {
+    'premierefrappe' => '1ST',
+    'aterre' => 'DOWN',
+    'brulure' => 'BRN',
+    'chaos' => 'CH',
+    'commotion' => 'COM',
+    'degatbonus' => 'DMG+',
+    'deperissement' => 'DEC',
+    'domination' => 'DOM',
+    'eboulissement' => 'EBO',
+    'enchevetrement' => 'ROOT',
+    'evitement' => 'EVA',
+    'hemorragie' => 'HEM',
+    'mainduroi' => 'KH',
+    'ombre' => 'SHD',
+    'parasite' => 'PAR',
+    'poison' => 'PO',
+    'prime' => 'PRI',
+    'prispourcible' => 'TGT',
+    'riposte' => 'RIP',
+    'ronces' => 'THR',
+    'salve' => 'SAL',
+    'silence' => 'SIL',
+    'siphonvital' => 'SIP',
+    'sort' => 'SPL',
+    'vol' => 'VOL',
+    'hoarding' => 'HLD',
+    _ =>
+      label.length <= 4
+          ? label.toUpperCase()
+          : label.substring(0, 4).toUpperCase(),
+  };
 }
 
 const List<EnemyProfile> greenEnemyProfiles = [
@@ -1105,8 +1279,8 @@ const List<EnemyProfile> blueEnemyProfiles = [
     pc: 2,
     cardAsset: 'assets/bleu/bleu-013.png',
     attacks: [
-      'Racine Fletrie: micro suite = 5 degats.',
-      'Petite suite = Parasite + 7. Grande suite = Deperissement + 9.',
+      'Racine Fletrie: micro suite = {damage:5}.',
+      'Petite suite = {token:Parasite} + {damage:7}. Grande suite = {token:Dépérissement} + {damage:9}.',
     ],
     defense:
         'Jet defensif 5 des: sur 2 jaunes, previent la moitie des degats arrondie au superieur.',
@@ -1914,6 +2088,10 @@ List<EnemyProfile> _recipeProfilesFor(EnemyRank rank) {
 }
 
 List<EnemyProfile> _profilesForRank(EnemyRank rank) {
+  final jsonProfiles = EnemyProfileRepository.byRank(rank);
+  if (jsonProfiles.isNotEmpty) {
+    return jsonProfiles;
+  }
   return switch (rank) {
     EnemyRank.green => [...greenEnemyProfiles, ...generatedGreenEnemyProfiles],
     EnemyRank.blue => [...blueEnemyProfiles],
@@ -1956,6 +2134,10 @@ String _genericProfileCode(EnemyProfile profile) {
 EnemyProfile? _profileByKey(String? key) {
   if (key == null) {
     return null;
+  }
+  final jsonProfile = EnemyProfileRepository.byKey(key);
+  if (jsonProfile != null) {
+    return jsonProfile;
   }
   for (final profile in [
     ...greenEnemyProfiles,
@@ -4498,7 +4680,7 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
 }
 
 class _MapPageState extends State<MapPage> {
-  static double _savedMapScale = 0.52;
+  static double _savedMapScale = 2.4;
   late final TransformationController _mapController =
       TransformationController();
   final ScrollController _mapScrollController = ScrollController();
@@ -4515,7 +4697,7 @@ class _MapPageState extends State<MapPage> {
       _savedMapScale = _mapController.value.getMaxScaleOnAxis();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showWholeMap(immediate: true);
+      _centerOnEnemy(_currentTarget(), immediate: true);
     });
   }
 
@@ -4840,8 +5022,8 @@ class _MapPageState extends State<MapPage> {
       return;
     }
     final verticalTarget =
-        (offset.dy + 100) -
-        _mapScrollController.position.viewportDimension * 0.62;
+        (offset.dy + 80) -
+        _mapScrollController.position.viewportDimension * 0.76;
     final horizontalTarget =
         offset.dx - _mapHorizontalController.position.viewportDimension / 2;
 
@@ -4869,40 +5051,6 @@ class _MapPageState extends State<MapPage> {
         curve: Curves.easeOutCubic,
       );
     }
-  }
-
-  void _showWholeMap({bool immediate = false}) {
-    if (!_mapScrollController.hasClients ||
-        !_mapHorizontalController.hasClients) {
-      return;
-    }
-    final v = (_mapScrollController.position.maxScrollExtent * 0.48)
-        .clamp(
-          _mapScrollController.position.minScrollExtent,
-          _mapScrollController.position.maxScrollExtent,
-        )
-        .toDouble();
-    final h = (_mapHorizontalController.position.maxScrollExtent * 0.5)
-        .clamp(
-          _mapHorizontalController.position.minScrollExtent,
-          _mapHorizontalController.position.maxScrollExtent,
-        )
-        .toDouble();
-    if (immediate) {
-      _mapScrollController.jumpTo(v);
-      _mapHorizontalController.jumpTo(h);
-      return;
-    }
-    _mapScrollController.animateTo(
-      v,
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeOutCubic,
-    );
-    _mapHorizontalController.animateTo(
-      h,
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeOutCubic,
-    );
   }
 
   void _openDetails(BuildContext context) {
@@ -4962,7 +5110,7 @@ class _MapHeaderState extends State<MapHeader> {
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: const BoxDecoration(
         color: Color(0xee131313),
-        border: Border(bottom: BorderSide(color: Color(0xff3d4a3e))),
+        border: Border(bottom: BorderSide(color: panelBorderGrey)),
       ),
       child: Column(
         children: [
@@ -5022,7 +5170,7 @@ class _MapHeaderState extends State<MapHeader> {
                     value: adventure.health.toString(),
                     color: heroAccent,
                     accent: heroAccent,
-                    borderColor: Colors.white,
+                    borderColor: panelBorderGrey,
                     onTap: () => _openStatEditor('HP', adventure.health),
                   ),
                 ),
@@ -5034,7 +5182,7 @@ class _MapHeaderState extends State<MapHeader> {
                     value: adventure.combatPoints.toString(),
                     color: heroAccent,
                     accent: heroAccent,
-                    borderColor: Colors.white,
+                    borderColor: panelBorderGrey,
                     onTap: () => _openStatEditor('CP', adventure.combatPoints),
                   ),
                 ),
@@ -5065,7 +5213,7 @@ class _MapHeaderState extends State<MapHeader> {
               items: adventure.bonuses,
               accent: heroAccent,
               background: Colors.black.withValues(alpha: 0.32),
-              border: Colors.white,
+              border: panelBorderGrey,
               compactDuplicates: false,
               leading: Icon(Icons.emoji_events, color: heroAccent, size: 18),
             ),
@@ -5252,7 +5400,7 @@ class CurrentTargetCard extends StatelessWidget {
           colors: [Color(0xff2a2a2a), Color(0xff101010)],
         ),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xff3d4a3e), width: 2),
+        border: Border.all(color: panelBorderGrey, width: 2),
         boxShadow: [
           BoxShadow(
             color: const Color(0xff9b59b6).withValues(alpha: 0.55),
@@ -7683,7 +7831,7 @@ class HeroTokenStrip extends StatelessWidget {
       items: tokens,
       accent: heroAccent,
       background: Colors.black.withValues(alpha: 0.32),
-      border: Colors.white,
+      border: panelBorderGrey,
       trailing: IconButton(
         tooltip: 'Edit tokens',
         visualDensity: VisualDensity.compact,
@@ -9479,7 +9627,7 @@ List<InlineSpan> _chatSpans(
 }) {
   final spans = <InlineSpan>[];
   final pattern = RegExp(
-    '(${RegExp.escape(heroName)}|${RegExp.escape(enemyName)}|\\*\\*[^*]+\\*\\*|_[^_]+_|prevents? \\d+ damage|prevented \\d+ damage|prévents? \\d+ damage|prévient \\d+ damage|deals? \\d+ undefendable damage|dealt \\d+ undefendable damage|inflicts? \\d+ undefendable damage|inflige \\d+ undefendable damage|deals? \\d+ defendable damage|dealt \\d+ defendable damage|inflicts? \\d+ defendable damage|inflige \\d+ defendable damage|deals? \\d+ damage|dealt \\d+ damage|inflicts? \\d+ damage|inflige \\d+ damage|heals? \\d+ HP|healed \\d+ HP|\\d+ HP)',
+    '(${RegExp.escape(heroName)}|${RegExp.escape(enemyName)}|\\{[a-zA-Z]+:[^}]+\\}|\\*\\*[^*]+\\*\\*|_[^_]+_|prevents? \\d+ damage|prevented \\d+ damage|prévents? \\d+ damage|prévient \\d+ damage|deals? \\d+ undefendable damage|dealt \\d+ undefendable damage|inflicts? \\d+ undefendable damage|inflige \\d+ undefendable damage|deals? \\d+ defendable damage|dealt \\d+ defendable damage|inflicts? \\d+ defendable damage|inflige \\d+ defendable damage|deals? \\d+ damage|dealt \\d+ damage|inflicts? \\d+ damage|inflige \\d+ damage|heals? \\d+ HP|healed \\d+ HP|\\d+ HP)',
     caseSensitive: false,
   );
   var index = 0;
@@ -9496,7 +9644,7 @@ List<InlineSpan> _chatSpans(
         ),
       );
     } else {
-      final visual = _chatVisualSpan(token);
+      final visual = _chatVisualSpan(token, enemyColor: enemyColor);
       if (visual != null) {
         spans.add(visual);
       } else if (token.toLowerCase() == heroName.toLowerCase()) {
@@ -9535,9 +9683,17 @@ List<InlineSpan> _chatSpans(
   return spans;
 }
 
-InlineSpan? _chatVisualSpan(String token) {
+InlineSpan? _chatVisualSpan(String token, {required Color enemyColor}) {
   if (token.startsWith('_')) {
     return null;
+  }
+  final tagMatch = RegExp(r'^\{([a-zA-Z]+):([^}]+)\}$').firstMatch(token);
+  if (tagMatch != null) {
+    return _chatTagVisualSpan(
+      tagMatch.group(1)!.toLowerCase(),
+      tagMatch.group(2)!.trim(),
+      enemyColor: enemyColor,
+    );
   }
   final number = RegExp(r'\d+').firstMatch(token)?.group(0);
   if (number == null) {
@@ -9618,6 +9774,80 @@ InlineSpan? _chatVisualSpan(String token) {
     );
   }
   return null;
+}
+
+InlineSpan? _chatTagVisualSpan(
+  String tag,
+  String value, {
+  required Color enemyColor,
+}) {
+  final normalized = value.toLowerCase().trim();
+  if (tag == 'die' || tag == 'dice') {
+    final symbol = switch (normalized) {
+      'white' || 'blanc' => DieSymbol.white,
+      'orange' || 'yellow' || 'jaune' => DieSymbol.yellow,
+      'red' || 'rouge' => DieSymbol.red,
+      _ => null,
+    };
+    if (symbol == null) {
+      return null;
+    }
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Transform.scale(
+          scale: 0.72,
+          child: DieSymbolMark(symbol: symbol),
+        ),
+      ),
+    );
+  }
+  if (tag == 'token') {
+    final rule = _tokenRuleFromTag(value);
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Tooltip(
+          message: rule.label,
+          child: TokenBadge(
+            label: _tokenShortLabel(rule.label),
+            color: enemyColor,
+          ),
+        ),
+      ),
+    );
+  }
+  final amount = int.tryParse(value);
+  if (amount == null) {
+    return null;
+  }
+  return WidgetSpan(
+    alignment: PlaceholderAlignment.middle,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: switch (tag) {
+        'damage' || 'dmg' => _InlineChatBadge(
+          label: amount.toString(),
+          color: Colors.white,
+        ),
+        'undef' || 'imparable' => _InlineChatBadge(
+          label: amount.toString(),
+          color: Colors.redAccent,
+        ),
+        'prevent' || 'block' => _InlineChatBadge(
+          label: amount.toString(),
+          color: Colors.blueAccent,
+        ),
+        'heal' => _InlineChatBadge(
+          label: amount.toString(),
+          color: Colors.greenAccent,
+        ),
+        _ => _InlineChatBadge(label: amount.toString(), color: Colors.white),
+      },
+    ),
+  );
 }
 
 class _InlineChatBadge extends StatelessWidget {
@@ -11661,7 +11891,7 @@ class CombatantStatusRow extends StatelessWidget {
             value: hp.toString(),
             color: accent,
             accent: accent,
-            borderColor: Colors.white,
+            borderColor: panelBorderGrey,
             onTap: onHp,
           ),
         ),
@@ -11674,7 +11904,7 @@ class CombatantStatusRow extends StatelessWidget {
               value: cp.toString(),
               color: accent,
               accent: accent,
-              borderColor: Colors.white,
+              borderColor: panelBorderGrey,
               onTap: onCp,
             ),
           ),
@@ -11688,7 +11918,7 @@ class CombatantStatusRow extends StatelessWidget {
             items: tokens,
             accent: accent,
             background: Colors.black.withValues(alpha: 0.32),
-            border: Colors.white,
+            border: panelBorderGrey,
             trailing: IconButton(
               tooltip: 'Edit tokens',
               visualDensity: VisualDensity.compact,

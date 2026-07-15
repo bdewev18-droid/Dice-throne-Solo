@@ -1,0 +1,2482 @@
+{
+  "schemaVersion": 1,
+  "note": "Extracted from lib/main.dart. Edit this file as the future source of truth for enemy profiles.",
+  "diceSymbols": {
+    "white": "1,2,3",
+    "orange": "4,5",
+    "red": "6"
+  },
+  "profiles": [
+    {
+      "key": "fee",
+      "name": "Fée",
+      "rank": "green",
+      "maxHealth": 9,
+      "cp": 2,
+      "cardAsset": "assets/enemy_green_fairy.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Agacement",
+        "Micro suite: inflige 2 dégâts imparables.",
+        "Petite suite: inflige 5 dégâts.",
+        "Grande suite: vole 1 CP et inflige 6 dégâts."
+      ],
+      "defense": "Jet défensif 4 dés: sur 2 symboles jaunes, prévient 3 dégâts.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "ronin-vagabond",
+      "name": "Ronin Vagabond",
+      "rank": "green",
+      "maxHealth": 8,
+      "cp": 2,
+      "cardAsset": "assets/enemy_green_ronin.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Coupe & Découpe",
+        "3 symboles blancs: inflige 5 dégâts.",
+        "4 symboles blancs: inflige 6 dégâts.",
+        "5 symboles blancs: inflige 7 dégâts.",
+        "Si vous obtenez 4 symboles identiques, gagne le token Riposte."
+      ],
+      "defense": "Jet défensif 1 dé: inflige la moitié de la valeur du dé en dégâts, arrondie au chiffre supérieur.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 4,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 5,
+            "orange": 0,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "enchanteur-gobelin",
+      "name": "Enchanteur Gobelin",
+      "rank": "green",
+      "maxHealth": 10,
+      "cp": 1,
+      "cardAsset": "assets/enemy_green_goblin_enchanter.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Ensorcellule",
+        "Objectif: 1 symbole blanc, 2 symboles jaunes, 1 symbole rouge.",
+        "Inflige 4 dégâts imparables.",
+        "Votre adversaire défausse 1 carte au hasard."
+      ],
+      "defense": "Jet défensif 3 dés: sur 1 ou plusieurs symboles jaunes, inflige 1 dégât. Sur 1 ou plusieurs symboles rouges, inflige Poison.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 1,
+            "orange": 2,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "archer-de-lombre",
+      "name": "Archer de l'Ombre",
+      "rank": "green",
+      "maxHealth": 10,
+      "cp": 3,
+      "cardAsset": "assets/enemy_green_shadow_archer.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Volée de l'Ombre",
+        "2 symboles jaunes: inflige 5 dégâts.",
+        "3 symboles jaunes: inflige 6 dégâts.",
+        "4 symboles jaunes: inflige 7 dégâts.",
+        "5 symboles jaunes: inflige 8 dégâts.",
+        "Si vous obtenez 3 chiffres identiques, inflige Silence."
+      ],
+      "defense": "Jet défensif 3 dés: sur 1 ou plusieurs symboles jaunes, prévient 3 dégâts.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 2,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 3,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 4,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 5,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "ombre-feline",
+      "name": "Ombre Féline",
+      "rank": "green",
+      "maxHealth": 9,
+      "cp": 2,
+      "cardAsset": "assets/enemy_green_feline_shadow.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Griffure",
+        "3 symboles blancs: inflige 4 dégâts.",
+        "4 symboles blancs: inflige 5 dégâts.",
+        "5 symboles blancs: inflige 6 dégâts.",
+        "Si vous obtenez 3 chiffres identiques, inflige Hémorragie."
+      ],
+      "defense": "Jet défensif 1 dé: sur symbole blanc, inflige Hémorragie.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 4,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 5,
+            "orange": 0,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "epeiste-egare",
+      "name": "Épéiste Égaré",
+      "rank": "green",
+      "maxHealth": 11,
+      "cp": 0,
+      "cardAsset": "assets/enemy_green_lost_fencer.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "En Garde",
+        "3 symboles blancs: inflige 5 dégâts.",
+        "4 symboles blancs: inflige 6 dégâts.",
+        "5 symboles blancs: inflige 7 dégâts."
+      ],
+      "defense": "Jet défensif 3 dés: inflige 1 dégât par symbole blanc + 1 dégât par symbole rouge. Prévient 1 dégât par symbole jaune.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 4,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 5,
+            "orange": 0,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "elfe-du-chaos",
+      "name": "Elfe du Chaos",
+      "rank": "green",
+      "maxHealth": 10,
+      "cp": 1,
+      "cardAsset": "assets/enemy_green_chaos_elf.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Fil de Lame",
+        "Micro suite: inflige 4 dégâts.",
+        "Petite suite: inflige 7 dégâts.",
+        "Grande suite: inflige Ronces et inflige 8 dégâts."
+      ],
+      "defense": "Jet défensif 4 dés: sur 2 symboles jaunes, prévient la moitié des dégâts, arrondie au chiffre supérieur.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "oni-delirant",
+      "name": "Oni Délirant",
+      "rank": "green",
+      "maxHealth": 11,
+      "cp": 0,
+      "cardAsset": "assets/enemy_green_raving_oni.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Onisima",
+        "4 symboles jaunes, puis lancez 1 dé.",
+        "Sur symbole blanc: inflige 5 dégâts imparables.",
+        "Sur symbole jaune: inflige 6 dégâts imparables.",
+        "Sur symbole rouge: vole 4 points de Santé."
+      ],
+      "defense": "Jet défensif 2 dés: vole 1 point de Santé par symbole jaune.",
+      "defenseDice": 2,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 4,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "vert-vert-011",
+      "name": "Roi Vautour",
+      "rank": "green",
+      "maxHealth": 8,
+      "cp": 2,
+      "cardAsset": "assets/vert/vert-011.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Descente en Pique: 3 jaunes = 4 degats imparables.",
+        "4 jaunes = 5 degats imparables. 5 jaunes = 6 degats imparables."
+      ],
+      "defense": "Jet defensif 3 des: sur jaune, previent la moitie des degats arrondie au superieur.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 3,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 4,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 5,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "vert-vert-012",
+      "name": "Roc",
+      "rank": "green",
+      "maxHealth": 15,
+      "cp": 2,
+      "cardAsset": "assets/vert/vert-012.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Rocalanche: lance 2 des et inflige la valeur totale du jet.",
+        "Passif: si le lancer offensif echoue, inflige 1 degat imparable."
+      ],
+      "defense": "Jet defensif 5 des: previent 1 degat par symbole jaune.",
+      "defenseDice": 5,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 4,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "vert-vert-013",
+      "name": "Serpentyne",
+      "rank": "green",
+      "maxHealth": 9,
+      "cp": 2,
+      "cardAsset": "assets/vert/vert-013.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Baiser Venimeux: 3 blancs = 6 degats.",
+        "3 blancs + 1 rouge = 6 degats et Poison."
+      ],
+      "defense": "Jet defensif 3 des: sur rouge, inflige Poison.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "vert-vert-014",
+      "name": "Druide Tenebreux",
+      "rank": "green",
+      "maxHealth": 11,
+      "cp": 3,
+      "cardAsset": "assets/vert/vert-014.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Frappe Spirituelle: 3 jaunes.",
+        "Forme Ours: A Terre et 6 degats. Forme Elan: Ronces et 6 degats.",
+        "Passif: debut de tour, 1-3 Ours, 4-6 Elan."
+      ],
+      "defense": "Jet defensif 4 des: Ours inflige 1 par jaune + 2 par rouge; Elan previent 1 par jaune + 2 par rouge.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 3,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "vert-vert-015",
+      "name": "Disciple",
+      "rank": "green",
+      "maxHealth": 12,
+      "cp": 2,
+      "cardAsset": "assets/vert/vert-015.png",
+      "initialTokens": [],
+      "rewardChests": 2,
+      "rewardRank": null,
+      "attacks": [
+        "Abnegation: 2 blancs + 3 jaunes = 5 degats imparables et lance 1 de.",
+        "Sur jaune, vole 1 CP. Sur rouge, retire ce minion et engage un minion niveau 3."
+      ],
+      "defense": "Jet defensif 2 des: sur rouge, renvoie la moitie des degats subis arrondie au superieur.",
+      "defenseDice": 2,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 3,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "vert-vert-016",
+      "name": "Valet Maraud",
+      "rank": "green",
+      "maxHealth": 12,
+      "cp": 0,
+      "cardAsset": "assets/vert/vert-016.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Volonte du Maitre: 1 blanc + 2 jaunes + 1 rouge = 5 degats imparables."
+      ],
+      "defense": "Jet defensif 3 des: previent 1 par jaune; sur rouge les heros perdent 1 or.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 1,
+            "orange": 2,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "vert-vert-017",
+      "name": "Homme Lezard",
+      "rank": "green",
+      "maxHealth": 15,
+      "cp": 2,
+      "cardAsset": "assets/vert/vert-017.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Claquement de Crocs: 2 blancs + 1 rouge, lance 1 de et applique son effet.",
+        "Sur blanc: inflige 2 degats imparables. Sur jaune ou rouge: inflige A Terre."
+      ],
+      "defense": "Jet defensif 1 de: sur blanc, inflige 2 degats.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 0,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "vert-vert-018",
+      "name": "Satyre",
+      "rank": "green",
+      "maxHealth": 9,
+      "cp": 1,
+      "cardAsset": "assets/vert/vert-018.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Belier: 2 blancs + 1 jaune = 4 degats.",
+        "2 blancs + 2 jaunes = 5 degats et Enchevetrement.",
+        "2 blancs + 2 jaunes + rouge = 7 degats et Enchevetrement."
+      ],
+      "defense": "Jet defensif 2 des: sur jaune A Terre; sur rouge previent 2.",
+      "defenseDice": 2,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 1,
+            "red": 0
+          },
+          {
+            "white": 2,
+            "orange": 2,
+            "red": 0
+          },
+          {
+            "white": 2,
+            "orange": 2,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "vert-vert-019",
+      "name": "Jeune Fille Melodieuse",
+      "rank": "green",
+      "maxHealth": 12,
+      "cp": 2,
+      "cardAsset": "assets/vert/vert-019.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": "blue",
+      "attacks": [
+        "Transe: 2 rouges = 4 degats imparables.",
+        "Le joueur actif choisit un coequipier pour 2 degats collateraux, sinon defausse 1 carte au hasard."
+      ],
+      "defense": "Jet defensif 2 des: sur rouge, previent 3 degats.",
+      "defenseDice": 2,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 2
+          }
+        ]
+      }
+    },
+    {
+      "key": "vert-vert-020",
+      "name": "Guerrier Ogrun",
+      "rank": "green",
+      "maxHealth": 11,
+      "cp": 0,
+      "cardAsset": "assets/vert/vert-020.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Fleau: micro suite = 4 degats.",
+        "Petite suite = 7 degats. Grande suite = 7 degats et A Terre."
+      ],
+      "defense": "Jet defensif 4 des: sur blanc inflige 1; previent 1 par jaune + 1 par rouge.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "vert-vert-021",
+      "name": "Mage Lezard",
+      "rank": "green",
+      "maxHealth": 10,
+      "cp": 2,
+      "cardAsset": "assets/vert/vert-021.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Sorcellerie Ophique: 2 jaunes + 1 rouge, lance 1 de.",
+        "Blanc: gagne 2 Chaos. Jaune: inflige Eboulissement. Puis inflige 6 + 1 par Chaos."
+      ],
+      "defense": "Jet defensif 3 des: gagne 1 Chaos par jaune puis inflige 1 degat par Chaos.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 2,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-vert-022",
+      "name": "Plague Bearer",
+      "rank": "green",
+      "maxHealth": 10,
+      "cp": 2,
+      "cardAsset": "assets/bleu/vert-022.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Scurry: 2 blancs + jaune = 4 degats.",
+        "2 blancs + 2 jaunes = 5 degats et Poison.",
+        "2 blancs + 2 jaunes + rouge = 6 degats et Parasite."
+      ],
+      "defense": "Defense roll 2 dice: on yellow prevent 2; on red inflict Parasite.",
+      "defenseDice": 2,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 1,
+            "red": 0
+          },
+          {
+            "white": 2,
+            "orange": 2,
+            "red": 0
+          },
+          {
+            "white": 2,
+            "orange": 2,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-vert-023",
+      "name": "Corrupted Ghoul",
+      "rank": "green",
+      "maxHealth": 7,
+      "cp": 2,
+      "cardAsset": "assets/bleu/vert-023.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Gnaw: 2 blancs + jaune + rouge = vole 2 points de vie."
+      ],
+      "defense": "Defense roll 3 dice: on red, steal 1 health.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 1,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-001",
+      "name": "Maraud Bestial",
+      "rank": "blue",
+      "maxHealth": 15,
+      "cp": 1,
+      "cardAsset": "assets/bleu/bleu-001.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Sauvagerie de l Ame: 2 blancs + 2 jaunes + rouge = 6 degats imparables."
+      ],
+      "defense": "Jet defensif 4 des: previent 1 par jaune; sur rouge les heros perdent 1 or.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 2,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-002",
+      "name": "Archer Aveugle",
+      "rank": "blue",
+      "maxHealth": 12,
+      "cp": 3,
+      "cardAsset": "assets/bleu/bleu-002.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Vraie Vision: 3/4/5 jaunes = 4/5/6 degats imparables.",
+        "Si 3 chiffres identiques, inflige Eboulissement."
+      ],
+      "defense": "Jet defensif 4 des: sur 2 jaunes, previent 4 degats.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 3,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 4,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 5,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-003",
+      "name": "Mage de l Entropie",
+      "rank": "blue",
+      "maxHealth": 13,
+      "cp": 2,
+      "cardAsset": "assets/bleu/bleu-003.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Sorcellerie Chaotique: 2 jaunes + rouge, lance 1 de puis inflige 7 + 1 par Chaos.",
+        "Blanc: gagne 2 Chaos. Jaune: inflige Sort."
+      ],
+      "defense": "Jet defensif 4 des: gagne 1 Chaos par jaune puis inflige 1 degat par Chaos.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 2,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-004",
+      "name": "Mage de Sang",
+      "rank": "blue",
+      "maxHealth": 12,
+      "cp": 2,
+      "cardAsset": "assets/bleu/bleu-004.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Hemo-Siphon: 3/4/5 jaunes = vole 3/4/5 points de vie.",
+        "Passif: debut de tour gagne Chaos; a 3 Chaos, les depense pour voler 3 PV."
+      ],
+      "defense": "Jet defensif 3 des: vole 1 PV par jaune; sur rouge gagne Chaos.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 3,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 4,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 5,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-005",
+      "name": "Sorciere d Os",
+      "rank": "blue",
+      "maxHealth": 10,
+      "cp": 2,
+      "cardAsset": "assets/bleu/bleu-005.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Magie Noire: blanc + 2 jaunes + rouge = Deperissement, Silence, Parasite et 3 degats imparables.",
+        "Passif upkeep: gagne Siphon Vital."
+      ],
+      "defense": "Jet defensif 4 des: vole 1 PV par jaune; inflige Hemorragie par rouge.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 1,
+            "orange": 2,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-006",
+      "name": "Cyclope Brutal",
+      "rank": "blue",
+      "maxHealth": 14,
+      "cp": 3,
+      "cardAsset": "assets/bleu/bleu-006.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Ecrasement: 4 blancs + rouge = 6 degats et lance 1 de; ajoute sa valeur en degats.",
+        "Passif: si echec offensif, inflige 2 degats imparables."
+      ],
+      "defense": "Jet defensif 1 de: sur blanc inflige 3; sur jaune soigne 2.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 4,
+            "orange": 0,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-007",
+      "name": "The Hermit",
+      "rank": "blue",
+      "maxHealth": 12,
+      "cp": 5,
+      "cardAsset": "assets/bleu/bleu-007.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Deep Magic: blanc + 3 jaunes = 3 degats imparables et lance 1 de.",
+        "Blanc: +2 degats. Jaune: Deperissement. Rouge: Brulure."
+      ],
+      "defense": "Defense roll 5 dice: on 2 yellow, prevent 3.",
+      "defenseDice": 5,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 1,
+            "orange": 3,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-008",
+      "name": "Dark Specter",
+      "rank": "blue",
+      "maxHealth": 13,
+      "cp": 1,
+      "cardAsset": "assets/bleu/bleu-008.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Bane: micro suite = Enchevetrement + 4 degats.",
+        "Petite suite = Silence + 6. Grande suite = Sort + 8."
+      ],
+      "defense": "Jet defensif 3 des: previent 2 degats par jaune.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "bleu-bleu-009",
+      "name": "The Butcher",
+      "rank": "blue",
+      "maxHealth": 12,
+      "cp": 3,
+      "cardAsset": "assets/bleu/bleu-009.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Carve: blanc + 2 jaunes + rouge = 3 degats imparables et lance 1 de.",
+        "Sur jaune, inflige Commotion. Passif echec: soigne 2."
+      ],
+      "defense": "Defense roll 1 die: on yellow, deal 3.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 1,
+            "orange": 2,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-010",
+      "name": "Vipere Vicieuse",
+      "rank": "blue",
+      "maxHealth": 12,
+      "cp": 2,
+      "cardAsset": "assets/bleu/bleu-010.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Envenimation: 3 blancs = 7 degats; 3 blancs + rouge = Poison et 7 degats."
+      ],
+      "defense": "Jet defensif 4 des: sur rouge, inflige Poison.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-011",
+      "name": "Vaurien",
+      "rank": "blue",
+      "maxHealth": 14,
+      "cp": 5,
+      "cardAsset": "assets/bleu/bleu-011.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Ruelle Dangereuse: petite suite = moitie des PC en degats.",
+        "Grande suite = PC en degats. Debut de tour gagne 2 PC."
+      ],
+      "defense": "Jet defensif 4 des: sur 2 jaunes vole 1 PC; sur 2 rouges ignore tous les degats.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "bleu-bleu-012",
+      "name": "Epee Fantome",
+      "rank": "blue",
+      "maxHealth": 14,
+      "cp": 3,
+      "cardAsset": "assets/bleu/bleu-012.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Feinte de l Ombre: 3/4/5 blancs = 5/6/7 degats.",
+        "Si 3 chiffres identiques, inflige Parasite."
+      ],
+      "defense": "Jet defensif 1 de: inflige la moitie de la valeur en degats arrondie au superieur.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 4,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 5,
+            "orange": 0,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-013",
+      "name": "Elfe Fletri",
+      "rank": "blue",
+      "maxHealth": 13,
+      "cp": 2,
+      "cardAsset": "assets/bleu/bleu-013.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Racine Fletrie: micro suite = {damage:5}.",
+        "Petite suite = {token:Parasite} + {damage:7}. Grande suite = {token:Dépérissement} + {damage:9}."
+      ],
+      "defense": "Jet defensif 5 des: sur 2 jaunes, previent la moitie des degats arrondie au superieur.",
+      "defenseDice": 5,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "bleu-bleu-014",
+      "name": "Banshie Hurlante",
+      "rank": "blue",
+      "maxHealth": 12,
+      "cp": 2,
+      "cardAsset": "assets/bleu/bleu-014.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Hurlement Sonique: 2/3/4/5 rouges = 2/3/4/5 degats collateraux a tous les adversaires.",
+        "Si un seul adversaire, inflige Silence."
+      ],
+      "defense": "Jet defensif 2 des: sur rouge, ignore tous les degats.",
+      "defenseDice": 2,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 2
+          },
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 3
+          },
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 4
+          },
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 5
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-015",
+      "name": "Centaure Enrage",
+      "rank": "blue",
+      "maxHealth": 15,
+      "cp": 2,
+      "cardAsset": "assets/bleu/bleu-015.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Charge: 2 blancs + 1/2 jaunes = 4/5 degats; avec rouge = 6 degats.",
+        "Le joueur actif defausse un token positif au hasard."
+      ],
+      "defense": "Jet defensif 3 des: sur jaune, inflige A Terre.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 1,
+            "red": 0
+          },
+          {
+            "white": 2,
+            "orange": 2,
+            "red": 0
+          },
+          {
+            "white": 2,
+            "orange": 2,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-016",
+      "name": "Chevalier a la Hache",
+      "rank": "blue",
+      "maxHealth": 13,
+      "cp": 1,
+      "cardAsset": "assets/bleu/bleu-016.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Decoupage: petite suite = soigne 2 et 6 degats.",
+        "Grande suite = soigne 2 et 9 degats. Echec: gagne 3 Degats Bonus."
+      ],
+      "defense": "Jet defensif 4 des: blanc inflige 1; previent 2 par jaune + 1 par rouge.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "bleu-bleu-017",
+      "name": "Panthere Tenebreuse",
+      "rank": "blue",
+      "maxHealth": 9,
+      "cp": 4,
+      "cardAsset": "assets/bleu/bleu-017.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Dechiquetage: 3/4/5 blancs = 6/7/8 degats.",
+        "Si 3 chiffres identiques, inflige Hemorragie."
+      ],
+      "defense": "Jet defensif 1 de: blanc inflige Hemorragie; rouge inflige 2 Hemorragie.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 4,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 5,
+            "orange": 0,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-018",
+      "name": "Harpie Cornue",
+      "rank": "blue",
+      "maxHealth": 10,
+      "cp": 3,
+      "cardAsset": "assets/bleu/bleu-018.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Frappe en Pique: 2/3/4/5 jaunes = 3/4/5/6 degats imparables."
+      ],
+      "defense": "Jet defensif 3 des: sur jaune previent la moitie; sur 2 jaunes ignore tous les degats.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 2,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 3,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 4,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 5,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-019",
+      "name": "Elfe Agile",
+      "rank": "blue",
+      "maxHealth": 13,
+      "cp": 3,
+      "cardAsset": "assets/bleu/bleu-019.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Velocite Magique: 3 blancs + 2 jaunes = Eboulissement et 6 degats.",
+        "Debut de tour: retire toutes les alterations positives du joueur actif."
+      ],
+      "defense": "Jet defensif 1 de: soigne selon la valeur du de et le nombre de minions en jeu.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 2,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-020",
+      "name": "Farceur",
+      "rank": "blue",
+      "maxHealth": 8,
+      "cp": 4,
+      "cardAsset": "assets/bleu/bleu-020.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Recreation: blanc + 2 jaunes + rouge = 4 degats imparables et lance 1 de.",
+        "Blanc: vole 2 CP. Jaune: defausse 1 carte. Rouge: les deux."
+      ],
+      "defense": "Jet defensif 5 des: sur 2 jaunes, previent 3.",
+      "defenseDice": 5,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 1,
+            "orange": 2,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-021",
+      "name": "Bandit sans Ame",
+      "rank": "blue",
+      "maxHealth": 10,
+      "cp": 2,
+      "cardAsset": "assets/bleu/bleu-021.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Lame de l Esprit: 3/4/5 blancs = 5/6/7 degats.",
+        "Si 3 chiffres identiques, tous les adversaires engages perdent 1 CP."
+      ],
+      "defense": "Jet defensif 3 des: inflige 1 par blanc + 1 par rouge.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 4,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 5,
+            "orange": 0,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-022",
+      "name": "Vibra l Esoterique",
+      "rank": "blue",
+      "maxHealth": 14,
+      "cp": 3,
+      "cardAsset": "assets/bleu/bleu-022.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Sanguinolame: 2 blancs + 1/2/3 jaunes = 4/5/6 degats.",
+        "Debut de tour gagne Chaos; avec 3 Chaos, les depense pour se soigner du montant des degats."
+      ],
+      "defense": "Jet defensif 4 des: vole 1 PV par jaune.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 1,
+            "red": 0
+          },
+          {
+            "white": 2,
+            "orange": 2,
+            "red": 0
+          },
+          {
+            "white": 2,
+            "orange": 3,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "bleu-bleu-023",
+      "name": "Yokai",
+      "rank": "blue",
+      "maxHealth": 11,
+      "cp": 1,
+      "cardAsset": "assets/bleu/bleu-023.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Attraction: 4 jaunes, lance 1 de.",
+        "Blanc: 4 degats imparables. Jaune: vole 3 PV. Rouge: vole 4 PV.",
+        "Echec offensif: inflige Silence et Sort."
+      ],
+      "defense": "Jet defensif 3 des: vole 1 PV par jaune.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 4,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-001",
+      "name": "Guivre Noire",
+      "rank": "violet",
+      "maxHealth": 20,
+      "cp": 10,
+      "cardAsset": "assets/violet/violet-001.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Souffle Acide: 2 rouges = Poison, Brulure et 3 degats imparables.",
+        "Passif: si moins de 5 PV au debut du tour, fuit."
+      ],
+      "defense": "Jet defensif 1 de: blanc perd 1 PV; jaune ou rouge soigne 1.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 2
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-002",
+      "name": "Wyverne",
+      "rank": "violet",
+      "maxHealth": 16,
+      "cp": 10,
+      "cardAsset": "assets/violet/violet-002.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Brasier: 2 rouges = 7 degats et lance 1 de.",
+        "Blanc: Brulure. Jaune: Brulure a 2 adversaires. Rouge: Brulure a tous."
+      ],
+      "defense": "Defense unique: si attaquee, lance 1 de; sur 5-6 l attaque adverse echoue.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 2
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-003",
+      "name": "Diablotin",
+      "rank": "violet",
+      "maxHealth": 13,
+      "cp": 4,
+      "cardAsset": "assets/violet/violet-003.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Malice: micro suite = 5 degats.",
+        "Petite suite = Enchevetrement + 7. Grande suite = Enchevetrement + vole 2 CP + 8."
+      ],
+      "defense": "Jet defensif 5 des: sur 2 jaunes, previent 3 degats.",
+      "defenseDice": 5,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "violet-violet-004",
+      "name": "Elfe Sombresource",
+      "rank": "violet",
+      "maxHealth": 15,
+      "cp": 2,
+      "cardAsset": "assets/violet/violet-004.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Ardillon Mystique: micro suite = 6 degats.",
+        "Petite suite = Ronces + 8. Grande suite = Deperissement + 10."
+      ],
+      "defense": "Jet defensif 5 des: sur 2 jaunes, previent la moitie des degats arrondie au superieur.",
+      "defenseDice": 5,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "violet-violet-005",
+      "name": "Iron Maiden",
+      "rank": "violet",
+      "maxHealth": 20,
+      "cp": 1,
+      "cardAsset": "assets/violet/violet-005.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Heavy Metal: micro suite = 6 degats.",
+        "Petite suite = Ronces + 7. Grande suite = Ronces + Hemorragie + 9."
+      ],
+      "defense": "Jet defensif 3 des: previent 2 degats par jaune.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "violet-violet-006",
+      "name": "Carrion Golem",
+      "rank": "violet",
+      "maxHealth": 18,
+      "cp": 2,
+      "cardAsset": "assets/violet/violet-006.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Corpse Wave: 3 jaunes, lance 2 des et inflige la valeur totale.",
+        "Si total inferieur a 6, inflige Parasite. Echec offensif: Poison."
+      ],
+      "defense": "Jet defensif 5 des: previent 1 degat par jaune.",
+      "defenseDice": 5,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 3,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-007",
+      "name": "Fell Summoner",
+      "rank": "violet",
+      "maxHealth": 20,
+      "cp": 2,
+      "cardAsset": "assets/violet/violet-007.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Ritual: 1/2/3 blancs + 2 jaunes = 3/4/5 degats imparables et gagne Chaos.",
+        "Avec 3 Chaos fin de tour: se retire et engage un niveau 3 avec Premiere Frappe."
+      ],
+      "defense": "Defense roll 2 dice: on yellow, gain Chaos.",
+      "defenseDice": 2,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 1,
+            "orange": 2,
+            "red": 0
+          },
+          {
+            "white": 2,
+            "orange": 2,
+            "red": 0
+          },
+          {
+            "white": 3,
+            "orange": 2,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-008",
+      "name": "Devin de Mort",
+      "rank": "violet",
+      "maxHealth": 15,
+      "cp": 2,
+      "cardAsset": "assets/violet/violet-008.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Baiser de la Mort: blanc + jaune + rouge, lance 2 des.",
+        "Blanc gagne 2 Chaos; jaune Silence; rouge Sort; puis 7 + 1 par Chaos."
+      ],
+      "defense": "Jet defensif 5 des: gagne 1 Chaos par jaune puis inflige 1 degat par Chaos.",
+      "defenseDice": 5,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 1,
+            "orange": 1,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-009",
+      "name": "Basilic",
+      "rank": "violet",
+      "maxHealth": 14,
+      "cp": 2,
+      "cardAsset": "assets/violet/violet-009.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Morsure Venimeuse: 3 blancs = 7 degats.",
+        "3 blancs + rouge = Poison + 8. 3 blancs + 2 rouges = Poison + 9."
+      ],
+      "defense": "Jet defensif 4 des: inflige Poison par rouge.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 1
+          },
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 2
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-010",
+      "name": "Golem Concasseur",
+      "rank": "violet",
+      "maxHealth": 16,
+      "cp": 4,
+      "cardAsset": "assets/violet/violet-010.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Castagne: 3 jaunes, lance 2 des et inflige la valeur totale.",
+        "Si total inferieur a 7, inflige Commotion. Echec offensif: Commotion."
+      ],
+      "defense": "Jet defensif 5 des: previent 1 par jaune + 1 par rouge.",
+      "defenseDice": 5,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 3,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-011",
+      "name": "Hydre Feroce",
+      "rank": "violet",
+      "maxHealth": 8,
+      "cp": 10,
+      "cardAsset": "assets/violet/violet-011.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Plurimorsure: 2 rouges = 6 degats + 3 par tete.",
+        "Fin de lancer offensif: lance 1 de; sur rouge gagne 1 tete."
+      ],
+      "defense": "Defense unique: si les PV tombent a 0 et qu il reste des tetes, retire 1 tete et remet les PV.",
+      "defenseDice": 0,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 2
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-012",
+      "name": "Pillard Gobelin",
+      "rank": "violet",
+      "maxHealth": 25,
+      "cp": 4,
+      "cardAsset": "assets/violet/violet-012.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "La Rixe ou la Fuite: 5 jaunes, lance 1 de.",
+        "1-3: 4 degats imparables. 4-6: fuit. Echec offensif: les heros perdent 1 or."
+      ],
+      "defense": "Jet defensif 1 de: 1-5 vole 1 CP et inflige 1; rouge fuit.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 5,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-013",
+      "name": "Onibaba",
+      "rank": "violet",
+      "maxHealth": 14,
+      "cp": 2,
+      "cardAsset": "assets/violet/violet-013.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Malice: 4 jaunes, lance 1 de.",
+        "Blanc: 6 imparables. Jaune: vole 4 PV. Rouge: vole 5 PV. Echec: Sort + vole 1 PV."
+      ],
+      "defense": "Jet defensif 3 des: vole 1 PV par jaune.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 4,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-014",
+      "name": "Chimere",
+      "rank": "violet",
+      "maxHealth": 20,
+      "cp": 4,
+      "cardAsset": "assets/violet/violet-014.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Triple Attaque: 3 rouges = 3 degats imparables et lance 1 de.",
+        "1-2 Brulure, 3-4 A Terre, 5-6 deux Hemorragie."
+      ],
+      "defense": "Jet defensif 1 de: blanc 1 degat; jaune 3 degats; rouge Poison.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 3
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-015",
+      "name": "Chaman Orque",
+      "rank": "violet",
+      "maxHealth": 15,
+      "cp": 3,
+      "cardAsset": "assets/violet/violet-015.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Terre Feu Tempetes: 2 blancs + 2 rouges = Poison, defausse 1 carte aleatoire et 4 degats imparables.",
+        "Echec: Parasite + Sort."
+      ],
+      "defense": "Jet defensif 5 des: soigne 2 par jaune; sur rouge inflige Parasite.",
+      "defenseDice": 5,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 0,
+            "red": 2
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-016",
+      "name": "Fanatique Sacre",
+      "rank": "violet",
+      "maxHealth": 16,
+      "cp": 4,
+      "cardAsset": "assets/violet/violet-016.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Combat Fervent: 2 blancs + 3 jaunes = 7 degats et lance 3 des.",
+        "Ajoute 1 par blanc + 2 par jaune; soigne 2 par rouge. Echec: 2 imparables et soigne 1."
+      ],
+      "defense": "Jet defensif 4 des: blanc inflige 1; previent 2 par jaune + 2 par rouge.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 3,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-017",
+      "name": "Lame Maudite",
+      "rank": "violet",
+      "maxHealth": 13,
+      "cp": 4,
+      "cardAsset": "assets/violet/violet-017.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Lame Corrompue: 3/4/5 blancs = 6/7/8 degats.",
+        "Si 3 chiffres identiques, gagne Riposte."
+      ],
+      "defense": "Jet defensif 1 de: inflige et previent la moitie de la valeur du de arrondie au superieur.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 4,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 5,
+            "orange": 0,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-018",
+      "name": "Succube",
+      "rank": "violet",
+      "maxHealth": 13,
+      "cp": 4,
+      "cardAsset": "assets/violet/violet-018.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Seduction: 2 blancs + 1/2/3 jaunes = 4/5/6 degats.",
+        "Avec 2 Chaos, les depense pour se soigner du montant des degats. Debut de tour gagne Chaos."
+      ],
+      "defense": "Jet defensif 4 des: vole 1 PV par jaune; sur 2 blancs inflige Parasite.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 1,
+            "red": 0
+          },
+          {
+            "white": 2,
+            "orange": 2,
+            "red": 0
+          },
+          {
+            "white": 2,
+            "orange": 3,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-019",
+      "name": "Archer Pourpre",
+      "rank": "violet",
+      "maxHealth": 14,
+      "cp": 3,
+      "cardAsset": "assets/violet/violet-019.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Tir Diabolique: 2/3/4/5 jaunes = 6/7/8/9 degats.",
+        "Si 3 chiffres identiques, inflige Ronces a tous les adversaires."
+      ],
+      "defense": "Jet defensif 4 des: inflige 1 par blanc + 1 par jaune; sur rouge a tous les adversaires engages.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 2,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 3,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 4,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 5,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-020",
+      "name": "Lion Obscur",
+      "rank": "violet",
+      "maxHealth": 14,
+      "cp": 4,
+      "cardAsset": "assets/violet/violet-020.png",
+      "initialTokens": [
+        "Première Frappe"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Evisceration: 3/4/5 blancs = 6/7/8 degats.",
+        "Si 3 chiffres identiques, inflige Hemorragie + Silence."
+      ],
+      "defense": "Jet defensif 1 de: blanc ou jaune inflige Hemorragie; rouge inflige 2 Hemorragie.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 4,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 5,
+            "orange": 0,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "violet-violet-021",
+      "name": "Chevalier du Chaos",
+      "rank": "violet",
+      "maxHealth": 16,
+      "cp": 2,
+      "cardAsset": "assets/violet/violet-021.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Assaut Impie: petite suite = soigne 1 et 8 degats.",
+        "Grande suite = soigne 2 et 10 degats. Echec: gagne 3 Degats Bonus."
+      ],
+      "defense": "Jet defensif 4 des: blanc inflige 1; previent 2 par jaune + 2 par rouge.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "orange-orange-001",
+      "name": "Renegate Vereuse",
+      "rank": "orange",
+      "maxHealth": 30,
+      "cp": 8,
+      "cardAsset": "assets/orange/orange-001.png",
+      "initialTokens": [
+        "Première Frappe",
+        "Main du roi"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Frappe Fourbe: petite suite = degats egaux a la moitie des PC du minion, arrondie au superieur.",
+        "Frappe Fourbe: grande suite = degats egaux aux PC du minion.",
+        "Passif: au debut de son tour, gagne 2 PC.",
+        "Passif: si le lancer offensif echoue, gagne 3 Degats Bonus et Ombre."
+      ],
+      "defense": "Jet defensif 5 des: sur 2 rouges, ignore tous les degats; sinon vole 2 PC.",
+      "defenseDice": 5,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "orange-orange-002",
+      "name": "Mort Murmurante",
+      "rank": "orange",
+      "maxHealth": 30,
+      "cp": 2,
+      "cardAsset": "assets/orange/orange-002.png",
+      "initialTokens": [
+        "Main du roi"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Chant Mortuaire: 2 rouges = 3 degats collateraux.",
+        "Chant Mortuaire: 3 rouges = 4 degats collateraux.",
+        "Chant Mortuaire: 4 rouges = 5 degats collateraux.",
+        "Chant Mortuaire: 5 rouges = 6 degats collateraux.",
+        "Si un seul adversaire est engage, inflige aussi Deperissement et Silence."
+      ],
+      "defense": "Jet defensif 2 des: sur rouge, ignore tous les degats.",
+      "defenseDice": 2,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 2
+          },
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 3
+          },
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 4
+          },
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 5
+          }
+        ]
+      }
+    },
+    {
+      "key": "orange-orange-003",
+      "name": "Atlas",
+      "rank": "orange",
+      "maxHealth": 30,
+      "cp": 8,
+      "cardAsset": "assets/orange/orange-003.png",
+      "initialTokens": [
+        "Main du roi"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Frappe Titanique: micro suite = 2 degats collateraux a tous les adversaires engages.",
+        "Frappe Titanique: petite suite = A Terre et 4 degats collateraux.",
+        "Frappe Titanique: grande suite = Commotion et 7 degats collateraux."
+      ],
+      "defense": "Jet defensif unique 1 de: previent un nombre de degats egal a la valeur du de.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "orange-orange-004",
+      "name": "Umbra",
+      "rank": "orange",
+      "maxHealth": 25,
+      "cp": 10,
+      "cardAsset": "assets/orange/orange-004.png",
+      "initialTokens": [
+        "Main du roi"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Silhouette: 3 jaunes = 3 degats imparables.",
+        "Silhouette: 4 jaunes = 5 degats imparables.",
+        "Si Umbra possede Ombre, toutes ses attaques infligent 4 degats supplementaires.",
+        "Passif: si le lancer offensif echoue, gagne Ombre."
+      ],
+      "defense": "Jet defensif 3 des: sur rouge, gagne Ombre.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 3,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 4,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "orange-orange-005",
+      "name": "Horde de Gobelins",
+      "rank": "orange",
+      "maxHealth": 25,
+      "cp": 6,
+      "cardAsset": "assets/orange/orange-005.png",
+      "initialTokens": [
+        "Main du roi"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Nuee: inflige autant de degats que la moitie de ses points de vie, arrondie au superieur.",
+        "Si les degats sont inferieurs ou egaux a 5, cette attaque devient imparable.",
+        "Passif: si le lancer offensif echoue, soigne 3 PV et retire toutes les alterations positives du joueur actif."
+      ],
+      "defense": "Defense unique: les degats subis lors de l attaque d un adversaire sont reduits a un maximum de 5.",
+      "defenseDice": 0,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 5,
+            "orange": 0,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "orange-orange-006",
+      "name": "Empereur Cobra",
+      "rank": "orange",
+      "maxHealth": 30,
+      "cp": 8,
+      "cardAsset": "assets/orange/orange-006.png",
+      "initialTokens": [
+        "Main du roi"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Frappe Venimeuse: inflige Poison, Enchevetrement et 2 Hemorragie.",
+        "Passif: a la fin de son tour, l adversaire subit 1 degat par alteration negative qui l affecte."
+      ],
+      "defense": "Jet defensif 1 de: sur blanc, inflige Hemorragie.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 0,
+            "orange": 3,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "orange-orange-007",
+      "name": "Berserker Enrage",
+      "rank": "orange",
+      "maxHealth": 30,
+      "cp": 4,
+      "cardAsset": "assets/orange/orange-007.png",
+      "initialTokens": [
+        "Première Frappe",
+        "Main du roi"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Colere Dechainee: lance 2 des, plus 1 de par Chaos, jusqu a 5 des maximum.",
+        "Inflige autant de degats que la valeur totale du jet.",
+        "Passif: si le lancer offensif echoue, gagne Chaos."
+      ],
+      "defense": "Defense unique: si le Berserker subit des degats pendant un lancer offensif adverse, il gagne Chaos.",
+      "defenseDice": 0,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 3,
+            "orange": 0,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "orange-orange-008",
+      "name": "Swamp Dweller",
+      "rank": "orange",
+      "maxHealth": 30,
+      "cp": 6,
+      "cardAsset": "assets/orange/orange-008.png",
+      "initialTokens": [
+        "Main du roi"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Toxic Touch: inflige Poison, puis inflige un Poison supplementaire.",
+        "Passif: quand un adversaire engage devrait recevoir Poison, inflige aussi 2 degats imparables."
+      ],
+      "defense": "Defense roll 2 dice: on yellow, inflict Poison.",
+      "defenseDice": 2,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 1,
+            "orange": 3,
+            "red": 0
+          }
+        ]
+      }
+    },
+    {
+      "key": "orange-orange-009",
+      "name": "Bloodseeker",
+      "rank": "orange",
+      "maxHealth": 30,
+      "cp": 5,
+      "cardAsset": "assets/orange/orange-009.png",
+      "initialTokens": [
+        "Première Frappe",
+        "Main du roi"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Leeching Strike: micro straight = inflict 2 Bleed and deal 3 undefendable damage.",
+        "Leeching Strike: small straight = inflict Bleed, deal 6 damage, plus 1 per Bleed on the hero board.",
+        "Leeching Strike: large straight = inflict Bleed, deal 8 damage, plus 2 per Bleed on the hero board."
+      ],
+      "defense": "Defense roll 3 dice: on 2 white symbols, inflict Bleed.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "suite",
+        "goals": []
+      }
+    },
+    {
+      "key": "orange-orange-010",
+      "name": "The Ashen King",
+      "rank": "orange",
+      "maxHealth": 35,
+      "cp": 6,
+      "cardAsset": "assets/orange/orange-010.png",
+      "initialTokens": [
+        "Main du roi"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Profane Command: 1 blanc + 2 jaunes = 7 degats.",
+        "Profane Command: 1 blanc + 2 jaunes + 1 rouge = Domination et 9 degats.",
+        "Profane Command: 1 blanc + 3 jaunes + 1 rouge = Domination et 13 degats."
+      ],
+      "defense": "Defense roll 2 dice: on yellow, inflict Burn. If already at stack limit, deal 2 damage instead.",
+      "defenseDice": 2,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 1,
+            "orange": 2,
+            "red": 0
+          },
+          {
+            "white": 1,
+            "orange": 2,
+            "red": 1
+          },
+          {
+            "white": 1,
+            "orange": 3,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "orange-orange-011",
+      "name": "Fallen Pharaoh",
+      "rank": "orange",
+      "maxHealth": 25,
+      "cp": 5,
+      "cardAsset": "assets/orange/orange-011.png",
+      "initialTokens": [
+        "Main du roi"
+      ],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Ancient Curse: inflige 5 degats imparables et lance 1 de.",
+        "Sur blanc: inflige Silence. Sur jaune: inflige Sort. Sur rouge: inflige Sort et Silence.",
+        "Passif: au debut de son tour, gagne Siphon Vital; si deja a la limite, soigne 3 PV."
+      ],
+      "defense": "Defense roll 3 dice: on red, steal 2 health.",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 2,
+            "red": 1
+          }
+        ]
+      }
+    },
+    {
+      "key": "green-fallback",
+      "name": "Level 1 Minion",
+      "rank": "green",
+      "maxHealth": 8,
+      "cp": 1,
+      "cardAsset": "assets/map_green.jpg",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Quick hit: 3 damage"
+      ],
+      "defense": "Blocks 1 damage",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "none",
+        "goals": []
+      }
+    },
+    {
+      "key": "naraxus",
+      "name": "Naxarus",
+      "rank": "naraxus",
+      "maxHealth": 65,
+      "cp": 0,
+      "cardAsset": "assets/home_background_v4.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Swoop: 1 = remove 1 random Naxarus token, heal 4 HP, deal 3 undefendable damage.",
+        "Ember Spark: 2 = hero moves top 3 deck cards to discard, then takes 8 damage.",
+        "Gashing Bite: 3 = roll 4 dice, deal damage equal to the 2 highest dice.",
+        "Hoarding: 4 = hero loses 1 die next battle phase, then takes 9 damage.",
+        "Thundering Roar: 5 = hero discards 1 card and takes 8 undefendable damage.",
+        "Dragon's Might: 6 = deal 10 damage and roll 1 extra die; on 5-6 also Swoop."
+      ],
+      "defense": "Defense roll 1 die: 1 prevents 1, 2-5 prevents 3, 6 prevents 5.",
+      "defenseDice": 1,
+      "attackPlan": {
+        "style": "none",
+        "goals": []
+      }
+    },
+    {
+      "key": "blue-generic",
+      "name": "Level 2 Minion",
+      "rank": "blue",
+      "maxHealth": 11,
+      "cp": 2,
+      "cardAsset": "assets/map_blue.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Precise strike: 4 damage",
+        "Pressure: -1 CP"
+      ],
+      "defense": "Blocks 2 damage",
+      "defenseDice": 2,
+      "attackPlan": {
+        "style": "none",
+        "goals": []
+      }
+    },
+    {
+      "key": "violet-generic",
+      "name": "Level 3 Minion",
+      "rank": "violet",
+      "maxHealth": 14,
+      "cp": 3,
+      "cardAsset": "assets/map_violet.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Mystic slash: 5 damage",
+        "Weaken: status token"
+      ],
+      "defense": "Blocks 3 damage",
+      "defenseDice": 3,
+      "attackPlan": {
+        "style": "none",
+        "goals": []
+      }
+    },
+    {
+      "key": "viseer",
+      "name": "Viseer",
+      "rank": "viseer",
+      "maxHealth": 20,
+      "cp": 0,
+      "cardAsset": "assets/enemy_viseer.jpg",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Special rules",
+        "When the Boss is attacked, the attacker may choose to target Viseer instead.",
+        "Viseer is immune to status effects, CP loss, and everything else besides damage.",
+        "Passive: during the Boss upkeep phase, roll 1 die."
+      ],
+      "defense": "Defense roll 4 dice: on red symbol, activate Passive Ability.",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "none",
+        "goals": []
+      }
+    },
+    {
+      "key": "orange-generic",
+      "name": "Level 4 Minion",
+      "rank": "orange",
+      "maxHealth": 20,
+      "cp": 5,
+      "cardAsset": "assets/map_orange.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Boss rage: 8 damage",
+        "Counter: reinforced defense"
+      ],
+      "defense": "Blocks 4 damage and counters",
+      "defenseDice": 4,
+      "attackPlan": {
+        "style": "none",
+        "goals": []
+      }
+    }
+  ]
+}
