@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.24';
+const String appVersionLabel = 'Version 1.2.25';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const int mediumTarget = 33;
@@ -5022,6 +5022,7 @@ class _MapHeaderState extends State<MapHeader> {
                     value: adventure.health.toString(),
                     color: heroAccent,
                     accent: heroAccent,
+                    borderColor: Colors.white,
                     onTap: () => _openStatEditor('HP', adventure.health),
                   ),
                 ),
@@ -5033,6 +5034,7 @@ class _MapHeaderState extends State<MapHeader> {
                     value: adventure.combatPoints.toString(),
                     color: heroAccent,
                     accent: heroAccent,
+                    borderColor: Colors.white,
                     onTap: () => _openStatEditor('CP', adventure.combatPoints),
                   ),
                 ),
@@ -5063,7 +5065,7 @@ class _MapHeaderState extends State<MapHeader> {
               items: adventure.bonuses,
               accent: heroAccent,
               background: Colors.black.withValues(alpha: 0.32),
-              border: heroAccent,
+              border: Colors.white,
               compactDuplicates: false,
               leading: Icon(Icons.emoji_events, color: heroAccent, size: 18),
             ),
@@ -5163,6 +5165,7 @@ class MapStatChip extends StatelessWidget {
     required this.onTap,
     this.icon,
     this.accent,
+    this.borderColor,
     super.key,
   });
 
@@ -5171,6 +5174,7 @@ class MapStatChip extends StatelessWidget {
   final String value;
   final Color color;
   final Color? accent;
+  final Color? borderColor;
   final VoidCallback? onTap;
 
   @override
@@ -5184,7 +5188,9 @@ class MapStatChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: (accent ?? const Color(0xff2a2a2a)).withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: accent ?? const Color(0xff3d4a3e)),
+          border: Border.all(
+            color: borderColor ?? accent ?? const Color(0xff3d4a3e),
+          ),
         ),
         child: Row(
           children: [
@@ -5510,9 +5516,6 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Spacer(),
-                  Center(child: EnemyRankAvatar(enemy: enemy, size: 132)),
-                  const SizedBox(height: 18),
                   Text(
                     enemy.label.isEmpty ? 'Opponent name' : enemy.label,
                     textAlign: TextAlign.center,
@@ -5522,57 +5525,9 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${enemy.rank.label} Minion',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.56),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: enemy.rank.color),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.favorite,
-                              color: enemy.rank.color,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '${enemy.maxHealth} HP',
-                              style: TextStyle(
-                                color: enemy.rank.color,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(width: 18),
-                            RewardChestBadge(
-                              rank: enemy.rewardRank,
-                              count: enemy.rewardChests,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        EnemyObjectivePreview(enemy: enemy),
-                      ],
-                    ),
-                  ),
+                  const Expanded(child: SizedBox()),
                   if (widget.showNext &&
                       enemy.alterations.contains('Première Frappe')) ...[
-                    const SizedBox(height: 18),
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -5605,25 +5560,74 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 12),
                   ],
-                  const Spacer(),
-                  if (widget.showNext)
-                    ImageActionButton(
-                      label: 'Next',
-                      icon: Icons.arrow_forward,
-                      onPressed: () {
-                        if (_keepFirstStrike) {
-                          if (!enemy.alterations.contains('Première Frappe')) {
-                            enemy.alterations.add('Première Frappe');
-                          }
-                        } else {
-                          enemy.alterations.removeWhere(
-                            (token) => token == 'Première Frappe',
-                          );
-                        }
-                        widget.onNext();
-                      },
-                    ),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.56),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: enemy.rank.color),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.favorite,
+                                    color: enemy.rank.color,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${enemy.maxHealth} HP',
+                                    style: TextStyle(
+                                      color: enemy.rank.color,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 18),
+                                  RewardChestBadge(
+                                    rank: enemy.rewardRank,
+                                    count: enemy.rewardChests,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              EnemyObjectivePreview(enemy: enemy),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (widget.showNext) ...[
+                        const SizedBox(width: 10),
+                        SizedBox(
+                          width: 58,
+                          child: _IntroPulse(
+                            active: true,
+                            child: IconButton.filled(
+                              style: IconButton.styleFrom(
+                                backgroundColor: const Color(0xff8f43ff),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              tooltip: 'Start fight',
+                              onPressed: _continueToFight,
+                              icon: const Icon(Icons.arrow_forward),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -5631,6 +5635,18 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
         ],
       ),
     );
+  }
+
+  void _continueToFight() {
+    final enemy = widget.enemy;
+    if (_keepFirstStrike) {
+      if (!enemy.alterations.contains('Première Frappe')) {
+        enemy.alterations.add('Première Frappe');
+      }
+    } else {
+      enemy.alterations.removeWhere((token) => token == 'Première Frappe');
+    }
+    widget.onNext();
   }
 }
 
@@ -6179,48 +6195,34 @@ class _FightPageState extends State<FightPage> {
           child: Column(
             children: [
               CombatBottomDock(
-                showResolution: _isBattlePhase,
                 phase: _phase,
                 adventure: widget.adventure,
                 enemy: enemy,
-                naraxusRollHistory: _naraxusRollHistory,
-                onFinish:
-                    enemy.health <= 0 ||
-                        (_isNaraxus && widget.adventure.health <= 0)
-                    ? _finishCombat
-                    : null,
                 upkeepApplied: _upkeepApplied,
                 heroUpkeepApplied: _heroUpkeepApplied,
                 canAdvancePhase: canAdvancePhase,
-                attackValue: _battleAttackValue,
-                defenseValue: _battleDefenseValue,
-                onChanged: () {
-                  widget.onChanged();
-                  setState(() {});
-                },
                 onPhaseChanged: _setPhase,
                 onNext: _advancePhase,
                 onApplyUpkeep: _applyUpkeep,
                 onApplyHeroUpkeep: _applyHeroUpkeep,
-                onAttackChanged: (delta) => setState(() {
-                  _battleAttackValue = (_battleAttackValue + delta).clamp(
-                    0,
-                    99,
-                  );
-                }),
-                onDefenseChanged: (delta) => setState(() {
-                  _battleDefenseValue = (_battleDefenseValue + delta).clamp(
-                    0,
-                    99,
-                  );
-                }),
-                onApply: _applyBattleResolution,
               ),
               Expanded(
                 child: ListView(
                   controller: _combatScrollController,
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 180),
                   children: [
+                    FightStatusPanel(
+                      adventure: widget.adventure,
+                      enemy: enemy,
+                      phase: _phase,
+                      naraxusRollHistory: _naraxusRollHistory,
+                      onFinish: null,
+                      onChanged: () {
+                        widget.onChanged();
+                        setState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 12),
                     EnemyRulesPanel(
                       enemy: enemy,
                       phase: _phase,
@@ -6361,6 +6363,27 @@ class _FightPageState extends State<FightPage> {
                 heroTokens: _battleHeroTokens,
                 minionTokens: _battleMinionTokens,
                 notes: _battleNotes,
+                showResolution: _isBattlePhase,
+                attackValue: _battleAttackValue,
+                defenseValue: _battleDefenseValue,
+                onAttackChanged: (delta) => setState(() {
+                  _battleAttackValue = (_battleAttackValue + delta).clamp(
+                    0,
+                    99,
+                  );
+                }),
+                onDefenseChanged: (delta) => setState(() {
+                  _battleDefenseValue = (_battleDefenseValue + delta).clamp(
+                    0,
+                    99,
+                  );
+                }),
+                onApply: _applyBattleResolution,
+                onFinish:
+                    enemy.health <= 0 ||
+                        (_isNaraxus && widget.adventure.health <= 0)
+                    ? _finishCombat
+                    : null,
                 onChanged: () {
                   widget.onChanged();
                   setState(() {});
@@ -6663,7 +6686,7 @@ class _FightPageState extends State<FightPage> {
       case 'fee':
         if (yellow >= 2) {
           prevented = 3;
-          notes.add('Defense: 2 yellow symbols prevent 3 damage.');
+          notes.add('Defense: 2 orange symbols prevent 3 damage.');
         }
       case 'ronin-vagabond':
         final value = rolled.first.value ?? 0;
@@ -6672,7 +6695,7 @@ class _FightPageState extends State<FightPage> {
       case 'enchanteur-gobelin':
         if (yellow > 0) {
           returnDamage = 1;
-          notes.add('Defense: yellow symbol returns 1 damage.');
+          notes.add('Defense: orange symbol returns 1 damage.');
         }
         if (red > 0) {
           heroTokens.add('Poison');
@@ -6681,7 +6704,7 @@ class _FightPageState extends State<FightPage> {
       case 'archer-de-lombre':
         if (yellow > 0) {
           prevented = 3;
-          notes.add('Defense: yellow symbol prevents 3 damage.');
+          notes.add('Defense: orange symbol prevents 3 damage.');
         }
       case 'ombre-feline':
         if (white > 0) {
@@ -6700,7 +6723,7 @@ class _FightPageState extends State<FightPage> {
       case 'elfe-du-chaos':
         if (yellow >= 2) {
           prevented = (_battleAttackValue / 2).ceil();
-          notes.add('Defense: 2 yellow symbols prevent half the damage.');
+          notes.add('Defense: 2 orange symbols prevent half the damage.');
         }
       case 'oni-delirant':
         lifeSteal = yellow;
@@ -6710,7 +6733,7 @@ class _FightPageState extends State<FightPage> {
       case 'vert-vert-011':
         if (yellow > 0) {
           prevented = (_battleAttackValue / 2).ceil();
-          notes.add('Defense: yellow prevents half the damage.');
+          notes.add('Defense: orange prevents half the damage.');
         }
       case 'vert-vert-012':
       case 'vert-vert-016':
@@ -6736,7 +6759,7 @@ class _FightPageState extends State<FightPage> {
       case 'vert-vert-018':
         if (yellow > 0) {
           heroTokens.add('À Terre');
-          notes.add('Defense: yellow gives À Terre to the hero.');
+          notes.add('Defense: orange gives À Terre to the hero.');
         }
         if (red > 0) {
           prevented = 2;
@@ -6759,7 +6782,7 @@ class _FightPageState extends State<FightPage> {
       case 'bleu-vert-022':
         if (yellow > 0) {
           prevented = 2;
-          notes.add('Defense: yellow prevents 2 damage.');
+          notes.add('Defense: orange prevents 2 damage.');
         }
         if (red > 0) {
           heroTokens.add('Parasite');
@@ -6772,6 +6795,13 @@ class _FightPageState extends State<FightPage> {
         }
       default:
         notes.add('Defense rolled. Check the minion card for exact effects.');
+    }
+
+    if (prevented == 0 &&
+        returnDamage == 0 &&
+        lifeSteal == 0 &&
+        heroTokens.isEmpty) {
+      notes.add('Defense roll failed.');
     }
 
     _battleDefenseValue = prevented.clamp(0, 99);
@@ -6807,8 +6837,8 @@ class _FightPageState extends State<FightPage> {
     } else if (result != null) {
       notes.add(
         result.imparable
-            ? 'Attack result: ${result.value} imparable damage.'
-            : 'Attack result: ${result.value} damage.',
+            ? 'Attack result: deals ${result.value} undefendable damage.'
+            : 'Attack result: deals ${result.value} damage.',
       );
     } else if (_rollCount > 0) {
       notes.add('No valid attack yet.');
@@ -6926,7 +6956,9 @@ class _FightPageState extends State<FightPage> {
         notes.add('Ember Spark: 8 damage.');
       case 3:
         attack = 0;
-        notes.add('Gashing Bite: the player rolls 4 dice in the extra dice phase.');
+        notes.add(
+          'Gashing Bite: the player rolls 4 dice in the extra dice phase.',
+        );
         notes.add(
           'Damage will equal the 2 highest dice after hero interactions.',
         );
@@ -6998,7 +7030,9 @@ class _FightPageState extends State<FightPage> {
           damage += 3;
           heal = 4;
           notes.add('Extra die $extra: Swoop is added.');
-          notes.add('Swoop: Naxarus heals 4 HP and deals 3 undefendable damage.');
+          notes.add(
+            'Swoop: Naxarus heals 4 HP and deals 3 undefendable damage.',
+          );
         } else {
           notes.add('Extra die $extra: no Swoop added.');
         }
@@ -7116,8 +7150,8 @@ class _FightPageState extends State<FightPage> {
         } else {
           _lastBattleOutcomeMessage =
               '${widget.adventure.hero.label} dealt $_battleAttackValue damage. '
-              '${enemy.label} prevented $_battleDefenseValue damage. '
-              'Net damage: $netDamage.'
+              '${enemy.label} prevented $_battleDefenseValue damage.\n'
+              'Net damage: deals $netDamage damage.'
               '${_battleReturnDamage > 0 ? ' Return damage: $_battleReturnDamage.' : ''}'
               '${_battleLifeSteal > 0 ? ' Life steal: $_battleLifeSteal.' : ''}'
               '${_battleHeroTokens.isNotEmpty ? ' Hero receives ${_battleHeroTokens.join(', ')}.' : ''}'
@@ -7160,8 +7194,8 @@ class _FightPageState extends State<FightPage> {
         );
         _lastBattleOutcomeMessage =
             '${enemy.label} dealt $_battleAttackValue damage. '
-            '${widget.adventure.hero.label} prevented $_battleDefenseValue damage. '
-            'Net damage: $netDamage.'
+            '${widget.adventure.hero.label} prevented $_battleDefenseValue damage.\n'
+            'Net damage: deals $netDamage damage.'
             '${_battleHeroTokens.isNotEmpty ? ' ${widget.adventure.hero.label} receives ${_battleHeroTokens.join(', ')}.' : ''}'
             '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_battleMinionTokens.join(', ')}.' : ''}'
             '${_battleEnemyHeal > 0 ? ' ${enemy.label} heals $_battleEnemyHeal HP.' : ''}'
@@ -7189,19 +7223,15 @@ class _FightPageState extends State<FightPage> {
       widget.adventure.setHeroPc(
         widget.adventure.combatPoints + GameEngine.combatPointStartGain(),
       );
+      var upkeepLog = '${widget.adventure.hero.label} gains 1 CP';
       if (poisonCount > 0) {
         widget.adventure.setHeroHealth(widget.adventure.health - poisonCount);
-        _lastBattleOutcomeMessage =
-            '${widget.adventure.hero.label} upkeep resolved: +1 CP, -$poisonCount HP from Poison.';
-      } else {
-        _lastBattleOutcomeMessage =
-            '${widget.adventure.hero.label} upkeep resolved: +1 CP.';
+        upkeepLog += ', loses $poisonCount HP from Poison';
       }
       if (widget.adventure.alterations.contains('Hémorragie')) {
-        _lastBattleOutcomeMessage +=
-            ' Hémorragie requires a manual upkeep roll.';
+        upkeepLog += '. Hémorragie requires a manual upkeep roll';
       }
-      widget.adventure.log(_lastBattleOutcomeMessage);
+      widget.adventure.log('$upkeepLog.');
       widget.onChanged();
     });
     _maybeShowGameOverDialog();
@@ -7223,9 +7253,7 @@ class _FightPageState extends State<FightPage> {
         enemy.alterations.remove(token);
       }
       _upkeepApplied = true;
-      final upkeepLog = _isNaraxus
-          ? _naxarusUpkeepLog(outcome)
-          : outcome.log;
+      final upkeepLog = _isNaraxus ? _naxarusUpkeepLog(outcome) : outcome.log;
       if (upkeepLog.isNotEmpty) {
         widget.adventure.log('${enemy.label} upkeep: $upkeepLog.');
       }
@@ -7635,7 +7663,7 @@ class HeroTokenStrip extends StatelessWidget {
       items: tokens,
       accent: heroAccent,
       background: Colors.black.withValues(alpha: 0.32),
-      border: heroAccent,
+      border: Colors.white,
       trailing: IconButton(
         tooltip: 'Edit tokens',
         visualDensity: VisualDensity.compact,
@@ -7911,6 +7939,9 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
         _showDefense = true;
       } else if (widget.phase == CombatPhase.minionAttack) {
         _showAttack = true;
+        _showDefense = false;
+      } else {
+        _showAttack = false;
         _showDefense = false;
       }
     }
@@ -8338,10 +8369,7 @@ class _NaxarusAttackSummary extends StatelessWidget {
           value: 4,
           name: 'Hoarding',
           detail: _naraxusAttackDetails[4]!,
-          result: [
-            _DiePenaltyBadge(),
-            DamageBadge(value: 9, imparable: false),
-          ],
+          result: [_DiePenaltyBadge(), DamageBadge(value: 9, imparable: false)],
         ),
         _NaxarusAttackLine(
           value: 5,
@@ -8364,18 +8392,12 @@ class _NaxarusAttackSummary extends StatelessWidget {
 }
 
 const Map<int, String> _naraxusAttackDetails = {
-  1:
-      'Swoop\n\nRemove 1 random status effect token from Naxarus.\nHeal 4 HP.\nDeal 3 undefendable damage.',
-  2:
-      'Ember Spark\n\nThe active hero must place the top 3 cards of their deck into their discard pile.\nDeal 8 damage.',
-  3:
-      'Gashing Bite\n\nRoll 4 dice.\nThen deal damage equal to the total roll value of the two highest value dice that were rolled.',
-  4:
-      'Hoarding\n\nTake one of the active hero dice. They cannot use this die until the end of their turn.\nDeal 9 damage.',
-  5:
-      'Thundering Roar\n\nThe active hero must discard 1 card of their choice.\nDeal 8 undefendable damage.',
-  6:
-      "Dragon's Might\n\nDeal 10 damage and roll 1 die.\nOn 5-6, at the end of the roll phase, activate Swoop.",
+  1: 'Swoop\n\nRemove 1 random status effect token from Naxarus.\nHeal 4 HP.\nDeal 3 undefendable damage.',
+  2: 'Ember Spark\n\nThe active hero must place the top 3 cards of their deck into their discard pile.\nDeal 8 damage.',
+  3: 'Gashing Bite\n\nRoll 4 dice.\nThen deal damage equal to the total roll value of the two highest value dice that were rolled.',
+  4: 'Hoarding\n\nTake one of the active hero dice. They cannot use this die until the end of their turn.\nDeal 9 damage.',
+  5: 'Thundering Roar\n\nThe active hero must discard 1 card of their choice.\nDeal 8 undefendable damage.',
+  6: "Dragon's Might\n\nDeal 10 damage and roll 1 die.\nOn 5-6, at the end of the roll phase, activate Swoop.",
 };
 
 class _NaxarusAttackLine extends StatelessWidget {
@@ -8628,18 +8650,11 @@ class _NaxarusDefenseGrid extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: const [
-        Expanded(
-          child: _NaxarusDefenseCell(value: 1, prevention: 1),
-        ),
+        Expanded(child: _NaxarusDefenseCell(value: 1, prevention: 1)),
         SizedBox(width: 8),
-        Expanded(
-          flex: 2,
-          child: _NaxarusDefenseRange(),
-        ),
+        Expanded(flex: 2, child: _NaxarusDefenseRange()),
         SizedBox(width: 8),
-        Expanded(
-          child: _NaxarusDefenseCell(value: 6, prevention: 5),
-        ),
+        Expanded(child: _NaxarusDefenseCell(value: 6, prevention: 5)),
       ],
     );
   }
@@ -8892,128 +8907,49 @@ class _DefenseEffectLine extends StatelessWidget {
 
 class CombatBottomDock extends StatelessWidget {
   const CombatBottomDock({
-    required this.showResolution,
     required this.phase,
     required this.adventure,
     required this.enemy,
-    required this.naraxusRollHistory,
-    required this.onFinish,
     required this.upkeepApplied,
     required this.heroUpkeepApplied,
     required this.canAdvancePhase,
-    required this.attackValue,
-    required this.defenseValue,
     required this.onPhaseChanged,
     required this.onNext,
     required this.onApplyUpkeep,
     required this.onApplyHeroUpkeep,
-    required this.onAttackChanged,
-    required this.onDefenseChanged,
-    required this.onApply,
-    required this.onChanged,
     super.key,
   });
 
-  final bool showResolution;
   final CombatPhase phase;
   final AdventureState adventure;
   final EnemyNode enemy;
-  final List<String> naraxusRollHistory;
-  final VoidCallback? onFinish;
   final bool upkeepApplied;
   final bool heroUpkeepApplied;
   final bool canAdvancePhase;
-  final int attackValue;
-  final int defenseValue;
   final ValueChanged<CombatPhase> onPhaseChanged;
   final VoidCallback onNext;
   final VoidCallback onApplyUpkeep;
   final VoidCallback onApplyHeroUpkeep;
-  final ValueChanged<int> onAttackChanged;
-  final ValueChanged<int> onDefenseChanged;
-  final VoidCallback onApply;
-  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final isHeroBattle = phase == CombatPhase.hero;
-    final attackColor = isHeroBattle ? heroAccent : enemy.rank.color;
-    final defenseColor = isHeroBattle ? enemy.rank.color : heroAccent;
-
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xf2121212),
         border: Border(bottom: BorderSide(color: Colors.white12)),
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TurnPhasePanel(
-              phase: phase,
-              adventure: adventure,
-              enemy: enemy,
-              upkeepApplied: upkeepApplied,
-              heroUpkeepApplied: heroUpkeepApplied,
-              canAdvance: canAdvancePhase,
-              onPhaseChanged: onPhaseChanged,
-              onNext: onNext,
-              onApplyUpkeep: onApplyUpkeep,
-              onApplyHeroUpkeep: onApplyHeroUpkeep,
-            ),
-            FightStatusPanel(
-              adventure: adventure,
-              enemy: enemy,
-              phase: phase,
-              naraxusRollHistory: naraxusRollHistory,
-              onFinish: onFinish,
-              onChanged: onChanged,
-            ),
-            if (showResolution) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: _BattleCounter(
-                      label: 'ATK',
-                      value: attackValue,
-                      color: attackColor,
-                      onChanged: onAttackChanged,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _BattleCounter(
-                      label: 'DEF',
-                      value: defenseValue,
-                      color: defenseColor,
-                      onChanged: onDefenseChanged,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 56,
-                    height: 52,
-                    child: FilledButton(
-                      onPressed: onApply,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xff8f43ff),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: const Text(
-                        'OK',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: TurnPhasePanel(
+        phase: phase,
+        adventure: adventure,
+        enemy: enemy,
+        upkeepApplied: upkeepApplied,
+        heroUpkeepApplied: heroUpkeepApplied,
+        canAdvance: canAdvancePhase,
+        onPhaseChanged: onPhaseChanged,
+        onNext: onNext,
+        onApplyUpkeep: onApplyUpkeep,
+        onApplyHeroUpkeep: onApplyHeroUpkeep,
       ),
     );
   }
@@ -9033,6 +8969,13 @@ class CombatAiChatDock extends StatelessWidget {
     required this.heroTokens,
     required this.minionTokens,
     required this.notes,
+    required this.showResolution,
+    required this.attackValue,
+    required this.defenseValue,
+    required this.onAttackChanged,
+    required this.onDefenseChanged,
+    required this.onApply,
+    required this.onFinish,
     required this.onChanged,
     super.key,
   });
@@ -9049,11 +8992,18 @@ class CombatAiChatDock extends StatelessWidget {
   final List<String> heroTokens;
   final List<String> minionTokens;
   final List<String> notes;
+  final bool showResolution;
+  final int attackValue;
+  final int defenseValue;
+  final ValueChanged<int> onAttackChanged;
+  final ValueChanged<int> onDefenseChanged;
+  final VoidCallback onApply;
+  final VoidCallback? onFinish;
   final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
-    if (!aiMode) {
+    if (!aiMode && !showResolution && onFinish == null) {
       return const SizedBox.shrink();
     }
     final chatAccent =
@@ -9070,29 +9020,93 @@ class CombatAiChatDock extends StatelessWidget {
       if (cpSteal > 0) 'CP steal: $cpSteal',
       if (enemy.profileKey != 'naraxus') ...notes,
     ];
+    final isHeroBattle = phase == CombatPhase.hero;
+    final attackColor = isHeroBattle ? heroAccent : enemy.rank.color;
+    final defenseColor = isHeroBattle ? enemy.rank.color : heroAccent;
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xf2121212),
         border: Border(top: BorderSide(color: Colors.white12)),
       ),
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-      child: _AiChatWithHealth(
-        message: _battleChatText(aiMessage, tokenText),
-        accent: chatAccent,
-        heroHp: adventure.health,
-        enemyHp: enemy.health,
-        enemyColor: enemy.rank.color,
-        heroName: adventure.hero.label,
-        enemyName: enemy.label,
-        showHealthControls: false,
-        onHeroHpSaved: (value) {
-          adventure.setHeroHealth(value);
-          onChanged();
-        },
-        onEnemyHpSaved: (value) {
-          enemy.health = value.clamp(0, 99);
-          onChanged();
-        },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (aiMode)
+            _AiChatWithHealth(
+              message: _battleChatText(aiMessage, tokenText),
+              accent: chatAccent,
+              heroHp: adventure.health,
+              enemyHp: enemy.health,
+              enemyColor: enemy.rank.color,
+              heroName: adventure.hero.label,
+              enemyName: enemy.label,
+              showHealthControls: false,
+              onHeroHpSaved: (value) {
+                adventure.setHeroHealth(value);
+                onChanged();
+              },
+              onEnemyHpSaved: (value) {
+                enemy.health = value.clamp(0, 99);
+                onChanged();
+              },
+            ),
+          if (showResolution) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _BattleCounter(
+                    label: 'ATK',
+                    value: attackValue,
+                    color: attackColor,
+                    onChanged: onAttackChanged,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _BattleCounter(
+                    label: 'DEF',
+                    value: defenseValue,
+                    color: defenseColor,
+                    onChanged: onDefenseChanged,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 56,
+                  height: 52,
+                  child: FilledButton(
+                    onPressed: onApply,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xff8f43ff),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.zero,
+                    ),
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (onFinish != null) ...[
+            const SizedBox(height: 10),
+            Center(
+              child: SizedBox(
+                width: 210,
+                child: ImageActionButton(
+                  label: 'Finish',
+                  icon: Icons.flag,
+                  onPressed: onFinish!,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -9181,11 +9195,12 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
         ? heroAccent
         : widget.enemyColor;
     final chat = Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: widget.accent.withValues(alpha: 0.7)),
+        border: Border.all(color: Colors.white),
       ),
       child: SingleChildScrollView(
         reverse: true,
@@ -9481,13 +9496,15 @@ List<InlineSpan> _chatSpans(
             style: TextStyle(color: enemyColor, fontWeight: FontWeight.w900),
           ),
         );
-      } else {
+      } else if (token.startsWith('_') && token.endsWith('_')) {
         spans.add(
           TextSpan(
             text: token.substring(1, token.length - 1),
             style: const TextStyle(fontStyle: FontStyle.italic),
           ),
         );
+      } else {
+        spans.add(TextSpan(text: token));
       }
     }
     index = match.end;
@@ -9513,10 +9530,7 @@ InlineSpan? _chatVisualSpan(String token) {
         TextSpan(text: lower.contains('prévient') ? 'prévient ' : 'prevents '),
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
-          child: _InlineChatBadge(
-            label: number,
-            color: Colors.blueAccent,
-          ),
+          child: _InlineChatBadge(label: number, color: Colors.blueAccent),
         ),
       ],
     );
@@ -9534,10 +9548,7 @@ InlineSpan? _chatVisualSpan(String token) {
         TextSpan(text: verb),
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
-          child: _InlineChatBadge(
-            label: number,
-            color: Colors.redAccent,
-          ),
+          child: _InlineChatBadge(label: number, color: Colors.redAccent),
         ),
       ],
     );
@@ -9557,15 +9568,15 @@ InlineSpan? _chatVisualSpan(String token) {
         TextSpan(text: verb),
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
-          child: _InlineChatBadge(
-            label: number,
-            color: Colors.white,
-          ),
+          child: _InlineChatBadge(label: number, color: Colors.white),
         ),
       ],
     );
   }
   if (lower.contains('hp')) {
+    if (!lower.contains('heal')) {
+      return null;
+    }
     final verb = lower.contains('heal')
         ? lower.contains('healed')
               ? 'healed '
@@ -9590,10 +9601,7 @@ InlineSpan? _chatVisualSpan(String token) {
 }
 
 class _InlineChatBadge extends StatelessWidget {
-  const _InlineChatBadge({
-    required this.label,
-    required this.color,
-  });
+  const _InlineChatBadge({required this.label, required this.color});
 
   final String label;
   final Color color;
@@ -9790,7 +9798,9 @@ class MinionAiPanel extends StatelessWidget {
                 for (final die in visibleDice)
                   DieTile(
                     die: die,
-                    onTap: () => onTapDie(die),
+                    onTap: editMode || rerollOneMode
+                        ? () => onTapDie(die)
+                        : null,
                     highlight: die.reserved || editingDieId == die.id,
                     highlightColor: editingDieId == die.id
                         ? heroAccent
@@ -10075,10 +10085,6 @@ String _heroBattleAiMessage(
       ? 'The first attack dealt $lastHeroAttack damage. Can ${adventure.hero.label} do better?'
       : '${adventure.hero.label} averages ${(heroAttackTotal / heroAttackCount).toStringAsFixed(1)} damage per attack. Can this turn beat that?';
   return [
-    if (heroAttackCount == 0)
-      _openingAiLines(adventure, enemy, historyRecords)
-    else
-      _combatIntroLine(adventure, enemy),
     '**Battle phase.**',
     intro,
     '${enemy.label} is waiting for the hero attack result.',
@@ -10152,14 +10158,10 @@ String _minionAttackAiMessage(
   if (rollCount == 0 || rolled.isEmpty) {
     if (enemy.attackPlan.style == MinionAttackStyle.suite) {
       return '**Battle phase.**\n'
-          '${enemy.label} battle phase.\n'
-          '${enemy.label} has ${enemy.health} HP, ${enemy.combatPoints} CP and ${enemy.alterations.length} token(s).\n'
           'I use ${enemy.attacks.first}.\n'
           'First target: micro suite. If it succeeds, I will try to improve.';
     }
     return '**Battle phase.**\n'
-        '${enemy.label} battle phase.\n'
-        '${enemy.label} has ${enemy.health} HP, ${enemy.combatPoints} CP and ${enemy.alterations.length} token(s).\n'
         'I use ${enemy.attacks.first}.\n'
         'First target: the smallest valid symbol attack.';
   }
@@ -10174,23 +10176,26 @@ String _minionAttackAiMessage(
     final best = _bestSuiteLength(values);
     final rollLabel = _rollLabel(rollCount);
     if (best >= 5) {
+      final damage = _suiteDamage(enemy, 5);
       return rollCount >= 3
           ? 'After my 3 attack rolls, large suite validated with ${_bestSuiteValues(values, 5).join('/')}.\n'
-                '${adventure.hero.label} may still try to make my attack fail before pressing OK.'
+                '${_defenseInstruction(adventure, damage)}'
           : 'On my $rollLabel roll, large suite validated with ${_bestSuiteValues(values, 5).join('/')}.\n'
                 'The resolution line is ready; I can still try to improve if one roll remains.';
     }
     if (best == 4) {
+      final damage = _suiteDamage(enemy, 4);
       return rollCount >= 3
           ? 'After my 3 attack rolls, small suite validated with ${_bestSuiteValues(values, 4).join('/')}.\n'
-                '${adventure.hero.label} must perform a defensive phase if the attack is defendable.'
+                '${_defenseInstruction(adventure, damage)}'
           : 'On my $rollLabel roll, small suite validated with ${_bestSuiteValues(values, 4).join('/')}.\n'
                 'I can hit, then try to improve if one roll remains.';
     }
     if (best == 3) {
+      final damage = _suiteDamage(enemy, 3);
       return rollCount >= 3
           ? 'After my 3 attack rolls, micro suite validated with ${_bestSuiteValues(values, 3).join('/')}.\n'
-                '${adventure.hero.label} must perform a defensive phase if the attack is defendable.'
+                '${_defenseInstruction(adventure, damage)}'
           : 'On my $rollLabel roll, micro suite validated.\n'
                 'I keep ${kept.join('/')} and can keep rolling to improve.';
     }
@@ -10205,11 +10210,21 @@ String _minionAttackAiMessage(
     return symbolDamage == null
         ? 'After my 3 attack rolls, no valid attack combination was made.'
         : 'After my 3 attack rolls, the attack is validated with ${_reservedDiceText(dice)}.\n'
-              '${adventure.hero.label} must perform a defensive phase if the attack is defendable.';
+              '${_defenseInstruction(adventure, symbolDamage)}';
   }
   return kept.isEmpty
       ? 'On my $rollLabel roll, I deal no damage yet.\nI reroll toward the first attack.'
       : 'On my $rollLabel roll, I keep ${kept.join('/')}.\nI try to improve the attack.';
+}
+
+String _defenseInstruction(AdventureState adventure, _AttackDamage? damage) {
+  if (damage == null || damage.value <= 0) {
+    return 'No damage is dealt.';
+  }
+  if (damage.imparable) {
+    return 'No defense roll: this attack is undefendable. Defensive cards may still reduce the damage.';
+  }
+  return '${adventure.hero.label} should perform a defense roll.';
 }
 
 String _rollLabel(int rollCount) {
@@ -11626,6 +11641,7 @@ class CombatantStatusRow extends StatelessWidget {
             value: hp.toString(),
             color: accent,
             accent: accent,
+            borderColor: Colors.white,
             onTap: onHp,
           ),
         ),
@@ -11638,6 +11654,7 @@ class CombatantStatusRow extends StatelessWidget {
               value: cp.toString(),
               color: accent,
               accent: accent,
+              borderColor: Colors.white,
               onTap: onCp,
             ),
           ),
@@ -11651,7 +11668,7 @@ class CombatantStatusRow extends StatelessWidget {
             items: tokens,
             accent: accent,
             background: Colors.black.withValues(alpha: 0.32),
-            border: accent,
+            border: Colors.white,
             trailing: IconButton(
               tooltip: 'Edit tokens',
               visualDensity: VisualDensity.compact,
@@ -11905,10 +11922,7 @@ class TurnPhasePanel extends StatelessWidget {
     final heroHasHemorrhage = adventure.alterations.contains('Hémorragie');
     final heroHasRonces = adventure.alterations.contains('Ronces');
     final enemyHasRiposte = enemy.alterations.contains('Riposte');
-    final nextPhase = _nextCombatPhase(phase);
-    final nextColor = phase == CombatPhase.intro
-        ? const Color(0xff8f43ff)
-        : _phaseColor(nextPhase, enemy);
+    const nextColor = Color(0xff8f43ff);
     final reminder = switch (phase) {
       CombatPhase.heroUpkeep => [
         if (heroHasHemorrhage) 'Hémorragie',
@@ -12142,16 +12156,6 @@ class _CompactPhaseSelector extends StatelessWidget {
       }).toList(),
     );
   }
-}
-
-CombatPhase _nextCombatPhase(CombatPhase phase) {
-  return switch (phase) {
-    CombatPhase.intro => CombatPhase.heroUpkeep,
-    CombatPhase.heroUpkeep => CombatPhase.hero,
-    CombatPhase.hero => CombatPhase.minionUpkeep,
-    CombatPhase.minionUpkeep => CombatPhase.minionAttack,
-    CombatPhase.minionAttack => CombatPhase.heroUpkeep,
-  };
 }
 
 Color _phaseColor(CombatPhase phase, EnemyNode enemy) {
@@ -12443,7 +12447,7 @@ class DieTile extends StatelessWidget {
   });
 
   final GameDie die;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool compact;
   final bool highlight;
   final Color? highlightColor;
