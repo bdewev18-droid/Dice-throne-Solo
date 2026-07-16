@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.28';
+const String appVersionLabel = 'Version 1.2.27';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -4537,28 +4537,6 @@ class RoundIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final asset = switch (icon) {
-      Icons.add => 'assets/ui/button_plus_round.png',
-      Icons.remove => 'assets/ui/button_minus_round.png',
-      _ => null,
-    };
-    if (asset != null) {
-      return Tooltip(
-        message: tooltip,
-        child: Opacity(
-          opacity: onPressed == null ? 0.42 : 1,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onPressed,
-            child: SizedBox(
-              width: 44,
-              height: 44,
-              child: Image.asset(asset, fit: BoxFit.contain),
-            ),
-          ),
-        ),
-      );
-    }
     return IconButton(
       tooltip: tooltip,
       onPressed: onPressed,
@@ -8140,7 +8118,6 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
   @override
   Widget build(BuildContext context) {
     return InfoCard(
-      imageAsset: 'assets/ui/combat_panel_rules.png',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -9266,17 +9243,18 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 SizedBox(
-                  width: 64,
-                  height: 56,
-                  child: Tooltip(
-                    message: 'Apply',
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: onApply,
-                      child: Image.asset(
-                        'assets/ui/button_ok_purple.png',
-                        fit: BoxFit.fill,
-                      ),
+                  width: 56,
+                  height: 52,
+                  child: FilledButton(
+                    onPressed: onApply,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xff8f43ff),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.zero,
+                    ),
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(fontWeight: FontWeight.w900),
                     ),
                   ),
                 ),
@@ -9388,13 +9366,9 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
       width: double.infinity,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xffefe1bf),
+        color: Colors.black.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xff6e5a38)),
-        image: const DecorationImage(
-          image: AssetImage('assets/ui/combat_panel_chat.png'),
-          fit: BoxFit.fill,
-        ),
+        border: Border.all(color: Colors.white),
       ),
       child: SingleChildScrollView(
         reverse: true,
@@ -9402,7 +9376,7 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
           text: TextSpan(
             style: DefaultTextStyle.of(
               context,
-            ).style.copyWith(height: 1.25, color: const Color(0xff241a10)),
+            ).style.copyWith(height: 1.25, color: Colors.white),
             children: _chatSpans(
               widget.message,
               heroName: widget.heroName,
@@ -10028,7 +10002,6 @@ class MinionAiPanel extends StatelessWidget {
         : dice.firstWhere((die) => die.id == editingDieId);
     final isDefensePhase = phase == CombatPhase.hero;
     return InfoCard(
-      imageAsset: 'assets/ui/combat_panel_dice.png',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -10708,7 +10681,6 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
   Widget build(BuildContext context) {
     final visibleDice = _dice.take(_diceToRoll.clamp(0, 5)).toList();
     return InfoCard(
-      imageAsset: 'assets/ui/combat_panel_dice.png',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -11639,14 +11611,9 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-      decoration: BoxDecoration(
-        color: const Color(0xee121212),
-        border: Border.all(color: panelBorderGrey),
-        borderRadius: BorderRadius.circular(8),
-        image: const DecorationImage(
-          image: AssetImage('assets/ui/combat_panel_dark.png'),
-          fit: BoxFit.fill,
-        ),
+      decoration: const BoxDecoration(
+        color: Color(0xee121212),
+        border: Border(top: BorderSide(color: Colors.white12)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -12205,6 +12172,7 @@ class TurnPhasePanel extends StatelessWidget {
     final heroHasHemorrhage = adventure.alterations.contains('Hémorragie');
     final heroHasRonces = adventure.alterations.contains('Ronces');
     final enemyHasRiposte = enemy.alterations.contains('Riposte');
+    const nextColor = Color(0xff8f43ff);
     final reminder = switch (phase) {
       CombatPhase.heroUpkeep => [
         if (heroHasHemorrhage) 'Hémorragie',
@@ -12242,8 +12210,12 @@ class TurnPhasePanel extends StatelessWidget {
                 height: 44,
                 child: _IntroPulse(
                   active: phase == CombatPhase.intro,
-                  child: Tooltip(
-                    message: phase == CombatPhase.intro
+                  child: IconButton.filled(
+                    style: IconButton.styleFrom(
+                      backgroundColor: nextColor,
+                      foregroundColor: Colors.black,
+                    ),
+                    tooltip: phase == CombatPhase.intro
                         ? 'Start fight'
                         : (phase == CombatPhase.minionUpkeep &&
                                   !upkeepApplied) ||
@@ -12251,29 +12223,20 @@ class TurnPhasePanel extends StatelessWidget {
                                   !heroUpkeepApplied)
                         ? 'Apply upkeep and continue'
                         : 'Next phase',
-                    child: Opacity(
-                      opacity: canAdvance ? 1 : 0.42,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: canAdvance
-                            ? () {
-                                if (phase == CombatPhase.heroUpkeep &&
-                                    !heroUpkeepApplied) {
-                                  onApplyHeroUpkeep();
-                                }
-                                if (phase == CombatPhase.minionUpkeep &&
-                                    !upkeepApplied) {
-                                  onApplyUpkeep();
-                                }
-                                onNext();
-                              }
-                            : null,
-                        child: Image.asset(
-                          'assets/ui/button_arrow_purple.png',
-                          fit: BoxFit.fill,
-                        ),
-                      ),
-                    ),
+                    onPressed: canAdvance
+                        ? () {
+                            if (phase == CombatPhase.heroUpkeep &&
+                                !heroUpkeepApplied) {
+                              onApplyHeroUpkeep();
+                            }
+                            if (phase == CombatPhase.minionUpkeep &&
+                                !upkeepApplied) {
+                              onApplyUpkeep();
+                            }
+                            onNext();
+                          }
+                        : null,
+                    icon: const Icon(Icons.arrow_forward),
                   ),
                 ),
               ),
@@ -13149,10 +13112,9 @@ class DetailSection extends StatelessWidget {
 }
 
 class InfoCard extends StatelessWidget {
-  const InfoCard({required this.child, this.imageAsset, super.key});
+  const InfoCard({required this.child, super.key});
 
   final Widget child;
-  final String? imageAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -13160,26 +13122,11 @@ class InfoCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: imageAsset == null
-            ? const Color(0xff202020)
-            : const Color(0xffefe1bf),
+        color: const Color(0xff202020),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: imageAsset == null ? Colors.white12 : const Color(0xff6e5a38),
-        ),
-        image: imageAsset == null
-            ? null
-            : DecorationImage(image: AssetImage(imageAsset!), fit: BoxFit.fill),
+        border: Border.all(color: Colors.white12),
       ),
-      child: imageAsset == null
-          ? child
-          : IconTheme.merge(
-              data: const IconThemeData(color: Color(0xff241a10)),
-              child: DefaultTextStyle.merge(
-                style: const TextStyle(color: Color(0xff241a10)),
-                child: child,
-              ),
-            ),
+      child: child,
     );
   }
 }
