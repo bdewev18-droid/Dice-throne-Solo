@@ -6170,13 +6170,13 @@ class _HpHeartBadgePainter extends CustomPainter {
       )
       ..close();
     final fill = style == _CombatHpStyle.hero
-        ? Paint()
+        ? (Paint()
             ..shader = const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [Color(0xff8d1749), Color(0xffd34165)],
-            ).createShader(Offset.zero & size)
-        : Paint()..color = const Color(0xff1a1a1a);
+            ).createShader(Offset.zero & size))
+        : (Paint()..color = const Color(0xff1a1a1a));
     canvas.drawPath(path, fill);
     canvas.drawPath(
       path,
