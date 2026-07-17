@@ -2,6 +2,12 @@
 
 A new Flutter project.
 
+## Project workflow
+
+Enemy data is maintained in `docs/enemy_profiles.json`; see
+`docs/BUILD_PROCESS.md` for the fast local checks, version command, and
+manual GitHub Pages/APK workflows.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

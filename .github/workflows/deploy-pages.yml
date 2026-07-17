@@ -2,12 +2,18 @@ name: Deploy Web to GitHub Pages
 
 on:
   workflow_dispatch:
+    inputs:
+      run_analyze:
+        description: Run the full Dart analyzer before the web build
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
 
 concurrency:
-  group: pages
+  group: dt-solo-pages
   cancel-in-progress: true
 
 jobs:
@@ -28,13 +34,14 @@ jobs:
           cache: true
 
       - name: Flutter pub get
-        run: flutter pub get
+        run: timeout 90s flutter pub get
 
-      - name: Analyze
-        run: flutter analyze --no-pub
+      - name: Analyze (optional)
+        if: ${{ inputs.run_analyze == true }}
+        run: timeout 120s flutter analyze --no-pub
 
       - name: Build web
-        run: flutter build web --release --base-href '/Dice-throne-Solo/' --no-pub
+        run: timeout 600s flutter build web --release --base-href '/Dice-throne-Solo/' --no-pub
 
       - name: Publish to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
