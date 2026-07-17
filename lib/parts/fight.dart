@@ -1950,115 +1950,109 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return InfoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+    final attackContent = _CollapsibleRulesLine(
+      key: widget.attackKey,
+      label: 'Attack',
+      icon: Icons.gps_fixed,
+      color: enemy.rank.color,
+      trailing: AttackObjectiveInline(enemy: enemy),
+      expanded: widget.aiMode ? _showAttack : true,
+      onTap: () => setState(() {
+        if (!widget.aiMode) {
+          return;
+        }
+        _showAttack = !_showAttack;
+        if (_showAttack) {
+          _showDefense = false;
+        }
+      }),
+      child: MinionAttackSummary(enemy: enemy),
+    );
+    final defenseContent = _CollapsibleRulesLine(
+      key: widget.defenseKey,
+      label: 'Defense',
+      icon: Icons.shield,
+      color: enemy.rank.color,
+      trailing: DefenseDiceInline(count: enemy.defenseDice),
+      expanded: widget.aiMode ? _showDefense : true,
+      onTap: () => setState(() {
+        if (!widget.aiMode) {
+          return;
+        }
+        _showDefense = !_showDefense;
+        if (_showDefense) {
+          _showAttack = false;
+        }
+      }),
+      child: MinionDefenseSummary(enemy: enemy),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _RulesBackgroundBand(
+          asset: 'assets/attack_background_feline_shadow.png',
+          topRadius: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              InkWell(
-                onTap: () => _openEnemyCard(context),
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  width: 58,
-                  height: 40,
-                  decoration: BoxDecoration(
+              Row(
+                children: [
+                  InkWell(
+                    onTap: () => _openEnemyCard(context),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: enemy.rank.color),
-                    image: DecorationImage(
-                      image: AssetImage(enemy.cardAsset),
-                      fit: BoxFit.cover,
-                      alignment: Alignment.centerLeft,
+                    child: Container(
+                      width: 64,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: panelBorderGrey),
+                        image: DecorationImage(
+                          image: AssetImage(enemy.cardAsset),
+                          fit: BoxFit.cover,
+                          alignment: Alignment.centerLeft,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Text(
-                    enemy.label,
-                    maxLines: 1,
-                    style: TextStyle(
-                      color: enemy.rank.color,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Text(
+                        enemy.label,
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: enemy.rank.color,
+                          fontSize: 21,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    tooltip: 'Combat settings',
+                    onPressed: () => _openSettings(context),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.black.withValues(alpha: 0.22),
+                      foregroundColor: Colors.white,
+                      side: BorderSide(color: panelBorderGrey),
+                    ),
+                    icon: const Icon(Icons.settings),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              IconButton.filledTonal(
-                tooltip: 'Combat settings',
-                onPressed: () => _openSettings(context),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.white.withValues(alpha: 0.08),
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white70),
-                ),
-                icon: const Icon(Icons.settings),
-              ),
+              const SizedBox(height: 8),
+              attackContent,
             ],
           ),
-          const SizedBox(height: 8),
-          if (widget.aiMode)
-            Column(
-              children: [
-                _CollapsibleRulesLine(
-                  key: widget.attackKey,
-                  label: 'Attack',
-                  icon: Icons.gps_fixed,
-                  color: enemy.rank.color,
-                  trailing: AttackObjectiveInline(enemy: enemy),
-                  expanded: _showAttack,
-                  onTap: () => setState(() {
-                    _showAttack = !_showAttack;
-                    if (_showAttack) {
-                      _showDefense = false;
-                    }
-                  }),
-                  child: MinionAttackSummary(enemy: enemy),
-                ),
-                const SizedBox(height: 8),
-                _CollapsibleRulesLine(
-                  key: widget.defenseKey,
-                  label: 'Defense',
-                  icon: Icons.shield,
-                  color: enemy.rank.color,
-                  trailing: DefenseDiceInline(count: enemy.defenseDice),
-                  expanded: _showDefense,
-                  onTap: () => setState(() {
-                    _showDefense = !_showDefense;
-                    if (_showDefense) {
-                      _showAttack = false;
-                    }
-                  }),
-                  child: MinionDefenseSummary(enemy: enemy),
-                ),
-              ],
-            )
-          else
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Attack',
-                  style: TextStyle(fontWeight: FontWeight.w900),
-                ),
-                const SizedBox(height: 6),
-                MinionAttackSummary(enemy: enemy),
-                const SizedBox(height: 10),
-                const Text(
-                  'Defense',
-                  style: TextStyle(fontWeight: FontWeight.w900),
-                ),
-                const SizedBox(height: 6),
-                MinionDefenseSummary(enemy: enemy),
-              ],
-            ),
-        ],
-      ),
+        ),
+        _RulesBackgroundBand(
+          asset: 'assets/defense_background_feline_shadow.png',
+          child: defenseContent,
+        ),
+      ],
     );
   }
 
@@ -2233,6 +2227,44 @@ class _AiModeSwitch extends StatelessWidget {
   }
 }
 
+class _RulesBackgroundBand extends StatelessWidget {
+  const _RulesBackgroundBand({
+    required this.asset,
+    required this.child,
+    this.topRadius = false,
+  });
+
+  final String asset;
+  final Widget child;
+  final bool topRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: -16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage(asset),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            Colors.black.withValues(alpha: 0.22),
+            BlendMode.darken,
+          ),
+        ),
+        border: Border(
+          top: BorderSide(color: panelBorderGrey.withValues(alpha: 0.45)),
+          bottom: BorderSide(color: panelBorderGrey.withValues(alpha: 0.45)),
+        ),
+        borderRadius: BorderRadius.vertical(
+          top: topRadius ? const Radius.circular(8) : Radius.zero,
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
 class _CollapsibleRulesLine extends StatelessWidget {
   const _CollapsibleRulesLine({
     required this.label,
@@ -2255,27 +2287,13 @@ class _CollapsibleRulesLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundAsset = label == 'Attack'
-        ? 'assets/attack_background_feline_shadow.png'
-        : label == 'Defense'
-        ? 'assets/defense_background_feline_shadow.png'
-        : null;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 160),
       decoration: BoxDecoration(
-        color: expanded ? Colors.black.withValues(alpha: 0.22) : Colors.transparent,
-        image: expanded && backgroundAsset != null
-            ? DecorationImage(
-                image: AssetImage(backgroundAsset),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.black.withValues(alpha: 0.30),
-                  BlendMode.darken,
-                ),
-              )
-            : null,
+        color: expanded
+            ? Colors.black.withValues(alpha: 0.10)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: panelBorderGrey, width: 1.5),
       ),
       child: Column(
         children: [
@@ -3959,6 +3977,35 @@ class _BattleCounter extends StatelessWidget {
   }
 }
 
+class _DiceBackgroundBand extends StatelessWidget {
+  const _DiceBackgroundBand({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: -16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: const AssetImage('assets/passive_background_umbra.png'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            Colors.black.withValues(alpha: 0.16),
+            BlendMode.darken,
+          ),
+        ),
+        border: Border(
+          top: BorderSide(color: panelBorderGrey.withValues(alpha: 0.45)),
+          bottom: BorderSide(color: panelBorderGrey.withValues(alpha: 0.45)),
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
 class MinionAiPanel extends StatelessWidget {
   const MinionAiPanel({
     required this.enemy,
@@ -4007,7 +4054,7 @@ class MinionAiPanel extends StatelessWidget {
         ? null
         : dice.firstWhere((die) => die.id == editingDieId);
     final isDefensePhase = phase == CombatPhase.hero;
-    return InfoCard(
+    return _DiceBackgroundBand(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -6063,7 +6110,7 @@ class _CombatBadgeButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: SizedBox(width: 72, height: 52, child: Center(child: child)),
+        child: SizedBox(width: 74, height: 62, child: Center(child: child)),
       ),
     );
   }
@@ -6109,14 +6156,17 @@ class _PcTriangleBadge extends StatelessWidget {
     return CustomPaint(
       painter: const _PcTriangleBadgePainter(),
       child: SizedBox(
-        width: 62,
-        height: 48,
-        child: Center(
+        width: 58,
+        height: 58,
+        child: Align(
+          alignment: safeValue.length > 1
+              ? const Alignment(-0.22, 0)
+              : const Alignment(-0.46, 0),
           child: Text(
             safeValue,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.96),
-              fontSize: safeValue.length > 1 ? 18 : 25,
+              fontSize: safeValue.length > 1 ? 21 : 28,
               fontWeight: FontWeight.w900,
               shadows: const [Shadow(color: Colors.white54, blurRadius: 8)],
             ),
@@ -6200,12 +6250,27 @@ class _PcTriangleBadgePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final path = Path()
-      ..moveTo(size.width * 0.20, size.height * 0.15)
-      ..quadraticBezierTo(size.width * 0.13, size.height * 0.15, size.width * 0.12, size.height * 0.24)
-      ..lineTo(size.width * 0.12, size.height * 0.76)
-      ..quadraticBezierTo(size.width * 0.13, size.height * 0.85, size.width * 0.20, size.height * 0.85)
-      ..lineTo(size.width * 0.86, size.height * 0.56)
-      ..quadraticBezierTo(size.width * 0.99, size.height * 0.50, size.width * 0.86, size.height * 0.44)
+      ..moveTo(size.width * 0.22, size.height * 0.10)
+      ..quadraticBezierTo(
+        size.width * 0.10,
+        size.height * 0.10,
+        size.width * 0.10,
+        size.height * 0.23,
+      )
+      ..lineTo(size.width * 0.10, size.height * 0.77)
+      ..quadraticBezierTo(
+        size.width * 0.10,
+        size.height * 0.90,
+        size.width * 0.22,
+        size.height * 0.90,
+      )
+      ..lineTo(size.width * 0.78, size.height * 0.58)
+      ..quadraticBezierTo(
+        size.width * 0.98,
+        size.height * 0.50,
+        size.width * 0.78,
+        size.height * 0.42,
+      )
       ..close();
     canvas.drawPath(
       path,
@@ -6900,7 +6965,7 @@ class DicePanel extends StatelessWidget {
         ? null
         : dice.firstWhere((die) => die.id == editingDieId);
 
-    return InfoCard(
+    return _DiceBackgroundBand(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

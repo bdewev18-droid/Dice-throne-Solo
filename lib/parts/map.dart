@@ -1127,6 +1127,17 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                       ),
                     ),
                   ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 54,
+                    bottom: 116,
+                    child: Image.asset(
+                      enemy.previewAsset,
+                      fit: BoxFit.contain,
+                      alignment: Alignment.bottomCenter,
+                    ),
+                  ),
                   if (widget.showNext &&
                       enemy.alterations.contains('Première Frappe'))
                     Align(

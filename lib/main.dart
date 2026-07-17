@@ -20,12 +20,12 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.02';
+const String appVersionLabel = 'Version 1.3.03';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
 const String defaultEnemyChatPortrait =
-    'assets/reconstitutions/bleu-001-full.png';
+    'assets/enemy_previews/bleu-001.webp';
 const int mediumTarget = 33;
 const int hardTarget = 52;
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
@@ -736,6 +736,23 @@ class EnemyNode {
   final List<String> alterations = [];
   bool defeated = false;
   bool current = false;
+
+  String get previewAsset {
+    final filename = cardAsset.split('/').last;
+    final base = filename.split('.').first.toLowerCase();
+    if (cardAsset.contains('/bleu/vert-022')) {
+      return 'assets/enemy_previews/bleu-022.webp';
+    }
+    if (cardAsset.contains('/bleu/vert-023')) {
+      return 'assets/enemy_previews/bleu-023.webp';
+    }
+    if (base.startsWith('bleu-') ||
+        base.startsWith('violet-') ||
+        base.startsWith('orange-')) {
+      return 'assets/enemy_previews/$base.webp';
+    }
+    return cardAsset;
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
