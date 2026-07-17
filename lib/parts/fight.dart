@@ -2255,12 +2255,27 @@ class _CollapsibleRulesLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final backgroundAsset = label == 'Attack'
+        ? 'assets/attack_background_feline_shadow.png'
+        : label == 'Defense'
+        ? 'assets/defense_background_feline_shadow.png'
+        : null;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 160),
       decoration: BoxDecoration(
-        color: expanded ? color.withValues(alpha: 0.1) : Colors.transparent,
+        color: expanded ? Colors.black.withValues(alpha: 0.22) : Colors.transparent,
+        image: expanded && backgroundAsset != null
+            ? DecorationImage(
+                image: AssetImage(backgroundAsset),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withValues(alpha: 0.30),
+                  BlendMode.darken,
+                ),
+              )
+            : null,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color),
+        border: Border.all(color: panelBorderGrey, width: 1.5),
       ),
       child: Column(
         children: [
@@ -2276,7 +2291,10 @@ class _CollapsibleRulesLine extends StatelessWidget {
                   Expanded(
                     child: Text(
                       label,
-                      style: const TextStyle(fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                   Flexible(child: trailing),
@@ -5605,11 +5623,6 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
             onEditHeroTokens: _editHeroTokens,
             onEditEnemyTokens: _editEnemyTokens,
           ),
-          const SizedBox(height: 8),
-          CombatVersusStatusVariant(
-            adventure: widget.adventure,
-            enemy: widget.enemy,
-          ),
           if (_editing.contains('heroHp')) ...[
             const SizedBox(height: 6),
             _buildEditorRow('heroHp'),
@@ -5830,99 +5843,44 @@ class CombatVersusStatusPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 188,
+      height: 196,
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.26),
       ),
       clipBehavior: Clip.hardEdge,
       child: Row(
         children: [
-          _CombatPortraitStrip(
-            asset: defaultEnemyChatPortrait,
-            alignment: Alignment.centerLeft,
-          ),
           Expanded(
-            child: _CombatantInfoBlock(
+            child: _CombatantVersusHalf(
               title: enemy.label,
               hp: enemy.health,
               cp: enemy.combatPoints,
               tokens: enemy.alterations,
               accent: enemy.rank.color,
-              hideCp: enemy.profileKey == 'naraxus',
+              portraitAsset: defaultEnemyChatPortrait,
+              portraitAlignment: Alignment.centerLeft,
+              hpStyle: _CombatHpStyle.enemy,
               onHp: onEnemyHp,
               onCp: onEnemyCp,
               onEditTokens: onEditEnemyTokens,
             ),
           ),
+          Container(width: 1, color: panelBorderGrey.withValues(alpha: 0.75)),
           Expanded(
-            child: _CombatantInfoBlock(
+            child: _CombatantVersusHalf(
               title: adventure.hero.label,
               hp: adventure.health,
               cp: adventure.combatPoints,
               tokens: adventure.alterations,
               accent: heroAccent,
+              portraitAsset: adventure.hero.asset,
+              portraitAlignment: adventure.hero.imageAlignment,
+              portraitScale: adventure.hero.imageScale,
+              hpStyle: _CombatHpStyle.hero,
               onHp: onHeroHp,
               onCp: onHeroCp,
               onEditTokens: onEditHeroTokens,
-              alignEnd: true,
-            ),
-          ),
-          _CombatPortraitStrip(
-            asset: adventure.hero.asset,
-            alignment: adventure.hero.imageAlignment,
-            scale: adventure.hero.imageScale,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class CombatVersusStatusVariant extends StatelessWidget {
-  const CombatVersusStatusVariant({
-    required this.adventure,
-    required this.enemy,
-    super.key,
-  });
-
-  final AdventureState adventure;
-  final EnemyNode enemy;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 164,
-      color: Colors.black.withValues(alpha: 0.18),
-      child: Row(
-        children: [
-          Expanded(
-            child: _StaticCombatantInfo(
-              title: enemy.label,
-              hp: enemy.health,
-              cp: enemy.combatPoints,
-              tokens: enemy.alterations,
-              accent: enemy.rank.color,
-              alignEnd: true,
-            ),
-          ),
-          _CombatPortraitStrip(
-            width: 82,
-            asset: defaultEnemyChatPortrait,
-            alignment: Alignment.center,
-          ),
-          _CombatPortraitStrip(
-            width: 82,
-            asset: adventure.hero.asset,
-            alignment: adventure.hero.imageAlignment,
-            scale: adventure.hero.imageScale,
-          ),
-          Expanded(
-            child: _StaticCombatantInfo(
-              title: adventure.hero.label,
-              hp: adventure.health,
-              cp: adventure.combatPoints,
-              tokens: adventure.alterations,
-              accent: heroAccent,
+              imageOnRight: true,
             ),
           ),
         ],
@@ -5931,105 +5889,23 @@ class CombatVersusStatusVariant extends StatelessWidget {
   }
 }
 
-class _StaticCombatantInfo extends StatelessWidget {
-  const _StaticCombatantInfo({
+enum _CombatHpStyle { enemy, hero }
+
+class _CombatantVersusHalf extends StatelessWidget {
+  const _CombatantVersusHalf({
     required this.title,
     required this.hp,
     required this.cp,
     required this.tokens,
     required this.accent,
-    this.alignEnd = false,
-  });
-
-  final String title;
-  final int hp;
-  final int cp;
-  final List<String> tokens;
-  final Color accent;
-  final bool alignEnd;
-
-  @override
-  Widget build(BuildContext context) {
-    final alignment = alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final textAlign = alignEnd ? TextAlign.end : TextAlign.start;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: alignment,
-        children: [
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: textAlign,
-            style: TextStyle(
-              color: accent,
-              fontWeight: FontWeight.w900,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'HP $hp${cp > 0 ? '   CP $cp' : ''}',
-            textAlign: textAlign,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            tokens.isEmpty ? 'Tokens' : tokens.join('  '),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: textAlign,
-            style: TextStyle(color: accent, fontSize: 11),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CombatPortraitStrip extends StatelessWidget {
-  const _CombatPortraitStrip({
-    required this.asset,
-    required this.alignment,
-    this.width = 112,
-    this.scale = 1,
-  });
-
-  final String asset;
-  final Alignment alignment;
-  final double width;
-  final double scale;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      height: double.infinity,
-      child: Transform.scale(
-        scale: scale,
-        child: Image.asset(asset, fit: BoxFit.cover, alignment: alignment),
-      ),
-    );
-  }
-}
-
-class _CombatantInfoBlock extends StatelessWidget {
-  const _CombatantInfoBlock({
-    required this.title,
-    required this.hp,
-    required this.cp,
-    required this.tokens,
-    required this.accent,
+    required this.portraitAsset,
+    required this.portraitAlignment,
+    required this.hpStyle,
     required this.onHp,
     required this.onCp,
     required this.onEditTokens,
-    this.hideCp = false,
-    this.alignEnd = false,
+    this.portraitScale = 1,
+    this.imageOnRight = false,
   });
 
   final String title;
@@ -6037,63 +5913,61 @@ class _CombatantInfoBlock extends StatelessWidget {
   final int cp;
   final List<String> tokens;
   final Color accent;
+  final String portraitAsset;
+  final Alignment portraitAlignment;
+  final double portraitScale;
+  final _CombatHpStyle hpStyle;
   final VoidCallback onHp;
   final VoidCallback onCp;
   final VoidCallback onEditTokens;
-  final bool hideCp;
-  final bool alignEnd;
+  final bool imageOnRight;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-      child: Column(
-        crossAxisAlignment:
-            alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: alignEnd ? TextAlign.end : TextAlign.start,
-            style: TextStyle(
-              color: accent,
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            textDirection: alignEnd ? TextDirection.rtl : TextDirection.ltr,
-            children: [
-              Expanded(
-                child: MapStatChip(
-                  icon: Icons.favorite,
-                  label: '',
-                  value: hp.toString(),
-                  color: accent,
-                  accent: accent,
-                  borderColor: panelBorderGrey,
-                  onTap: onHp,
-                ),
+    final portrait = Expanded(
+      flex: 7,
+      child: _NamedCombatPortrait(
+        title: title,
+        asset: portraitAsset,
+        alignment: portraitAlignment,
+        scale: portraitScale,
+        accent: accent,
+      ),
+    );
+    final stats = Expanded(
+      flex: 5,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _CombatBadgeButton(
+              onTap: onHp,
+              child: _HpHeartBadge(
+                value: hp,
+                style: hpStyle,
               ),
-              if (!hideCp) ...[
-                const SizedBox(width: 6),
-                Expanded(
-                  child: MapStatChip(
-                    label: 'CP',
-                    value: cp.toString(),
-                    color: accent,
-                    accent: accent,
-                    borderColor: panelBorderGrey,
-                    onTap: onCp,
-                  ),
-                ),
-              ],
-            ],
+            ),
+            const SizedBox(height: 8),
+            _CombatBadgeButton(
+              onTap: onCp,
+              child: _PcTriangleBadge(value: cp),
+            ),
+          ],
+        ),
+      ),
+    );
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
+            children: imageOnRight ? [stats, portrait] : [portrait, stats],
           ),
-          const SizedBox(height: 6),
-          Expanded(
+        ),
+        SizedBox(
+          height: 45,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(6, 0, 6, 7),
             child: CompactItemStrip(
               label: 'Tokens',
               emptyText: 'Tokens',
@@ -6109,10 +5983,251 @@ class _CombatantInfoBlock extends StatelessWidget {
               ),
             ),
           ),
-        ],
+        ),
+      ],
+    );
+  }
+}
+
+class _NamedCombatPortrait extends StatelessWidget {
+  const _NamedCombatPortrait({
+    required this.title,
+    required this.asset,
+    required this.alignment,
+    required this.accent,
+    this.scale = 1,
+  });
+
+  final String title;
+  final String asset;
+  final Alignment alignment;
+  final Color accent;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Transform.scale(
+          scale: scale,
+          child: Image.asset(asset, fit: BoxFit.cover, alignment: alignment),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0),
+                  Colors.black.withValues(alpha: 0.78),
+                ],
+              ),
+            ),
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: accent,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                shadows: const [
+                  Shadow(color: Colors.black, blurRadius: 8),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CombatBadgeButton extends StatelessWidget {
+  const _CombatBadgeButton({required this.child, required this.onTap});
+
+  final Widget child;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: SizedBox(width: 72, height: 52, child: Center(child: child)),
       ),
     );
   }
+}
+
+class _HpHeartBadge extends StatelessWidget {
+  const _HpHeartBadge({required this.value, required this.style});
+
+  final int value;
+  final _CombatHpStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _HpHeartBadgePainter(style: style),
+      child: SizedBox(
+        width: 58,
+        height: 48,
+        child: Center(
+          child: Text(
+            value.clamp(0, 99).toString(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              shadows: [Shadow(color: Colors.black, blurRadius: 4)],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PcTriangleBadge extends StatelessWidget {
+  const _PcTriangleBadge({required this.value});
+
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    final safeValue = value.clamp(0, 99).toString();
+    return CustomPaint(
+      painter: const _PcTriangleBadgePainter(),
+      child: SizedBox(
+        width: 62,
+        height: 48,
+        child: Center(
+          child: Text(
+            safeValue,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.96),
+              fontSize: safeValue.length > 1 ? 18 : 25,
+              fontWeight: FontWeight.w900,
+              shadows: const [Shadow(color: Colors.white54, blurRadius: 8)],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HpHeartBadgePainter extends CustomPainter {
+  const _HpHeartBadgePainter({required this.style});
+
+  final _CombatHpStyle style;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(size.width * 0.5, size.height * 0.88)
+      ..cubicTo(
+        size.width * 0.18,
+        size.height * 0.64,
+        size.width * 0.03,
+        size.height * 0.43,
+        size.width * 0.12,
+        size.height * 0.23,
+      )
+      ..cubicTo(
+        size.width * 0.22,
+        size.height * 0.02,
+        size.width * 0.42,
+        size.height * 0.08,
+        size.width * 0.5,
+        size.height * 0.24,
+      )
+      ..cubicTo(
+        size.width * 0.58,
+        size.height * 0.08,
+        size.width * 0.78,
+        size.height * 0.02,
+        size.width * 0.88,
+        size.height * 0.23,
+      )
+      ..cubicTo(
+        size.width * 0.97,
+        size.height * 0.43,
+        size.width * 0.82,
+        size.height * 0.64,
+        size.width * 0.5,
+        size.height * 0.88,
+      )
+      ..close();
+    final fill = style == _CombatHpStyle.hero
+        ? Paint()
+            ..shader = const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xff8d1749), Color(0xffd34165)],
+            ).createShader(Offset.zero & size)
+        : Paint()..color = const Color(0xff1a1a1a);
+    canvas.drawPath(path, fill);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.2
+        ..strokeJoin = StrokeJoin.round
+        ..color = Colors.white,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _HpHeartBadgePainter oldDelegate) {
+    return oldDelegate.style != style;
+  }
+}
+
+class _PcTriangleBadgePainter extends CustomPainter {
+  const _PcTriangleBadgePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(size.width * 0.20, size.height * 0.15)
+      ..quadraticBezierTo(size.width * 0.13, size.height * 0.15, size.width * 0.12, size.height * 0.24)
+      ..lineTo(size.width * 0.12, size.height * 0.76)
+      ..quadraticBezierTo(size.width * 0.13, size.height * 0.85, size.width * 0.20, size.height * 0.85)
+      ..lineTo(size.width * 0.86, size.height * 0.56)
+      ..quadraticBezierTo(size.width * 0.99, size.height * 0.50, size.width * 0.86, size.height * 0.44)
+      ..close();
+    canvas.drawPath(
+      path,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xff0f706e), Color(0xff0b4c51)],
+        ).createShader(Offset.zero & size),
+    );
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..strokeJoin = StrokeJoin.round
+        ..color = Colors.white.withValues(alpha: 0.92),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class CombatantStatusRow extends StatelessWidget {

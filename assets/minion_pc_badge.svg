@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 150" role="img" aria-label="PC symbol">
+  <defs>
+    <linearGradient id="pcFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B8990"/>
+      <stop offset=".5" stop-color="#08636E"/>
+      <stop offset="1" stop-color="#08414F"/>
+    </linearGradient>
+    <filter id="pcShadow" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#00333D" flood-opacity=".55"/>
+    </filter>
+  </defs>
+  <!-- Rounded equilateral triangle: the three sides are kept at the same visual length. -->
+  <path d="M38.7 15L133.3 70Q142 75 133.3 80L38.7 135Q30 140 30 130V20Q30 10 38.7 15Z" fill="url(#pcFill)" stroke="#F2FFFC" stroke-width="5" stroke-linejoin="round" filter="url(#pcShadow)"/>
+  <!-- Main value. The UI can place a small second digit immediately to its right for 10-99. -->
+  <text id="pc-value" x="78" y="99" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="67" font-weight="700" text-anchor="middle">0</text>
+  <text id="pc-second-digit-slot" x="109" y="91" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="28" font-weight="700" text-anchor="middle" opacity="0">0</text>
+</svg>
