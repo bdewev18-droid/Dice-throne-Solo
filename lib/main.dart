@@ -9,10 +9,12 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'game_engine.dart';
 
-const String appVersionLabel = 'Version 1.2.27';
+const String appVersionLabel = 'Version 1.2.28';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
+const String defaultEnemyChatPortrait =
+    'assets/reconstitutions/bleu-001-portrait-chat-curve.png';
 const int mediumTarget = 33;
 const int hardTarget = 52;
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
@@ -6395,6 +6397,9 @@ class _FightPageState extends State<FightPage> {
                       enemy: enemy,
                       phase: _phase,
                       aiMode: _aiMode,
+                      onDetails: _openAdventureDetails,
+                      onAbandon: _openPauseDialog,
+                      onExport: _openCombatExport,
                       attackKey: _attackRulesKey,
                       defenseKey: _defenseRulesKey,
                       onAiModeChanged: (value) {
@@ -6415,8 +6420,6 @@ class _FightPageState extends State<FightPage> {
                         dice: _dice,
                         adventure: widget.adventure,
                         rollCount: _rollCount,
-                        onDetails: _openAdventureDetails,
-                        onAbandon: _openPauseDialog,
                         diceToRoll: _diceToRoll,
                         visibleDiceCount: _visibleDiceCount,
                         maxRolls: _maxRolls,
@@ -6629,6 +6632,74 @@ class _FightPageState extends State<FightPage> {
           aiMode: _aiMode,
           rollCount: _rollCount,
         ),
+      ),
+    );
+  }
+
+  void _openCombatExport() {
+    final jsonText = const JsonEncoder.withIndent('  ').convert({
+      'exportVersion': 2,
+      'createdAt': DateTime.now().toIso8601String(),
+      'run': {
+        'hero': widget.adventure.hero.label,
+        'mode': widget.adventure.config.mode.label,
+        'score': widget.adventure.score,
+        'targetScore': widget.adventure.targetScore,
+        'elapsed': widget.adventure.elapsed.inSeconds,
+        'rewards': widget.adventure.bonuses,
+        'logs': widget.adventure.logs,
+      },
+      'heroState': {
+        'hp': widget.adventure.health,
+        'cp': widget.adventure.combatPoints,
+        'tokens': widget.adventure.alterations,
+      },
+      'combat': {
+        'phase': _phase.name,
+        'aiMode': _aiMode,
+        'rollCount': _rollCount,
+        'enemy': {
+          'id': enemy.id,
+          'profileKey': enemy.profileKey,
+          'name': enemy.label,
+          'rank': enemy.rank.name,
+          'hp': enemy.health,
+          'cp': enemy.combatPoints,
+          'tokens': enemy.alterations,
+        },
+        'dice': [
+          for (final die in _dice)
+            {'id': die.id, 'value': die.value, 'reserved': die.reserved},
+        ],
+      },
+    });
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Combat export'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: SelectableText(
+              jsonText,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: jsonText));
+              Navigator.of(context).pop();
+            },
+            icon: const Icon(Icons.copy),
+            label: const Text('Copy'),
+          ),
+        ],
       ),
     );
   }
@@ -8069,6 +8140,9 @@ class EnemyRulesPanel extends StatefulWidget {
     required this.phase,
     required this.aiMode,
     required this.onAiModeChanged,
+    required this.onDetails,
+    required this.onAbandon,
+    required this.onExport,
     this.attackKey,
     this.defenseKey,
     super.key,
@@ -8078,6 +8152,9 @@ class EnemyRulesPanel extends StatefulWidget {
   final CombatPhase phase;
   final bool aiMode;
   final ValueChanged<bool> onAiModeChanged;
+  final VoidCallback onDetails;
+  final VoidCallback onAbandon;
+  final VoidCallback onExport;
   final Key? attackKey;
   final Key? defenseKey;
 
@@ -8156,10 +8233,15 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                 ),
               ),
               const SizedBox(width: 8),
-              _AiModeSwitch(
-                enabled: widget.aiMode,
-                color: enemy.rank.color,
-                onChanged: widget.onAiModeChanged,
+              IconButton.filledTonal(
+                tooltip: 'Combat settings',
+                onPressed: () => _openSettings(context),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.08),
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white70),
+                ),
+                icon: const Icon(Icons.settings),
               ),
             ],
           ),
@@ -8224,6 +8306,92 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
     );
   }
 
+  void _openSettings(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xff111111),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Combat settings',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Close',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _SettingsActionTile(
+                icon: Icons.receipt_long,
+                label: 'Run log',
+                color: heroAccent,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  widget.onDetails();
+                },
+              ),
+              _SettingsActionTile(
+                icon: Icons.ios_share,
+                label: 'Export log',
+                color: Colors.white,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  widget.onExport();
+                },
+              ),
+              _SettingsActionTile(
+                icon: Icons.power_settings_new,
+                label: 'Quit / abandon run',
+                color: Colors.redAccent,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  widget.onAbandon();
+                },
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const SizedBox(
+                    width: 112,
+                    child: Text(
+                      'Control',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  Expanded(
+                    child: _AiModeSwitch(
+                      enabled: widget.aiMode,
+                      color: Colors.white,
+                      onChanged: widget.onAiModeChanged,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _openEnemyCard(BuildContext context) {
     showDialog<void>(
       context: context,
@@ -8251,6 +8419,31 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SettingsActionTile extends StatelessWidget {
+  const _SettingsActionTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: color),
+      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+      onTap: onTap,
     );
   }
 }
@@ -9210,6 +9403,18 @@ class CombatAiChatDock extends StatelessWidget {
               enemyColor: enemy.rank.color,
               heroName: adventure.hero.label,
               enemyName: enemy.label,
+              portraitAsset:
+                  phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
+                  ? adventure.hero.asset
+                  : defaultEnemyChatPortrait,
+              portraitAlignment:
+                  phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
+                  ? adventure.hero.imageAlignment
+                  : Alignment.centerLeft,
+              portraitScale:
+                  phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
+                  ? adventure.hero.imageScale
+                  : 1,
               showHealthControls: false,
               onHeroHpSaved: (value) {
                 adventure.setHeroHealth(value);
@@ -9299,6 +9504,9 @@ class _AiChatWithHealth extends StatefulWidget {
     required this.enemyColor,
     required this.heroName,
     required this.enemyName,
+    required this.portraitAsset,
+    required this.portraitAlignment,
+    this.portraitScale = 1,
     this.showHealthControls = true,
     required this.onHeroHpSaved,
     required this.onEnemyHpSaved,
@@ -9311,6 +9519,9 @@ class _AiChatWithHealth extends StatefulWidget {
   final Color enemyColor;
   final String heroName;
   final String enemyName;
+  final String portraitAsset;
+  final Alignment portraitAlignment;
+  final double portraitScale;
   final bool showHealthControls;
   final ValueChanged<int> onHeroHpSaved;
   final ValueChanged<int> onEnemyHpSaved;
@@ -9392,7 +9603,31 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
           ? 1
           : widget.message.trim().split('\n').length;
       final chatHeight = (56.0 + lineCount * 18.0).clamp(86.0, 210.0);
-      return SizedBox(height: chatHeight, child: chat);
+      return SizedBox(
+        height: chatHeight,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              width: 96,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(8),
+                ),
+                child: Transform.scale(
+                  scale: widget.portraitScale,
+                  child: Image.asset(
+                    widget.portraitAsset,
+                    fit: BoxFit.cover,
+                    alignment: widget.portraitAlignment,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(child: chat),
+          ],
+        ),
+      );
     }
     return SizedBox(
       height: 150,
@@ -9903,7 +10138,7 @@ class _BattleCounter extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.65)),
+        border: Border.all(color: panelBorderGrey, width: 2),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -9956,8 +10191,6 @@ class MinionAiPanel extends StatelessWidget {
     required this.dice,
     required this.adventure,
     required this.rollCount,
-    required this.onDetails,
-    required this.onAbandon,
     required this.diceToRoll,
     required this.visibleDiceCount,
     required this.maxRolls,
@@ -9978,8 +10211,6 @@ class MinionAiPanel extends StatelessWidget {
   final List<GameDie> dice;
   final AdventureState adventure;
   final int rollCount;
-  final VoidCallback onDetails;
-  final VoidCallback onAbandon;
   final int diceToRoll;
   final int visibleDiceCount;
   final int maxRolls;
@@ -10025,18 +10256,6 @@ class MinionAiPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              IconButton(
-                tooltip: 'Run log',
-                onPressed: onDetails,
-                icon: const Icon(Icons.receipt_long),
-                color: heroAccent,
-              ),
-              IconButton(
-                tooltip: 'Quit run',
-                onPressed: onAbandon,
-                icon: const Icon(Icons.power_settings_new),
-                color: Colors.redAccent,
-              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -11618,13 +11837,15 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CombatantStatusRow.hero(
+          CombatVersusStatusPanel(
             adventure: widget.adventure,
-            hideCp: false,
-            rollHistory: const [],
-            onHp: () => _openEditor('heroHp', widget.adventure.health),
-            onCp: () => _openEditor('heroCp', widget.adventure.combatPoints),
-            onEditTokens: _editHeroTokens,
+            enemy: widget.enemy,
+            onHeroHp: () => _openEditor('heroHp', widget.adventure.health),
+            onHeroCp: () => _openEditor('heroCp', widget.adventure.combatPoints),
+            onEnemyHp: () => _openEditor('enemyHp', widget.enemy.health),
+            onEnemyCp: () => _openEditor('enemyCp', widget.enemy.combatPoints),
+            onEditHeroTokens: _editHeroTokens,
+            onEditEnemyTokens: _editEnemyTokens,
           ),
           if (_editing.contains('heroHp')) ...[
             const SizedBox(height: 6),
@@ -11634,14 +11855,6 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
             const SizedBox(height: 6),
             _buildEditorRow('heroCp'),
           ],
-          const SizedBox(height: 8),
-          CombatantStatusRow.enemy(
-            enemy: widget.enemy,
-            hideCp: widget.enemy.profileKey == 'naraxus',
-            onHp: () => _openEditor('enemyHp', widget.enemy.health),
-            onCp: () => _openEditor('enemyCp', widget.enemy.combatPoints),
-            onEditTokens: _editEnemyTokens,
-          ),
           if (_editing.contains('enemyHp')) ...[
             const SizedBox(height: 6),
             _buildEditorRow('enemyHp'),
@@ -11826,6 +12039,212 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       widget.onChanged();
       setState(() {});
     }
+  }
+}
+
+class CombatVersusStatusPanel extends StatelessWidget {
+  const CombatVersusStatusPanel({
+    required this.adventure,
+    required this.enemy,
+    required this.onHeroHp,
+    required this.onHeroCp,
+    required this.onEnemyHp,
+    required this.onEnemyCp,
+    required this.onEditHeroTokens,
+    required this.onEditEnemyTokens,
+    super.key,
+  });
+
+  final AdventureState adventure;
+  final EnemyNode enemy;
+  final VoidCallback onHeroHp;
+  final VoidCallback onHeroCp;
+  final VoidCallback onEnemyHp;
+  final VoidCallback onEnemyCp;
+  final VoidCallback onEditHeroTokens;
+  final VoidCallback onEditEnemyTokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 144,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.26),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: panelBorderGrey, width: 2),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        children: [
+          _CombatPortraitStrip(
+            asset: defaultEnemyChatPortrait,
+            alignment: Alignment.centerLeft,
+          ),
+          Expanded(
+            child: _CombatantInfoBlock(
+              title: enemy.label,
+              hp: enemy.health,
+              cp: enemy.combatPoints,
+              tokens: enemy.alterations,
+              accent: enemy.rank.color,
+              hideCp: enemy.profileKey == 'naraxus',
+              onHp: onEnemyHp,
+              onCp: onEnemyCp,
+              onEditTokens: onEditEnemyTokens,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              'VS',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.72),
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          Expanded(
+            child: _CombatantInfoBlock(
+              title: adventure.hero.label,
+              hp: adventure.health,
+              cp: adventure.combatPoints,
+              tokens: adventure.alterations,
+              accent: heroAccent,
+              onHp: onHeroHp,
+              onCp: onHeroCp,
+              onEditTokens: onEditHeroTokens,
+              alignEnd: true,
+            ),
+          ),
+          _CombatPortraitStrip(
+            asset: adventure.hero.asset,
+            alignment: adventure.hero.imageAlignment,
+            scale: adventure.hero.imageScale,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CombatPortraitStrip extends StatelessWidget {
+  const _CombatPortraitStrip({
+    required this.asset,
+    required this.alignment,
+    this.scale = 1,
+  });
+
+  final String asset;
+  final Alignment alignment;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 86,
+      height: double.infinity,
+      child: Transform.scale(
+        scale: scale,
+        child: Image.asset(asset, fit: BoxFit.cover, alignment: alignment),
+      ),
+    );
+  }
+}
+
+class _CombatantInfoBlock extends StatelessWidget {
+  const _CombatantInfoBlock({
+    required this.title,
+    required this.hp,
+    required this.cp,
+    required this.tokens,
+    required this.accent,
+    required this.onHp,
+    required this.onCp,
+    required this.onEditTokens,
+    this.hideCp = false,
+    this.alignEnd = false,
+  });
+
+  final String title;
+  final int hp;
+  final int cp;
+  final List<String> tokens;
+  final Color accent;
+  final VoidCallback onHp;
+  final VoidCallback onCp;
+  final VoidCallback onEditTokens;
+  final bool hideCp;
+  final bool alignEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+      child: Column(
+        crossAxisAlignment:
+            alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: alignEnd ? TextAlign.end : TextAlign.start,
+            style: TextStyle(
+              color: accent,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            textDirection: alignEnd ? TextDirection.rtl : TextDirection.ltr,
+            children: [
+              Expanded(
+                child: MapStatChip(
+                  icon: Icons.favorite,
+                  label: '',
+                  value: hp.toString(),
+                  color: accent,
+                  accent: accent,
+                  borderColor: panelBorderGrey,
+                  onTap: onHp,
+                ),
+              ),
+              if (!hideCp) ...[
+                const SizedBox(width: 6),
+                Expanded(
+                  child: MapStatChip(
+                    label: 'CP',
+                    value: cp.toString(),
+                    color: accent,
+                    accent: accent,
+                    borderColor: panelBorderGrey,
+                    onTap: onCp,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: CompactItemStrip(
+              label: 'Tokens',
+              emptyText: 'Tokens',
+              items: tokens,
+              accent: accent,
+              background: Colors.black.withValues(alpha: 0.22),
+              border: panelBorderGrey,
+              trailing: IconButton(
+                tooltip: 'Edit tokens',
+                visualDensity: VisualDensity.compact,
+                onPressed: onEditTokens,
+                icon: const Icon(Icons.edit, size: 16),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
