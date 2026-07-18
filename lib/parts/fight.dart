@@ -1526,6 +1526,16 @@ class _FightPageState extends State<FightPage> {
     }
   }
 
+  String _rollDruidForm() {
+    final roll = _random.nextInt(6) + 1;
+    final form = roll <= 3 ? 'Forme Ours' : 'Forme Elan';
+    enemy.alterations.removeWhere(
+      (token) => token == 'Forme Ours' || token == 'Forme Elan',
+    );
+    enemy.alterations.add(form);
+    return 'passive roll $roll: ${form == 'Forme Ours' ? 'Bear Form' : 'Elk Form'}';
+  }
+
   String _naxarusUpkeepLog(UpkeepOutcome outcome) {
     final parts = <String>[];
     if (outcome.healthDelta != 0) {
@@ -2315,16 +2325,6 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
         ),
       ],
     );
-  }
-
-  String _rollDruidForm() {
-    final roll = _random.nextInt(6) + 1;
-    final form = roll <= 3 ? 'Forme Ours' : 'Forme Elan';
-    enemy.alterations.removeWhere(
-      (token) => token == 'Forme Ours' || token == 'Forme Elan',
-    );
-    enemy.alterations.add(form);
-    return 'passive roll $roll: ${form == 'Forme Ours' ? 'Bear Form' : 'Elk Form'}';
   }
 
   void _openSettings(BuildContext context) {
