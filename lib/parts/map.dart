@@ -1464,32 +1464,6 @@ class EnemyRankAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (enemy.profileKey == 'naraxus') {
-      return Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: const Color(0xffb91622),
-          border: Border.all(color: heroAccent, width: 3),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xffd51f2a).withValues(alpha: 0.55),
-              blurRadius: 14,
-            ),
-          ],
-        ),
-        child: Text(
-          'NX',
-          style: TextStyle(
-            color: heroAccent,
-            fontSize: size * 0.34,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      );
-    }
     return Container(
       width: size,
       height: size,
@@ -1504,7 +1478,7 @@ class EnemyRankAvatar extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Image.asset(enemy.cardAsset, fit: BoxFit.cover),
+      child: Image.asset(enemy.previewAsset, fit: BoxFit.cover),
     );
   }
 }

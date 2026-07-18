@@ -19,7 +19,7 @@ const EnemyProfile naraxusProfile = EnemyProfile(
   rank: EnemyRank.naraxus,
   maxHealth: 65,
   pc: 0,
-  cardAsset: 'assets/home_background_v4.png',
+  cardAsset: 'assets/enemy_previews/naraxus_card.webp',
   attacks: [
     'Swoop: 1 = remove 1 random Naxarus token, heal 4 HP, deal 3 undefendable damage.',
     'Ember Spark: 2 = hero moves top 3 deck cards to discard, then takes 8 damage.',

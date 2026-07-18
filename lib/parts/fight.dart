@@ -349,6 +349,7 @@ class _FightPageState extends State<FightPage> {
           .toList();
       for (final die in rollable) {
         die.value = _random.nextInt(6) + 1;
+        die.rollTick++;
       }
       if (_isNaraxus) {
         final values = rollable
@@ -468,6 +469,7 @@ class _FightPageState extends State<FightPage> {
       }
       if (_rerollOneMode) {
         die.value = _random.nextInt(6) + 1;
+        die.rollTick++;
         _rerollOneMode = false;
         _refreshBattleResolutionFromDice();
         widget.adventure.log(
@@ -1992,7 +1994,6 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
       children: [
         _RulesBackgroundBand(
           asset: 'assets/attack_background_feline_shadow.png',
-          topRadius: true,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -2231,19 +2232,18 @@ class _RulesBackgroundBand extends StatelessWidget {
   const _RulesBackgroundBand({
     required this.asset,
     required this.child,
-    this.topRadius = false,
   });
 
   final String asset;
   final Widget child;
-  final bool topRadius;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: -16),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       decoration: BoxDecoration(
+        color: const Color(0xff202020),
         image: DecorationImage(
           image: AssetImage(asset),
           fit: BoxFit.cover,
@@ -2252,13 +2252,8 @@ class _RulesBackgroundBand extends StatelessWidget {
             BlendMode.darken,
           ),
         ),
-        border: Border(
-          top: BorderSide(color: panelBorderGrey.withValues(alpha: 0.45)),
-          bottom: BorderSide(color: panelBorderGrey.withValues(alpha: 0.45)),
-        ),
-        borderRadius: BorderRadius.vertical(
-          top: topRadius ? const Radius.circular(8) : Radius.zero,
-        ),
+        border: Border.all(color: panelBorderGrey),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: child,
     );
@@ -2687,6 +2682,7 @@ class DefenseDiceInline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final safeCount = count.clamp(0, 6);
     return Align(
       alignment: Alignment.centerRight,
       child: FittedBox(
@@ -2694,10 +2690,18 @@ class DefenseDiceInline extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            for (var i = 0; i < count.clamp(0, 6); i++) ...[
-              if (i > 0) const SizedBox(width: 2),
-              const SuiteGoalPip(size: 22),
-            ],
+            if (safeCount > 1)
+              Text(
+                '$safeCount',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  shadows: [Shadow(color: Colors.black, blurRadius: 3)],
+                ),
+              ),
+            if (safeCount > 1) const SizedBox(width: 4),
+            if (safeCount > 0) const _CubeIcon(size: 30),
           ],
         ),
       ),
@@ -3198,10 +3202,12 @@ class CombatAiChatDock extends StatelessWidget {
               portraitAsset:
                   phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
                   ? adventure.hero.asset
-                  : defaultEnemyChatPortrait,
+                  : enemy.previewAsset,
               portraitAlignment:
                   phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
                   ? adventure.hero.imageAlignment
+                  : enemy.profileKey == 'naraxus'
+                  ? Alignment.center
                   : Alignment.centerLeft,
               portraitScale:
                   phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
@@ -3985,21 +3991,12 @@ class _DiceBackgroundBand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: -16),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
       decoration: BoxDecoration(
-        image: DecorationImage(
-          image: const AssetImage('assets/passive_background_umbra.png'),
-          fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(
-            Colors.black.withValues(alpha: 0.16),
-            BlendMode.darken,
-          ),
-        ),
-        border: Border(
-          top: BorderSide(color: panelBorderGrey.withValues(alpha: 0.45)),
-          bottom: BorderSide(color: panelBorderGrey.withValues(alpha: 0.45)),
-        ),
+        color: const Color(0xff202020),
+        border: Border.all(color: panelBorderGrey),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: child,
     );
@@ -4851,6 +4848,7 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
       final visibleDice = _dice.take(_diceToRoll.clamp(0, 5)).toList();
       for (final die in visibleDice) {
         die.value = _random.nextInt(6) + 1;
+        die.rollTick++;
       }
       _rollCount++;
     });
@@ -4865,6 +4863,7 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
       }
       if (_rerollMode) {
         die.value = _random.nextInt(6) + 1;
+        die.rollTick++;
         _rerollMode = false;
         widget.onChanged?.call(_dice.take(_diceToRoll.clamp(0, 5)).toList());
         return;
@@ -4983,6 +4982,127 @@ class SuiteGoalView extends StatelessWidget {
   }
 }
 
+class _CubeIcon extends StatelessWidget {
+  const _CubeIcon({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(painter: const _CubeIconPainter()),
+    );
+  }
+}
+
+class _UpkeepCubeIcon extends StatelessWidget {
+  const _UpkeepCubeIcon({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: const _CubeIconPainter(
+          faceColor: Color(0xffd94c1f),
+          lineColor: Colors.white,
+        ),
+      ),
+    );
+  }
+}
+
+class _CubeIconPainter extends CustomPainter {
+  const _CubeIconPainter({
+    this.faceColor = Colors.white,
+    this.lineColor = const Color(0xff252724),
+  });
+
+  final Color faceColor;
+  final Color lineColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.shortestSide / 100;
+    canvas.save();
+    canvas.translate((size.width - 100 * scale) / 2, (size.height - 100 * scale) / 2);
+    canvas.scale(scale);
+
+    final fill = Paint()..color = faceColor;
+    final stroke = Paint()
+      ..color = lineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 7
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final pip = Paint()..color = lineColor;
+
+    final top = Path()
+      ..moveTo(50, 6)
+      ..lineTo(88, 28)
+      ..lineTo(50, 50)
+      ..lineTo(12, 28)
+      ..close();
+    final left = Path()
+      ..moveTo(12, 28)
+      ..lineTo(50, 50)
+      ..lineTo(50, 94)
+      ..lineTo(12, 72)
+      ..close();
+    final right = Path()
+      ..moveTo(88, 28)
+      ..lineTo(50, 50)
+      ..lineTo(50, 94)
+      ..lineTo(88, 72)
+      ..close();
+
+    canvas.drawPath(top, fill);
+    canvas.drawPath(left, fill);
+    canvas.drawPath(right, fill);
+    canvas.drawPath(top, stroke);
+    canvas.drawPath(left, stroke);
+    canvas.drawPath(right, stroke);
+
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(50, 27), width: 12, height: 9),
+      pip,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(25, 45), width: 9, height: 13),
+      pip,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(35, 61), width: 9, height: 13),
+      pip,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(44, 78), width: 9, height: 13),
+      pip,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(65, 59), width: 9, height: 13),
+      pip,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(78, 72), width: 9, height: 13),
+      pip,
+    );
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _CubeIconPainter oldDelegate) {
+    return oldDelegate.faceColor != faceColor ||
+        oldDelegate.lineColor != lineColor;
+  }
+}
+
 class SymbolGoalView extends StatelessWidget {
   const SymbolGoalView({required this.goal, super.key});
 
@@ -5012,19 +5132,18 @@ class DieSymbolMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (symbol) {
-      DieSymbol.white => Colors.white,
-      DieSymbol.yellow => Colors.orangeAccent,
-      DieSymbol.red => Colors.redAccent,
+    final asset = switch (symbol) {
+      DieSymbol.white => 'assets/dice_faces/symbol_white.webp',
+      DieSymbol.yellow => 'assets/dice_faces/symbol_orange.webp',
+      DieSymbol.red => 'assets/dice_faces/symbol_red.webp',
     };
-    return Container(
-      width: 25,
-      height: 25,
-      margin: const EdgeInsets.only(right: 3),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.black54),
+    return Padding(
+      padding: const EdgeInsets.only(right: 3),
+      child: Image.asset(
+        asset,
+        width: 26,
+        height: 26,
+        fit: BoxFit.contain,
       ),
     );
   }
@@ -5904,8 +6023,10 @@ class CombatVersusStatusPanel extends StatelessWidget {
               cp: enemy.combatPoints,
               tokens: enemy.alterations,
               accent: enemy.rank.color,
-              portraitAsset: defaultEnemyChatPortrait,
-              portraitAlignment: Alignment.centerLeft,
+              portraitAsset: enemy.previewAsset,
+              portraitAlignment: enemy.profileKey == 'naraxus'
+                  ? Alignment.center
+                  : Alignment.centerLeft,
               hpStyle: _CombatHpStyle.enemy,
               onHp: onEnemyHp,
               onCp: onEnemyCp,
@@ -6152,25 +6273,48 @@ class _PcTriangleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final safeValue = value.clamp(0, 99).toString();
+    final safeValue = value.clamp(0, 99);
+    final valueText = safeValue.toString();
+    final showPcLabel = safeValue < 10;
     return CustomPaint(
       painter: const _PcTriangleBadgePainter(),
       child: SizedBox(
         width: 58,
         height: 58,
-        child: Align(
-          alignment: safeValue.length > 1
-              ? const Alignment(-0.22, 0)
-              : const Alignment(-0.46, 0),
-          child: Text(
-            safeValue,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.96),
-              fontSize: safeValue.length > 1 ? 21 : 28,
-              fontWeight: FontWeight.w900,
-              shadows: const [Shadow(color: Colors.white54, blurRadius: 8)],
+        child: Stack(
+          children: [
+            Align(
+              alignment: showPcLabel
+                  ? const Alignment(-0.54, -0.02)
+                  : const Alignment(-0.24, 0),
+              child: Text(
+                valueText,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.96),
+                  fontSize: showPcLabel ? 28 : 21,
+                  fontWeight: FontWeight.w900,
+                  shadows: const [Shadow(color: Colors.white54, blurRadius: 8)],
+                ),
+              ),
             ),
-          ),
+            if (showPcLabel)
+              Align(
+                alignment: const Alignment(0.18, -0.04),
+                child: Text(
+                  'PC',
+                  style: TextStyle(
+                    color: const Color(0xff9ee8e2).withValues(alpha: 0.98),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                    shadows: const [
+                      Shadow(color: Colors.white54, blurRadius: 5),
+                      Shadow(color: Colors.black87, blurRadius: 2),
+                    ],
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -6848,13 +6992,9 @@ class _CompactPhaseSelector extends StatelessWidget {
                         ),
                       ),
                       child: switch (value) {
-                        CombatPhase.heroUpkeep => HeroAvatar(
-                          hero: adventure.hero,
-                          size: 28,
-                        ),
-                        CombatPhase.minionUpkeep => EnemyRankAvatar(
-                          enemy: enemy,
-                          size: 28,
+                        CombatPhase.heroUpkeep ||
+                        CombatPhase.minionUpkeep => const _UpkeepCubeIcon(
+                          size: 30,
                         ),
                         _ => const Icon(
                           Icons.casino,
@@ -6900,6 +7040,7 @@ class GameDie {
   final int id;
   int? value;
   bool reserved = false;
+  int rollTick = 0;
 
   DieSymbol? get symbol {
     final face = value;
@@ -7152,7 +7293,7 @@ class DiceZone extends StatelessWidget {
   }
 }
 
-class DieTile extends StatelessWidget {
+class DieTile extends StatefulWidget {
   const DieTile({
     required this.die,
     required this.onTap,
@@ -7169,60 +7310,133 @@ class DieTile extends StatelessWidget {
   final Color? highlightColor;
 
   @override
+  State<DieTile> createState() => _DieTileState();
+}
+
+class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  Timer? _faceTimer;
+  int? _animatedValue;
+  int _lastRollTick = 0;
+  final Random _animationRandom = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    _lastRollTick = widget.die.rollTick;
+    _animatedValue = widget.die.value;
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          _faceTimer?.cancel();
+          if (mounted) {
+            setState(() => _animatedValue = widget.die.value);
+          }
+        }
+      });
+  }
+
+  @override
+  void didUpdateWidget(covariant DieTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.die.rollTick != _lastRollTick && widget.die.value != null) {
+      _lastRollTick = widget.die.rollTick;
+      _startRollAnimation();
+    } else if (!_controller.isAnimating) {
+      _animatedValue = widget.die.value;
+    }
+  }
+
+  @override
+  void dispose() {
+    _faceTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _startRollAnimation() {
+    _faceTimer?.cancel();
+    _controller
+      ..reset()
+      ..forward();
+    _faceTimer = Timer.periodic(const Duration(milliseconds: 95), (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _animatedValue = _animationRandom.nextInt(6) + 1);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final value = die.value;
-    final color = switch (value) {
-      6 => Colors.redAccent,
-      4 || 5 => Colors.orangeAccent,
-      _ => Colors.white,
-    };
-    final textColor = value == null || value <= 3 ? Colors.black : Colors.white;
+    final size = widget.compact ? 40.0 : 50.0;
+    final value = _controller.isAnimating ? _animatedValue : widget.die.value;
     return InkWell(
-      onTap: onTap,
+      onTap: widget.onTap,
       borderRadius: BorderRadius.circular(8),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Container(
-            width: compact ? 40 : 50,
-            height: compact ? 40 : 50,
-            constraints: BoxConstraints(maxWidth: compact ? 40 : 50),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: value == null ? Colors.white24 : color,
-              borderRadius: BorderRadius.circular(8),
-              border: highlight
-                  ? Border.all(color: highlightColor ?? heroAccent, width: 3)
-                  : null,
-              boxShadow: highlight
-                  ? [
-                      BoxShadow(
-                        color: (highlightColor ?? heroAccent).withValues(
-                          alpha: 0.72,
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              final turn = _controller.value * 6.0 * pi;
+              final pulse = 1 + sin(_controller.value * pi * 10) * 0.05;
+              return Transform.rotate(
+                angle: turn,
+                child: Transform.scale(scale: pulse, child: child),
+              );
+            },
+            child: Container(
+              width: size,
+              height: size,
+              constraints: BoxConstraints(maxWidth: size),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: value == null ? Colors.white12 : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: widget.highlight
+                    ? Border.all(
+                        color: widget.highlightColor ?? heroAccent,
+                        width: 3,
+                      )
+                    : null,
+                boxShadow: widget.highlight
+                    ? [
+                        BoxShadow(
+                          color: (widget.highlightColor ?? heroAccent)
+                              .withValues(alpha: 0.72),
+                          blurRadius: 10,
+                          spreadRadius: 1,
                         ),
-                        blurRadius: 10,
-                        spreadRadius: 1,
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Text(
-              value?.toString() ?? '-',
-              style: TextStyle(
-                color: value == null ? Colors.white : textColor,
-                fontSize: compact ? 20 : 24,
-                fontWeight: FontWeight.w900,
+                      ]
+                    : null,
               ),
+              clipBehavior: Clip.antiAlias,
+              child: value == null
+                  ? const Text(
+                      '-',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    )
+                  : Image.asset(
+                      'assets/dice_faces/face_$value.webp',
+                      fit: BoxFit.contain,
+                    ),
             ),
           ),
-          if (highlight)
+          if (widget.highlight)
             Positioned(
               right: -4,
               top: -5,
               child: Icon(
                 Icons.check_circle,
-                color: highlightColor ?? heroAccent,
-                size: compact ? 16 : 18,
+                color: widget.highlightColor ?? heroAccent,
+                size: widget.compact ? 16 : 18,
               ),
             ),
         ],
