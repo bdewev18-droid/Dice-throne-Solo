@@ -4099,18 +4099,18 @@ class MinionAiPanel extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           if (visibleDice.isNotEmpty || isDefensePhase) ...[
-            FilledButton.icon(
+            FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: enemy.rank.color,
                 foregroundColor: Colors.black,
                 minimumSize: const Size.fromHeight(48),
               ),
               onPressed: rollCount < maxRolls && diceToRoll > 0 ? onRoll : null,
-              icon: Icon(isDefensePhase ? Icons.shield : Icons.casino),
-              label: Text(
+              child: Text(
                 isDefensePhase
                     ? 'Roll defense'
                     : (rollCount == 0 ? 'Roll' : 'Reroll'),
+                style: const TextStyle(fontWeight: FontWeight.w900),
               ),
             ),
             const SizedBox(height: 8),
@@ -5138,11 +5138,11 @@ class DieSymbolMark extends StatelessWidget {
       DieSymbol.red => 'assets/dice_faces/symbol_red.webp',
     };
     return Padding(
-      padding: const EdgeInsets.only(right: 3),
+      padding: const EdgeInsets.only(right: 4),
       child: Image.asset(
         asset,
-        width: 26,
-        height: 26,
+        width: 34,
+        height: 34,
         fit: BoxFit.contain,
       ),
     );
@@ -5295,6 +5295,31 @@ class DieValueBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.18),
+      child: Image.asset(
+        'assets/dice_faces/face_$value.webp',
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+}
+
+class _LegacyDieValueBadge extends StatelessWidget {
+  const _LegacyDieValueBadge({
+    required this.value,
+    this.showValue = true,
+    this.size = 30,
+  });
+
+  final int value;
+  final bool showValue;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: size,
       height: size,
@@ -5324,7 +5349,7 @@ class _NaxarusDieValueBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DieValueBadge(value: value, size: 24);
+    return DieValueBadge(value: value, size: 30);
   }
 }
 
@@ -5789,21 +5814,13 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
             onEditHeroTokens: _editHeroTokens,
             onEditEnemyTokens: _editEnemyTokens,
           ),
-          if (_editing.contains('heroHp')) ...[
+          if (_editing.contains('heroHp') || _editing.contains('enemyHp')) ...[
             const SizedBox(height: 6),
-            _buildEditorRow('heroHp'),
+            _buildEditorPair('heroHp', 'enemyHp'),
           ],
-          if (_editing.contains('heroCp')) ...[
+          if (_editing.contains('heroCp') || _editing.contains('enemyCp')) ...[
             const SizedBox(height: 6),
-            _buildEditorRow('heroCp'),
-          ],
-          if (_editing.contains('enemyHp')) ...[
-            const SizedBox(height: 6),
-            _buildEditorRow('enemyHp'),
-          ],
-          if (_editing.contains('enemyCp')) ...[
-            const SizedBox(height: 6),
-            _buildEditorRow('enemyCp'),
+            _buildEditorPair('heroCp', 'enemyCp'),
           ],
           if (widget.onFinish != null) ...[
             const SizedBox(height: 6),
@@ -5830,66 +5847,98 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
     );
   }
 
+  Widget _buildEditorPair(String leftKey, String rightKey) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: _editing.contains(leftKey)
+                ? _buildEditorRow(leftKey)
+                : const SizedBox(height: 44),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _editing.contains(rightKey)
+                ? _buildEditorRow(rightKey)
+                : const SizedBox(height: 44),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildEditorRow(String key) {
     final isHero = key.startsWith('hero');
     final isHp = key.endsWith('Hp');
     final accent = isHero ? heroAccent : widget.enemy.rank.color;
     final value = _draftValues[key] ?? 0;
-    return Row(
-      children: [
-        SizedBox(
-          width: 34,
-          child: Center(
-            child: isHp
-                ? Icon(Icons.favorite, color: accent, size: 18)
-                : Text(
-                    'CP',
-                    style: TextStyle(
-                      color: accent,
-                      fontWeight: FontWeight.w900,
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: accent.withValues(alpha: 0.8)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 26,
+            child: Center(
+              child: isHp
+                  ? Icon(Icons.favorite, color: accent, size: 17)
+                  : Text(
+                      'PC',
+                      style: TextStyle(
+                        color: accent,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        RoundIconButton(
-          icon: Icons.add,
-          tooltip: 'Add',
-          color: accent,
-          onPressed: () => setState(() => _draftValues[key] = value + 1),
-        ),
-        Expanded(
-          child: Center(
-            child: Text(
-              value.toString(),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: accent,
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
+          _CompactRoundIconButton(
+            icon: Icons.add,
+            tooltip: 'Add',
+            color: accent,
+            onPressed: () => setState(() => _draftValues[key] = value + 1),
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                value.toString(),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: accent,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
           ),
-        ),
-        RoundIconButton(
-          icon: Icons.remove,
-          tooltip: 'Remove',
-          color: accent,
-          onPressed: () => setState(() => _draftValues[key] = value - 1),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 112,
-          child: FilledButton(
-            onPressed: () => _saveStat(key),
-            style: FilledButton.styleFrom(
-              backgroundColor: accent,
-              foregroundColor: Colors.black,
-            ),
-            child: const Text('Save'),
+          _CompactRoundIconButton(
+            icon: Icons.remove,
+            tooltip: 'Remove',
+            color: accent,
+            onPressed: () => setState(() => _draftValues[key] = value - 1),
           ),
-        ),
-      ],
+          const SizedBox(width: 4),
+          SizedBox(
+            width: 40,
+            height: 34,
+            child: FilledButton(
+              onPressed: () => _saveStat(key),
+              style: FilledButton.styleFrom(
+                backgroundColor: accent,
+                foregroundColor: Colors.black,
+                padding: EdgeInsets.zero,
+              ),
+              child: const Icon(Icons.check, size: 18),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -6014,41 +6063,64 @@ class CombatVersusStatusPanel extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.26),
       ),
       clipBehavior: Clip.hardEdge,
-      child: Row(
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Expanded(
-            child: _CombatantVersusHalf(
-              title: enemy.label,
-              hp: enemy.health,
-              cp: enemy.combatPoints,
-              tokens: enemy.alterations,
-              accent: enemy.rank.color,
-              portraitAsset: enemy.previewAsset,
-              portraitAlignment: enemy.profileKey == 'naraxus'
-                  ? Alignment.center
-                  : Alignment.centerLeft,
-              hpStyle: _CombatHpStyle.enemy,
-              onHp: onEnemyHp,
-              onCp: onEnemyCp,
-              onEditTokens: onEditEnemyTokens,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _CombatantVersusHalf(
+                  title: enemy.label,
+                  hp: enemy.health,
+                  cp: enemy.combatPoints,
+                  tokens: enemy.alterations,
+                  accent: enemy.rank.color,
+                  portraitAsset: enemy.previewAsset,
+                  portraitAlignment: enemy.profileKey == 'naraxus'
+                      ? Alignment.center
+                      : Alignment.centerLeft,
+                  hpStyle: _CombatHpStyle.enemy,
+                  onHp: onEnemyHp,
+                  onCp: onEnemyCp,
+                  onEditTokens: onEditEnemyTokens,
+                ),
+              ),
+              Container(width: 1, color: panelBorderGrey.withValues(alpha: 0.75)),
+              Expanded(
+                child: _CombatantVersusHalf(
+                  title: adventure.hero.label,
+                  hp: adventure.health,
+                  cp: adventure.combatPoints,
+                  tokens: adventure.alterations,
+                  accent: heroAccent,
+                  portraitAsset: adventure.hero.asset,
+                  portraitAlignment: adventure.hero.imageAlignment,
+                  portraitScale: adventure.hero.imageScale,
+                  hpStyle: _CombatHpStyle.hero,
+                  onHp: onHeroHp,
+                  onCp: onHeroCp,
+                  onEditTokens: onEditHeroTokens,
+                  imageOnRight: true,
+                ),
+              ),
+            ],
           ),
-          Container(width: 1, color: panelBorderGrey.withValues(alpha: 0.75)),
-          Expanded(
-            child: _CombatantVersusHalf(
-              title: adventure.hero.label,
-              hp: adventure.health,
-              cp: adventure.combatPoints,
-              tokens: adventure.alterations,
-              accent: heroAccent,
-              portraitAsset: adventure.hero.asset,
-              portraitAlignment: adventure.hero.imageAlignment,
-              portraitScale: adventure.hero.imageScale,
-              hpStyle: _CombatHpStyle.hero,
-              onHp: onHeroHp,
-              onCp: onHeroCp,
-              onEditTokens: onEditHeroTokens,
-              imageOnRight: true,
+          IgnorePointer(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.66),
+                borderRadius: BorderRadius.circular(99),
+                border: Border.all(color: panelBorderGrey),
+              ),
+              child: const Text(
+                'VS',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                ),
+              ),
             ),
           ),
         ],
@@ -6992,15 +7064,18 @@ class _CompactPhaseSelector extends StatelessWidget {
                         ),
                       ),
                       child: switch (value) {
-                        CombatPhase.heroUpkeep ||
-                        CombatPhase.minionUpkeep => const _UpkeepCubeIcon(
-                          size: 30,
+                        CombatPhase.heroUpkeep => _PhasePortraitIcon(
+                          asset: adventure.hero.asset,
+                          alignment: adventure.hero.imageAlignment,
+                          scale: adventure.hero.imageScale,
                         ),
-                        _ => const Icon(
-                          Icons.casino,
-                          color: Colors.white,
-                          size: 19,
+                        CombatPhase.minionUpkeep => _PhasePortraitIcon(
+                          asset: enemy.previewAsset,
+                          alignment: enemy.profileKey == 'naraxus'
+                              ? Alignment.center
+                              : Alignment.topCenter,
                         ),
+                        _ => const _UpkeepCubeIcon(size: 30),
                       },
                     ),
                   ),
@@ -7010,6 +7085,35 @@ class _CompactPhaseSelector extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+class _PhasePortraitIcon extends StatelessWidget {
+  const _PhasePortraitIcon({
+    required this.asset,
+    required this.alignment,
+    this.scale = 1,
+  });
+
+  final String asset;
+  final Alignment alignment;
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(7),
+      child: Transform.scale(
+        scale: scale,
+        child: Image.asset(
+          asset,
+          width: double.infinity,
+          height: double.infinity,
+          fit: BoxFit.cover,
+          alignment: alignment,
+        ),
+      ),
     );
   }
 }
@@ -7382,11 +7486,14 @@ class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
           AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
-              final turn = _controller.value * 6.0 * pi;
-              final pulse = 1 + sin(_controller.value * pi * 10) * 0.05;
-              return Transform.rotate(
-                angle: turn,
-                child: Transform.scale(scale: pulse, child: child),
+              final turn = _controller.value * 10.0 * pi;
+              final squash = 0.92 + sin(_controller.value * pi * 12) * 0.08;
+              return Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.001)
+                  ..rotateX(turn),
+                child: Transform.scale(scaleY: squash, child: child),
               );
             },
             child: Container(

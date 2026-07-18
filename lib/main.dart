@@ -20,7 +20,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.04';
+const String appVersionLabel = 'Version 1.3.05';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -749,7 +749,22 @@ class EnemyNode {
     if (cardAsset.contains('/bleu/vert-023')) {
       return 'assets/enemy_previews/bleu-023.webp';
     }
+    final greenLegacyPreview = switch (base) {
+      'enemy_green_fairy' => 'vert-001',
+      'enemy_green_ronin' => 'vert-002',
+      'enemy_green_goblin_enchanter' => 'vert-003',
+      'enemy_green_shadow_archer' => 'vert-004',
+      'enemy_green_feline_shadow' => 'vert-005',
+      'enemy_green_lost_fencer' => 'vert-006',
+      'enemy_green_chaos_elf' => 'vert-007',
+      'enemy_green_raving_oni' => 'vert-008',
+      _ => null,
+    };
+    if (greenLegacyPreview != null) {
+      return 'assets/enemy_previews/$greenLegacyPreview.webp';
+    }
     if (base.startsWith('bleu-') ||
+        base.startsWith('vert-') ||
         base.startsWith('violet-') ||
         base.startsWith('orange-')) {
       return 'assets/enemy_previews/$base.webp';
