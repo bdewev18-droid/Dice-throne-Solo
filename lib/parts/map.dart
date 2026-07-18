@@ -1091,9 +1091,9 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
         fit: StackFit.expand,
         children: [
           Image.asset(
-            enemy.cardAsset,
+            enemy.previewAsset,
             fit: BoxFit.cover,
-            alignment: Alignment.centerLeft,
+            alignment: Alignment.topCenter,
           ),
           Container(color: Colors.black.withValues(alpha: 0.58)),
           if (!widget.showNext)
@@ -1125,17 +1125,6 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                         fontSize: 30,
                         fontWeight: FontWeight.w900,
                       ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 54,
-                    bottom: 116,
-                    child: Image.asset(
-                      enemy.previewAsset,
-                      fit: BoxFit.contain,
-                      alignment: Alignment.bottomCenter,
                     ),
                   ),
                   if (widget.showNext &&
