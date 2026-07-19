@@ -427,17 +427,20 @@ class ActiveCampaignHomeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(8),
-        image: const DecorationImage(
-          image: AssetImage('assets/button_background.png'),
-          fit: BoxFit.fill,
-        ),
+        border: Border.all(color: Colors.white24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           FilledButton.icon(
             onPressed: onResume,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xff8f43ff),
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(48),
+            ),
             icon: const Icon(Icons.play_arrow),
             label: const Text('Resume current run'),
           ),
@@ -459,8 +462,13 @@ class ActiveCampaignHomeCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          OutlinedButton.icon(
+          FilledButton.icon(
             onPressed: onStop,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xffd85a21),
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(44),
+            ),
             icon: const Icon(Icons.stop_circle),
             label: const Text('Stop campaign'),
           ),

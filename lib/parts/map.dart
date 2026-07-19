@@ -1095,7 +1095,7 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
             fit: BoxFit.cover,
             alignment: Alignment.topCenter,
           ),
-          Container(color: Colors.black.withValues(alpha: 0.29)),
+          Container(color: Colors.black.withValues(alpha: 0.15)),
           if (!widget.showNext)
             SafeArea(
               child: Align(
@@ -1178,7 +1178,7 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: SizedBox(
-                      height: 104,
+                      height: 114,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -1277,23 +1277,37 @@ class PauseRunDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Pause run'),
+      titlePadding: const EdgeInsets.fromLTRB(24, 18, 8, 0),
+      title: Row(
+        children: [
+          const Expanded(child: Text('Pause run')),
+          IconButton(
+            tooltip: 'Cancel',
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
       content: const Text(
         'Do you want to leave this run and resume it later, or abandon it now? '
         'Abandoning keeps your current score for statistics.',
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        OutlinedButton.icon(
+        FilledButton.icon(
           onPressed: () => Navigator.of(context).pop(_PauseAction.resumeLater),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xff8f43ff),
+            foregroundColor: Colors.white,
+          ),
           icon: const Icon(Icons.save),
           label: const Text('Resume later'),
         ),
         FilledButton.icon(
           onPressed: () => Navigator.of(context).pop(_PauseAction.abandon),
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.redAccent,
+            foregroundColor: Colors.white,
+          ),
           icon: const Icon(Icons.flag),
           label: const Text('Abandon'),
         ),

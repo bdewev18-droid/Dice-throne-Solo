@@ -1,6 +1,6 @@
 part of '../main.dart';
 
-int combatDiceAnimationSeconds = 2;
+int combatDiceAnimationSeconds = 0;
 
 class FightPage extends StatefulWidget {
   const FightPage({
@@ -2635,42 +2635,6 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const SizedBox(
-                      width: 112,
-                      child: Text(
-                        'Dice anim.',
-                        style: TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                    Expanded(
-                      child: Slider(
-                        value: combatDiceAnimationSeconds.toDouble(),
-                        min: 0,
-                        max: 5,
-                        divisions: 5,
-                        label: '${combatDiceAnimationSeconds}s',
-                        activeColor: heroAccent,
-                        onChanged: (value) {
-                          setSheetState(
-                            () => combatDiceAnimationSeconds = value.round(),
-                          );
-                          setState(() {});
-                        },
-                      ),
-                    ),
-                    SizedBox(
-                      width: 30,
-                      child: Text(
-                        combatDiceAnimationSeconds.toString(),
-                        textAlign: TextAlign.right,
-                        style: const TextStyle(fontWeight: FontWeight.w900),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
@@ -3427,16 +3391,20 @@ class EnemyObjectivePreview extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w900),
         ),
         const SizedBox(width: 8),
-        Flexible(
-          child: enemy.profileKey == 'naraxus'
-              ? const DieValueBadge(value: 6, showValue: false)
-              : switch (enemy.attackPlan.style) {
-                  MinionAttackStyle.suite => const SuiteGoalView(length: 5),
-                  MinionAttackStyle.symbols => SymbolGoalView(
-                    goal: _strongestSymbolGoal(enemy),
-                  ),
-                  MinionAttackStyle.none => const Text('--'),
-                },
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: enemy.profileKey == 'naraxus'
+                ? const DieValueBadge(value: 6, showValue: false)
+                : switch (enemy.attackPlan.style) {
+                    MinionAttackStyle.suite => const SuiteGoalView(length: 5),
+                    MinionAttackStyle.symbols => SymbolGoalView(
+                      goal: _strongestSymbolGoal(enemy),
+                    ),
+                    MinionAttackStyle.none => const Text('--'),
+                  },
+          ),
         ),
       ],
     );
@@ -5873,7 +5841,7 @@ class _SuiteEffectLine extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 56,
+            width: 48,
             child: Text(
               label,
               style: const TextStyle(fontWeight: FontWeight.w800),
@@ -5881,12 +5849,20 @@ class _SuiteEffectLine extends StatelessWidget {
           ),
           Expanded(child: SuiteGoalView(length: length)),
           const SizedBox(width: 8),
-          Flexible(
-            child: Wrap(
-              spacing: 5,
-              alignment: WrapAlignment.end,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: result,
+          SizedBox(
+            width: 112,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Wrap(
+                  spacing: 5,
+                  alignment: WrapAlignment.end,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: result,
+                ),
+              ),
             ),
           ),
         ],
@@ -7102,7 +7078,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
                       ? Alignment.center
                       : Alignment.centerLeft,
                   hpStyle: _CombatHpStyle.enemy,
-                  showCp: enemy.profileKey != 'naraxus',
+                  infiniteCp: enemy.profileKey == 'naraxus',
                   onHp: onEnemyHp,
                   onCp: onEnemyCp,
                   onEditTokens: onEditEnemyTokens,
@@ -7118,7 +7094,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
                   accent: heroAccent,
                   portraitAsset: adventure.hero.asset,
                   portraitAlignment: adventure.hero.imageAlignment,
-                  portraitScale: adventure.hero.imageScale,
+                  portraitScale: min(adventure.hero.imageScale, 1.08),
                   hpStyle: _CombatHpStyle.hero,
                   onHp: onHeroHp,
                   onCp: onHeroCp,
@@ -7172,7 +7148,7 @@ class _CombatantVersusHalf extends StatelessWidget {
     required this.onEditTokens,
     this.portraitScale = 1,
     this.imageOnRight = false,
-    this.showCp = true,
+    this.infiniteCp = false,
   });
 
   final String title;
@@ -7188,7 +7164,7 @@ class _CombatantVersusHalf extends StatelessWidget {
   final VoidCallback onCp;
   final VoidCallback onEditTokens;
   final bool imageOnRight;
-  final bool showCp;
+  final bool infiniteCp;
 
   @override
   Widget build(BuildContext context) {
@@ -7216,13 +7192,11 @@ class _CombatantVersusHalf extends StatelessWidget {
                 style: hpStyle,
               ),
             ),
-            if (showCp) ...[
-              const SizedBox(height: 8),
-              _CombatBadgeButton(
-                onTap: onCp,
-                child: _PcTriangleBadge(value: cp),
-              ),
-            ],
+            const SizedBox(height: 8),
+            _CombatBadgeButton(
+              onTap: infiniteCp ? () {} : onCp,
+              child: _PcTriangleBadge(value: cp, infinity: infiniteCp),
+            ),
           ],
         ),
       ),
@@ -7279,12 +7253,14 @@ class _NamedCombatPortrait extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Transform.scale(
-          scale: scale,
-          child: Image.asset(
-            asset,
-            fit: BoxFit.cover,
-            alignment: _topCropAlignment(alignment),
+        ClipRect(
+          child: Transform.scale(
+            scale: scale,
+            child: Image.asset(
+              asset,
+              fit: BoxFit.cover,
+              alignment: _topCropAlignment(alignment),
+            ),
           ),
         ),
         Positioned(
@@ -7341,6 +7317,28 @@ Alignment _heroEyeAlignment(HeroType hero) {
   };
 }
 
+Alignment _minionEyeAlignment(EnemyNode enemy) {
+  return switch (enemy.profileKey) {
+    'rat-de-la-rue' => const Alignment(-0.18, -0.58),
+    'fee' => const Alignment(0, -0.76),
+    'ronin-vagabond' => const Alignment(0, -0.72),
+    'enchanteur-gobelin' => const Alignment(-0.12, -0.64),
+    'archer-de-lombre' => const Alignment(0, -0.68),
+    _ => Alignment.center,
+  };
+}
+
+BoxFit _minionEyeFit(EnemyNode enemy) {
+  return switch (enemy.profileKey) {
+    'rat-de-la-rue' ||
+    'fee' ||
+    'ronin-vagabond' ||
+    'enchanteur-gobelin' ||
+    'archer-de-lombre' => BoxFit.cover,
+    _ => BoxFit.contain,
+  };
+}
+
 class _CombatBadgeButton extends StatelessWidget {
   const _CombatBadgeButton({required this.child, required this.onTap});
 
@@ -7390,15 +7388,16 @@ class _HpHeartBadge extends StatelessWidget {
 }
 
 class _PcTriangleBadge extends StatelessWidget {
-  const _PcTriangleBadge({required this.value});
+  const _PcTriangleBadge({required this.value, this.infinity = false});
 
   final int value;
+  final bool infinity;
 
   @override
   Widget build(BuildContext context) {
     final safeValue = value.clamp(0, 99);
-    final valueText = safeValue.toString();
-    final showPcLabel = safeValue < 10;
+    final valueText = infinity ? '∞' : safeValue.toString();
+    final showPcLabel = !infinity && safeValue < 10;
     return CustomPaint(
       painter: const _PcTriangleBadgePainter(),
       child: SizedBox(
@@ -7414,7 +7413,7 @@ class _PcTriangleBadge extends StatelessWidget {
                 valueText,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.96),
-                  fontSize: showPcLabel ? 28 : 21,
+                  fontSize: infinity ? 30 : (showPcLabel ? 28 : 21),
                   fontWeight: FontWeight.w900,
                   shadows: const [Shadow(color: Colors.white54, blurRadius: 8)],
                 ),
@@ -8124,10 +8123,8 @@ class _CompactPhaseSelector extends StatelessWidget {
                           asset: enemy.profileKey == 'naraxus'
                               ? 'assets/enemy_previews/naxarus_head.png'
                               : enemy.previewAsset,
-                          alignment: enemy.profileKey == 'naraxus'
-                              ? Alignment.center
-                              : Alignment.center,
-                          fit: BoxFit.contain,
+                          alignment: _minionEyeAlignment(enemy),
+                          fit: _minionEyeFit(enemy),
                         ),
                         _ => const _UpkeepCubeIcon(size: 27),
                       },

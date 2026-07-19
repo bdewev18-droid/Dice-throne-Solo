@@ -388,7 +388,17 @@ Future<List<String>?> showAlterationDialog(
           selected.addAll(List.filled(entry.value, entry.key));
         }
         return AlertDialog(
-          title: const Text('Edit status tokens'),
+          titlePadding: const EdgeInsets.fromLTRB(24, 18, 8, 0),
+          title: Row(
+            children: [
+              const Expanded(child: Text('Edit status tokens')),
+              IconButton(
+                tooltip: 'Cancel',
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -435,10 +445,6 @@ Future<List<String>?> showAlterationDialog(
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(selected),
               child: const Text('Save'),
