@@ -68,6 +68,7 @@ class _FightPageState extends State<FightPage> {
   final List<String> _battleMinionTokens = [];
   final List<String> _battleNotes = [];
   final List<String> _naraxusRollHistory = [];
+  bool _diceAnimationPending = false;
 
   EnemyNode get enemy => widget.adventure.enemyById(widget.enemyId);
 
@@ -348,14 +349,15 @@ class _FightPageState extends State<FightPage> {
       enemy.health = (enemy.health - 1).clamp(0, 99);
       widget.adventure.log('Ronces: minion loses 1 HP for reroll.');
     }
+    final rolledIds = <int>[];
     setState(() {
-      final rollable = _dice
-          .where((die) => !die.reserved)
-          .take(_diceToRoll)
-          .toList();
+      final rollable = _dice.where((die) => !die.reserved).take(_diceToRoll).toList();
+      _diceAnimationPending = combatDiceAnimationSeconds > 0 && rollable.isNotEmpty;
       for (final die in rollable) {
         die.value = _random.nextInt(6) + 1;
+        die.settled = !_diceAnimationPending;
         die.rollTick++;
+        rolledIds.add(die.id);
       }
       if (_isNaraxus) {
         final values = rollable
@@ -370,17 +372,46 @@ class _FightPageState extends State<FightPage> {
       widget.adventure.log(
         'Roll $_rollCount: ${rollable.map((die) => die.value).join(', ')}.',
       );
-      if (_phase == CombatPhase.minionAttack && _aiMode) {
-        _applyMinionDiceStrategy();
+      if (!_diceAnimationPending) {
+        _finalizeRolledDice();
       }
-      _refreshBattleResolutionFromDice();
       widget.onChanged();
-      if (_rollCount == _maxRolls) {
-        _specialAttackReady = _shouldResolveSpecialAttack();
-      }
     });
+    if (_diceAnimationPending) {
+      Future<void>.delayed(
+        Duration(seconds: combatDiceAnimationSeconds.clamp(1, 5).toInt()),
+        () {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            for (final die in _dice.where((die) => rolledIds.contains(die.id))) {
+              die.settled = true;
+            }
+            _diceAnimationPending = _dice.any((die) => !die.settled);
+            if (!_diceAnimationPending) {
+              _finalizeRolledDice();
+              widget.onChanged();
+            }
+          });
+          if (_showAiExtraDicePhase) {
+            _scrollToRulesKey(_extraDicePhaseKey);
+          }
+        },
+      );
+    }
     if (_showAiExtraDicePhase) {
       _scrollToRulesKey(_extraDicePhaseKey);
+    }
+  }
+
+  void _finalizeRolledDice() {
+    if (_phase == CombatPhase.minionAttack && _aiMode) {
+      _applyMinionDiceStrategy();
+    }
+    _refreshBattleResolutionFromDice();
+    if (_rollCount == _maxRolls) {
+      _specialAttackReady = _shouldResolveSpecialAttack();
     }
   }
 
@@ -475,6 +506,7 @@ class _FightPageState extends State<FightPage> {
       }
       if (_rerollOneMode) {
         die.value = _random.nextInt(6) + 1;
+        die.settled = true;
         die.rollTick++;
         _rerollOneMode = false;
         _refreshBattleResolutionFromDice();
@@ -493,6 +525,7 @@ class _FightPageState extends State<FightPage> {
   void _selectFace(GameDie die, int face) {
     setState(() {
       die.value = face;
+      die.settled = true;
       _refreshBattleResolutionFromDice();
       widget.adventure.log('Die ${die.id + 1} changed to $face.');
       widget.onChanged();
@@ -573,6 +606,7 @@ class _FightPageState extends State<FightPage> {
 
   void _resetDice() {
     _rollCount = 0;
+    _diceAnimationPending = false;
     _editingDieId = null;
     _editMode = false;
     _rerollOneMode = false;
@@ -581,6 +615,7 @@ class _FightPageState extends State<FightPage> {
     for (final die in _dice) {
       die
         ..value = null
+        ..settled = true
         ..reserved = false;
     }
   }
@@ -596,6 +631,9 @@ class _FightPageState extends State<FightPage> {
   }
 
   bool get _showAiExtraDicePhase {
+    if (_diceAnimationPending) {
+      return false;
+    }
     if (!_aiMode || _phase != CombatPhase.minionAttack || _rollCount == 0) {
       return false;
     }
@@ -611,6 +649,12 @@ class _FightPageState extends State<FightPage> {
     }
     if (enemy.profileKey == 'vert-vert-015') {
       return _symbolGoalMet(const SymbolGoal(white: 2, yellow: 3));
+    }
+    if (enemy.profileKey == 'vert-vert-017') {
+      return _symbolGoalMet(const SymbolGoal(white: 2, red: 1));
+    }
+    if (enemy.profileKey == 'vert-vert-021') {
+      return _symbolGoalMet(const SymbolGoal(yellow: 2, red: 1));
     }
     return _attackNeedsExtraDice(enemy) && _currentAttackGoalMet();
   }
@@ -628,6 +672,12 @@ class _FightPageState extends State<FightPage> {
     if (enemy.profileKey == 'vert-vert-015') {
       return 1;
     }
+    if (enemy.profileKey == 'vert-vert-017') {
+      return 1;
+    }
+    if (enemy.profileKey == 'vert-vert-021') {
+      return 1;
+    }
     return _extraDiceCountFor(enemy);
   }
 
@@ -643,6 +693,12 @@ class _FightPageState extends State<FightPage> {
     }
     if (enemy.profileKey == 'vert-vert-015') {
       return 'Abnegation extra roll';
+    }
+    if (enemy.profileKey == 'vert-vert-017') {
+      return 'Claquement de Crocs extra roll';
+    }
+    if (enemy.profileKey == 'vert-vert-021') {
+      return 'Sorcellerie Ophique extra roll';
     }
     return '${enemy.label} extra roll';
   }
@@ -696,8 +752,10 @@ class _FightPageState extends State<FightPage> {
     var returnDamage = 0;
     var returnDamageUndefendable = false;
     var lifeSteal = 0;
+    var cpSteal = 0;
     final notes = <String>[];
     final heroTokens = <String>[];
+    final minionTokens = <String>[];
 
     switch (enemy.profileKey) {
       case 'naraxus':
@@ -796,6 +854,7 @@ class _FightPageState extends State<FightPage> {
       case 'vert-vert-017':
         if (white > 0) {
           returnDamage = 2;
+          returnDamageUndefendable = true;
           notes.add('Defense: white returns 2 imparable damage.');
         }
       case 'vert-vert-018':
@@ -814,12 +873,39 @@ class _FightPageState extends State<FightPage> {
         }
       case 'vert-vert-020':
         returnDamage = white;
+        returnDamageUndefendable = returnDamage > 0;
         prevented = yellow + red;
         if (returnDamage > 0) {
-          notes.add('Defense: white returns $returnDamage damage.');
+          notes.add('Defense: white returns $returnDamage imparable damage.');
         }
         if (prevented > 0) {
           notes.add('Defense: prevents $prevented damage.');
+        }
+      case 'vert-vert-021':
+        final currentChaos = _tokenCount(enemy.alterations, 'Chaos');
+        final gainedChaos = yellow;
+        returnDamage = currentChaos + gainedChaos;
+        returnDamageUndefendable = returnDamage > 0;
+        if (gainedChaos > 0) {
+          notes.add(
+            'Defense: gains $gainedChaos Chaos during the roll.',
+          );
+        }
+        if (returnDamage > 0) {
+          notes.add(
+            'Defense: $currentChaos existing Chaos + $gainedChaos new Chaos returns $returnDamage undefendable damage.',
+          );
+        }
+        minionTokens.addAll(List.filled(gainedChaos, 'Chaos'));
+      case 'rat-de-la-rue':
+        if (yellow >= 2) {
+          cpSteal = 1;
+          notes.add('Defense: 2 orange symbols steal 1 CP.');
+        }
+        if (red >= 2) {
+          prevented = _battleAttackValue;
+          _battleAttackUndefendable = false;
+          notes.add('Defense: 2 red symbols ignore all incoming damage.');
         }
       case 'bleu-vert-022':
         if (yellow > 0) {
@@ -831,7 +917,7 @@ class _FightPageState extends State<FightPage> {
           notes.add('Defense: red gives Parasite to the hero.');
         }
       case 'bleu-vert-023':
-        lifeSteal = red;
+        lifeSteal = red > 0 ? 1 : 0;
         if (lifeSteal > 0) {
           notes.add('Defense: steals $lifeSteal HP.');
         }
@@ -842,7 +928,8 @@ class _FightPageState extends State<FightPage> {
     if (prevented == 0 &&
         returnDamage == 0 &&
         lifeSteal == 0 &&
-        heroTokens.isEmpty) {
+        heroTokens.isEmpty &&
+        minionTokens.isEmpty) {
       notes.add('Defense roll failed.');
     }
 
@@ -852,9 +939,13 @@ class _FightPageState extends State<FightPage> {
         _battleReturnDamage > 0 && returnDamageUndefendable;
     _battleLifeSteal = lifeSteal.clamp(0, 99);
     _battleEnemyHeal = 0;
+    _battleCpSteal = cpSteal.clamp(0, 99);
     _battleHeroTokens
       ..clear()
       ..addAll(heroTokens);
+    _battleMinionTokens
+      ..clear()
+      ..addAll(minionTokens);
     _battleNotes
       ..clear()
       ..addAll(notes);
@@ -884,11 +975,35 @@ class _FightPageState extends State<FightPage> {
       attackUndefendable = true;
       notes.add('Abnegation: 6 undefendable damage.');
       notes.add('Abnegation: roll 1 {die:any} to resolve the extra effect.');
+    } else if (enemy.profileKey == 'vert-vert-017' &&
+        _symbolGoalMet(const SymbolGoal(white: 2, red: 1))) {
+      attack = 0;
+      notes.add(
+        'Claquement de Crocs: roll 1 {die:any}; the value becomes damage and hero receives À Terre.',
+      );
+    } else if (enemy.profileKey == 'vert-vert-021' &&
+        _symbolGoalMet(const SymbolGoal(yellow: 2, red: 1))) {
+      attack = 0;
+      notes.add(
+        'Sorcellerie Ophique: roll 1 {die:any}; then deal 6 damage plus current Chaos.',
+      );
     } else if (_attackNeedsExtraDice(enemy) && _currentAttackGoalMet()) {
       notes.add('Attack ready: resolve the extra dice phase before applying.');
     } else if (enemy.profileKey == 'oni-delirant' &&
         _symbolGoalMet(const SymbolGoal(yellow: 4))) {
       notes.add('Attack ready: roll 1 {die:any} to choose the Oni effect.');
+    } else if (enemy.profileKey == 'rat-de-la-rue') {
+      final suite = _bestSuiteLength(
+        _dice
+            .where((die) => die.value != null)
+            .map((die) => die.value!)
+            .toList(),
+      );
+      if (suite >= 3) {
+        notes.add('Chapardage: suite validated.');
+      } else if (_rollCount > 0) {
+        notes.add('No valid attack yet.');
+      }
     } else if (result != null) {
       notes.add(
         result.imparable
@@ -973,6 +1088,10 @@ class _FightPageState extends State<FightPage> {
           heroTokens.add('Enchevêtrement');
           notes.add('Validated attack: hero receives Enchevêtrement.');
         }
+      case 'vert-vert-019':
+        if (_symbolGoalMet(const SymbolGoal(red: 2))) {
+          notes.add('Validated attack: hero discards 1 random card.');
+        }
       case 'vert-vert-020':
         if (_bestSuiteLength(values) >= 5) {
           heroTokens.add('À Terre');
@@ -980,17 +1099,39 @@ class _FightPageState extends State<FightPage> {
         }
       case 'bleu-vert-022':
         if (_symbolGoalMet(const SymbolGoal(white: 2, yellow: 2, red: 1))) {
-          heroTokens.add('Parasite');
-          notes.add('Validated attack: hero receives Parasite.');
-        } else if (_symbolGoalMet(const SymbolGoal(white: 2, yellow: 2))) {
           heroTokens.add('Poison');
           notes.add('Validated attack: hero receives Poison.');
+        } else if (_symbolGoalMet(const SymbolGoal(white: 2, yellow: 2))) {
+          heroTokens.add('Parasite');
+          notes.add('Validated attack: hero receives Parasite.');
         }
       case 'bleu-vert-023':
         if (_symbolGoalMet(const SymbolGoal(white: 2, yellow: 1, red: 1))) {
           attack = 0;
           lifeSteal = 2;
           notes.add('Validated attack: steals 2 HP.');
+        }
+      case 'rat-de-la-rue':
+        final suite = _bestSuiteLength(values);
+        if (suite >= 5) {
+          cpSteal = 2;
+          attack = (enemy.combatPoints + cpSteal).clamp(0, 99);
+          attackUndefendable = false;
+          notes.add(
+            'Large suite: Rat steals 2 CP, then deals damage equal to its CP ($attack).',
+          );
+        } else if (suite >= 4) {
+          cpSteal = 1;
+          attack = (enemy.combatPoints + cpSteal).clamp(0, 99);
+          attackUndefendable = false;
+          notes.add(
+            'Small suite: Rat steals 1 CP, then deals damage equal to its CP ($attack).',
+          );
+        } else if (suite >= 3) {
+          cpSteal = 1;
+          attack = 0;
+          attackUndefendable = false;
+          notes.add('Micro suite: Rat steals 1 CP.');
         }
     }
 
@@ -1143,6 +1284,77 @@ class _FightPageState extends State<FightPage> {
               'Abnegation extra die: $roll.\n'
               'Red symbol: after OK, Disciple leaves and a random level 3 minion engages.';
         }
+      });
+      return;
+    }
+    if (enemy.profileKey == 'vert-vert-017') {
+      final rolled = extraDice.where((die) => die.value != null).toList();
+      if (rolled.isEmpty) {
+        return;
+      }
+      final roll = rolled.first.value!;
+      setState(() {
+        _battleAttackValue = roll.clamp(0, 99);
+        _battleAttackUndefendable = false;
+        _battleLifeSteal = 0;
+        _battleEnemyHeal = 0;
+        _battleCpSteal = 0;
+        _battleHeroTokens
+          ..clear()
+          ..add('À Terre');
+        _battleMinionTokens.clear();
+        _battleNotes
+          ..clear()
+          ..add(
+            'Claquement de Crocs extra die $roll: deals $roll damage and gives À Terre.',
+          );
+        _extraDiceOutcomeMessage =
+            'Claquement de Crocs extra die: $roll.\n'
+            'Homme Lezard inflicts $roll damage and gives À Terre.';
+      });
+      return;
+    }
+    if (enemy.profileKey == 'vert-vert-021') {
+      final rolled = extraDice.where((die) => die.value != null).toList();
+      if (rolled.isEmpty) {
+        return;
+      }
+      final roll = rolled.first.value!;
+      final symbol = _symbolForFace(roll);
+      final currentChaos = _tokenCount(enemy.alterations, 'Chaos');
+      final gainedChaos = symbol == DieSymbol.white ? 2 : 0;
+      final totalChaos = currentChaos + gainedChaos;
+      setState(() {
+        _battleAttackValue = (6 + totalChaos).clamp(0, 99);
+        _battleAttackUndefendable = false;
+        _battleLifeSteal = 0;
+        _battleEnemyHeal = 0;
+        _battleCpSteal = 0;
+        _battleHeroTokens.clear();
+        _battleMinionTokens.clear();
+        _battleNotes.clear();
+        if (symbol == DieSymbol.white) {
+          _battleMinionTokens.addAll(const ['Chaos', 'Chaos']);
+          _battleNotes.add(
+            'Sorcellerie Ophique extra die $roll: Mage Lezard gains 2 Chaos during the roll.',
+          );
+        } else if (symbol == DieSymbol.yellow) {
+          _battleHeroTokens.add('Eboulissement');
+          _battleNotes.add(
+            'Sorcellerie Ophique extra die $roll: hero receives Eboulissement after OK.',
+          );
+        } else {
+          _battleNotes.add(
+            'Sorcellerie Ophique extra die $roll: red symbol adds no extra effect.',
+          );
+        }
+        _battleNotes.add(
+          'Sorcellerie Ophique: 6 base damage + $totalChaos Chaos = $_battleAttackValue damage.',
+        );
+        _extraDiceOutcomeMessage =
+            'Sorcellerie Ophique extra die: $roll.\n'
+            '${symbol == DieSymbol.white ? 'White symbol: Mage Lezard gains 2 Chaos immediately for this attack.\n' : symbol == DieSymbol.yellow ? 'Orange symbol: hero receives Eboulissement after OK.\n' : 'Red symbol: no extra effect.\n'}'
+            'Mage Lezard inflicts 6 + $totalChaos Chaos = $_battleAttackValue damage.';
       });
       return;
     }
@@ -1310,6 +1522,10 @@ class _FightPageState extends State<FightPage> {
     return counts.values.any((value) => value >= count);
   }
 
+  int _tokenCount(List<String> tokens, String label) {
+    return tokens.where((token) => token == label).length;
+  }
+
   void _applyBattleResolution() {
     if (!_isBattlePhase) {
       return;
@@ -1322,6 +1538,15 @@ class _FightPageState extends State<FightPage> {
       final netDamage = max(0, _battleAttackValue - effectiveDefense);
       if (_phase == CombatPhase.hero) {
         enemy.health = (enemy.health - netDamage).clamp(0, 99);
+        if (_battleCpSteal > 0) {
+          widget.adventure.setHeroPc(
+            widget.adventure.combatPoints - _battleCpSteal,
+          );
+          enemy.combatPoints = (enemy.combatPoints + _battleCpSteal).clamp(
+            0,
+            99,
+          );
+        }
         if (_battleReturnDamage > 0) {
           widget.adventure.setHeroHealth(
             widget.adventure.health - _battleReturnDamage,
@@ -1358,7 +1583,8 @@ class _FightPageState extends State<FightPage> {
               '${_battleReturnDamage > 0 ? ' Return damage: $_battleReturnDamage.' : ''}'
               '${_battleLifeSteal > 0 ? ' Steals $_battleLifeSteal health.' : ''}'
               '${_battleHeroTokens.isNotEmpty ? ' Hero receives ${_battleHeroTokens.join(', ')}.' : ''}'
-              '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_battleMinionTokens.join(', ')}.' : ''}';
+              '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_battleMinionTokens.join(', ')}.' : ''}'
+              '${_battleCpSteal > 0 ? ' ${enemy.label} steals $_battleCpSteal CP.' : ''}';
         }
         _heroAttackCount++;
         _heroAttackTotal += _battleAttackValue;
@@ -1666,13 +1892,15 @@ class _FightPageState extends State<FightPage> {
       _rollCount = 1;
       _diceToRoll = 1;
       for (final die in _dice) {
-        die
-          ..value = null
-          ..reserved = true;
-      }
-      _dice.first
-        ..value = roll
-        ..reserved = false;
+          die
+            ..value = null
+            ..settled = true
+            ..reserved = true;
+        }
+        _dice.first
+          ..value = roll
+          ..settled = true
+          ..reserved = false;
     });
 
     final apply = await showDialog<bool>(
@@ -2690,14 +2918,27 @@ class MinionAttackSummary extends StatelessWidget {
             goal: const SymbolGoal(white: 2, yellow: 2),
             result: [
               const DamageBadge(value: 5, imparable: false),
-              TokenBadge(label: 'PO', color: enemy.rank.color),
+              TokenBadge(label: 'PAR', color: enemy.rank.color),
             ],
           ),
           _AttackResultLine(
             goal: const SymbolGoal(white: 2, yellow: 2, red: 1),
             result: [
               const DamageBadge(value: 6, imparable: false),
-              TokenBadge(label: 'PAR', color: enemy.rank.color),
+              TokenBadge(label: 'PO', color: enemy.rank.color),
+            ],
+          ),
+        ],
+      );
+    }
+    if (enemy.profileKey == 'bleu-vert-023') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _AttackResultLine(
+            goal: const SymbolGoal(white: 2, yellow: 1, red: 1),
+            result: [
+              LifeStealBadge(value: 2, color: enemy.rank.color),
             ],
           ),
         ],
@@ -2791,6 +3032,149 @@ class MinionAttackSummary extends StatelessWidget {
         ],
       );
     }
+    if (enemy.profileKey == 'vert-vert-017') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _AttackResultLine(
+            goal: const SymbolGoal(white: 2, red: 1),
+            result: [
+              const DieValueBadge(value: 1, showValue: false, size: 28),
+              const Text('= deal damage equal to the extra die value'),
+              TokenBadge(label: 'DOWN', color: enemy.rank.color),
+            ],
+          ),
+        ],
+      );
+    }
+    if (enemy.profileKey == 'vert-vert-021') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _AttackResultLine(
+            goal: const SymbolGoal(yellow: 2, red: 1),
+            result: [
+              const DieValueBadge(value: 1, showValue: false, size: 28),
+              const DamageBadge(value: 6, imparable: false),
+              Text(
+                '+ Chaos',
+                style: TextStyle(
+                  color: enemy.rank.color,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          _ResultLine(
+            symbol: DieSymbol.white,
+            children: [
+              TokenBadge(label: 'Chaos x2', color: enemy.rank.color),
+            ],
+          ),
+          _ResultLine(
+            symbol: DieSymbol.yellow,
+            children: [
+              TokenBadge(label: 'EBO', color: enemy.rank.color),
+            ],
+          ),
+          const _ResultLine(
+            symbol: DieSymbol.red,
+            children: [Text('no extra effect')],
+          ),
+        ],
+      );
+    }
+    if (enemy.profileKey == 'rat-de-la-rue') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SuiteEffectLine(
+            label: 'Micro',
+            length: 3,
+            result: [
+              Text(
+                'steal 1 CP',
+                style: TextStyle(
+                  color: enemy.rank.color,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          _SuiteEffectLine(
+            label: 'Small',
+            length: 4,
+            result: [
+              Text(
+                'steal 1 CP',
+                style: TextStyle(
+                  color: enemy.rank.color,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const Text('+ damage = CP'),
+            ],
+          ),
+          _SuiteEffectLine(
+            label: 'Large',
+            length: 5,
+            result: [
+              Text(
+                'steal 2 CP',
+                style: TextStyle(
+                  color: enemy.rank.color,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const Text('+ damage = CP'),
+            ],
+          ),
+        ],
+      );
+    }
+    if (enemy.profileKey == 'vert-vert-018') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _AttackResultLine(
+            goal: const SymbolGoal(white: 2, yellow: 1),
+            result: [
+              TokenBadge(label: 'ENT', color: enemy.rank.color),
+              const DamageBadge(value: 4, imparable: false),
+            ],
+          ),
+          _AttackResultLine(
+            goal: const SymbolGoal(white: 2, yellow: 2),
+            result: [
+              TokenBadge(label: 'ENT', color: enemy.rank.color),
+              const DamageBadge(value: 5, imparable: false),
+            ],
+          ),
+          _AttackResultLine(
+            goal: const SymbolGoal(white: 2, yellow: 2, red: 1),
+            result: [
+              TokenBadge(label: 'ENT', color: enemy.rank.color),
+              const DamageBadge(value: 7, imparable: true),
+            ],
+          ),
+        ],
+      );
+    }
+    if (enemy.profileKey == 'vert-vert-019') {
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _AttackResultLine(
+            goal: SymbolGoal(red: 2),
+            result: [
+              _DiscardCardBadge(value: 1),
+              DamageBadge(value: 4, imparable: true),
+            ],
+          ),
+        ],
+      );
+    }
 
     switch (enemy.attackPlan.style) {
       case MinionAttackStyle.symbols:
@@ -2836,6 +3220,8 @@ class MinionAttackSummary extends StatelessWidget {
               damage: _suiteDamage(enemy, 5),
               leadingResult: enemy.profileKey == 'elfe-du-chaos'
                   ? TokenBadge(label: 'Ronces', color: enemy.rank.color)
+                  : enemy.profileKey == 'vert-vert-020'
+                  ? TokenBadge(label: 'DOWN', color: enemy.rank.color)
                   : null,
             ),
             ..._shortTokenHints(enemy),
@@ -2867,10 +3253,13 @@ class MinionAttackSummary extends StatelessWidget {
     if (text.contains('parasite')) {
       hints.add(const Text('If condition met: Parasite.'));
     }
-    if (text.contains('a terre') || text.contains('à terre')) {
+    if ((text.contains('a terre') || text.contains('à terre')) &&
+        enemy.profileKey != 'vert-vert-020') {
       hints.add(const Text('If condition met: À Terre.'));
     }
-    if (text.contains('enchevetrement') || text.contains('enchevêtrement')) {
+    if ((text.contains('enchevetrement') ||
+            text.contains('enchevêtrement')) &&
+        enemy.profileKey != 'vert-vert-018') {
       hints.add(const Text('If condition met: Enchevêtrement.'));
     }
     return hints;
@@ -3430,6 +3819,24 @@ List<Widget> _defenseEffectLines(EnemyNode enemy) {
         repeat: true,
       );
       return lines;
+    case 'rat-de-la-rue':
+      symbol(const SymbolGoal(yellow: 2), [
+        Text(
+          'steal 1 CP',
+          textAlign: TextAlign.right,
+          style: TextStyle(
+            color: enemy.rank.color,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ]);
+      symbol(const SymbolGoal(red: 2), const [
+        Text(
+          'ignore all damage',
+          textAlign: TextAlign.right,
+        ),
+      ]);
+      return lines;
     case 'bleu-vert-022':
       symbol(const SymbolGoal(yellow: 1), const [PreventBadge(value: 2)]);
       symbol(const SymbolGoal(red: 1), [
@@ -3439,7 +3846,7 @@ List<Widget> _defenseEffectLines(EnemyNode enemy) {
     case 'bleu-vert-023':
       symbol(const SymbolGoal(red: 1), [
         LifeStealBadge(value: 1, color: enemy.rank.color),
-      ], repeat: true);
+      ]);
       return lines;
   }
 
@@ -4099,7 +4506,7 @@ class _CompactRoundIconButton extends StatelessWidget {
           style: IconButton.styleFrom(
             shape: const CircleBorder(),
             foregroundColor: Colors.white,
-            side: const BorderSide(color: panelBorderGrey, width: 1.4),
+            side: BorderSide(color: color, width: 1.4),
           ),
           icon: Icon(icon, size: 18, color: Colors.white),
         ),
@@ -4411,7 +4818,7 @@ class _BattleCounter extends StatelessWidget {
           _CompactRoundIconButton(
             icon: Icons.add,
             tooltip: 'Add',
-            color: Colors.white,
+            color: color,
             onPressed: () => onChanged(1),
           ),
           Expanded(
@@ -4440,7 +4847,7 @@ class _BattleCounter extends StatelessWidget {
           _CompactRoundIconButton(
             icon: Icons.remove,
             tooltip: 'Remove',
-            color: Colors.white,
+            color: color,
             onPressed: () => onChanged(-1),
           ),
         ],
@@ -4511,8 +4918,11 @@ class MinionAiPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleDice = dice.take(visibleDiceCount.clamp(0, 5)).toList()
-      ..sort(_compareDice);
+    final visibleDice = dice.take(visibleDiceCount.clamp(0, 5)).toList();
+    final hasRollingDice = visibleDice.any((die) => !die.settled);
+    if (!hasRollingDice) {
+      visibleDice.sort(_compareDice);
+    }
     final editingDie = editingDieId == null
         ? null
         : dice.firstWhere((die) => die.id == editingDieId);
@@ -4552,10 +4962,13 @@ class MinionAiPanel extends StatelessWidget {
                 for (final die in visibleDice)
                   DieTile(
                     die: die,
-                    onTap: editMode || rerollOneMode
+                    onTap: !die.settled
+                        ? null
+                        : editMode || rerollOneMode
                         ? () => onTapDie(die)
                         : null,
-                    highlight: die.reserved || editingDieId == die.id,
+                    highlight:
+                        die.settled && (die.reserved || editingDieId == die.id),
                     highlightColor: editingDieId == die.id
                         ? heroAccent
                         : enemy.rank.color,
@@ -4565,18 +4978,15 @@ class MinionAiPanel extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           if (visibleDice.isNotEmpty || isDefensePhase) ...[
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: enemy.rank.color,
-                foregroundColor: Colors.black,
-                minimumSize: const Size.fromHeight(48),
-              ),
-              onPressed: rollCount < maxRolls && diceToRoll > 0 ? onRoll : null,
+            _SolidRollButton(
+              onPressed: !hasRollingDice && rollCount < maxRolls && diceToRoll > 0
+                  ? onRoll
+                  : null,
+              color: enemy.rank.color,
               child: Text(
                 isDefensePhase
                     ? 'Roll defense'
                     : (rollCount == 0 ? 'Roll' : 'Reroll'),
-                style: const TextStyle(fontWeight: FontWeight.w900),
               ),
             ),
             const SizedBox(height: 8),
@@ -5154,6 +5564,7 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
   int _rollCount = 0;
   bool _editMode = false;
   bool _rerollMode = false;
+  bool _animationPending = false;
   int? _editingDieId;
 
   @override
@@ -5174,10 +5585,12 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
       _rollCount = 0;
       _editMode = false;
       _rerollMode = false;
+      _animationPending = false;
       _editingDieId = null;
       for (final die in _dice) {
         die
           ..value = null
+          ..settled = true
           ..reserved = false;
       }
     }
@@ -5186,6 +5599,7 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
   @override
   Widget build(BuildContext context) {
     final visibleDice = _dice.take(_diceToRoll.clamp(0, 5)).toList();
+    final hasRollingDice = visibleDice.any((die) => !die.settled);
     return InfoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -5227,7 +5641,7 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
               for (final die in visibleDice)
                 DieTile(
                   die: die,
-                  onTap: () => _tapDie(die),
+                  onTap: die.settled ? () => _tapDie(die) : null,
                   compact: true,
                   highlightColor: _editingDieId == die.id
                       ? heroAccent
@@ -5249,10 +5663,9 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
                     selected: false,
                     onSelected: (_) {
                       setState(() {
-                        _dice
-                                .firstWhere((die) => die.id == _editingDieId)
-                                .value =
-                            face;
+                        _dice.firstWhere((die) => die.id == _editingDieId)
+                          ..value = face
+                          ..settled = true;
                         _editingDieId = null;
                         _editMode = false;
                       });
@@ -5265,10 +5678,12 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
             ),
           ],
           const SizedBox(height: 10),
-          ImageActionButton(
-            label: _rollCount == 0 ? 'Roll' : 'Reroll',
-            icon: Icons.casino,
-            onPressed: _diceToRoll <= 0 ? null : _rollVisibleDice,
+          _SolidRollButton(
+            color: widget.accent,
+            onPressed: _diceToRoll <= 0 || hasRollingDice
+                ? null
+                : _rollVisibleDice,
+            child: Text(_rollCount == 0 ? 'Roll' : 'Reroll'),
           ),
           const SizedBox(height: 8),
           Row(
@@ -5312,15 +5727,43 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
   }
 
   void _rollVisibleDice() {
+    final rolledIds = <int>[];
     setState(() {
       final visibleDice = _dice.take(_diceToRoll.clamp(0, 5)).toList();
+      _animationPending = combatDiceAnimationSeconds > 0 && visibleDice.isNotEmpty;
       for (final die in visibleDice) {
         die.value = _random.nextInt(6) + 1;
+        die.settled = !_animationPending;
         die.rollTick++;
+        rolledIds.add(die.id);
       }
       _rollCount++;
     });
-    widget.onChanged?.call(_dice.take(_diceToRoll.clamp(0, 5)).toList());
+    _notifyAfterAnimation(rolledIds);
+  }
+
+  void _notifyAfterAnimation(List<int> rolledIds) {
+    if (!_animationPending) {
+      widget.onChanged?.call(_dice.take(_diceToRoll.clamp(0, 5)).toList());
+      return;
+    }
+    Future<void>.delayed(
+      Duration(seconds: combatDiceAnimationSeconds.clamp(1, 5).toInt()),
+      () {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          for (final die in _dice.where((die) => rolledIds.contains(die.id))) {
+            die.settled = true;
+          }
+          _animationPending = _dice.any((die) => !die.settled);
+        });
+        if (!_animationPending) {
+          widget.onChanged?.call(_dice.take(_diceToRoll.clamp(0, 5)).toList());
+        }
+      },
+    );
   }
 
   void _tapDie(GameDie die) {
@@ -5331,9 +5774,11 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
       }
       if (_rerollMode) {
         die.value = _random.nextInt(6) + 1;
+        die.settled = combatDiceAnimationSeconds <= 0;
         die.rollTick++;
         _rerollMode = false;
-        widget.onChanged?.call(_dice.take(_diceToRoll.clamp(0, 5)).toList());
+        _animationPending = !die.settled;
+        _notifyAfterAnimation([die.id]);
         return;
       }
       if (_rollCount > 0) {
@@ -5404,6 +5849,46 @@ class _SuiteLine extends StatelessWidget {
           ],
           if (damage != null)
             DamageBadge(value: damage!.value, imparable: damage!.imparable),
+        ],
+      ),
+    );
+  }
+}
+
+class _SuiteEffectLine extends StatelessWidget {
+  const _SuiteEffectLine({
+    required this.label,
+    required this.length,
+    required this.result,
+  });
+
+  final String label;
+  final int length;
+  final List<Widget> result;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 56,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+          Expanded(child: SuiteGoalView(length: length)),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Wrap(
+              spacing: 5,
+              alignment: WrapAlignment.end,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: result,
+            ),
+          ),
         ],
       ),
     );
@@ -6117,6 +6602,9 @@ _AttackDamage? _damageForSymbolGoal(EnemyNode enemy, SymbolGoal goal) {
   if (key == 'epeiste-egare') {
     return _AttackDamage(goal.white + 2);
   }
+  if (key == 'vert-vert-016') {
+    return const _AttackDamage(5, imparable: true);
+  }
   if (key == 'vert-vert-012' || key == 'vert-vert-017') {
     return null;
   }
@@ -6125,6 +6613,23 @@ _AttackDamage? _damageForSymbolGoal(EnemyNode enemy, SymbolGoal goal) {
   }
   if (key == 'vert-vert-015') {
     return const _AttackDamage(6, imparable: true);
+  }
+  if (key == 'vert-vert-018') {
+    if (goal.white == 2 && goal.yellow == 1 && goal.red == 0) {
+      return const _AttackDamage(4);
+    }
+    if (goal.white == 2 && goal.yellow == 2 && goal.red == 0) {
+      return const _AttackDamage(5);
+    }
+    if (goal.white == 2 && goal.yellow == 2 && goal.red == 1) {
+      return const _AttackDamage(7, imparable: true);
+    }
+  }
+  if (key == 'vert-vert-019') {
+    return const _AttackDamage(4, imparable: true);
+  }
+  if (key == 'vert-vert-021') {
+    return null;
   }
   return _damageFromAttackText(enemy, goalIndex);
 }
@@ -6144,6 +6649,14 @@ _AttackDamage? _suiteDamage(EnemyNode enemy, int length) {
       3 => const _AttackDamage(4),
       4 => const _AttackDamage(7),
       5 => const _AttackDamage(8),
+      _ => null,
+    };
+  }
+  if (key == 'vert-vert-020') {
+    return switch (length) {
+      3 => const _AttackDamage(4),
+      4 => const _AttackDamage(7),
+      5 => const _AttackDamage(7),
       _ => null,
     };
   }
@@ -6325,11 +6838,11 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
           ),
           if (_editing.contains('heroHp') || _editing.contains('enemyHp')) ...[
             const SizedBox(height: 6),
-            _buildEditorPair('heroHp', 'enemyHp'),
+            _buildEditorPair('enemyHp', 'heroHp'),
           ],
           if (_editing.contains('heroCp') || _editing.contains('enemyCp')) ...[
             const SizedBox(height: 6),
-            _buildEditorPair('heroCp', 'enemyCp'),
+            _buildEditorPair('enemyCp', 'heroCp'),
           ],
           if (widget.onFinish != null) ...[
             const SizedBox(height: 6),
@@ -6388,7 +6901,7 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: accent.withValues(alpha: 0.8)),
+        border: Border.all(color: panelBorderGrey),
       ),
       child: Row(
         children: [
@@ -6589,6 +7102,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
                       ? Alignment.center
                       : Alignment.centerLeft,
                   hpStyle: _CombatHpStyle.enemy,
+                  showCp: enemy.profileKey != 'naraxus',
                   onHp: onEnemyHp,
                   onCp: onEnemyCp,
                   onEditTokens: onEditEnemyTokens,
@@ -6658,6 +7172,7 @@ class _CombatantVersusHalf extends StatelessWidget {
     required this.onEditTokens,
     this.portraitScale = 1,
     this.imageOnRight = false,
+    this.showCp = true,
   });
 
   final String title;
@@ -6673,6 +7188,7 @@ class _CombatantVersusHalf extends StatelessWidget {
   final VoidCallback onCp;
   final VoidCallback onEditTokens;
   final bool imageOnRight;
+  final bool showCp;
 
   @override
   Widget build(BuildContext context) {
@@ -6700,11 +7216,13 @@ class _CombatantVersusHalf extends StatelessWidget {
                 style: hpStyle,
               ),
             ),
-            const SizedBox(height: 8),
-            _CombatBadgeButton(
-              onTap: onCp,
-              child: _PcTriangleBadge(value: cp),
-            ),
+            if (showCp) ...[
+              const SizedBox(height: 8),
+              _CombatBadgeButton(
+                onTap: onCp,
+                child: _PcTriangleBadge(value: cp),
+              ),
+            ],
           ],
         ),
       ),
@@ -6808,6 +7326,19 @@ class _NamedCombatPortrait extends StatelessWidget {
 
 Alignment _topCropAlignment(Alignment alignment) {
   return Alignment(alignment.x.clamp(-1.0, 1.0).toDouble(), -1);
+}
+
+Alignment _heroEyeAlignment(HeroType hero) {
+  return switch (hero) {
+    HeroType.barbare => const Alignment(0, -0.62),
+    HeroType.elfeLunaire => const Alignment(0, -0.70),
+    HeroType.tacticien => const Alignment(0, -0.66),
+    HeroType.monk => const Alignment(0, -0.78),
+    HeroType.paladin => const Alignment(0, -0.72),
+    HeroType.pyromancer => const Alignment(0, -0.76),
+    HeroType.shadowThief => const Alignment(0, -0.72),
+    HeroType.deadpool => const Alignment(0, -0.58),
+  };
 }
 
 class _CombatBadgeButton extends StatelessWidget {
@@ -7586,18 +8117,19 @@ class _CompactPhaseSelector extends StatelessWidget {
                       child: switch (value) {
                         CombatPhase.heroUpkeep => _PhasePortraitIcon(
                           asset: adventure.hero.asset,
-                          alignment: adventure.hero.imageAlignment,
+                          alignment: _heroEyeAlignment(adventure.hero),
                           scale: adventure.hero.imageScale,
                         ),
                         CombatPhase.minionUpkeep => _PhasePortraitIcon(
                           asset: enemy.profileKey == 'naraxus'
                               ? 'assets/enemy_previews/naxarus_head.png'
-                              : enemy.rank.asset,
+                              : enemy.previewAsset,
                           alignment: enemy.profileKey == 'naraxus'
                               ? Alignment.center
-                              : Alignment.topCenter,
+                              : Alignment.center,
+                          fit: BoxFit.contain,
                         ),
-                        _ => const _UpkeepCubeIcon(size: 30),
+                        _ => const _UpkeepCubeIcon(size: 27),
                       },
                     ),
                   ),
@@ -7616,11 +8148,13 @@ class _PhasePortraitIcon extends StatelessWidget {
     required this.asset,
     required this.alignment,
     this.scale = 1,
+    this.fit = BoxFit.cover,
   });
 
   final String asset;
   final Alignment alignment;
   final double scale;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -7632,7 +8166,7 @@ class _PhasePortraitIcon extends StatelessWidget {
           asset,
           width: double.infinity,
           height: double.infinity,
-          fit: BoxFit.cover,
+          fit: fit,
           alignment: alignment,
         ),
       ),
@@ -7666,6 +8200,7 @@ class GameDie {
   final int id;
   int? value;
   bool reserved = false;
+  bool settled = true;
   int rollTick = 0;
 
   DieSymbol? get symbol {
@@ -7724,10 +8259,13 @@ class DicePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final visibleDice = dice.take(visibleDiceCount.clamp(0, 6)).toList();
-    final rollDice = visibleDice.where((die) => !die.reserved).toList()
-      ..sort(_compareDice);
-    final reserveDice = visibleDice.where((die) => die.reserved).toList()
-      ..sort(_compareDice);
+    final hasRollingDice = visibleDice.any((die) => !die.settled);
+    final rollDice = visibleDice.where((die) => !die.reserved).toList();
+    final reserveDice = visibleDice.where((die) => die.reserved).toList();
+    if (!hasRollingDice) {
+      rollDice.sort(_compareDice);
+      reserveDice.sort(_compareDice);
+    }
     final editingDie = editingDieId == null
         ? null
         : dice.firstWhere((die) => die.id == editingDieId);
@@ -7803,24 +8341,14 @@ class DicePanel extends StatelessWidget {
                 const SizedBox(width: 10),
               ],
               Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: rollColor,
-                    foregroundColor: Colors.black,
-                    minimumSize: const Size.fromHeight(56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  onPressed: rollCount < maxRolls && diceToRoll > 0
+                child: _SolidRollButton(
+                  onPressed: !hasRollingDice &&
+                          rollCount < maxRolls &&
+                          diceToRoll > 0
                       ? onRoll
                       : null,
-                  icon: const Icon(Icons.casino),
-                  label: Text(rollLabel),
+                  color: rollColor,
+                  child: Text(rollLabel),
                 ),
               ),
             ],
@@ -7852,6 +8380,42 @@ class DicePanel extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _SolidRollButton extends StatelessWidget {
+  const _SolidRollButton({
+    required this.color,
+    required this.onPressed,
+    required this.child,
+  });
+
+  final Color color;
+  final VoidCallback? onPressed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = ThemeData.estimateBrightnessForColor(color) ==
+            Brightness.dark
+        ? Colors.white
+        : Colors.black;
+    return FilledButton(
+      style: FilledButton.styleFrom(
+        backgroundColor: color,
+        disabledBackgroundColor: color.withValues(alpha: 0.28),
+        foregroundColor: foreground,
+        disabledForegroundColor: foreground.withValues(alpha: 0.42),
+        minimumSize: const Size.fromHeight(50),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+      ),
+      onPressed: onPressed,
+      child: DefaultTextStyle.merge(
+        style: const TextStyle(fontWeight: FontWeight.w900),
+        child: child,
       ),
     );
   }
@@ -7896,7 +8460,10 @@ class DiceZone extends StatelessWidget {
           child: Row(
             children: [
               for (final die in dice) ...[
-                DieTile(die: die, onTap: () => onTapDie(die)),
+                DieTile(
+                  die: die,
+                  onTap: die.settled ? () => onTapDie(die) : null,
+                ),
                 const SizedBox(width: 5),
               ],
               if (dice.isEmpty)
@@ -7926,6 +8493,7 @@ class DieTile extends StatefulWidget {
     this.compact = false,
     this.highlight = false,
     this.highlightColor,
+    this.onAnimationDone,
     super.key,
   });
 
@@ -7934,6 +8502,7 @@ class DieTile extends StatefulWidget {
   final bool compact;
   final bool highlight;
   final Color? highlightColor;
+  final VoidCallback? onAnimationDone;
 
   @override
   State<DieTile> createState() => _DieTileState();
@@ -7962,6 +8531,7 @@ class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
           if (mounted) {
             setState(() => _animatedValue = widget.die.value);
           }
+          widget.onAnimationDone?.call();
         }
       });
   }
@@ -7996,6 +8566,9 @@ class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
     _controller.duration = Duration(
       seconds: combatDiceAnimationSeconds.clamp(1, 5).toInt(),
     );
+    if (mounted) {
+      setState(() => _animatedValue = _animationRandom.nextInt(6) + 1);
+    }
     _controller
       ..reset()
       ..forward();
@@ -8010,7 +8583,9 @@ class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final size = widget.compact ? 40.0 : 50.0;
-    final value = _controller.isAnimating ? _animatedValue : widget.die.value;
+    final value = !widget.die.settled || _controller.isAnimating
+        ? _animatedValue
+        : widget.die.value;
     return InkWell(
       onTap: widget.onTap,
       borderRadius: BorderRadius.circular(8),

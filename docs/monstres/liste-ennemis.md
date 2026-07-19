@@ -13,6 +13,7 @@ Ce fichier sert de registre de depart pour integrer les ennemis dans l applicati
 
 | Nom | Couleur | Niveau | Fiche |
 | --- | --- | --- | --- |
+| Rat de la Rue | Vert | 1 | $(Rat de la Rue Vert 1 rat-de-la-rue.md[3]) |
 | Enchanteur Gobelin | Vert | 1 | $(Enchanteur Gobelin Vert 1 enchanteur-gobelin.md[3]) |
 | Fee | Vert | 1 | $(Fee Vert 1 fee.md[3]) |
 | Ronin Vagabond | Vert | 1 | $(Ronin Vagabond Vert 1 ronin-vagabond.md[3]) |

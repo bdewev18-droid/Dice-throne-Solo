@@ -499,6 +499,7 @@ String _recipeProfileLabel(EnemyProfile profile) {
 
 String _recipeProfileCode(EnemyProfile profile) {
   return switch (profile.key) {
+    'rat-de-la-rue' => 'Vert001',
     'fee' => 'Vert002',
     'ronin-vagabond' => 'Vert003',
     'enchanteur-gobelin' => 'Vert004',
@@ -740,6 +741,9 @@ class EnemyNode {
   String get previewAsset {
     if (profileKey == 'naraxus') {
       return 'assets/enemy_previews/naraxus.webp';
+    }
+    if (profileKey == 'rat-de-la-rue') {
+      return 'assets/enemy_previews/rat-de-la-rue.webp';
     }
     final filename = cardAsset.split('/').last;
     final base = filename.split('.').first.toLowerCase();

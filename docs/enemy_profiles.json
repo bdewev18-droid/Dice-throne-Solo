@@ -8,6 +8,151 @@
   },
   "profiles": [
     {
+      "key": "rat-de-la-rue",
+      "name": "Rat de la Rue",
+      "rank": "green",
+      "maxHealth": 10,
+      "cp": 4,
+      "cardAsset": "assets/vert/vert-001.png",
+      "initialTokens": [],
+      "rewardChests": 1,
+      "rewardRank": null,
+      "attacks": [
+        "Chapardage",
+        "Micro suite: vole 1 CP.",
+        "Petite suite: vole 1 CP et inflige ses CP en dégâts.",
+        "Grande suite: vole 2 CP et inflige ses CP en dégâts."
+      ],
+      "defense": "Jet défensif 4 dés: sur 2 symboles orange, vole 1 CP; sur 2 symboles rouges, ignore tous les dégâts.",
+      "defenseDice": 4,
+      "defensePlan": {
+        "dice": 4,
+        "effects": [
+          {
+            "condition": {
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 2,
+                "red": 0
+              },
+              "repeat": false
+            },
+            "prevent": 0,
+            "returnDamage": 0,
+            "undefendable": false,
+            "stealHp": 0,
+            "stealCp": 1,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "tokens": [],
+            "formulas": []
+          },
+          {
+            "condition": {
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 0,
+                "red": 2
+              },
+              "repeat": false
+            },
+            "prevent": 0,
+            "returnDamage": 0,
+            "undefendable": false,
+            "stealHp": 0,
+            "stealCp": 0,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "tokens": [],
+            "formulas": [
+              "ignoreAllIncomingDamage = true"
+            ]
+          }
+        ],
+        "notes": [
+          "Sur 4 symboles orange, Rat de la Rue vole toujours seulement 1 CP."
+        ]
+      },
+      "attackPlan": {
+        "style": "suite",
+        "goals": [],
+        "name": "Chapardage",
+        "actions": [
+          {
+            "condition": {
+              "type": "suite",
+              "suite": "micro",
+              "length": 3
+            },
+            "label": "Micro suite",
+            "damage": 0,
+            "undefendable": false,
+            "stealHp": 0,
+            "stealCp": 1,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "topDeckToDiscard": 0,
+            "tokens": [],
+            "formulas": [],
+            "extraRoll": null,
+            "notes": []
+          },
+          {
+            "condition": {
+              "type": "suite",
+              "suite": "small",
+              "length": 4
+            },
+            "label": "Petite suite",
+            "damage": 0,
+            "undefendable": false,
+            "stealHp": 0,
+            "stealCp": 1,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "topDeckToDiscard": 0,
+            "tokens": [],
+            "formulas": [
+              "damage = minionCpAfterSteal"
+            ],
+            "extraRoll": null,
+            "notes": []
+          },
+          {
+            "condition": {
+              "type": "suite",
+              "suite": "large",
+              "length": 5
+            },
+            "label": "Grande suite",
+            "damage": 0,
+            "undefendable": false,
+            "stealHp": 0,
+            "stealCp": 2,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "topDeckToDiscard": 0,
+            "tokens": [],
+            "formulas": [
+              "damage = minionCpAfterSteal"
+            ],
+            "extraRoll": null,
+            "notes": []
+          }
+        ],
+        "conditionalRules": [],
+        "passives": [],
+        "notes": []
+      }
+    },
+    {
       "key": "fee",
       "name": "Fée",
       "rank": "green",
@@ -1948,7 +2093,7 @@
       "rewardRank": null,
       "attacks": [
         "Claquement de Crocs: 2 blancs + 1 rouge, lance 1 de et applique son effet.",
-        "Sur blanc: inflige 2 degats imparables. Sur jaune ou rouge: inflige A Terre."
+        "Inflige autant de degats que la valeur du jet additionnel et inflige A Terre."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -2009,55 +2154,18 @@
             "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
-          },
-          {
-            "condition": {
-              "type": "symbols",
-              "symbols": {
-                "white": 1,
-                "orange": 0,
-                "red": 0
-              }
+            "extraRoll": {
+              "dice": 1,
+              "effects": [
+                {
+                  "condition": "any",
+                  "damageFormula": "roll",
+                  "tokens": [
+                    "À Terre"
+                  ]
+                }
+              ]
             },
-            "label": "Sur blanc",
-            "damage": 2,
-            "undefendable": true,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "topDeckToDiscard": 0,
-            "tokens": [],
-            "formulas": [],
-            "extraRoll": null,
-            "notes": []
-          },
-          {
-            "condition": {
-              "type": "symbols",
-              "symbols": {
-                "white": 0,
-                "orange": 1,
-                "red": 1
-              }
-            },
-            "label": "Sur jaune ou rouge",
-            "damage": 0,
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "topDeckToDiscard": 0,
-            "tokens": [
-              "À Terre"
-            ],
-            "formulas": [],
-            "extraRoll": null,
             "notes": []
           }
         ],
@@ -2077,9 +2185,9 @@
       "rewardChests": 1,
       "rewardRank": null,
       "attacks": [
-        "Belier: 2 blancs + 1 jaune = 4 degats.",
-        "2 blancs + 2 jaunes = 5 degats et Enchevetrement.",
-        "2 blancs + 2 jaunes + rouge = 7 degats et Enchevetrement."
+        "Belier: 2 blancs + 1 jaune = Enchevetrement + 4 degats.",
+        "2 blancs + 2 jaunes = Enchevetrement + 5 degats.",
+        "2 blancs + 2 jaunes + rouge = Enchevetrement + 7 degats imparables."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -2171,7 +2279,9 @@
             "drawCards": 0,
             "discardCards": 0,
             "topDeckToDiscard": 0,
-            "tokens": [],
+            "tokens": [
+              "Enchevêtrement"
+            ],
             "formulas": [],
             "extraRoll": null,
             "notes": []
@@ -2210,7 +2320,7 @@
               }
             },
             "damage": 7,
-            "undefendable": false,
+            "undefendable": true,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -2241,8 +2351,7 @@
       "rewardChests": 1,
       "rewardRank": "blue",
       "attacks": [
-        "Transe: 2 rouges = 4 degats imparables.",
-        "Le joueur actif choisit un coequipier pour 2 degats collateraux, sinon defausse 1 carte au hasard."
+        "Transe: 2 rouges = defausse 1 carte au hasard + 4 degats imparables."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -2295,23 +2404,6 @@
             "label": "Transe",
             "damage": 4,
             "undefendable": true,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "topDeckToDiscard": 0,
-            "tokens": [],
-            "formulas": [],
-            "extraRoll": null,
-            "notes": []
-          },
-          {
-            "condition": {
-              "type": "text"
-            },
-            "damage": 2,
-            "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -2469,8 +2561,8 @@
       "rewardChests": 1,
       "rewardRank": null,
       "attacks": [
-        "Sorcellerie Ophique: 2 jaunes + 1 rouge, lance 1 de.",
-        "Blanc: gagne 2 Chaos. Jaune: inflige Eboulissement. Puis inflige 6 + 1 par Chaos."
+        "Sorcellerie Ophique: 2 oranges + 1 rouge, then roll 1 die.",
+        "White: Mage Lezard gains 2 Chaos during the roll. Orange: hero receives Eboulissement after OK. Red: no extra effect. Then deal 6 damage plus 1 per Chaos."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -2479,7 +2571,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 3 des: gagne 1 Chaos par jaune puis inflige 1 degat par Chaos."
+              "text": "Defense roll 3 dice: gain 1 Chaos per orange, then return 1 undefendable damage per Chaos."
             },
             "prevent": 0,
             "returnDamage": 1,
@@ -2515,7 +2607,7 @@
                 "red": 1
               }
             },
-            "label": "Sorcellerie Ophique",
+            "label": "Sorcellerie Ophique: roll 1 die",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -2538,7 +2630,7 @@
                 "red": 0
               }
             },
-            "label": "Blanc",
+            "label": "White: gain 2 Chaos",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -2561,7 +2653,7 @@
                 "red": 0
               }
             },
-            "label": "Jaune",
+            "label": "Orange: give Eboulissement",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -2610,8 +2702,8 @@
       "rewardRank": null,
       "attacks": [
         "Scurry: 2 blancs + jaune = 4 degats.",
-        "2 blancs + 2 jaunes = 5 degats et Poison.",
-        "2 blancs + 2 jaunes + rouge = 6 degats et Parasite."
+        "2 blancs + 2 jaunes = 5 degats et Parasite.",
+        "2 blancs + 2 jaunes + rouge = 6 degats et Poison."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -2726,7 +2818,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Poison"
+              "Parasite"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -2750,7 +2842,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Parasite"
+              "Poison"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -2828,7 +2920,7 @@
             "label": "Gnaw",
             "damage": 0,
             "undefendable": false,
-            "stealHp": 0,
+            "stealHp": 2,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,

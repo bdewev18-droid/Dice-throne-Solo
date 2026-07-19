@@ -1095,7 +1095,7 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
             fit: BoxFit.cover,
             alignment: Alignment.topCenter,
           ),
-          Container(color: Colors.black.withValues(alpha: 0.58)),
+          Container(color: Colors.black.withValues(alpha: 0.29)),
           if (!widget.showNext)
             SafeArea(
               child: Align(

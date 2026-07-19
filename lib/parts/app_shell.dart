@@ -261,13 +261,17 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   }
 
   Future<void> _abandonAdventure(AdventureState adventure) async {
+    adventure.finished = true;
     _recordAdventure(adventure);
-    _activeAdventure = null;
     await _store.clear();
     if (!mounted) {
       return;
     }
-    setState(() {});
+    setState(() {
+      if (identical(_activeAdventure, adventure)) {
+        _activeAdventure = null;
+      }
+    });
     appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
   }
 
