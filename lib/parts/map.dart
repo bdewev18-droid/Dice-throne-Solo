@@ -976,9 +976,10 @@ class EndAdventureBanner extends StatelessWidget {
 }
 
 class RecipeEnemySelectionPage extends StatefulWidget {
-  const RecipeEnemySelectionPage({required this.enemy, super.key});
+  const RecipeEnemySelectionPage({required this.enemy, this.rank, super.key});
 
   final EnemyNode enemy;
+  final EnemyRank? rank;
 
   @override
   State<RecipeEnemySelectionPage> createState() =>
@@ -987,7 +988,7 @@ class RecipeEnemySelectionPage extends StatefulWidget {
 
 class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
   late final List<EnemyProfile> _profiles = _recipeProfilesFor(
-    widget.enemy.rank,
+    widget.rank ?? widget.enemy.rank,
   );
   late EnemyProfile _selected = _profiles.firstWhere(
     (profile) => profile.key == widget.enemy.profileKey,

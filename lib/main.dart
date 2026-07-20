@@ -20,7 +20,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.09';
+const String appVersionLabel = 'Version 1.3.10';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -726,7 +726,7 @@ class EnemyNode {
 
   final int id;
   String label;
-  final EnemyRank rank;
+  EnemyRank rank;
   int maxHealth;
   int pc;
   List<String> attacks;
@@ -798,8 +798,9 @@ class EnemyNode {
 
   void applyJson(Map<String, dynamic> json) {
     final restoredProfile = _profileByKey(json['profileKey']?.toString());
-    if (restoredProfile != null && restoredProfile.rank == rank) {
+    if (restoredProfile != null) {
       label = restoredProfile.name;
+      rank = restoredProfile.rank;
       maxHealth = restoredProfile.maxHealth;
       pc = restoredProfile.pc;
       attacks = restoredProfile.attacks;
@@ -836,10 +837,8 @@ class EnemyNode {
   }
 
   void applyProfile(EnemyProfile profile) {
-    if (profile.rank != rank) {
-      return;
-    }
     label = profile.name;
+    rank = profile.rank;
     maxHealth = profile.maxHealth;
     pc = profile.pc;
     attacks = profile.attacks;
