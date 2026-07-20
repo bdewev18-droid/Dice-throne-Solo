@@ -42,6 +42,7 @@ class EnemyProfile {
     this.initialTokens = const [],
     this.rewardChests = 1,
     this.rewardRank,
+    this.rewardRanks = const [],
   });
 
   final String key;
@@ -57,6 +58,7 @@ class EnemyProfile {
   final List<String> initialTokens;
   final int rewardChests;
   final EnemyRank? rewardRank;
+  final List<EnemyRank> rewardRanks;
 }
 
 enum MinionAttackStyle { symbols, suite, none }

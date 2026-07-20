@@ -271,6 +271,7 @@ EnemyNode _enemy(
     initialTokens: selectedProfile.initialTokens,
     rewardChests: selectedProfile.rewardChests,
     rewardRank: selectedProfile.rewardRank,
+    rewardRanks: selectedProfile.rewardRanks,
   );
 }
 

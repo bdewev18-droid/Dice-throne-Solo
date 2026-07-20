@@ -73,6 +73,7 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
       initialTokens: naraxusProfile.initialTokens,
       rewardChests: naraxusProfile.rewardChests,
       rewardRank: naraxusProfile.rewardRank,
+      rewardRanks: naraxusProfile.rewardRanks,
     );
     adventure
       ..health = 50
@@ -1213,6 +1214,7 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                                       RewardChestBadge(
                                         rank: enemy.rewardRank,
                                         count: enemy.rewardChests,
+                                        ranks: enemy.rewardRanks,
                                       ),
                                     ],
                                   ),
@@ -1293,23 +1295,35 @@ class PauseRunDialog extends StatelessWidget {
         'Abandoning keeps your current score for statistics.',
       ),
       actions: [
-        FilledButton.icon(
-          onPressed: () => Navigator.of(context).pop(_PauseAction.resumeLater),
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xff8f43ff),
-            foregroundColor: Colors.white,
+        SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FilledButton.icon(
+                onPressed: () =>
+                    Navigator.of(context).pop(_PauseAction.resumeLater),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xff8f43ff),
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.save),
+                label: const Text('Resume later'),
+              ),
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                onPressed: () =>
+                    Navigator.of(context).pop(_PauseAction.abandon),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.flag),
+                label: const Text('Abandon'),
+              ),
+            ],
           ),
-          icon: const Icon(Icons.save),
-          label: const Text('Resume later'),
-        ),
-        FilledButton.icon(
-          onPressed: () => Navigator.of(context).pop(_PauseAction.abandon),
-          style: FilledButton.styleFrom(
-            backgroundColor: Colors.redAccent,
-            foregroundColor: Colors.white,
-          ),
-          icon: const Icon(Icons.flag),
-          label: const Text('Abandon'),
         ),
       ],
     );

@@ -20,7 +20,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.06';
+const String appVersionLabel = 'Version 1.3.09';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -388,7 +388,7 @@ const List<StatusTokenRule> statusTokenRules = [
     persistent: true,
   ),
   StatusTokenRule(
-    label: 'Sort',
+    label: 'Sort 6',
     kind: StatusTokenKind.positive,
     maxStack: 1,
     persistent: true,
@@ -709,11 +709,18 @@ class EnemyNode {
     List<String> initialTokens = const [],
     this.rewardChests = 1,
     EnemyRank? rewardRank,
+    List<EnemyRank> rewardRanks = const [],
     this.branch,
     this.step = 0,
   }) : health = maxHealth,
        combatPoints = pc,
-       rewardRank = rewardRank ?? rank {
+       rewardRank = rewardRank ?? rank,
+       rewardRanks = rewardRanks.isEmpty
+           ? List<EnemyRank>.filled(
+               rewardChests.clamp(1, 4).toInt(),
+               rewardRank ?? rank,
+             )
+           : List<EnemyRank>.from(rewardRanks) {
     alterations.addAll(initialTokens);
   }
 
@@ -730,6 +737,7 @@ class EnemyNode {
   String? profileKey;
   int rewardChests;
   EnemyRank rewardRank;
+  List<EnemyRank> rewardRanks;
   final BranchSide? branch;
   final int step;
   int health;
@@ -785,6 +793,7 @@ class EnemyNode {
     'profileKey': profileKey,
     'rewardChests': rewardChests,
     'rewardRank': rewardRank.name,
+    'rewardRanks': rewardRanks.map((rank) => rank.name).toList(),
   };
 
   void applyJson(Map<String, dynamic> json) {
@@ -801,12 +810,22 @@ class EnemyNode {
       profileKey = restoredProfile.key;
       rewardChests = restoredProfile.rewardChests;
       rewardRank = restoredProfile.rewardRank ?? restoredProfile.rank;
+      rewardRanks = restoredProfile.rewardRanks.isEmpty
+          ? List<EnemyRank>.filled(rewardChests, rewardRank)
+          : List<EnemyRank>.from(restoredProfile.rewardRanks);
     }
     rewardChests = ((json['rewardChests'] as num?)?.toInt() ?? rewardChests)
         .clamp(1, 4);
     rewardRank =
         _enumByName(EnemyRank.values, json['rewardRank'] as String?) ??
         rewardRank;
+    final restoredRewardRanks = (json['rewardRanks'] as List? ?? const [])
+        .map((value) => _enumByName(EnemyRank.values, value.toString()))
+        .whereType<EnemyRank>()
+        .toList();
+    rewardRanks = restoredRewardRanks.isEmpty
+        ? List<EnemyRank>.filled(rewardChests, rewardRank)
+        : restoredRewardRanks;
     health = ((json['health'] as num?)?.toInt() ?? health).clamp(0, maxHealth);
     combatPoints = ((json['combatPoints'] as num?)?.toInt() ?? combatPoints)
         .clamp(0, 99);
@@ -831,6 +850,9 @@ class EnemyNode {
     profileKey = profile.key;
     rewardChests = profile.rewardChests;
     rewardRank = profile.rewardRank ?? profile.rank;
+    rewardRanks = profile.rewardRanks.isEmpty
+        ? List<EnemyRank>.filled(rewardChests, rewardRank)
+        : List<EnemyRank>.from(profile.rewardRanks);
     health = maxHealth;
     combatPoints = pc;
     alterations

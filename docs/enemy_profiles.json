@@ -442,7 +442,7 @@
       "rewardRank": null,
       "attacks": [
         "Ensorcellule",
-        "Objectif: 1 symbole blanc, 2 symboles jaunes, 1 symbole rouge.",
+        "Objectif: 1 symbole blanc, 2 symboles orange, 1 symbole rouge.",
         "Inflige 4 dégâts imparables.",
         "Votre adversaire défausse 1 carte au hasard."
       ],
@@ -515,8 +515,10 @@
                 "white": 1,
                 "orange": 2,
                 "red": 1
-              }
+              },
+              "repeat": false
             },
+            "label": "Ensorcellule",
             "damage": 4,
             "undefendable": true,
             "stealHp": 0,
@@ -528,9 +530,8 @@
             "tokens": [],
             "formulas": [],
             "extraRoll": null,
-            "notes": [],
-            "additionalEffects": [
-              "Votre adversaire défausse 1 carte au hasard."
+            "notes": [
+              "Hero discards 1 random card."
             ]
           }
         ],
@@ -1354,8 +1355,9 @@
       "rewardChests": 1,
       "rewardRank": null,
       "attacks": [
-        "Descente en Pique: 3 oranges = 4 degats imparables.",
-        "4 oranges = 5 degats imparables. 5 oranges = 6 degats imparables."
+        "Descente en Pique: 3 orange = 4 dégâts imparables.",
+        "4 orange = 5 dégâts imparables.",
+        "5 orange = 6 dégâts imparables."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -1415,7 +1417,8 @@
                 "white": 0,
                 "orange": 3,
                 "red": 0
-              }
+              },
+              "repeat": false
             },
             "label": "Descente en Pique",
             "damage": 4,
@@ -1438,7 +1441,8 @@
                 "white": 0,
                 "orange": 4,
                 "red": 0
-              }
+              },
+              "repeat": false
             },
             "damage": 5,
             "undefendable": true,
@@ -1460,7 +1464,8 @@
                 "white": 0,
                 "orange": 5,
                 "red": 0
-              }
+              },
+              "repeat": false
             },
             "damage": 6,
             "undefendable": true,
@@ -1492,8 +1497,8 @@
       "rewardChests": 1,
       "rewardRank": null,
       "attacks": [
-        "Rocalanche: 4 oranges, then roll 2 dice and deal damage equal to the total roll value.",
-        "Passive: if the offensive roll fails, Roc deals 1 undefendable damage."
+        "Rocalanche: 4 orange, puis lancez 2 dés et infligez autant de dégâts que la valeur totale du jet.",
+        "Passif: si le lancer offensif échoue, Roc inflige 1 dégât imparable."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -1543,7 +1548,8 @@
                 "white": 0,
                 "orange": 4,
                 "red": 0
-              }
+              },
+              "repeat": false
             },
             "label": "Rocalanche",
             "damage": 0,
@@ -1585,7 +1591,13 @@
           }
         ],
         "notes": []
-      }
+      },
+      "passives": [
+        {
+          "text": "Passive: if the offensive roll fails, Roc deals 1 undefendable damage.",
+          "timing": "offensiveRollFailed"
+        }
+      ]
     },
     {
       "key": "vert-vert-013",
@@ -1713,9 +1725,9 @@
       "rewardChests": 2,
       "rewardRank": null,
       "attacks": [
-        "Frappe Spirituelle: 3 oranges.",
-        "Bear Form: A Terre and 6 damage. Elk Form: Ronces and 6 damage.",
-        "Passive: at the start of each Druid upkeep, roll 1 die. On 1-3 the Druid becomes Bear. On 4-6 the Druid becomes Elk."
+        "Frappe Spirituelle: 3 orange.",
+        "Bear Form: À Terre + 6 dégâts. Elk Form: Ronces + 6 dégâts.",
+        "Passive: at the start of each Druid upkeep, roll 1 die. On 1-3: Bear Form. On 4-6: Elk Form."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -1851,7 +1863,13 @@
           }
         ],
         "notes": []
-      }
+      },
+      "passives": [
+        {
+          "text": "Passive: at each Druid upkeep, the player rolls 1 die. On 1-3: Bear Form. On 4-6: Elk Form. The form stays active until the next Druid upkeep roll.",
+          "timing": "minionUpkeep"
+        }
+      ]
     },
     {
       "key": "vert-vert-015",
@@ -2092,8 +2110,8 @@
       "rewardChests": 1,
       "rewardRank": null,
       "attacks": [
-        "Claquement de Crocs: 2 blancs + 1 rouge, lance 1 de et applique son effet.",
-        "Inflige autant de degats que la valeur du jet additionnel et inflige A Terre."
+        "Claquement de Crocs: 2 blancs + 1 rouge, puis lancez 1 dé.",
+        "Inflige autant de dégâts que la valeur du jet additionnel et inflige À Terre."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -2141,7 +2159,8 @@
                 "white": 2,
                 "orange": 0,
                 "red": 1
-              }
+              },
+              "repeat": false
             },
             "label": "Claquement de Crocs",
             "damage": 0,
@@ -2185,9 +2204,9 @@
       "rewardChests": 1,
       "rewardRank": null,
       "attacks": [
-        "Belier: 2 blancs + 1 jaune = Enchevetrement + 4 degats.",
-        "2 blancs + 2 jaunes = Enchevetrement + 5 degats.",
-        "2 blancs + 2 jaunes + rouge = Enchevetrement + 7 degats imparables."
+        "Belier: 2 blancs + 1 orange = Enchevêtrement + 4 dégâts.",
+        "2 blancs + 2 orange = Enchevêtrement + 5 dégâts.",
+        "2 blancs + 2 orange + rouge = Enchevêtrement + 7 dégâts."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -2320,7 +2339,7 @@
               }
             },
             "damage": 7,
-            "undefendable": true,
+            "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -2561,8 +2580,8 @@
       "rewardChests": 1,
       "rewardRank": null,
       "attacks": [
-        "Sorcellerie Ophique: 2 oranges + 1 rouge, then roll 1 die.",
-        "White: Mage Lezard gains 2 Chaos during the roll. Orange: hero receives Eboulissement after OK. Red: no extra effect. Then deal 6 damage plus 1 per Chaos."
+        "Sorcellerie Ophique: 2 orange + 1 rouge, puis lancez 1 dé.",
+        "Blanc: gagne 2 Chaos. Orange: inflige Eboulissement. Rouge: rien. Puis inflige 6 dégâts + 1 par Chaos."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -2605,9 +2624,10 @@
                 "white": 0,
                 "orange": 2,
                 "red": 1
-              }
+              },
+              "repeat": false
             },
-            "label": "Sorcellerie Ophique: roll 1 die",
+            "label": "Sorcellerie Ophique",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -2618,70 +2638,89 @@
             "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
-          },
-          {
-            "condition": {
-              "type": "symbols",
-              "symbols": {
-                "white": 1,
-                "orange": 0,
-                "red": 0
-              }
+            "extraRoll": {
+              "dice": 1,
+              "outcomes": [
+                {
+                  "condition": {
+                    "type": "symbols",
+                    "symbols": {
+                      "white": 1,
+                      "orange": 0,
+                      "red": 0
+                    },
+                    "repeat": false
+                  },
+                  "label": "White: gain 2 Chaos",
+                  "damage": 0,
+                  "undefendable": false,
+                  "stealHp": 0,
+                  "stealCp": 0,
+                  "heal": 0,
+                  "drawCards": 0,
+                  "discardCards": 0,
+                  "topDeckToDiscard": 0,
+                  "tokens": [
+                    "Chaos",
+                    "Chaos"
+                  ],
+                  "formulas": [],
+                  "extraRoll": null,
+                  "notes": []
+                },
+                {
+                  "condition": {
+                    "type": "symbols",
+                    "symbols": {
+                      "white": 0,
+                      "orange": 1,
+                      "red": 0
+                    },
+                    "repeat": false
+                  },
+                  "label": "Orange: give Eboulissement",
+                  "damage": 0,
+                  "undefendable": false,
+                  "stealHp": 0,
+                  "stealCp": 0,
+                  "heal": 0,
+                  "drawCards": 0,
+                  "discardCards": 0,
+                  "topDeckToDiscard": 0,
+                  "tokens": [
+                    "Eboulissement"
+                  ],
+                  "formulas": [],
+                  "extraRoll": null,
+                  "notes": []
+                },
+                {
+                  "condition": {
+                    "type": "symbols",
+                    "symbols": {
+                      "white": 0,
+                      "orange": 0,
+                      "red": 1
+                    },
+                    "repeat": false
+                  },
+                  "label": "Red: no extra effect",
+                  "damage": 0,
+                  "undefendable": false,
+                  "stealHp": 0,
+                  "stealCp": 0,
+                  "heal": 0,
+                  "drawCards": 0,
+                  "discardCards": 0,
+                  "topDeckToDiscard": 0,
+                  "tokens": [],
+                  "formulas": [],
+                  "extraRoll": null,
+                  "notes": []
+                }
+              ],
+              "text": "Then deal 6 damage plus 1 per Chaos."
             },
-            "label": "White: gain 2 Chaos",
-            "damage": 0,
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "topDeckToDiscard": 0,
-            "tokens": [],
-            "formulas": [],
-            "extraRoll": null,
-            "notes": []
-          },
-          {
-            "condition": {
-              "type": "symbols",
-              "symbols": {
-                "white": 0,
-                "orange": 1,
-                "red": 0
-              }
-            },
-            "label": "Orange: give Eboulissement",
-            "damage": 0,
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "topDeckToDiscard": 0,
-            "tokens": [],
-            "formulas": [],
-            "extraRoll": null,
-            "notes": []
-          },
-          {
-            "condition": {
-              "type": "text"
-            },
-            "damage": 6,
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "topDeckToDiscard": 0,
-            "tokens": [],
-            "formulas": [],
-            "extraRoll": null,
             "notes": []
           }
         ],
@@ -2701,9 +2740,9 @@
       "rewardChests": 1,
       "rewardRank": null,
       "attacks": [
-        "Scurry: 2 blancs + jaune = 4 degats.",
-        "2 blancs + 2 jaunes = 5 degats et Parasite.",
-        "2 blancs + 2 jaunes + rouge = 6 degats et Poison."
+        "Scurry: 2 blancs + orange = 4 dégâts.",
+        "2 blancs + 2 orange = 5 dégâts et Parasite.",
+        "2 blancs + 2 orange + rouge = 6 dégâts et Poison."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -2867,7 +2906,7 @@
       "rewardChests": 1,
       "rewardRank": null,
       "attacks": [
-        "Gnaw: 2 blancs + jaune + rouge = vole 2 points de vie."
+        "Gnaw: 2 blancs + 1 orange + 1 rouge = vole 2 points de santé."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -2895,7 +2934,9 @@
             "formulas": []
           }
         ],
-        "notes": []
+        "notes": [
+          "Only 1 HP is stolen even with multiple red symbols."
+        ]
       },
       "attackPlan": {
         "style": "symbols",
@@ -2915,7 +2956,8 @@
                 "white": 2,
                 "orange": 1,
                 "red": 1
-              }
+              },
+              "repeat": false
             },
             "label": "Gnaw",
             "damage": 0,
@@ -2948,7 +2990,7 @@
       "rewardChests": 1,
       "rewardRank": null,
       "attacks": [
-        "Sauvagerie de l Ame: 2 blancs + 2 jaunes + rouge = 6 degats imparables."
+        "Sauvagerie de l Ame: 2 blancs + 2 orange + 1 rouge = 6 dégâts imparables."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -2956,8 +2998,13 @@
         "effects": [
           {
             "condition": {
-              "type": "text",
-              "text": "Jet defensif 4 des: previent 1 par jaune"
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 1,
+                "red": 0
+              },
+              "repeat": true
             },
             "prevent": 1,
             "returnDamage": 0,
@@ -2968,28 +3015,9 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": []
-          },
-          {
-            "condition": {
-              "type": "symbols",
-              "symbols": {
-                "white": 0,
-                "orange": 0,
-                "red": 1
-              },
-              "repeat": false
-            },
-            "prevent": 0,
-            "returnDamage": 0,
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": []
+            "formulas": [
+              "prevent is applied per orange symbol"
+            ]
           }
         ],
         "notes": []
@@ -3012,7 +3040,8 @@
                 "white": 2,
                 "orange": 2,
                 "red": 1
-              }
+              },
+              "repeat": false
             },
             "label": "Sauvagerie de l Ame",
             "damage": 6,
@@ -3045,8 +3074,10 @@
       "rewardChests": 1,
       "rewardRank": null,
       "attacks": [
-        "Vraie Vision: 3/4/5 jaunes = 4/5/6 degats imparables.",
-        "Si 3 chiffres identiques, inflige Eboulissement."
+        "Vraie Vision: 3 orange = 4 dégâts imparables.",
+        "4 orange = 5 dégâts imparables.",
+        "5 orange = 6 dégâts imparables.",
+        "If the attack succeeds and 3 values are identical, inflict Eboulissement."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -3054,8 +3085,13 @@
         "effects": [
           {
             "condition": {
-              "type": "number",
-              "number": 2
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 2,
+                "red": 0
+              },
+              "repeat": false
             },
             "prevent": 4,
             "returnDamage": 0,
@@ -3069,7 +3105,9 @@
             "formulas": []
           }
         ],
-        "notes": []
+        "notes": [
+          "On 4 orange symbols, only 4 damage is prevented."
+        ]
       },
       "attackPlan": {
         "style": "symbols",
@@ -3097,12 +3135,13 @@
               "type": "symbols",
               "symbols": {
                 "white": 0,
-                "orange": 5,
+                "orange": 3,
                 "red": 0
-              }
+              },
+              "repeat": false
             },
             "label": "Vraie Vision",
-            "damage": 6,
+            "damage": 4,
             "undefendable": true,
             "stealHp": 0,
             "stealCp": 0,
@@ -3114,6 +3153,54 @@
             "formulas": [],
             "extraRoll": null,
             "notes": []
+          },
+          {
+            "condition": {
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 4,
+                "red": 0
+              },
+              "repeat": false
+            },
+            "damage": 5,
+            "undefendable": true,
+            "stealHp": 0,
+            "stealCp": 0,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "topDeckToDiscard": 0,
+            "tokens": [],
+            "formulas": [],
+            "extraRoll": null,
+            "notes": []
+          },
+          {
+            "condition": {
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 5,
+                "red": 0
+              },
+              "repeat": false
+            },
+            "damage": 6,
+            "undefendable": true,
+            "stealHp": 0,
+            "stealCp": 0,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "topDeckToDiscard": 0,
+            "tokens": [],
+            "formulas": [],
+            "extraRoll": null,
+            "notes": [
+              "If the attack succeeds and 3 values are identical, inflict Eboulissement."
+            ]
           }
         ],
         "conditionalRules": [
@@ -3150,8 +3237,8 @@
       "rewardChests": 1,
       "rewardRank": null,
       "attacks": [
-        "Sorcellerie Chaotique: 2 jaunes + rouge, lance 1 de puis inflige 7 + 1 par Chaos.",
-        "Blanc: gagne 2 Chaos. Jaune: inflige Sort."
+        "Sorcellerie Chaotique: 2 orange + rouge, lancez 1 dé puis inflige 7 + 1 par Chaos.",
+        "Blanc: gagne 2 Chaos. Orange: inflige Sort 6. Rouge: rien."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -3159,19 +3246,28 @@
         "effects": [
           {
             "condition": {
-              "type": "text",
-              "text": "Jet defensif 4 des: gagne 1 Chaos par jaune puis inflige 1 degat par Chaos."
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 1,
+                "red": 0
+              },
+              "repeat": true
             },
             "prevent": 0,
             "returnDamage": 1,
-            "undefendable": false,
+            "undefendable": true,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "tokens": [],
-            "formulas": []
+            "tokens": [
+              "Chaos"
+            ],
+            "formulas": [
+              "gain 1 Chaos per orange, then return 1 undefendable damage per Chaos"
+            ]
           }
         ],
         "notes": []
@@ -3194,32 +3290,10 @@
                 "white": 0,
                 "orange": 2,
                 "red": 1
-              }
+              },
+              "repeat": false
             },
             "label": "Sorcellerie Chaotique",
-            "damage": 7,
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "topDeckToDiscard": 0,
-            "tokens": [],
-            "formulas": [],
-            "extraRoll": null,
-            "notes": []
-          },
-          {
-            "condition": {
-              "type": "symbols",
-              "symbols": {
-                "white": 1,
-                "orange": 0,
-                "red": 0
-              }
-            },
-            "label": "Blanc",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -3230,30 +3304,89 @@
             "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
-          },
-          {
-            "condition": {
-              "type": "symbols",
-              "symbols": {
-                "white": 0,
-                "orange": 1,
-                "red": 0
-              }
+            "extraRoll": {
+              "dice": 1,
+              "outcomes": [
+                {
+                  "condition": {
+                    "type": "symbols",
+                    "symbols": {
+                      "white": 1,
+                      "orange": 0,
+                      "red": 0
+                    },
+                    "repeat": false
+                  },
+                  "label": "White: gain 2 Chaos",
+                  "damage": 0,
+                  "undefendable": false,
+                  "stealHp": 0,
+                  "stealCp": 0,
+                  "heal": 0,
+                  "drawCards": 0,
+                  "discardCards": 0,
+                  "topDeckToDiscard": 0,
+                  "tokens": [
+                    "Chaos",
+                    "Chaos"
+                  ],
+                  "formulas": [],
+                  "extraRoll": null,
+                  "notes": []
+                },
+                {
+                  "condition": {
+                    "type": "symbols",
+                    "symbols": {
+                      "white": 0,
+                      "orange": 1,
+                      "red": 0
+                    },
+                    "repeat": false
+                  },
+                  "label": "Orange: give Sort 6",
+                  "damage": 0,
+                  "undefendable": false,
+                  "stealHp": 0,
+                  "stealCp": 0,
+                  "heal": 0,
+                  "drawCards": 0,
+                  "discardCards": 0,
+                  "topDeckToDiscard": 0,
+                  "tokens": [
+                    "Sort 6"
+                  ],
+                  "formulas": [],
+                  "extraRoll": null,
+                  "notes": []
+                },
+                {
+                  "condition": {
+                    "type": "symbols",
+                    "symbols": {
+                      "white": 0,
+                      "orange": 0,
+                      "red": 1
+                    },
+                    "repeat": false
+                  },
+                  "label": "Red: no extra effect",
+                  "damage": 0,
+                  "undefendable": false,
+                  "stealHp": 0,
+                  "stealCp": 0,
+                  "heal": 0,
+                  "drawCards": 0,
+                  "discardCards": 0,
+                  "topDeckToDiscard": 0,
+                  "tokens": [],
+                  "formulas": [],
+                  "extraRoll": null,
+                  "notes": []
+                }
+              ],
+              "text": "Then deal 7 damage plus 1 per Chaos."
             },
-            "label": "Jaune",
-            "damage": 0,
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "topDeckToDiscard": 0,
-            "tokens": [],
-            "formulas": [],
-            "extraRoll": null,
             "notes": []
           }
         ],
@@ -3270,11 +3403,13 @@
       "cp": 2,
       "cardAsset": "assets/bleu/bleu-004.png",
       "initialTokens": [],
-      "rewardChests": 1,
+      "rewardChests": 2,
       "rewardRank": null,
       "attacks": [
-        "Hemo-Siphon: 3/4/5 jaunes = vole 3/4/5 points de vie.",
-        "Passif: debut de tour gagne Chaos; a 3 Chaos, les depense pour voler 3 PV."
+        "Hemo-Siphon: 3 orange = vole 3 points de santé.",
+        "4 orange = vole 4 points de santé.",
+        "5 orange = vole 5 points de santé.",
+        "Passive: at upkeep, gains 1 Chaos. If he has 3 Chaos during upkeep, spend them and steal 3 health."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -3282,19 +3417,26 @@
         "effects": [
           {
             "condition": {
-              "type": "text",
-              "text": "Jet defensif 3 des: vole 1 PV par jaune"
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 1,
+                "red": 0
+              },
+              "repeat": true
             },
             "prevent": 0,
             "returnDamage": 0,
             "undefendable": false,
-            "stealHp": 0,
+            "stealHp": 1,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": []
+            "formulas": [
+              "stealHp is applied per orange symbol"
+            ]
           },
           {
             "condition": {
@@ -3314,7 +3456,9 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "tokens": [],
+            "tokens": [
+              "Chaos"
+            ],
             "formulas": []
           }
         ],
@@ -3346,14 +3490,61 @@
               "type": "symbols",
               "symbols": {
                 "white": 0,
-                "orange": 5,
+                "orange": 3,
                 "red": 0
-              }
+              },
+              "repeat": false
             },
             "label": "Hemo-Siphon",
             "damage": 0,
             "undefendable": false,
-            "stealHp": 0,
+            "stealHp": 3,
+            "stealCp": 0,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "topDeckToDiscard": 0,
+            "tokens": [],
+            "formulas": [],
+            "extraRoll": null,
+            "notes": []
+          },
+          {
+            "condition": {
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 4,
+                "red": 0
+              },
+              "repeat": false
+            },
+            "damage": 0,
+            "undefendable": false,
+            "stealHp": 4,
+            "stealCp": 0,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "topDeckToDiscard": 0,
+            "tokens": [],
+            "formulas": [],
+            "extraRoll": null,
+            "notes": []
+          },
+          {
+            "condition": {
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 5,
+                "red": 0
+              },
+              "repeat": false
+            },
+            "damage": 0,
+            "undefendable": false,
+            "stealHp": 5,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3385,7 +3576,17 @@
           }
         ],
         "notes": []
-      }
+      },
+      "rewardRanks": [
+        "blue",
+        "green"
+      ],
+      "passives": [
+        {
+          "text": "Passive: at the start of Blood Mage upkeep, gain 1 Chaos. If Blood Mage has 3 Chaos, spend them to steal 3 health from the hero.",
+          "timing": "minionUpkeep"
+        }
+      ]
     },
     {
       "key": "bleu-bleu-005",
@@ -3782,7 +3983,7 @@
       "rewardRank": null,
       "attacks": [
         "Bane: micro suite = Enchevetrement + 4 degats.",
-        "Petite suite = Silence + 6. Grande suite = Sort + 8."
+        "Petite suite = Silence + 6. Grande suite = Sort 6 + 8."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -5504,7 +5705,7 @@
       "attacks": [
         "Attraction: 4 jaunes, lance 1 de.",
         "Blanc: 4 degats imparables. Jaune: vole 3 PV. Rouge: vole 4 PV.",
-        "Echec offensif: inflige Silence et Sort."
+        "Echec offensif: inflige Silence et Sort 6."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -6513,7 +6714,7 @@
       "rewardRank": null,
       "attacks": [
         "Baiser de la Mort: blanc + jaune + rouge, lance 2 des.",
-        "Blanc gagne 2 Chaos; jaune Silence; rouge Sort; puis 7 + 1 par Chaos."
+        "Blanc gagne 2 Chaos; jaune Silence; rouge Sort 6; puis 7 + 1 par Chaos."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -7111,7 +7312,7 @@
       "rewardRank": null,
       "attacks": [
         "Malice: 4 jaunes, lance 1 de.",
-        "Blanc: 6 imparables. Jaune: vole 4 PV. Rouge: vole 5 PV. Echec: Sort + vole 1 PV."
+        "Blanc: 6 imparables. Jaune: vole 4 PV. Rouge: vole 5 PV. Echec: Sort 6 + vole 1 PV."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -7407,7 +7608,7 @@
       "rewardRank": null,
       "attacks": [
         "Terre Feu Tempetes: 2 blancs + 2 rouges = Poison, defausse 1 carte aleatoire et 4 degats imparables.",
-        "Echec: Parasite + Sort."
+        "Echec: Parasite + Sort 6."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -9612,7 +9813,7 @@
       "rewardRank": null,
       "attacks": [
         "Ancient Curse: inflige 5 degats imparables et lance 1 de.",
-        "Sur blanc: inflige Silence. Sur jaune: inflige Sort. Sur rouge: inflige Sort et Silence.",
+        "Sur blanc: inflige Silence. Sur jaune: inflige Sort 6. Sur rouge: inflige Sort 6 et Silence.",
         "Passif: au debut de son tour, gagne Siphon Vital; si deja a la limite, soigne 3 PV."
       ],
       "defenseDice": 3,

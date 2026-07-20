@@ -18,12 +18,13 @@ class _RewardPageState extends State<RewardPage> {
   @override
   Widget build(BuildContext context) {
     final d20 = _d20;
-    final total = widget.enemy.rewardChests.clamp(1, 4);
+    final total = widget.enemy.rewardChests.clamp(1, 4).toInt();
+    final currentRewardRank = _rewardRankFor(_confirmed);
     final outcome = d20 == null
         ? null
         : GameEngine.rewardForD20(
             d20,
-            chest: widget.enemy.rewardRank.rewardChestKey,
+            chest: currentRewardRank.rewardChestKey,
           );
     return Scaffold(
       appBar: AppBar(title: const Text('Reward')),
@@ -53,7 +54,7 @@ class _RewardPageState extends State<RewardPage> {
                       Text(
                         '${_confirmed + 1}/$total',
                         style: TextStyle(
-                          color: widget.enemy.rewardRank.color,
+                          color: currentRewardRank.color,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -100,7 +101,7 @@ class _RewardPageState extends State<RewardPage> {
                     : () {
                         widget.adventure.applyReward(
                           d20,
-                          widget.enemy.rewardRank,
+                          currentRewardRank,
                         );
                         if (_confirmed + 1 >= total) {
                           Navigator.of(context).pop();
@@ -127,6 +128,14 @@ class _RewardPageState extends State<RewardPage> {
         ),
       ),
     );
+  }
+
+  EnemyRank _rewardRankFor(int index) {
+    final ranks = widget.enemy.rewardRanks;
+    if (index >= 0 && index < ranks.length) {
+      return ranks[index];
+    }
+    return widget.enemy.rewardRank;
   }
 
   Future<void> _modifyD20() async {

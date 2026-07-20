@@ -29,7 +29,7 @@ Ce fichier liste les tokens connus pour alimenter la section dediee dans l'appli
 | Salve | infinie | A documenter |
 | Silence | 1 | Voir detail ci-dessous |
 | Siphon vital | 2 | A documenter |
-| Sort | 1 | A documenter |
+| Sort 6 | 1 | A documenter |
 | Vol | 3 | Ajoute via certains gains de coffre D20 |
 
 ## Poison

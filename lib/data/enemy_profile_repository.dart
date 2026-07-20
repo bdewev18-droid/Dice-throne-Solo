@@ -57,6 +57,7 @@ class EnemyProfileJson {
       initialTokens: _stringList(json['initialTokens']),
       rewardChests: _intValue(json['rewardChests'], fallback: 1),
       rewardRank: rewardRank,
+      rewardRanks: _rankList(json['rewardRanks']),
       attacks: _stringList(json['attacks']),
       defense: json['defense'] as String? ?? '',
       defenseDice: _intValue(json['defenseDice'], fallback: 0),
@@ -82,6 +83,17 @@ class EnemyProfileJson {
       return const [];
     }
     return value.whereType<String>().toList(growable: false);
+  }
+
+  static List<EnemyRank> _rankList(Object? value) {
+    if (value is! List) {
+      return const [];
+    }
+    return value
+        .whereType<String>()
+        .map(_rankFromName)
+        .whereType<EnemyRank>()
+        .toList(growable: false);
   }
 
   static int _intValue(Object? value, {required int fallback}) {
