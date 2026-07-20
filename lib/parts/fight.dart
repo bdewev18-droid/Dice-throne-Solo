@@ -4924,6 +4924,8 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
 
   @override
   Widget build(BuildContext context) {
+    const hpWidth = 56.0;
+    const editorWidth = 78.0;
     final target = _target;
     final editorColor = target == null
         ? widget.accent
