@@ -132,7 +132,9 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
 }
 
 class _MapPageState extends State<MapPage> {
-  static double _savedMapScale = 2.4;
+  static double _savedMapScale = 1.0;
+  static const double _focusedMapScale = 1.0;
+  static const double _branchChoiceMapScale = 0.45;
   late final TransformationController _mapController =
       TransformationController();
   final ScrollController _mapScrollController = ScrollController();
@@ -469,15 +471,20 @@ class _MapPageState extends State<MapPage> {
         !_mapHorizontalController.hasClients) {
       return;
     }
-    final offset = _positionsFor(mapSize)[enemy.id];
-    if (offset == null) {
+    final positions = _positionsFor(mapSize);
+    final focus = _mapFocusFor(enemy, positions);
+    if (focus == null) {
       return;
     }
+    final scale = _isBranchChoiceFocus()
+        ? _branchChoiceMapScale
+        : _focusedMapScale;
+    _setMapScale(scale);
     final verticalTarget =
-        (offset.dy + 80) -
-        _mapScrollController.position.viewportDimension * 0.76;
+        focus.dy - _mapScrollController.position.viewportDimension / (2 * scale);
     final horizontalTarget =
-        offset.dx - _mapHorizontalController.position.viewportDimension / 2;
+        focus.dx -
+        _mapHorizontalController.position.viewportDimension / (2 * scale);
 
     final v = verticalTarget.clamp(
       _mapScrollController.position.minScrollExtent,
@@ -503,6 +510,40 @@ class _MapPageState extends State<MapPage> {
         curve: Curves.easeOutCubic,
       );
     }
+  }
+
+  Offset? _mapFocusFor(EnemyNode fallback, Map<int, Offset> positions) {
+    final currentEnemies = widget.adventure.enemies
+        .where((enemy) => enemy.current && !enemy.defeated)
+        .toList();
+    if (currentEnemies.length >= 2) {
+      final currentPositions = currentEnemies
+          .map((enemy) => positions[enemy.id])
+          .whereType<Offset>()
+          .toList();
+      if (currentPositions.length >= 2) {
+        final sum = currentPositions.fold<Offset>(
+          Offset.zero,
+          (total, offset) => total + offset,
+        );
+        return sum / currentPositions.length.toDouble();
+      }
+    }
+    return positions[fallback.id];
+  }
+
+  bool _isBranchChoiceFocus() {
+    final currentEnemies = widget.adventure.enemies
+        .where((enemy) => enemy.current && !enemy.defeated)
+        .toList();
+    return currentEnemies.length >= 2;
+  }
+
+  void _setMapScale(double scale) {
+    final safeScale = scale.clamp(0.45, 2.4).toDouble();
+    _savedMapScale = safeScale;
+    _mapController.value = Matrix4.identity()
+      ..scaleByDouble(safeScale, safeScale, 1, 1);
   }
 
   void _openDetails(BuildContext context) {

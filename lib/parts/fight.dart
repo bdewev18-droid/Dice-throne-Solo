@@ -428,7 +428,7 @@ class _FightPageState extends State<FightPage> {
                 onApply: _applyBattleResolution,
                 onFinish:
                     enemy.health <= 0 ||
-                        (_isNaraxus && widget.adventure.health <= 0)
+                        widget.adventure.health <= 0
                     ? _finishCombat
                     : null,
                 onChanged: () {
@@ -987,6 +987,7 @@ class _FightPageState extends State<FightPage> {
     if (rolled.isEmpty) {
       return;
     }
+    _markExtraDiceSelection(dice, [rolled.first.id]);
     final roll = rolled.first.value!;
     final form = roll <= 3 ? 'Forme Ours' : 'Forme Elan';
     setState(() {
@@ -1648,6 +1649,10 @@ class _FightPageState extends State<FightPage> {
       if (values.isEmpty) {
         return;
       }
+      _markExtraDiceSelection(
+        extraDice,
+        extraDice.where((die) => die.value != null).map((die) => die.id),
+      );
       final damage = values.fold<int>(0, (sum, value) => sum + value);
       setState(() {
         _battleAttackValue = damage.clamp(0, 99);
@@ -1671,6 +1676,7 @@ class _FightPageState extends State<FightPage> {
       if (rolled.isEmpty) {
         return;
       }
+      _markExtraDiceSelection(extraDice, [rolled.first.id]);
       final roll = rolled.first.value!;
       final symbol = _symbolForFace(roll);
       setState(() {
@@ -1711,6 +1717,7 @@ class _FightPageState extends State<FightPage> {
       if (rolled.isEmpty) {
         return;
       }
+      _markExtraDiceSelection(extraDice, [rolled.first.id]);
       final roll = rolled.first.value!;
       setState(() {
         _battleAttackValue = roll.clamp(0, 99);
@@ -1738,6 +1745,7 @@ class _FightPageState extends State<FightPage> {
       if (rolled.isEmpty) {
         return;
       }
+      _markExtraDiceSelection(extraDice, [rolled.first.id]);
       final roll = rolled.first.value!;
       final symbol = _symbolForFace(roll);
       final currentChaos = _tokenCount(enemy.alterations, 'Chaos');
@@ -1782,6 +1790,7 @@ class _FightPageState extends State<FightPage> {
       if (rolled.isEmpty) {
         return;
       }
+      _markExtraDiceSelection(extraDice, [rolled.first.id]);
       final roll = rolled.first.value!;
       final symbol = _symbolForFace(roll);
       final currentChaos = _tokenCount(enemy.alterations, 'Chaos');
@@ -1826,6 +1835,7 @@ class _FightPageState extends State<FightPage> {
       if (rolled.isEmpty) {
         return;
       }
+      _markExtraDiceSelection(extraDice, [rolled.first.id]);
       final roll = rolled.first.value!;
       final symbol = _symbolForFace(roll);
       setState(() {
@@ -1870,18 +1880,17 @@ class _FightPageState extends State<FightPage> {
       return;
     }
     final baseAttack = _dice.first.value;
-    final values =
-        extraDice
-            .where((die) => die.value != null)
-            .map((die) => die.value!)
-            .toList()
-          ..sort((a, b) => b.compareTo(a));
-    if (values.isEmpty) {
+    final rolledDice =
+        extraDice.where((die) => die.value != null).toList()
+          ..sort((a, b) => b.value!.compareTo(a.value!));
+    if (rolledDice.isEmpty) {
       return;
     }
     setState(() {
       if (baseAttack == 3) {
-        final topTwo = values.take(2).toList();
+        final topTwoDice = rolledDice.take(2).toList();
+        final topTwo = topTwoDice.map((die) => die.value!).toList();
+        _markExtraDiceSelection(extraDice, topTwoDice.map((die) => die.id));
         final damage = topTwo.fold<int>(0, (sum, value) => sum + value);
         _battleAttackValue = damage.clamp(0, 99);
         _battleAttackUndefendable = false;
@@ -1893,10 +1902,12 @@ class _FightPageState extends State<FightPage> {
             'Gashing Bite: top dice ${topTwo.join(' + ')} deal $damage damage.',
           );
         _extraDiceOutcomeMessage =
-            'Gashing Bite extra roll: ${values.reversed.join('/')}.\n'
+            'Gashing Bite extra roll: ${rolledDice.map((die) => die.value!).toList().reversed.join('/')}.\n'
             'Naxarus inflicts $damage damage with the 2 highest dice (${topTwo.join(' + ')}).';
       } else if (baseAttack == 6) {
-        final extra = values.first;
+        final extraDie = rolledDice.first;
+        _markExtraDiceSelection(extraDice, [extraDie.id]);
+        final extra = extraDie.value!;
         var damage = 10;
         var heal = 0;
         final notes = <String>["Dragon's Might: 10 damage."];
@@ -1924,6 +1935,16 @@ class _FightPageState extends State<FightPage> {
                   'No Swoop: Naxarus inflicts 10 defendable damage.';
       }
     });
+  }
+
+  void _markExtraDiceSelection(
+    Iterable<GameDie> dice,
+    Iterable<int> selectedIds,
+  ) {
+    final selected = selectedIds.toSet();
+    for (final die in dice) {
+      die.reserved = selected.contains(die.id);
+    }
   }
 
   void _removeRandomEnemyToken() {
@@ -2053,6 +2074,11 @@ class _FightPageState extends State<FightPage> {
         _heroAttackCount++;
         _heroAttackTotal += _battleAttackValue;
         _lastHeroAttack = _battleAttackValue;
+        if (widget.adventure.alterations.remove('Hoarding')) {
+          widget.adventure.log('Hoarding expired after hero battle phase.');
+          _lastBattleOutcomeMessage =
+              '$_lastBattleOutcomeMessage Hoarding expires.';
+        }
         nextPhase = CombatPhase.minionUpkeep;
       } else {
         final shouldSummonLevel3 = _discipleSummonLevel3;
@@ -3115,43 +3141,67 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                 ),
                 if (enemy.profileKey != 'naraxus') ...[
                   const SizedBox(height: 12),
+                  const Text(
+                    'Restart recipe combat',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
                       Expanded(
-                        child: DropdownButtonFormField<EnemyRank>(
-                          initialValue: restartRank,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'Restart combat as',
+                        child: Container(
+                          height: 48,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xff1b1b1b),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: panelBorderGrey),
                           ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: EnemyRank.green,
-                              child: Text('Green'),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<EnemyRank>(
+                              value: restartRank,
+                              isExpanded: true,
+                              dropdownColor: const Color(0xff1b1b1b),
+                              iconEnabledColor: Colors.white,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                              ),
+                              selectedItemBuilder: (context) =>
+                                  const ['Green', 'Blue', 'Purple', 'Orange']
+                                      .map((label) => Text(label))
+                                      .toList(),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: EnemyRank.green,
+                                  child: Text('Green'),
+                                ),
+                                DropdownMenuItem(
+                                  value: EnemyRank.blue,
+                                  child: Text('Blue'),
+                                ),
+                                DropdownMenuItem(
+                                  value: EnemyRank.violet,
+                                  child: Text('Purple'),
+                                ),
+                                DropdownMenuItem(
+                                  value: EnemyRank.orange,
+                                  child: Text('Orange'),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setSheetState(() => restartRank = value);
+                                }
+                              },
                             ),
-                            DropdownMenuItem(
-                              value: EnemyRank.blue,
-                              child: Text('Blue'),
-                            ),
-                            DropdownMenuItem(
-                              value: EnemyRank.violet,
-                              child: Text('Violet'),
-                            ),
-                            DropdownMenuItem(
-                              value: EnemyRank.orange,
-                              child: Text('Orange'),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              setSheetState(() => restartRank = value);
-                            }
-                          },
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
-                      FilledButton.icon(
+                      SizedBox(
+                        height: 48,
+                        child: FilledButton(
                         onPressed: () {
                           Navigator.of(context).pop();
                           widget.onRestartCombat(restartRank);
@@ -3159,9 +3209,13 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xff8f43ff),
                           foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
                         ),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Restart'),
+                          child: const Text(
+                            'OK',
+                            style: TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -4727,6 +4781,9 @@ class CombatAiChatDock extends StatelessWidget {
                       phase == CombatPhase.minionUpkeep
                   ? BoxFit.contain
                   : BoxFit.cover,
+              showPortraitVitals:
+                  phase == CombatPhase.hero ||
+                  phase == CombatPhase.minionAttack,
               showHealthControls: false,
               onHeroHpSaved: (value) {
                 adventure.setHeroHealth(value);
@@ -4831,6 +4888,7 @@ class _AiChatWithHealth extends StatefulWidget {
     required this.portraitAlignment,
     this.portraitScale = 1,
     this.portraitFit = BoxFit.cover,
+    this.showPortraitVitals = true,
     this.showHealthControls = true,
     required this.onHeroHpSaved,
     required this.onHeroCpSaved,
@@ -4852,6 +4910,7 @@ class _AiChatWithHealth extends StatefulWidget {
   final Alignment portraitAlignment;
   final double portraitScale;
   final BoxFit portraitFit;
+  final bool showPortraitVitals;
   final bool showHealthControls;
   final ValueChanged<int> onHeroHpSaved;
   final ValueChanged<int> onHeroCpSaved;
@@ -4959,7 +5018,7 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
       final lineCount = widget.message.trim().isEmpty
           ? 1
           : widget.message.trim().split('\n').length;
-      final chatHeight = (74.0 + lineCount * 18.0).clamp(104.0, 230.0);
+      final chatHeight = (56.0 + lineCount * 18.0).clamp(86.0, 210.0);
       final portraitIsHero = widget.accent == heroAccent;
       final portrait = SizedBox(
         width: 112,
@@ -4971,6 +5030,10 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
           hp: portraitIsHero ? widget.heroHp : widget.enemyHp,
           cp: portraitIsHero ? widget.heroCp : widget.enemyCp,
           cpInfinity: !portraitIsHero && widget.enemyCpInfinity,
+          showHp: widget.showPortraitVitals,
+          showCp:
+              widget.showPortraitVitals &&
+              (portraitIsHero || !widget.enemyCpInfinity),
           hpStyle: portraitIsHero ? _CombatHpStyle.hero : _CombatHpStyle.enemy,
           onHpTap: () => _openEditor(
             portraitIsHero
@@ -5109,6 +5172,8 @@ class _AiChatPortraitVitals extends StatelessWidget {
     required this.hp,
     required this.cp,
     required this.cpInfinity,
+    required this.showHp,
+    required this.showCp,
     required this.hpStyle,
     required this.onHpTap,
     required this.onCpTap,
@@ -5121,6 +5186,8 @@ class _AiChatPortraitVitals extends StatelessWidget {
   final int hp;
   final int cp;
   final bool cpInfinity;
+  final bool showHp;
+  final bool showCp;
   final _CombatHpStyle hpStyle;
   final VoidCallback onHpTap;
   final VoidCallback onCpTap;
@@ -5136,32 +5203,34 @@ class _AiChatPortraitVitals extends StatelessWidget {
             child: Image.asset(asset, fit: fit, alignment: alignment),
           ),
         ),
-        Positioned(
-          top: 3,
-          left: 3,
-          child: InkWell(
-            onTap: onHpTap,
-            borderRadius: BorderRadius.circular(18),
-            child: Transform.scale(
-              scale: 0.58,
-              alignment: Alignment.topLeft,
-              child: _HpHeartBadge(value: hp, style: hpStyle),
+        if (showHp)
+          Positioned(
+            top: 3,
+            left: 3,
+            child: InkWell(
+              onTap: onHpTap,
+              borderRadius: BorderRadius.circular(18),
+              child: Transform.scale(
+                scale: 0.58,
+                alignment: Alignment.topLeft,
+                child: _HpHeartBadge(value: hp, style: hpStyle),
+              ),
             ),
           ),
-        ),
-        Positioned(
-          top: 0,
-          right: 0,
-          child: InkWell(
-            onTap: onCpTap,
-            borderRadius: BorderRadius.circular(18),
-            child: Transform.scale(
-              scale: 0.52,
-              alignment: Alignment.topRight,
-              child: _PcTriangleBadge(value: cp, infinity: cpInfinity),
+        if (showCp)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: InkWell(
+              onTap: onCpTap,
+              borderRadius: BorderRadius.circular(18),
+              child: Transform.scale(
+                scale: 0.52,
+                alignment: Alignment.topRight,
+                child: _PcTriangleBadge(value: cp, infinity: cpInfinity),
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -7448,13 +7517,13 @@ class _FourDiceToTopTwoBadge extends StatelessWidget {
     return Wrap(
       spacing: 3,
       crossAxisAlignment: WrapCrossAlignment.center,
-      children: const [
+      children: [
         Text('4x', style: TextStyle(fontWeight: FontWeight.w900)),
-        _EmptyDieBadge(size: 22),
-        Text('='),
-        _EmptyDieBadge(size: 22, label: '^'),
-        Text('+'),
-        _EmptyDieBadge(size: 22, label: '^'),
+        _WhiteDiceCubeIcon(size: 22),
+        const Text('='),
+        _WhiteDiceCubeIcon(size: 22, label: '^'),
+        const Text('+'),
+        _WhiteDiceCubeIcon(size: 22, label: '^'),
       ],
     );
   }
@@ -7479,15 +7548,94 @@ class _OneDieBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Wrap(
+    return Wrap(
       spacing: 3,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text('1x', style: TextStyle(fontWeight: FontWeight.w900)),
-        _EmptyDieBadge(size: 24),
+        _WhiteDiceCubeIcon(size: 24),
       ],
     );
   }
+}
+
+class _WhiteDiceCubeIcon extends StatelessWidget {
+  const _WhiteDiceCubeIcon({required this.size, this.label});
+
+  final double size;
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CustomPaint(
+            size: Size.square(size),
+            painter: const _WhiteDiceCubePainter(),
+          ),
+          if (label != null)
+            Text(
+              label!,
+              style: TextStyle(
+                color: const Color(0xff252724),
+                fontSize: size * 0.55,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WhiteDiceCubePainter extends CustomPainter {
+  const _WhiteDiceCubePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final outline = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = max(1.4, w * 0.11)
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
+    final fill = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    final top = Path()
+      ..moveTo(w * 0.50, h * 0.10)
+      ..lineTo(w * 0.88, h * 0.32)
+      ..lineTo(w * 0.50, h * 0.55)
+      ..lineTo(w * 0.12, h * 0.32)
+      ..close();
+    final left = Path()
+      ..moveTo(w * 0.12, h * 0.32)
+      ..lineTo(w * 0.50, h * 0.55)
+      ..lineTo(w * 0.50, h * 0.90)
+      ..lineTo(w * 0.12, h * 0.68)
+      ..close();
+    final right = Path()
+      ..moveTo(w * 0.88, h * 0.32)
+      ..lineTo(w * 0.50, h * 0.55)
+      ..lineTo(w * 0.50, h * 0.90)
+      ..lineTo(w * 0.88, h * 0.68)
+      ..close();
+
+    for (final face in [top, left, right]) {
+      canvas.drawPath(face, fill);
+      canvas.drawPath(face, outline);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WhiteDiceCubePainter oldDelegate) => false;
 }
 
 class _SwoopOnFiveSixBadge extends StatelessWidget {
@@ -8367,25 +8515,21 @@ Alignment _heroEyeAlignment(HeroType hero) {
 }
 
 Alignment _minionEyeAlignment(EnemyNode enemy) {
+  if (enemy.profileKey == 'naraxus') {
+    return Alignment.center;
+  }
   return switch (enemy.profileKey) {
     'rat-de-la-rue' => const Alignment(-0.18, -0.58),
     'fee' => const Alignment(0, -0.76),
     'ronin-vagabond' => const Alignment(0, -0.72),
     'enchanteur-gobelin' => const Alignment(-0.12, -0.64),
     'archer-de-lombre' => const Alignment(0, -0.68),
-    _ => Alignment.center,
+    _ => const Alignment(0, -0.68),
   };
 }
 
 BoxFit _minionEyeFit(EnemyNode enemy) {
-  return switch (enemy.profileKey) {
-    'rat-de-la-rue' ||
-    'fee' ||
-    'ronin-vagabond' ||
-    'enchanteur-gobelin' ||
-    'archer-de-lombre' => BoxFit.cover,
-    _ => BoxFit.contain,
-  };
+  return BoxFit.cover;
 }
 
 class _CombatBadgeButton extends StatelessWidget {

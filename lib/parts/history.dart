@@ -233,33 +233,22 @@ class _HistoryPageState extends State<HistoryPage> {
                       ),
                     ),
                     Expanded(
-                      child: Text(
-                        runs.length.toString(),
-                        textAlign: TextAlign.center,
+                      child: _HistoryMetricText(runs.length.toString()),
+                    ),
+                    Expanded(
+                      child: _HistoryMetricText(
+                        _roundedAverageLabel(_averageEnemies(runs)),
                       ),
                     ),
                     Expanded(
-                      child: Text(
-                        _averageEnemies(runs).toStringAsFixed(1),
-                        textAlign: TextAlign.center,
-                      ),
+                      child: _HistoryMetricText(_averageHealthLabel(runs)),
                     ),
                     Expanded(
-                      child: Text(
-                        _averageHealthLabel(runs),
-                        textAlign: TextAlign.center,
-                      ),
+                      child: _HistoryMetricText(_averageDurationLabel(runs)),
                     ),
                     Expanded(
-                      child: Text(
-                        _averageDurationLabel(runs),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        _averageScore(runs).toStringAsFixed(1),
-                        textAlign: TextAlign.right,
+                      child: _HistoryMetricText(
+                        _roundedAverageLabel(_averageScore(runs)),
                       ),
                     ),
                   ],
@@ -309,6 +298,12 @@ class _HistoryPageState extends State<HistoryPage> {
       runs.fold<int>(0, (total, run) => total + run.enemiesDefeated) /
       runs.length;
 
+  String _roundedAverageLabel(num value) {
+    final floorValue = value.floor();
+    final fraction = value - floorValue;
+    return (fraction < 0.6 ? floorValue : floorValue + 1).toString();
+  }
+
   String _averageHealthLabel(List<GameRecord> runs) {
     final values = runs
         .map((run) => run.healthRemaining)
@@ -319,7 +314,7 @@ class _HistoryPageState extends State<HistoryPage> {
     }
     final average =
         values.fold<int>(0, (total, value) => total + value) / values.length;
-    return average.toStringAsFixed(1);
+    return _roundedAverageLabel(average);
   }
 
   String _averageDurationLabel(List<GameRecord> runs) {
@@ -409,7 +404,9 @@ class _HistoryHeaderRow extends StatelessWidget {
         children: [
           Expanded(flex: 4, child: Text('Hero / run')),
           Expanded(child: _HistoryHeaderIcon(Icons.flag, 'Runs')),
-          Expanded(child: _HistoryHeaderIcon(Icons.casino, 'Enemies')),
+          Expanded(
+            child: _HistoryHeaderIcon(Icons.sports_martial_arts, 'Enemies'),
+          ),
           Expanded(child: _HistoryHeaderIcon(Icons.favorite, 'HP')),
           Expanded(child: _HistoryHeaderIcon(Icons.timer, 'Time')),
           Expanded(child: _HistoryHeaderIcon(Icons.emoji_events, 'Points')),
@@ -430,6 +427,20 @@ class _HistoryHeaderIcon extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Icon(icon, size: 18, color: Color(0xffffe22d)),
+    );
+  }
+}
+
+class _HistoryMetricText extends StatelessWidget {
+  const _HistoryMetricText(this.value);
+
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.translate(
+      offset: const Offset(-4, 0),
+      child: Text(value, textAlign: TextAlign.center),
     );
   }
 }
@@ -462,29 +473,22 @@ class _RunDetailRow extends StatelessWidget {
           flex: 4,
           child: Text(showHero ? record.hero.label : _formatDate(record.date)),
         ),
-        Expanded(child: Text('1', textAlign: TextAlign.center)),
+        const Expanded(child: _HistoryMetricText('1')),
         Expanded(
-          child: Text(
-            record.enemiesDefeated.toString(),
-            textAlign: TextAlign.center,
-          ),
+          child: _HistoryMetricText(record.enemiesDefeated.toString()),
         ),
         Expanded(
-          child: Text(
+          child: _HistoryMetricText(
             record.healthRemaining == null
                 ? 'n/a'
                 : record.healthRemaining.toString(),
-            textAlign: TextAlign.center,
           ),
         ),
         Expanded(
-          child: Text(
-            _formatDuration(record.duration),
-            textAlign: TextAlign.right,
-          ),
+          child: _HistoryMetricText(_formatDuration(record.duration)),
         ),
         Expanded(
-          child: Text(record.score.toString(), textAlign: TextAlign.right),
+          child: _HistoryMetricText(record.score.toString()),
         ),
       ],
     );
