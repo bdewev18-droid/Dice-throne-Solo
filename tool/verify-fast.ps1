@@ -27,7 +27,13 @@ function Invoke-BoundedFlutter {
   $process = Start-Process -FilePath $flutter -ArgumentList $Arguments -WorkingDirectory $root -NoNewWindow -PassThru
   if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
     Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-    throw "Commande Flutter interrompue apres $TimeoutSeconds secondes."
+    throw @"
+Commande Flutter interrompue apres $TimeoutSeconds secondes.
+
+Si cette commande est lancee depuis Codex, relance Flutter hors sandbox / avec droits systeme.
+Le Flutter tool doit pouvoir ecrire dans %APPDATA%\.flutter_tool_state et acceder a C:\dev\flutter.
+Voir docs\BUILD_PROCESS.md, section Fast local check.
+"@
   }
   if ($process.ExitCode -ne 0) {
     throw "Flutter a retourne le code $($process.ExitCode)."

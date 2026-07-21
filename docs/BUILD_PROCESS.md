@@ -34,6 +34,32 @@ The command updates both `pubspec.yaml` and the version displayed in the app.
 
 ## Fast local check
 
+Important for Codex/local automation: Flutter must be executed with system
+permissions, outside the restricted filesystem sandbox. The Flutter tool writes
+to `%APPDATA%\.flutter_tool_state` and reads `C:\dev\flutter`; sandboxed runs can
+hang or timeout before returning useful output.
+
+Known-good local setup:
+
+- Flutter: `C:\dev\flutter\bin\flutter.bat`
+- Android SDK: `C:\dev\sdk`
+- Local Flutter observed: `3.44.4`
+- GitHub Actions Flutter: `3.44.5`
+- Dart: `3.12.2`
+
+If Flutter commands hang locally, first check:
+
+```powershell
+C:\dev\flutter\bin\flutter.bat doctor -v
+git config --global --add safe.directory C:/dev/flutter
+C:\dev\flutter\bin\flutter.bat doctor --android-licenses
+```
+
+For Codex tool calls, request/run Flutter with elevated/system permissions so
+the tool can access AppData and the Flutter SDK cache. Do not repeatedly rerun
+analyze/test inside the sandbox if it times out; switch to elevated Flutter or
+GitHub Actions.
+
 The default check builds only the requested target and stops a stuck Flutter process:
 
 ```powershell
@@ -42,6 +68,42 @@ powershell -ExecutionPolicy Bypass -File .\tool\verify-fast.ps1 -Target apk -Tim
 ```
 
 Add `-WithAnalyze` only for a deliberate full check. A successful web or APK build already compiles the application and is the fast feedback loop.
+
+## Local web preview
+
+Use this when you want to test the mobile web build locally before pushing to
+GitHub Pages.
+
+1. Build the web release outside the Codex sandbox / with system permissions:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tool\verify-fast.ps1 -Target web -TimeoutSeconds 900
+```
+
+2. Start the local preview server:
+
+```powershell
+node .\tool\local-web-preview.js
+```
+
+If `node` is not in the Windows `PATH`, use the Codex bundled Node runtime:
+
+```powershell
+& "C:\Users\Focus on you\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe" .\tool\local-web-preview.js
+```
+
+3. Open the local preview:
+
+```text
+http://127.0.0.1:8082/Dice-throne-Solo/
+```
+
+When Codex starts the preview in the background, it reports a process id. Stop
+that server with:
+
+```powershell
+Stop-Process -Id <PID>
+```
 
 ## GitHub Actions
 

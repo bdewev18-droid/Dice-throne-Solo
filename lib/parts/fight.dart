@@ -7264,19 +7264,6 @@ class _HalfPreventBadge extends StatelessWidget {
   }
 }
 
-class _HalfReturnBadge extends StatelessWidget {
-  const _HalfReturnBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return const _TextBadge(
-      label: '1/2',
-      color: Colors.white,
-      icon: Icons.bolt,
-    );
-  }
-}
-
 class _MultiplierBadge extends StatelessWidget {
   const _MultiplierBadge();
 
@@ -7288,38 +7275,6 @@ class _MultiplierBadge extends StatelessWidget {
         color: Colors.white,
         fontSize: 18,
         fontWeight: FontWeight.w900,
-      ),
-    );
-  }
-}
-
-class _TextBadge extends StatelessWidget {
-  const _TextBadge({required this.label, required this.color, this.icon});
-
-  final String label;
-  final Color color;
-  final IconData? icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: color),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, color: color, size: 13),
-            const SizedBox(width: 3),
-          ],
-          Text(
-            label,
-            style: TextStyle(color: color, fontWeight: FontWeight.w900),
-          ),
-        ],
       ),
     );
   }
@@ -7347,41 +7302,6 @@ class DieValueBadge extends StatelessWidget {
         height: size,
         fit: BoxFit.contain,
       ),
-    );
-  }
-}
-
-class _LegacyDieValueBadge extends StatelessWidget {
-  const _LegacyDieValueBadge({
-    required this.value,
-    this.showValue = true,
-    this.size = 30,
-  });
-
-  final int value;
-  final bool showValue;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: Colors.white, width: 1.5),
-      ),
-      child: showValue
-          ? Text(
-              value.toString(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
-            )
-          : const Icon(Icons.casino, color: Colors.white, size: 16),
     );
   }
 }
@@ -7519,11 +7439,11 @@ class _FourDiceToTopTwoBadge extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text('4x', style: TextStyle(fontWeight: FontWeight.w900)),
-        _WhiteDiceCubeIcon(size: 22),
+        _CubeIcon(size: 22),
         const Text('='),
-        _WhiteDiceCubeIcon(size: 22, label: '^'),
+        const _TopDieBadge(),
         const Text('+'),
-        _WhiteDiceCubeIcon(size: 22, label: '^'),
+        const _TopDieBadge(),
       ],
     );
   }
@@ -7553,89 +7473,24 @@ class _OneDieBadge extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text('1x', style: TextStyle(fontWeight: FontWeight.w900)),
-        _WhiteDiceCubeIcon(size: 24),
+        _CubeIcon(size: 24),
       ],
     );
   }
 }
 
-class _WhiteDiceCubeIcon extends StatelessWidget {
-  const _WhiteDiceCubeIcon({required this.size, this.label});
-
-  final double size;
-  final String? label;
+class _TopDieBadge extends StatelessWidget {
+  const _TopDieBadge();
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CustomPaint(
-            size: Size.square(size),
-            painter: const _WhiteDiceCubePainter(),
-          ),
-          if (label != null)
-            Text(
-              label!,
-              style: TextStyle(
-                color: const Color(0xff252724),
-                fontSize: size * 0.55,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-        ],
-      ),
+    return const _EmptyDieBadge(
+      size: 22,
+      label: '^',
+      borderColor: Colors.white,
+      textColor: Colors.white,
     );
   }
-}
-
-class _WhiteDiceCubePainter extends CustomPainter {
-  const _WhiteDiceCubePainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final outline = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = max(1.4, w * 0.11)
-      ..strokeJoin = StrokeJoin.round
-      ..strokeCap = StrokeCap.round;
-    final fill = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-
-    final top = Path()
-      ..moveTo(w * 0.50, h * 0.10)
-      ..lineTo(w * 0.88, h * 0.32)
-      ..lineTo(w * 0.50, h * 0.55)
-      ..lineTo(w * 0.12, h * 0.32)
-      ..close();
-    final left = Path()
-      ..moveTo(w * 0.12, h * 0.32)
-      ..lineTo(w * 0.50, h * 0.55)
-      ..lineTo(w * 0.50, h * 0.90)
-      ..lineTo(w * 0.12, h * 0.68)
-      ..close();
-    final right = Path()
-      ..moveTo(w * 0.88, h * 0.32)
-      ..lineTo(w * 0.50, h * 0.55)
-      ..lineTo(w * 0.50, h * 0.90)
-      ..lineTo(w * 0.88, h * 0.68)
-      ..close();
-
-    for (final face in [top, left, right]) {
-      canvas.drawPath(face, fill);
-      canvas.drawPath(face, outline);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _WhiteDiceCubePainter oldDelegate) => false;
 }
 
 class _SwoopOnFiveSixBadge extends StatelessWidget {
