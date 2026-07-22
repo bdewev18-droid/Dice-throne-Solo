@@ -223,221 +223,219 @@ class _FightPageState extends State<FightPage> {
             }
           },
           child: SafeArea(
-          child: Column(
-            children: [
-              CombatBottomDock(
-                phase: _phase,
-                adventure: widget.adventure,
-                enemy: enemy,
-                upkeepApplied: _upkeepApplied,
-                heroUpkeepApplied: _heroUpkeepApplied,
-                canAdvancePhase: canAdvancePhase,
-                onPhaseChanged: _setPhase,
-                onNext: _handleNextStep,
-                onApplyUpkeep: () => _applyUpkeep(),
-                onApplyHeroUpkeep: () => _applyHeroUpkeep(),
-              ),
-              Expanded(
-                child: ListView(
-                  controller: _combatScrollController,
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 180),
-                  children: [
-                    FightStatusPanel(
-                      adventure: widget.adventure,
-                      enemy: enemy,
-                      phase: _phase,
-                      naraxusRollHistory: _naraxusRollHistory,
-                      onFinish: null,
-                      onChanged: () {
-                        widget.onChanged();
-                        setState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    EnemyRulesPanel(
-                      enemy: enemy,
-                      phase: _phase,
-                      aiMode: _aiMode,
-                      onDetails: _openAdventureDetails,
-                      onAbandon: _openPauseDialog,
-                      onExport: _openCombatExport,
-                      onRestartCombat: _restartCombatFromSettings,
-                      showUndo: _stepUndo != null,
-                      onUndo: _undoStep,
-                      attackKey: _attackRulesKey,
-                      defenseKey: _defenseRulesKey,
-                      onAiModeChanged: (value) {
-                        setState(() {
-                          _aiMode = value;
-                          _configureDiceForPhase(
-                            autoRollAttack:
-                                _aiMode && _phase == CombatPhase.minionAttack,
-                          );
-                        });
-                      },
-                    ),
-                    if (_aiMode) ...[
-                      const SizedBox(height: 12),
-                      MinionAiPanel(
+            child: Column(
+              children: [
+                CombatBottomDock(
+                  phase: _phase,
+                  adventure: widget.adventure,
+                  enemy: enemy,
+                  upkeepApplied: _upkeepApplied,
+                  heroUpkeepApplied: _heroUpkeepApplied,
+                  canAdvancePhase: canAdvancePhase,
+                  onPhaseChanged: _setPhase,
+                  onNext: _handleNextStep,
+                  onApplyUpkeep: () => _applyUpkeep(),
+                  onApplyHeroUpkeep: () => _applyHeroUpkeep(),
+                ),
+                Expanded(
+                  child: ListView(
+                    controller: _combatScrollController,
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 180),
+                    children: [
+                      FightStatusPanel(
+                        adventure: widget.adventure,
                         enemy: enemy,
                         phase: _phase,
-                        dice: _dice,
-                        adventure: widget.adventure,
-                        rollCount: _rollCount,
-                        diceToRoll: _diceToRoll,
-                        visibleDiceCount: _visibleDiceCount,
-                        maxRolls: _maxRolls,
-                        editMode: _editMode,
-                        rerollOneMode: _rerollOneMode,
-                        editingDieId: _editingDieId,
-                        onRoll: _rollDice,
-                        onTapDie: _tapDie,
-                        onSelectFace: _selectFace,
-                        onValidateEdit: () =>
-                            setState(() => _editingDieId = null),
-                        onToggleEdit: () => setState(() {
-                          _editMode = !_editMode;
-                          _rerollOneMode = false;
-                          _editingDieId = null;
-                        }),
-                        onToggleRerollOne: () => setState(() {
-                          _rerollOneMode = !_rerollOneMode;
-                          _editMode = false;
-                          _editingDieId = null;
-                        }),
+                        naraxusRollHistory: _naraxusRollHistory,
+                        onFinish: null,
+                        onChanged: () {
+                          widget.onChanged();
+                          setState(() {});
+                        },
                       ),
-                      if (_showDruidFormRollPanel) ...[
+                      const SizedBox(height: 12),
+                      EnemyRulesPanel(
+                        enemy: enemy,
+                        phase: _phase,
+                        aiMode: _aiMode,
+                        onDetails: _openAdventureDetails,
+                        onAbandon: _openPauseDialog,
+                        onExport: _openCombatExport,
+                        onRestartCombat: _restartCombatFromSettings,
+                        showUndo: _stepUndo != null,
+                        onUndo: _undoStep,
+                        attackKey: _attackRulesKey,
+                        defenseKey: _defenseRulesKey,
+                        onAiModeChanged: (value) {
+                          setState(() {
+                            _aiMode = value;
+                            _configureDiceForPhase(
+                              autoRollAttack:
+                                  _aiMode && _phase == CombatPhase.minionAttack,
+                            );
+                          });
+                        },
+                      ),
+                      if (_aiMode) ...[
                         const SizedBox(height: 12),
-                        ManualExtraDicePhasePanel(
-                          key: _extraDicePhaseKey,
-                          title: 'Druid form roll',
-                          initialDiceCount: 1,
-                          accent: enemy.rank.color,
-                          autoRoll: false,
-                          onChanged: _resolveDruidFormRoll,
+                        MinionAiPanel(
+                          enemy: enemy,
+                          phase: _phase,
+                          dice: _dice,
+                          adventure: widget.adventure,
+                          rollCount: _rollCount,
+                          diceToRoll: _diceToRoll,
+                          visibleDiceCount: _visibleDiceCount,
+                          maxRolls: _maxRolls,
+                          editMode: _editMode,
+                          rerollOneMode: _rerollOneMode,
+                          editingDieId: _editingDieId,
+                          onRoll: _rollDice,
+                          onTapDie: _tapDie,
+                          onSelectFace: _selectFace,
+                          onValidateEdit: () =>
+                              setState(() => _editingDieId = null),
+                          onToggleEdit: () => setState(() {
+                            _editMode = !_editMode;
+                            _rerollOneMode = false;
+                            _editingDieId = null;
+                          }),
+                          onToggleRerollOne: () => setState(() {
+                            _rerollOneMode = !_rerollOneMode;
+                            _editMode = false;
+                            _editingDieId = null;
+                          }),
                         ),
-                      ],
-                      if (_showAiExtraDicePhase) ...[
+                        if (_showDruidFormRollPanel) ...[
+                          const SizedBox(height: 12),
+                          ManualExtraDicePhasePanel(
+                            key: _extraDicePhaseKey,
+                            title: 'Druid form roll',
+                            initialDiceCount: 1,
+                            accent: enemy.rank.color,
+                            autoRoll: false,
+                            onChanged: _resolveDruidFormRoll,
+                          ),
+                        ],
+                        if (_showAiExtraDicePhase) ...[
+                          const SizedBox(height: 12),
+                          ManualExtraDicePhasePanel(
+                            key: _extraDicePhaseKey,
+                            title: _extraDicePhaseTitle,
+                            initialDiceCount: _extraDiceCount,
+                            accent: enemy.rank.color,
+                            autoRoll: false,
+                            onChanged: _resolveExtraDicePhase,
+                          ),
+                        ],
+                      ] else ...[
                         const SizedBox(height: 12),
-                        ManualExtraDicePhasePanel(
-                          key: _extraDicePhaseKey,
-                          title: _extraDicePhaseTitle,
-                          initialDiceCount: _extraDiceCount,
-                          accent: enemy.rank.color,
-                          autoRoll: false,
-                          onChanged: _resolveExtraDicePhase,
+                        OutlinedButton.icon(
+                          onPressed: () => setState(
+                            () => _showManualExtraDicePhase =
+                                !_showManualExtraDicePhase,
+                          ),
+                          icon: const Icon(Icons.add_circle_outline),
+                          label: Text(
+                            _showManualExtraDicePhase
+                                ? 'Hide extra dice phase'
+                                : 'Add dice phase',
+                          ),
+                        ),
+                        if (_showManualExtraDicePhase) ...[
+                          const SizedBox(height: 8),
+                          const ManualExtraDicePhasePanel(),
+                        ],
+                      ],
+                      if (!_aiMode) ...[
+                        const SizedBox(height: 12),
+                        DicePanel(
+                          dice: _dice,
+                          diceToRoll: _diceToRoll,
+                          visibleDiceCount: _visibleDiceCount,
+                          maxDiceCount: _diceMenuMax,
+                          rollCount: _rollCount,
+                          maxRolls: _maxRolls,
+                          editMode: _editMode,
+                          rerollOneMode: _rerollOneMode,
+                          editingDieId: _editingDieId,
+                          specialAttackMode: _specialAttackMode,
+                          onDiceToRollChanged: (value) =>
+                              setState(() => _diceToRoll = value),
+                          onRoll: _rollDice,
+                          onTapDie: _tapDie,
+                          onSelectFace: _selectFace,
+                          onValidateEdit: () =>
+                              setState(() => _editingDieId = null),
+                          onToggleEdit: () => setState(() {
+                            _editMode = !_editMode;
+                            _rerollOneMode = false;
+                            _editingDieId = null;
+                          }),
+                          onToggleRerollOne: () => setState(() {
+                            _rerollOneMode = !_rerollOneMode;
+                            _editMode = false;
+                            _editingDieId = null;
+                          }),
+                          rollLabel: _phase == CombatPhase.hero
+                              ? 'Roll defense'
+                              : (_rollCount == 0 ? 'Roll' : 'Reroll'),
+                          rollColor: _phase == CombatPhase.hero
+                              ? enemy.rank.color
+                              : const Color(0xff8f43ff),
                         ),
                       ],
-                    ] else ...[
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        onPressed: () => setState(
-                          () => _showManualExtraDicePhase =
-                              !_showManualExtraDicePhase,
+                      if (_specialAttackReady && !_aiMode) ...[
+                        const SizedBox(height: 12),
+                        ImageActionButton(
+                          label: 'Next',
+                          icon: Icons.arrow_forward,
+                          onPressed: _resolveSpecialAttack,
                         ),
-                        icon: const Icon(Icons.add_circle_outline),
-                        label: Text(
-                          _showManualExtraDicePhase
-                              ? 'Hide extra dice phase'
-                              : 'Add dice phase',
-                        ),
-                      ),
-                      if (_showManualExtraDicePhase) ...[
-                        const SizedBox(height: 8),
-                        const ManualExtraDicePhasePanel(),
                       ],
                     ],
-                    if (!_aiMode) ...[
-                      const SizedBox(height: 12),
-                      DicePanel(
-                        dice: _dice,
-                        diceToRoll: _diceToRoll,
-                        visibleDiceCount: _visibleDiceCount,
-                        maxDiceCount: _diceMenuMax,
-                        rollCount: _rollCount,
-                        maxRolls: _maxRolls,
-                        editMode: _editMode,
-                        rerollOneMode: _rerollOneMode,
-                        editingDieId: _editingDieId,
-                        specialAttackMode: _specialAttackMode,
-                        onDiceToRollChanged: (value) =>
-                            setState(() => _diceToRoll = value),
-                        onRoll: _rollDice,
-                        onTapDie: _tapDie,
-                        onSelectFace: _selectFace,
-                        onValidateEdit: () =>
-                            setState(() => _editingDieId = null),
-                        onToggleEdit: () => setState(() {
-                          _editMode = !_editMode;
-                          _rerollOneMode = false;
-                          _editingDieId = null;
-                        }),
-                        onToggleRerollOne: () => setState(() {
-                          _rerollOneMode = !_rerollOneMode;
-                          _editMode = false;
-                          _editingDieId = null;
-                        }),
-                        rollLabel: _phase == CombatPhase.hero
-                            ? 'Roll defense'
-                            : (_rollCount == 0 ? 'Roll' : 'Reroll'),
-                        rollColor: _phase == CombatPhase.hero
-                            ? enemy.rank.color
-                            : const Color(0xff8f43ff),
-                      ),
-                    ],
-                    if (_specialAttackReady && !_aiMode) ...[
-                      const SizedBox(height: 12),
-                      ImageActionButton(
-                        label: 'Next',
-                        icon: Icons.arrow_forward,
-                        onPressed: _resolveSpecialAttack,
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
-              CombatAiChatDock(
-                aiMode: _aiMode,
-                aiMessage: aiMessage,
-                phase: _phase,
-                adventure: widget.adventure,
-                enemy: enemy,
-                returnDamage: _battleReturnDamage,
-                returnDamageUndefendable: _battleReturnDamageUndefendable,
-                lifeSteal: _battleLifeSteal,
-                enemyHeal: _battleEnemyHeal,
-                cpSteal: _battleCpSteal,
-                heroTokens: _battleHeroTokens,
-                minionTokens: _battleMinionTokens,
-                notes: _battleNotes,
-                showResolution: _isBattlePhase,
-                attackValue: _battleAttackValue,
-                defenseValue: _battleDefenseValue,
-                onAttackChanged: (delta) => setState(() {
-                  _battleAttackValue = (_battleAttackValue + delta).clamp(
-                    0,
-                    99,
-                  );
-                }),
-                onDefenseChanged: (delta) => setState(() {
-                  _battleDefenseValue = (_battleDefenseValue + delta).clamp(
-                    0,
-                    99,
-                  );
-                }),
-                onApply: _applyBattleResolution,
-                onFinish:
-                    enemy.health <= 0 ||
-                        widget.adventure.health <= 0
-                    ? _finishCombat
-                    : null,
-                onChanged: () {
-                  widget.onChanged();
-                  setState(() {});
-                },
-              ),
-            ],
-          ),
+                CombatAiChatDock(
+                  aiMode: _aiMode,
+                  aiMessage: aiMessage,
+                  phase: _phase,
+                  adventure: widget.adventure,
+                  enemy: enemy,
+                  returnDamage: _battleReturnDamage,
+                  returnDamageUndefendable: _battleReturnDamageUndefendable,
+                  lifeSteal: _battleLifeSteal,
+                  enemyHeal: _battleEnemyHeal,
+                  cpSteal: _battleCpSteal,
+                  heroTokens: _battleHeroTokens,
+                  minionTokens: _battleMinionTokens,
+                  notes: _battleNotes,
+                  showResolution: _isBattlePhase,
+                  attackValue: _battleAttackValue,
+                  defenseValue: _battleDefenseValue,
+                  onAttackChanged: (delta) => setState(() {
+                    _battleAttackValue = (_battleAttackValue + delta).clamp(
+                      0,
+                      99,
+                    );
+                  }),
+                  onDefenseChanged: (delta) => setState(() {
+                    _battleDefenseValue = (_battleDefenseValue + delta).clamp(
+                      0,
+                      99,
+                    );
+                  }),
+                  onApply: _applyBattleResolution,
+                  onFinish: enemy.health <= 0 || widget.adventure.health <= 0
+                      ? _finishCombat
+                      : null,
+                  onChanged: () {
+                    widget.onChanged();
+                    setState(() {});
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -465,8 +463,12 @@ class _FightPageState extends State<FightPage> {
     }
     final rolledIds = <int>[];
     setState(() {
-      final rollable = _dice.where((die) => !die.reserved).take(_diceToRoll).toList();
-      _diceAnimationPending = combatDiceAnimationSeconds > 0 && rollable.isNotEmpty;
+      final rollable = _dice
+          .where((die) => !die.reserved)
+          .take(_diceToRoll)
+          .toList();
+      _diceAnimationPending =
+          combatDiceAnimationSeconds > 0 && rollable.isNotEmpty;
       for (final die in rollable) {
         die.value = _random.nextInt(6) + 1;
         die.settled = !_diceAnimationPending;
@@ -499,7 +501,9 @@ class _FightPageState extends State<FightPage> {
             return;
           }
           setState(() {
-            for (final die in _dice.where((die) => rolledIds.contains(die.id))) {
+            for (final die in _dice.where(
+              (die) => rolledIds.contains(die.id),
+            )) {
               die.settled = true;
             }
             _diceAnimationPending = _dice.any((die) => !die.settled);
@@ -1127,7 +1131,8 @@ class _FightPageState extends State<FightPage> {
       case 'ronin-vagabond':
         final value = rolled.first.value ?? 0;
         returnDamage = (value / 2).ceil();
-        notes.add('Defense: returns $returnDamage damage.');
+        returnDamageUndefendable = returnDamage > 0;
+        notes.add('Defense: returns $returnDamage undefendable damage.');
       case 'enchanteur-gobelin':
         if (yellow > 0) {
           returnDamage = 1;
@@ -1240,9 +1245,7 @@ class _FightPageState extends State<FightPage> {
         returnDamage = currentChaos + gainedChaos;
         returnDamageUndefendable = returnDamage > 0;
         if (gainedChaos > 0) {
-          notes.add(
-            'Defense: gains $gainedChaos Chaos during the roll.',
-          );
+          notes.add('Defense: gains $gainedChaos Chaos during the roll.');
         }
         if (returnDamage > 0) {
           notes.add(
@@ -1780,7 +1783,11 @@ class _FightPageState extends State<FightPage> {
         );
         _extraDiceOutcomeMessage =
             'Sorcellerie Ophique extra die: $roll.\n'
-            '${symbol == DieSymbol.white ? 'White symbol: Mage Lezard gains 2 Chaos immediately for this attack.\n' : symbol == DieSymbol.yellow ? 'Orange symbol: hero receives Eboulissement after OK.\n' : 'Red symbol: no extra effect.\n'}'
+            '${symbol == DieSymbol.white
+                ? 'White symbol: Mage Lezard gains 2 Chaos immediately for this attack.\n'
+                : symbol == DieSymbol.yellow
+                ? 'Orange symbol: hero receives Eboulissement after OK.\n'
+                : 'Red symbol: no extra effect.\n'}'
             'Mage Lezard inflicts 6 + $totalChaos Chaos = $_battleAttackValue damage.';
       });
       return;
@@ -1825,7 +1832,11 @@ class _FightPageState extends State<FightPage> {
         );
         _extraDiceOutcomeMessage =
             'Sorcellerie Chaotique extra die: $roll.\n'
-            '${symbol == DieSymbol.white ? 'White symbol: Mage de l Entropie gains 2 Chaos immediately for this attack.\n' : symbol == DieSymbol.yellow ? 'Orange symbol: hero receives Sort 6 after OK.\n' : 'Red symbol: no extra effect.\n'}'
+            '${symbol == DieSymbol.white
+                ? 'White symbol: Mage de l Entropie gains 2 Chaos immediately for this attack.\n'
+                : symbol == DieSymbol.yellow
+                ? 'Orange symbol: hero receives Sort 6 after OK.\n'
+                : 'Red symbol: no extra effect.\n'}'
             'Mage de l Entropie inflicts 7 + $totalChaos Chaos = $_battleAttackValue damage.';
       });
       return;
@@ -1880,9 +1891,8 @@ class _FightPageState extends State<FightPage> {
       return;
     }
     final baseAttack = _dice.first.value;
-    final rolledDice =
-        extraDice.where((die) => die.value != null).toList()
-          ..sort((a, b) => b.value!.compareTo(a.value!));
+    final rolledDice = extraDice.where((die) => die.value != null).toList()
+      ..sort((a, b) => b.value!.compareTo(a.value!));
     if (rolledDice.isEmpty) {
       return;
     }
@@ -2141,7 +2151,9 @@ class _FightPageState extends State<FightPage> {
   void _replaceCurrentEnemyWithRandomLevel3() {
     final profiles = _profilesForRank(EnemyRank.violet);
     if (profiles.isEmpty) {
-      widget.adventure.log('Disciple red effect failed: no level 3 profiles available.');
+      widget.adventure.log(
+        'Disciple red effect failed: no level 3 profiles available.',
+      );
       return;
     }
     final previous = enemy;
@@ -2395,15 +2407,15 @@ class _FightPageState extends State<FightPage> {
       _rollCount = 1;
       _diceToRoll = 1;
       for (final die in _dice) {
-          die
-            ..value = null
-            ..settled = true
-            ..reserved = true;
-        }
-        _dice.first
-          ..value = roll
+        die
+          ..value = null
           ..settled = true
-          ..reserved = false;
+          ..reserved = true;
+      }
+      _dice.first
+        ..value = roll
+        ..settled = true
+        ..reserved = false;
     });
 
     final apply = await showDialog<bool>(
@@ -2480,19 +2492,30 @@ class _FightPageState extends State<FightPage> {
                 : '${enemy.label} has no HP left.',
           ),
           actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.of(context).pop(_GameOverAction.newGame),
-              child: const Text('New game'),
-            ),
-            TextButton(
-              onPressed: () =>
-                  Navigator.of(context).pop(_GameOverAction.history),
-              child: const Text('History'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(_GameOverAction.quit),
-              child: const Text('Quit'),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FilledButton(
+                  onPressed: () =>
+                      Navigator.of(context).pop(_GameOverAction.history),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xff8f43ff),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('History'),
+                ),
+                const SizedBox(height: 8),
+                FilledButton(
+                  onPressed: () =>
+                      Navigator.of(context).pop(_GameOverAction.homepage),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xff8f43ff),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Homepage'),
+                ),
+              ],
             ),
           ],
         ),
@@ -2501,25 +2524,18 @@ class _FightPageState extends State<FightPage> {
         return;
       }
       switch (action) {
-        case _GameOverAction.newGame:
-          if (_isNaraxus) {
-            widget.onFinished?.call();
-          } else {
-            widget.onGameOverHome?.call();
-          }
         case _GameOverAction.history:
           if (_isNaraxus) {
             widget.onGameOverHistory?.call();
           } else {
             widget.onGameOverHistory?.call();
           }
-        case _GameOverAction.quit:
+        case _GameOverAction.homepage:
           if (_isNaraxus) {
             widget.onFinished?.call();
           } else {
             widget.onGameOverHome?.call();
           }
-          SystemNavigator.pop();
       }
     });
   }
@@ -2540,7 +2556,7 @@ class _FightPageState extends State<FightPage> {
   }
 }
 
-enum _GameOverAction { newGame, history, quit }
+enum _GameOverAction { history, homepage }
 
 class CompactItemStrip extends StatelessWidget {
   const CompactItemStrip({
@@ -3078,7 +3094,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
   }
 
   void _openSettings(BuildContext context) {
-    var restartRank = EnemyRank.green;
+    var restartRank = enemy.rank;
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: const Color(0xff111111),
@@ -3146,78 +3162,51 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 48,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xff1b1b1b),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: panelBorderGrey),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<EnemyRank>(
-                              value: restartRank,
-                              isExpanded: true,
-                              dropdownColor: const Color(0xff1b1b1b),
-                              iconEnabledColor: Colors.white,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                              ),
-                              selectedItemBuilder: (context) =>
-                                  const ['Green', 'Blue', 'Purple', 'Orange']
-                                      .map((label) => Text(label))
-                                      .toList(),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: EnemyRank.green,
-                                  child: Text('Green'),
-                                ),
-                                DropdownMenuItem(
-                                  value: EnemyRank.blue,
-                                  child: Text('Blue'),
-                                ),
-                                DropdownMenuItem(
-                                  value: EnemyRank.violet,
-                                  child: Text('Purple'),
-                                ),
-                                DropdownMenuItem(
-                                  value: EnemyRank.orange,
-                                  child: Text('Orange'),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setSheetState(() => restartRank = value);
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      SizedBox(
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 380;
+                      final picker = _RecipeRankPicker(
+                        selected: restartRank,
+                        onChanged: (value) =>
+                            setSheetState(() => restartRank = value),
+                      );
+                      final okButton = SizedBox(
                         height: 48,
+                        width: compact ? double.infinity : 62,
                         child: FilledButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          widget.onRestartCombat(restartRank);
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xff8f43ff),
-                          foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 18),
-                        ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            widget.onRestartCombat(restartRank);
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xff8f43ff),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.zero,
+                          ),
                           child: const Text(
                             'OK',
                             style: TextStyle(fontWeight: FontWeight.w900),
                           ),
                         ),
-                      ),
-                    ],
+                      );
+                      if (compact) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            picker,
+                            const SizedBox(height: 8),
+                            okButton,
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(child: picker),
+                          const SizedBox(width: 10),
+                          okButton,
+                        ],
+                      );
+                    },
                   ),
                 ],
                 const SizedBox(height: 14),
@@ -3271,6 +3260,94 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecipeRankPicker extends StatelessWidget {
+  const _RecipeRankPicker({required this.selected, required this.onChanged});
+
+  final EnemyRank selected;
+  final ValueChanged<EnemyRank> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    const ranks = [
+      (EnemyRank.green, 'Green'),
+      (EnemyRank.blue, 'Blue'),
+      (EnemyRank.violet, 'Purple'),
+      (EnemyRank.orange, 'Orange'),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xff1b1b1b),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: panelBorderGrey),
+      ),
+      child: Row(
+        children: [
+          for (final rank in ranks)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: _RecipeRankButton(
+                  rank: rank.$1,
+                  label: rank.$2,
+                  selected: selected == rank.$1,
+                  onTap: () => onChanged(rank.$1),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecipeRankButton extends StatelessWidget {
+  const _RecipeRankButton({
+    required this.rank,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final EnemyRank rank;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected ? Colors.black : Colors.white;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? rank.color : Colors.black.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: selected ? rank.color : Colors.white24,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: foreground,
+              fontWeight: FontWeight.w900,
+              fontSize: 13,
+            ),
           ),
         ),
       ),
@@ -3333,10 +3410,7 @@ class _AiModeSwitch extends StatelessWidget {
 }
 
 class _RulesBackgroundBand extends StatelessWidget {
-  const _RulesBackgroundBand({
-    required this.asset,
-    required this.child,
-  });
+  const _RulesBackgroundBand({required this.asset, required this.child});
 
   final String asset;
   final Widget child;
@@ -3505,9 +3579,7 @@ class MinionAttackSummary extends StatelessWidget {
         children: [
           _AttackResultLine(
             goal: const SymbolGoal(white: 2, yellow: 1, red: 1),
-            result: [
-              LifeStealBadge(value: 2, color: enemy.rank.color),
-            ],
+            result: [LifeStealBadge(value: 2, color: enemy.rank.color)],
           ),
         ],
       );
@@ -3557,7 +3629,9 @@ class MinionAttackSummary extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          const Text('White: gain 2 Chaos. Orange: hero receives Sort 6. Red: no extra effect.'),
+          const Text(
+            'White: gain 2 Chaos. Orange: hero receives Sort 6. Red: no extra effect.',
+          ),
         ],
       );
     }
@@ -3594,10 +3668,7 @@ class MinionAttackSummary extends StatelessWidget {
           const _AttackResultLine(
             goal: SymbolGoal(yellow: 4),
             result: [
-              Text(
-                '2 x',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
+              Text('2 x', style: TextStyle(fontWeight: FontWeight.w900)),
               _CubeIcon(size: 28),
               Text('= deal damage equal to the total roll value'),
             ],
@@ -3675,7 +3746,9 @@ class MinionAttackSummary extends StatelessWidget {
             ],
           ),
           SizedBox(height: 6),
-          Text('Extra die: white = nothing, orange = steal 1 CP, red = engage a random level 3 minion.'),
+          Text(
+            'Extra die: white = nothing, orange = steal 1 CP, red = engage a random level 3 minion.',
+          ),
         ],
       );
     }
@@ -3715,15 +3788,11 @@ class MinionAttackSummary extends StatelessWidget {
           const SizedBox(height: 6),
           _ResultLine(
             symbol: DieSymbol.white,
-            children: [
-              TokenBadge(label: 'Chaos x2', color: enemy.rank.color),
-            ],
+            children: [TokenBadge(label: 'Chaos x2', color: enemy.rank.color)],
           ),
           _ResultLine(
             symbol: DieSymbol.yellow,
-            children: [
-              TokenBadge(label: 'EBO', color: enemy.rank.color),
-            ],
+            children: [TokenBadge(label: 'EBO', color: enemy.rank.color)],
           ),
           const _ResultLine(
             symbol: DieSymbol.red,
@@ -3865,11 +3934,18 @@ class MinionAttackSummary extends StatelessWidget {
               label: 'Large',
               length: 5,
               damage: _suiteDamage(enemy, 5),
-              leadingResult: enemy.profileKey == 'elfe-du-chaos'
-                  ? TokenBadge(label: 'Ronces', color: enemy.rank.color)
-                  : enemy.profileKey == 'vert-vert-020'
-                  ? TokenBadge(label: 'DOWN', color: enemy.rank.color)
-                  : null,
+              leadingResult: switch (enemy.profileKey) {
+                'fee' => CpStealBadge(value: 1, color: enemy.rank.color),
+                'elfe-du-chaos' => TokenBadge(
+                  label: 'Ronces',
+                  color: enemy.rank.color,
+                ),
+                'vert-vert-020' => TokenBadge(
+                  label: 'DOWN',
+                  color: enemy.rank.color,
+                ),
+                _ => null,
+              },
             ),
             ..._shortTokenHints(enemy),
           ],
@@ -3904,8 +3980,7 @@ class MinionAttackSummary extends StatelessWidget {
         enemy.profileKey != 'vert-vert-020') {
       hints.add(const Text('If condition met: À Terre.'));
     }
-    if ((text.contains('enchevetrement') ||
-            text.contains('enchevêtrement')) &&
+    if ((text.contains('enchevetrement') || text.contains('enchevêtrement')) &&
         enemy.profileKey != 'vert-vert-018') {
       hints.add(const Text('If condition met: Enchevêtrement.'));
     }
@@ -4347,6 +4422,23 @@ List<Widget> _defenseEffectLines(EnemyNode enemy) {
     );
   }
 
+  void dieValueGroupLine(List<int> dieValues, List<Widget> result) {
+    lines.add(
+      _DefenseEffectLine(
+        left: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < dieValues.length; i++) ...[
+              if (i > 0) const SizedBox(width: 4),
+              DieValueBadge(value: dieValues[i]),
+            ],
+          ],
+        ),
+        right: result,
+      ),
+    );
+  }
+
   switch (enemy.profileKey) {
     case 'naraxus':
       dieValueLine(1, const [PreventBadge(value: 1)]);
@@ -4359,12 +4451,9 @@ List<Widget> _defenseEffectLines(EnemyNode enemy) {
       symbol(const SymbolGoal(yellow: 2), const [PreventBadge(value: 3)]);
       return lines;
     case 'ronin-vagabond':
-      dieValueLine(1, const [DamageBadge(value: 1, imparable: false)]);
-      dieValueLine(2, const [DamageBadge(value: 1, imparable: false)]);
-      dieValueLine(3, const [DamageBadge(value: 2, imparable: false)]);
-      dieValueLine(4, const [DamageBadge(value: 2, imparable: false)]);
-      dieValueLine(5, const [DamageBadge(value: 3, imparable: false)]);
-      dieValueLine(6, const [DamageBadge(value: 3, imparable: false)]);
+      dieValueGroupLine([1, 2], const [DamageBadge(value: 1, imparable: true)]);
+      dieValueGroupLine([3, 4], const [DamageBadge(value: 2, imparable: true)]);
+      dieValueGroupLine([5, 6], const [DamageBadge(value: 3, imparable: true)]);
       return lines;
     case 'enchanteur-gobelin':
       symbol(const SymbolGoal(yellow: 1), const [
@@ -4383,21 +4472,15 @@ List<Widget> _defenseEffectLines(EnemyNode enemy) {
       ]);
       return lines;
     case 'epeiste-egare':
-      symbol(
-        const SymbolGoal(white: 1),
-        const [DamageBadge(value: 1, imparable: true)],
-        repeat: true,
-      );
-      symbol(
-        const SymbolGoal(red: 1),
-        const [DamageBadge(value: 1, imparable: true)],
-        repeat: true,
-      );
-      symbol(
-        const SymbolGoal(yellow: 1),
-        const [PreventBadge(value: 1)],
-        repeat: true,
-      );
+      symbol(const SymbolGoal(white: 1), const [
+        DamageBadge(value: 1, imparable: true),
+      ], repeat: true);
+      symbol(const SymbolGoal(red: 1), const [
+        DamageBadge(value: 1, imparable: true),
+      ], repeat: true);
+      symbol(const SymbolGoal(yellow: 1), const [
+        PreventBadge(value: 1),
+      ], repeat: true);
       return lines;
     case 'elfe-du-chaos':
       symbol(const SymbolGoal(yellow: 2), const [_HalfPreventBadge()]);
@@ -4412,11 +4495,9 @@ List<Widget> _defenseEffectLines(EnemyNode enemy) {
       return lines;
     case 'vert-vert-012':
     case 'vert-vert-016':
-      symbol(
-        const SymbolGoal(yellow: 1),
-        const [PreventBadge(value: 1)],
-        repeat: true,
-      );
+      symbol(const SymbolGoal(yellow: 1), const [
+        PreventBadge(value: 1),
+      ], repeat: true);
       return lines;
     case 'vert-vert-013':
       symbol(const SymbolGoal(red: 1), [
@@ -4425,35 +4506,24 @@ List<Widget> _defenseEffectLines(EnemyNode enemy) {
       return lines;
     case 'vert-vert-014':
       if (_isDruidBearForm(enemy)) {
-        symbol(
-          const SymbolGoal(yellow: 1),
-          const [DamageBadge(value: 1, imparable: true)],
-          repeat: true,
-        );
-        symbol(
-          const SymbolGoal(red: 1),
-          const [DamageBadge(value: 2, imparable: true)],
-          repeat: true,
-        );
+        symbol(const SymbolGoal(yellow: 1), const [
+          DamageBadge(value: 1, imparable: true),
+        ], repeat: true);
+        symbol(const SymbolGoal(red: 1), const [
+          DamageBadge(value: 2, imparable: true),
+        ], repeat: true);
       } else {
-        symbol(
-          const SymbolGoal(yellow: 1),
-          const [PreventBadge(value: 1)],
-          repeat: true,
-        );
-        symbol(
-          const SymbolGoal(red: 1),
-          const [PreventBadge(value: 2)],
-          repeat: true,
-        );
+        symbol(const SymbolGoal(yellow: 1), const [
+          PreventBadge(value: 1),
+        ], repeat: true);
+        symbol(const SymbolGoal(red: 1), const [
+          PreventBadge(value: 2),
+        ], repeat: true);
       }
       return lines;
     case 'vert-vert-015':
       symbol(const SymbolGoal(red: 1), const [
-        Text(
-          'return half incoming damage',
-          textAlign: TextAlign.right,
-        ),
+        Text('return half incoming damage', textAlign: TextAlign.right),
       ]);
       return lines;
     case 'vert-vert-017':
@@ -4474,16 +4544,12 @@ List<Widget> _defenseEffectLines(EnemyNode enemy) {
       symbol(const SymbolGoal(white: 1), const [
         DamageBadge(value: 1, imparable: true),
       ], repeat: true);
-      symbol(
-        const SymbolGoal(yellow: 1),
-        const [PreventBadge(value: 1)],
-        repeat: true,
-      );
-      symbol(
-        const SymbolGoal(red: 1),
-        const [PreventBadge(value: 1)],
-        repeat: true,
-      );
+      symbol(const SymbolGoal(yellow: 1), const [
+        PreventBadge(value: 1),
+      ], repeat: true);
+      symbol(const SymbolGoal(red: 1), const [
+        PreventBadge(value: 1),
+      ], repeat: true);
       return lines;
     case 'rat-de-la-rue':
       symbol(const SymbolGoal(yellow: 2), [
@@ -4497,10 +4563,7 @@ List<Widget> _defenseEffectLines(EnemyNode enemy) {
         ),
       ]);
       symbol(const SymbolGoal(red: 2), const [
-        Text(
-          'ignore all damage',
-          textAlign: TextAlign.right,
-        ),
+        Text('ignore all damage', textAlign: TextAlign.right),
       ]);
       return lines;
     case 'bleu-vert-022':
@@ -4515,32 +4578,24 @@ List<Widget> _defenseEffectLines(EnemyNode enemy) {
       ]);
       return lines;
     case 'bleu-bleu-001':
-      symbol(
-        const SymbolGoal(yellow: 1),
-        const [PreventBadge(value: 1)],
-        repeat: true,
-      );
+      symbol(const SymbolGoal(yellow: 1), const [
+        PreventBadge(value: 1),
+      ], repeat: true);
       return lines;
     case 'bleu-bleu-002':
       symbol(const SymbolGoal(yellow: 2), const [PreventBadge(value: 4)]);
       return lines;
     case 'bleu-bleu-003':
-      symbol(
-        const SymbolGoal(yellow: 1),
-        [
-          TokenBadge(label: 'Chaos', color: enemy.rank.color),
-          const DamageBadge(value: 1, imparable: true),
-          const Text('per Chaos'),
-        ],
-        repeat: true,
-      );
+      symbol(const SymbolGoal(yellow: 1), [
+        TokenBadge(label: 'Chaos', color: enemy.rank.color),
+        const DamageBadge(value: 1, imparable: true),
+        const Text('per Chaos'),
+      ], repeat: true);
       return lines;
     case 'bleu-bleu-004':
-      symbol(
-        const SymbolGoal(yellow: 1),
-        [LifeStealBadge(value: 1, color: enemy.rank.color)],
-        repeat: true,
-      );
+      symbol(const SymbolGoal(yellow: 1), [
+        LifeStealBadge(value: 1, color: enemy.rank.color),
+      ], repeat: true);
       symbol(const SymbolGoal(red: 1), [
         TokenBadge(label: 'Chaos', color: enemy.rank.color),
       ]);
@@ -4772,15 +4827,9 @@ class CombatAiChatDock extends StatelessWidget {
                   : _topCropAlignment(Alignment.centerLeft),
               portraitScale:
                   phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
-                  ? (phase == CombatPhase.heroUpkeep
-                        ? 1
-                        : adventure.hero.imageScale)
+                  ? adventure.hero.imageScale
                   : 1,
-              portraitFit:
-                  phase == CombatPhase.heroUpkeep ||
-                      phase == CombatPhase.minionUpkeep
-                  ? BoxFit.contain
-                  : BoxFit.cover,
+              portraitFit: BoxFit.cover,
               showPortraitVitals:
                   phase == CombatPhase.hero ||
                   phase == CombatPhase.minionAttack,
@@ -4994,9 +5043,7 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
     final chat = Container(
       width: double.infinity,
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.35),
-      ),
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.35)),
       child: SingleChildScrollView(
         reverse: true,
         child: RichText(
@@ -5065,7 +5112,9 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Align(
-            alignment: alignRight ? Alignment.centerRight : Alignment.centerLeft,
+            alignment: alignRight
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
             child: FractionallySizedBox(
               widthFactor: 0.5,
               child: _AiChatVitalEditor(
@@ -5073,7 +5122,8 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
                 value: _draftValue,
                 color: editorColor,
                 onChanged: (delta) => setState(
-                  () => _draftValue = (_draftValue + delta).clamp(0, 99).toInt(),
+                  () =>
+                      _draftValue = (_draftValue + delta).clamp(0, 99).toInt(),
                 ),
                 onSave: _save,
               ),
@@ -5098,8 +5148,8 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
                 value: _draftValue,
                 color: editorColor,
                 onChanged: (delta) => setState(
-                  () => _draftValue =
-                      (_draftValue + delta).clamp(0, 99).toInt(),
+                  () =>
+                      _draftValue = (_draftValue + delta).clamp(0, 99).toInt(),
                 ),
                 onSave: _save,
               ),
@@ -5844,7 +5894,8 @@ class _HeroQuickVitalsLineState extends State<_HeroQuickVitalsLine> {
             label: 'HP',
             value: _hp,
             color: heroAccent,
-            onChanged: (delta) => setState(() => _hp = (_hp + delta).clamp(0, 99)),
+            onChanged: (delta) =>
+                setState(() => _hp = (_hp + delta).clamp(0, 99)),
           ),
         ),
         const SizedBox(width: 8),
@@ -5853,7 +5904,8 @@ class _HeroQuickVitalsLineState extends State<_HeroQuickVitalsLine> {
             label: 'CP',
             value: _cp,
             color: heroAccent,
-            onChanged: (delta) => setState(() => _cp = (_cp + delta).clamp(0, 99)),
+            onChanged: (delta) =>
+                setState(() => _cp = (_cp + delta).clamp(0, 99)),
           ),
         ),
         const SizedBox(width: 8),
@@ -6005,7 +6057,8 @@ class MinionAiPanel extends StatelessWidget {
           ],
           if (visibleDice.isNotEmpty || isDefensePhase) ...[
             _SolidRollButton(
-              onPressed: !hasRollingDice && rollCount < maxRolls && diceToRoll > 0
+              onPressed:
+                  !hasRollingDice && rollCount < maxRolls && diceToRoll > 0
                   ? onRoll
                   : null,
               color: enemy.rank.color,
@@ -6760,7 +6813,8 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
     final rolledIds = <int>[];
     setState(() {
       final visibleDice = _dice.take(_diceToRoll.clamp(0, 5)).toList();
-      _animationPending = combatDiceAnimationSeconds > 0 && visibleDice.isNotEmpty;
+      _animationPending =
+          combatDiceAnimationSeconds > 0 && visibleDice.isNotEmpty;
       for (final die in visibleDice) {
         die.value = _random.nextInt(6) + 1;
         die.settled = !_animationPending;
@@ -7061,7 +7115,10 @@ class _CubeIconPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final scale = size.shortestSide / 100;
     canvas.save();
-    canvas.translate((size.width - 100 * scale) / 2, (size.height - 100 * scale) / 2);
+    canvas.translate(
+      (size.width - 100 * scale) / 2,
+      (size.height - 100 * scale) / 2,
+    );
     canvas.scale(scale);
 
     final fill = Paint()..color = faceColor;
@@ -7170,12 +7227,7 @@ class DieSymbolMark extends StatelessWidget {
     };
     return Padding(
       padding: const EdgeInsets.only(right: 4),
-      child: Image.asset(
-        asset,
-        width: 34,
-        height: 34,
-        fit: BoxFit.contain,
-      ),
+      child: Image.asset(asset, width: 34, height: 34, fit: BoxFit.contain),
     );
   }
 }
@@ -7359,6 +7411,28 @@ class LifeStealBadge extends StatelessWidget {
       ),
       child: Text(
         'Steal $value health',
+        style: TextStyle(color: color, fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
+
+class CpStealBadge extends StatelessWidget {
+  const CpStealBadge({required this.value, required this.color, super.key});
+
+  final int value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        'Steal $value CP',
         style: TextStyle(color: color, fontWeight: FontWeight.w900),
       ),
     );
@@ -7858,7 +7932,8 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
             adventure: widget.adventure,
             enemy: widget.enemy,
             onHeroHp: () => _openEditor('heroHp', widget.adventure.health),
-            onHeroCp: () => _openEditor('heroCp', widget.adventure.combatPoints),
+            onHeroCp: () =>
+                _openEditor('heroCp', widget.adventure.combatPoints),
             onEnemyHp: () => _openEditor('enemyHp', widget.enemy.health),
             onEnemyCp: () => _openEditor('enemyCp', widget.enemy.combatPoints),
             onEditHeroTokens: _editHeroTokens,
@@ -8109,9 +8184,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 196,
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.26),
-      ),
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.26)),
       clipBehavior: Clip.hardEdge,
       child: Stack(
         alignment: Alignment.center,
@@ -8136,7 +8209,10 @@ class CombatVersusStatusPanel extends StatelessWidget {
                   onEditTokens: onEditEnemyTokens,
                 ),
               ),
-              Container(width: 1, color: panelBorderGrey.withValues(alpha: 0.75)),
+              Container(
+                width: 1,
+                color: panelBorderGrey.withValues(alpha: 0.75),
+              ),
               Expanded(
                 child: _CombatantVersusHalf(
                   title: adventure.hero.label,
@@ -8160,21 +8236,21 @@ class CombatVersusStatusPanel extends StatelessWidget {
             top: 66,
             child: IgnorePointer(
               child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.66),
-                borderRadius: BorderRadius.circular(99),
-                border: Border.all(color: panelBorderGrey),
-              ),
-              child: const Text(
-                'VS',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.66),
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: panelBorderGrey),
+                ),
+                child: const Text(
+                  'VS',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                  ),
                 ),
               ),
-            ),
             ),
           ),
         ],
@@ -8239,10 +8315,7 @@ class _CombatantVersusHalf extends StatelessWidget {
           children: [
             _CombatBadgeButton(
               onTap: onHp,
-              child: _HpHeartBadge(
-                value: hp,
-                style: hpStyle,
-              ),
+              child: _HpHeartBadge(value: hp, style: hpStyle),
             ),
             const SizedBox(height: 8),
             _CombatBadgeButton(
@@ -8340,9 +8413,7 @@ class _NamedCombatPortrait extends StatelessWidget {
                 color: accent,
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
-                shadows: const [
-                  Shadow(color: Colors.black, blurRadius: 8),
-                ],
+                shadows: const [Shadow(color: Colors.black, blurRadius: 8)],
               ),
             ),
           ),
@@ -9375,9 +9446,8 @@ class DicePanel extends StatelessWidget {
               ],
               Expanded(
                 child: _SolidRollButton(
-                  onPressed: !hasRollingDice &&
-                          rollCount < maxRolls &&
-                          diceToRoll > 0
+                  onPressed:
+                      !hasRollingDice && rollCount < maxRolls && diceToRoll > 0
                       ? onRoll
                       : null,
                   color: rollColor,
@@ -9431,8 +9501,8 @@ class _SolidRollButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = ThemeData.estimateBrightnessForColor(color) ==
-            Brightness.dark
+    final foreground =
+        ThemeData.estimateBrightnessForColor(color) == Brightness.dark
         ? Colors.white
         : Colors.black;
     return FilledButton(
@@ -9553,20 +9623,21 @@ class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
     super.initState();
     _lastRollTick = widget.die.rollTick;
     _animatedValue = widget.die.value;
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(
-        seconds: combatDiceAnimationSeconds.clamp(1, 5).toInt(),
-      ),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _faceTimer?.cancel();
-          if (mounted) {
-            setState(() => _animatedValue = widget.die.value);
+    _controller =
+        AnimationController(
+          vsync: this,
+          duration: Duration(
+            seconds: combatDiceAnimationSeconds.clamp(1, 5).toInt(),
+          ),
+        )..addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            _faceTimer?.cancel();
+            if (mounted) {
+              setState(() => _animatedValue = widget.die.value);
+            }
+            widget.onAnimationDone?.call();
           }
-          widget.onAnimationDone?.call();
-        }
-      });
+        });
   }
 
   @override
@@ -9692,4 +9763,3 @@ class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
     );
   }
 }
-

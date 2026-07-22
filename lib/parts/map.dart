@@ -132,6 +132,10 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
 }
 
 class _MapPageState extends State<MapPage> {
+  static const double _mapVisualOffsetX = -600;
+  static const double _mapVisualOffsetY = -800;
+  static const double _mapVisualBleedX = 760;
+  static const double _mapVisualBleedY = 1080;
   static double _savedMapScale = 1.0;
   static const double _focusedMapScale = 1.0;
   static const double _branchChoiceMapScale = 0.45;
@@ -208,6 +212,10 @@ class _MapPageState extends State<MapPage> {
                                 max(1160, constraints.maxWidth + 720),
                                 max(1320, constraints.maxHeight + 520),
                               );
+                              final renderSize = Size(
+                                mapSize.width + _mapVisualBleedX * 2,
+                                mapSize.height + _mapVisualBleedY * 2,
+                              );
                               _latestMapSize = mapSize;
                               return InteractiveViewer(
                                 constrained: false,
@@ -227,9 +235,10 @@ class _MapPageState extends State<MapPage> {
                                     controller: _mapHorizontalController,
                                     scrollDirection: Axis.horizontal,
                                     child: SizedBox(
-                                      width: mapSize.width,
-                                      height: mapSize.height,
+                                      width: renderSize.width,
+                                      height: renderSize.height,
                                       child: Stack(
+                                        clipBehavior: Clip.none,
                                         children: [
                                           ..._buildMapNodes(context, mapSize),
                                         ],
@@ -297,7 +306,11 @@ class _MapPageState extends State<MapPage> {
   }
 
   List<Widget> _buildMapNodes(BuildContext context, Size size) {
-    final positions = _positionsFor(size);
+    final positions = _positionsFor(
+      size,
+      includeBleed: true,
+      visualOffset: true,
+    );
     return [
       Positioned.fill(
         child: CustomPaint(
@@ -354,13 +367,28 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
-  Map<int, Offset> _positionsFor(Size size) {
+  Map<int, Offset> _positionsFor(
+    Size size, {
+    bool includeBleed = false,
+    bool visualOffset = false,
+  }) {
     final width = size.width;
     final height = size.height;
     final centerX = width / 2;
     final bottom = height - 180;
     final rowGap = max(150.0, (height - 360) / 7);
-    final positions = <int, Offset>{0: Offset(centerX, bottom)};
+    Offset position(Offset offset) {
+      var translated = offset;
+      if (includeBleed) {
+        translated += const Offset(_mapVisualBleedX, _mapVisualBleedY);
+      }
+      if (visualOffset) {
+        translated += const Offset(_mapVisualOffsetX, _mapVisualOffsetY);
+      }
+      return translated;
+    }
+
+    final positions = <int, Offset>{0: position(Offset(centerX, bottom))};
     for (final branch in BranchSide.values) {
       final branchEnemies =
           widget.adventure.enemies
@@ -379,7 +407,7 @@ class _MapPageState extends State<MapPage> {
             sign * width * (0.075 + enemy.step * 0.032) +
             width * pairOffset * 0.72;
         final y = bottom - rowGap * enemy.step;
-        positions[enemy.id] = Offset(x, y);
+        positions[enemy.id] = position(Offset(x, y));
       }
     }
     return positions;
@@ -471,7 +499,7 @@ class _MapPageState extends State<MapPage> {
         !_mapHorizontalController.hasClients) {
       return;
     }
-    final positions = _positionsFor(mapSize);
+    final positions = _positionsFor(mapSize, includeBleed: true);
     final focus = _mapFocusFor(enemy, positions);
     if (focus == null) {
       return;
@@ -481,7 +509,8 @@ class _MapPageState extends State<MapPage> {
         : _focusedMapScale;
     _setMapScale(scale);
     final verticalTarget =
-        focus.dy - _mapScrollController.position.viewportDimension / (2 * scale);
+        focus.dy -
+        _mapScrollController.position.viewportDimension / (2 * scale);
     final horizontalTarget =
         focus.dx -
         _mapHorizontalController.position.viewportDimension / (2 * scale);
@@ -1736,4 +1765,3 @@ class StepperStat extends StatelessWidget {
     );
   }
 }
-

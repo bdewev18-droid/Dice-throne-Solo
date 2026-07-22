@@ -20,12 +20,11 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.11';
+const String appVersionLabel = 'Version 1.3.15';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
-const String defaultEnemyChatPortrait =
-    'assets/enemy_previews/bleu-001.webp';
+const String defaultEnemyChatPortrait = 'assets/enemy_previews/bleu-001.webp';
 const int mediumTarget = 33;
 const int hardTarget = 52;
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
@@ -563,8 +562,8 @@ enum HistorySort {
 enum SurvivalMode {
   mediumFixed('Medium fixed route', mediumTarget, RunDifficulty.medium, false),
   mediumRandom('Medium random route', mediumTarget, RunDifficulty.medium, true),
-  hardFixed('Hard fixed route', hardTarget, RunDifficulty.hard, false),
-  hardRandom('Hard random route', hardTarget, RunDifficulty.hard, true),
+  hardFixed('Difficult fixed route', hardTarget, RunDifficulty.hard, false),
+  hardRandom('Difficult random route', hardTarget, RunDifficulty.hard, true),
   free('Free mode', mediumTarget, RunDifficulty.free, true),
   naraxus('Naxarus Battle', 100, RunDifficulty.naraxus, false);
 
@@ -583,7 +582,7 @@ enum SurvivalMode {
 
 enum RunDifficulty {
   medium('Medium'),
-  hard('Hard'),
+  hard('Difficult'),
   free('Free'),
   naraxus('Naxarus');
 
@@ -687,7 +686,7 @@ class SurvivalConfig {
 
   String get label => switch (mode) {
     SurvivalMode.mediumFixed || SurvivalMode.mediumRandom => 'Medium mode',
-    SurvivalMode.hardFixed || SurvivalMode.hardRandom => 'Hard mode',
+    SurvivalMode.hardFixed || SurvivalMode.hardRandom => 'Difficult mode',
     SurvivalMode.free => 'Free mode',
     SurvivalMode.naraxus => 'Naxarus Battle',
   };

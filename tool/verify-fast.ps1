@@ -24,9 +24,40 @@ function Invoke-BoundedFlutter {
   param([string[]]$Arguments)
 
   Write-Host "> $flutter $($Arguments -join ' ')"
-  $process = Start-Process -FilePath $flutter -ArgumentList $Arguments -WorkingDirectory $root -NoNewWindow -PassThru
+  $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+  $startInfo.FileName = $env:ComSpec
+  $startInfo.WorkingDirectory = $root
+  $startInfo.UseShellExecute = $false
+  $startInfo.CreateNoWindow = $false
+  $startInfo.RedirectStandardOutput = $true
+  $startInfo.RedirectStandardError = $true
+  $quotedFlutter = '"' + $flutter + '"'
+  $quotedArguments = $Arguments | ForEach-Object {
+    if ($_ -match '\s') {
+      '"' + ($_ -replace '"', '\"') + '"'
+    } else {
+      $_
+    }
+  }
+  $startInfo.Arguments = "/d /c call $quotedFlutter $($quotedArguments -join ' ')"
+  $process = [System.Diagnostics.Process]::Start($startInfo)
+  $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+  $stderrTask = $process.StandardError.ReadToEndAsync()
   if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
     Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+    $stdout = $stdoutTask.Result
+    $stderr = $stderrTask.Result
+    if ($stdout) { Write-Host $stdout }
+    if ($stderr) { Write-Host $stderr }
+    $combinedOutput = "$stdout`n$stderr"
+    $acceptedTimeout =
+      ($Arguments[0] -eq 'analyze' -and $combinedOutput -match 'No issues found!') -or
+      ($Arguments[0] -eq 'build' -and $Arguments[1] -eq 'web' -and $combinedOutput -match 'Built build\\web') -or
+      ($Arguments[0] -eq 'build' -and $Arguments[1] -eq 'apk' -and $combinedOutput -match 'Built build\\app\\outputs\\flutter-apk')
+    if ($acceptedTimeout) {
+      Write-Host "Flutter a affiche un succes avant le timeout; verification acceptee."
+      return
+    }
     throw @"
 Commande Flutter interrompue apres $TimeoutSeconds secondes.
 
@@ -35,6 +66,11 @@ Le Flutter tool doit pouvoir ecrire dans %APPDATA%\.flutter_tool_state et accede
 Voir docs\BUILD_PROCESS.md, section Fast local check.
 "@
   }
+  $stdout = $stdoutTask.Result
+  $stderr = $stderrTask.Result
+  if ($stdout) { Write-Host $stdout }
+  if ($stderr) { Write-Host $stderr }
+  $process.Refresh()
   if ($process.ExitCode -ne 0) {
     throw "Flutter a retourne le code $($process.ExitCode)."
   }

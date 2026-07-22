@@ -298,7 +298,7 @@
             },
             "prevent": 0,
             "returnDamage": 0,
-            "undefendable": false,
+            "undefendable": true,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,

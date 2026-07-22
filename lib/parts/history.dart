@@ -27,6 +27,9 @@ class _HistoryPageState extends State<HistoryPage> {
   final Set<GameRecord> _selectedForDelete = {};
   final Set<HeroType> _expandedHeroes = {};
 
+  bool get _showRouteFilter =>
+      _difficulty == RunDifficulty.medium || _difficulty == RunDifficulty.hard;
+
   @override
   Widget build(BuildContext context) {
     final records = [...widget.records.where(_matchesFilters)];
@@ -79,21 +82,23 @@ class _HistoryPageState extends State<HistoryPage> {
                       .toList(),
                 ),
                 const SizedBox(height: 12),
-                SegmentedButton<RandomFilter>(
-                  segments: RandomFilter.values
-                      .map(
-                        (filter) => ButtonSegment(
-                          value: filter,
-                          label: Text(filter.label),
-                        ),
-                      )
-                      .toList(),
-                  selected: {_randomFilter},
-                  onSelectionChanged: (selection) {
-                    setState(() => _randomFilter = selection.first);
-                  },
-                ),
-                const SizedBox(height: 12),
+                if (_showRouteFilter) ...[
+                  SegmentedButton<RandomFilter>(
+                    segments: RandomFilter.values
+                        .map(
+                          (filter) => ButtonSegment(
+                            value: filter,
+                            label: Text(filter.label),
+                          ),
+                        )
+                        .toList(),
+                    selected: {_randomFilter},
+                    onSelectionChanged: (selection) {
+                      setState(() => _randomFilter = selection.first);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 DropdownButtonFormField<HistorySort>(
                   initialValue: _sort,
                   decoration: const InputDecoration(
@@ -151,6 +156,9 @@ class _HistoryPageState extends State<HistoryPage> {
   bool _matchesFilters(GameRecord record) {
     if (record.mode.difficulty != _difficulty) {
       return false;
+    }
+    if (!_showRouteFilter) {
+      return true;
     }
     return switch (_randomFilter) {
       RandomFilter.both => true,
@@ -232,9 +240,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         style: const TextStyle(fontWeight: FontWeight.w900),
                       ),
                     ),
-                    Expanded(
-                      child: _HistoryMetricText(runs.length.toString()),
-                    ),
+                    Expanded(child: _HistoryMetricText(runs.length.toString())),
                     Expanded(
                       child: _HistoryMetricText(
                         _roundedAverageLabel(_averageEnemies(runs)),
@@ -474,9 +480,7 @@ class _RunDetailRow extends StatelessWidget {
           child: Text(showHero ? record.hero.label : _formatDate(record.date)),
         ),
         const Expanded(child: _HistoryMetricText('1')),
-        Expanded(
-          child: _HistoryMetricText(record.enemiesDefeated.toString()),
-        ),
+        Expanded(child: _HistoryMetricText(record.enemiesDefeated.toString())),
         Expanded(
           child: _HistoryMetricText(
             record.healthRemaining == null
@@ -484,12 +488,8 @@ class _RunDetailRow extends StatelessWidget {
                 : record.healthRemaining.toString(),
           ),
         ),
-        Expanded(
-          child: _HistoryMetricText(_formatDuration(record.duration)),
-        ),
-        Expanded(
-          child: _HistoryMetricText(record.score.toString()),
-        ),
+        Expanded(child: _HistoryMetricText(_formatDuration(record.duration))),
+        Expanded(child: _HistoryMetricText(record.score.toString())),
       ],
     );
   }
@@ -679,4 +679,3 @@ class _ManualRunDialogState extends State<ManualRunDialog> {
     );
   }
 }
-
