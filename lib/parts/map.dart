@@ -132,19 +132,20 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
 }
 
 class _MapPageState extends State<MapPage> {
-  static const double _mapVisualOffsetX = -600;
-  static const double _mapVisualOffsetY = -800;
+  static const double _mapVisualOffsetX = -1400;
+  static const double _mapVisualOffsetY = -2000;
+  static const double _latePathFocusOffsetX = 0;
+  static const double _latePathFocusOffsetY = 0;
   static const double _mapVisualBleedX = 760;
   static const double _mapVisualBleedY = 1080;
   static double _savedMapScale = 1.0;
   static const double _focusedMapScale = 1.0;
-  static const double _branchChoiceMapScale = 0.45;
+  static const double _branchChoiceMapScale = _focusedMapScale;
   late final TransformationController _mapController =
       TransformationController();
-  final ScrollController _mapScrollController = ScrollController();
-  final ScrollController _mapHorizontalController = ScrollController();
   int? _selectedEnemyId;
   Size? _latestMapSize;
+  Size? _latestMapViewportSize;
 
   @override
   void initState() {
@@ -162,8 +163,6 @@ class _MapPageState extends State<MapPage> {
   @override
   void dispose() {
     _mapController.dispose();
-    _mapScrollController.dispose();
-    _mapHorizontalController.dispose();
     super.dispose();
   }
 
@@ -217,33 +216,21 @@ class _MapPageState extends State<MapPage> {
                                 mapSize.height + _mapVisualBleedY * 2,
                               );
                               _latestMapSize = mapSize;
+                              _latestMapViewportSize = constraints.biggest;
                               return InteractiveViewer(
                                 constrained: false,
-                                boundaryMargin: const EdgeInsets.all(360),
+                                boundaryMargin: const EdgeInsets.all(4000),
                                 minScale: 0.45,
                                 maxScale: 2.4,
                                 transformationController: _mapController,
-                                child: SingleChildScrollView(
-                                  controller: _mapScrollController,
-                                  padding: const EdgeInsets.fromLTRB(
-                                    260,
-                                    100,
-                                    260,
-                                    180,
-                                  ),
-                                  child: SingleChildScrollView(
-                                    controller: _mapHorizontalController,
-                                    scrollDirection: Axis.horizontal,
-                                    child: SizedBox(
-                                      width: renderSize.width,
-                                      height: renderSize.height,
-                                      child: Stack(
-                                        clipBehavior: Clip.none,
-                                        children: [
-                                          ..._buildMapNodes(context, mapSize),
-                                        ],
-                                      ),
-                                    ),
+                                child: SizedBox(
+                                  width: renderSize.width,
+                                  height: renderSize.height,
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      ..._buildMapNodes(context, mapSize),
+                                    ],
                                   ),
                                 ),
                               );
@@ -259,9 +246,17 @@ class _MapPageState extends State<MapPage> {
                               adventure: adventure,
                               onReplay: widget.onReplay,
                               onChangeHero: widget.onChangeHero,
-                              onDetails: () => _openDetails(context),
+                              onDetails: () => Navigator.of(
+                                context,
+                              ).popUntil((route) => route.isFirst),
                             ),
                           ),
+                        Positioned(
+                          left: 12,
+                          right: 12,
+                          bottom: 126,
+                          child: MapObjectiveCard(adventure: adventure),
+                        ),
                         Positioned(
                           left: 12,
                           right: 12,
@@ -493,52 +488,37 @@ class _MapPageState extends State<MapPage> {
 
   void _centerOnEnemy(EnemyNode? enemy, {bool immediate = false}) {
     final mapSize = _latestMapSize;
+    final viewportSize = _latestMapViewportSize;
     if (enemy == null ||
         mapSize == null ||
-        !_mapScrollController.hasClients ||
-        !_mapHorizontalController.hasClients) {
+        viewportSize == null) {
       return;
     }
-    final positions = _positionsFor(mapSize, includeBleed: true);
+    final positions = _positionsFor(
+      mapSize,
+      includeBleed: true,
+      visualOffset: true,
+    );
     final focus = _mapFocusFor(enemy, positions);
     if (focus == null) {
       return;
     }
+    final cameraOffset = _focusOffsetFor(enemy);
     final scale = _isBranchChoiceFocus()
         ? _branchChoiceMapScale
         : _focusedMapScale;
-    _setMapScale(scale);
-    final verticalTarget =
-        focus.dy -
-        _mapScrollController.position.viewportDimension / (2 * scale);
-    final horizontalTarget =
-        focus.dx -
-        _mapHorizontalController.position.viewportDimension / (2 * scale);
-
-    final v = verticalTarget.clamp(
-      _mapScrollController.position.minScrollExtent,
-      _mapScrollController.position.maxScrollExtent,
+    final safeScale = scale.clamp(0.45, 2.4).toDouble();
+    _savedMapScale = safeScale;
+    final target = Offset(
+      viewportSize.width / 2 + cameraOffset.dx,
+      viewportSize.height / 2 + cameraOffset.dy,
     );
-    final h = horizontalTarget.clamp(
-      _mapHorizontalController.position.minScrollExtent,
-      _mapHorizontalController.position.maxScrollExtent,
-    );
-
-    if (immediate) {
-      _mapScrollController.jumpTo(v);
-      _mapHorizontalController.jumpTo(h);
-    } else {
-      _mapScrollController.animateTo(
-        v,
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeOutCubic,
-      );
-      _mapHorizontalController.animateTo(
-        h,
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeOutCubic,
-      );
-    }
+    _mapController.value = Matrix4.identity()
+      ..translate(
+        target.dx - focus.dx * safeScale,
+        target.dy - focus.dy * safeScale,
+      )
+      ..scaleByDouble(safeScale, safeScale, 1, 1);
   }
 
   Offset? _mapFocusFor(EnemyNode fallback, Map<int, Offset> positions) {
@@ -558,7 +538,18 @@ class _MapPageState extends State<MapPage> {
         return sum / currentPositions.length.toDouble();
       }
     }
-    return positions[fallback.id];
+    final fallbackPosition = positions[fallback.id];
+    if (fallbackPosition == null) {
+      return null;
+    }
+    return fallbackPosition;
+  }
+
+  Offset _focusOffsetFor(EnemyNode enemy) {
+    if (enemy.branch != null && enemy.step >= 2) {
+      return const Offset(_latePathFocusOffsetX, _latePathFocusOffsetY);
+    }
+    return Offset.zero;
   }
 
   bool _isBranchChoiceFocus() {
@@ -566,13 +557,6 @@ class _MapPageState extends State<MapPage> {
         .where((enemy) => enemy.current && !enemy.defeated)
         .toList();
     return currentEnemies.length >= 2;
-  }
-
-  void _setMapScale(double scale) {
-    final safeScale = scale.clamp(0.45, 2.4).toDouble();
-    _savedMapScale = safeScale;
-    _mapController.value = Matrix4.identity()
-      ..scaleByDouble(safeScale, safeScale, 1, 1);
   }
 
   void _openDetails(BuildContext context) {
@@ -992,6 +976,42 @@ class CurrentTargetCard extends StatelessWidget {
   }
 }
 
+class MapObjectiveCard extends StatelessWidget {
+  const MapObjectiveCard({required this.adventure, super.key});
+
+  final AdventureState adventure;
+
+  @override
+  Widget build(BuildContext context) {
+    final enemyCount = adventure.enemies.length;
+    final pointCount = adventure.targetScore;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xf2121212),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: panelBorderGrey, width: 2),
+        boxShadow: const [
+          BoxShadow(color: Colors.black87, blurRadius: 10),
+        ],
+      ),
+      child: Text(
+        "The hero's objective is to defeat $enemyCount enemies and score $pointCount points.",
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          height: 1.12,
+        ),
+      ),
+    );
+  }
+}
+
 class EndAdventureBanner extends StatelessWidget {
   const EndAdventureBanner({
     required this.adventure,
@@ -1035,7 +1055,7 @@ class EndAdventureBanner extends StatelessWidget {
               ),
               OutlinedButton(
                 onPressed: onDetails,
-                child: const Text('Details'),
+                child: const Text('Homepage'),
               ),
             ],
           ),

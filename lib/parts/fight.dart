@@ -1322,6 +1322,20 @@ class _FightPageState extends State<FightPage> {
       notes.add('Defense roll failed.');
     }
 
+    _markExtraDiceSelection(
+      _dice,
+      _defenseSelectionIds(
+        enemy: enemy,
+        rolled: rolled,
+        prevented: prevented,
+        returnDamage: returnDamage,
+        lifeSteal: lifeSteal,
+        cpSteal: cpSteal,
+        heroTokens: heroTokens,
+        minionTokens: minionTokens,
+      ),
+    );
+
     _battleDefenseValue = prevented.clamp(0, 99);
     _battleReturnDamage = returnDamage.clamp(0, 99);
     _battleReturnDamageUndefendable =
@@ -1338,6 +1352,92 @@ class _FightPageState extends State<FightPage> {
     _battleNotes
       ..clear()
       ..addAll(notes);
+  }
+
+  Iterable<int> _defenseSelectionIds({
+    required EnemyNode enemy,
+    required List<GameDie> rolled,
+    required int prevented,
+    required int returnDamage,
+    required int lifeSteal,
+    required int cpSteal,
+    required List<String> heroTokens,
+    required List<String> minionTokens,
+  }) {
+    final hasEffect =
+        prevented > 0 ||
+        returnDamage > 0 ||
+        lifeSteal > 0 ||
+        cpSteal > 0 ||
+        heroTokens.isNotEmpty ||
+        minionTokens.isNotEmpty;
+    if (!hasEffect) {
+      return const <int>[];
+    }
+
+    Iterable<int> firstSymbols(DieSymbol symbol, [int count = 1]) => rolled
+        .where((die) => die.symbol == symbol)
+        .take(count)
+        .map((die) => die.id);
+
+    Iterable<int> allSymbols(DieSymbol symbol) =>
+        rolled.where((die) => die.symbol == symbol).map((die) => die.id);
+
+    switch (enemy.profileKey) {
+      case 'naraxus':
+      case 'ronin-vagabond':
+        return rolled.take(1).map((die) => die.id);
+      case 'fee':
+      case 'elfe-du-chaos':
+      case 'bleu-bleu-002':
+        return firstSymbols(DieSymbol.yellow, 2);
+      case 'enchanteur-gobelin':
+        return [
+          ...firstSymbols(DieSymbol.yellow),
+          ...firstSymbols(DieSymbol.red),
+        ];
+      case 'archer-de-lombre':
+      case 'oni-delirant':
+      case 'vert-vert-011':
+      case 'vert-vert-012':
+      case 'vert-vert-016':
+      case 'bleu-bleu-001':
+      case 'bleu-bleu-004':
+        return allSymbols(DieSymbol.yellow);
+      case 'ombre-feline':
+      case 'vert-vert-017':
+        return firstSymbols(DieSymbol.white);
+      case 'epeiste-egare':
+      case 'vert-vert-014':
+      case 'vert-vert-020':
+        return [
+          ...allSymbols(DieSymbol.white),
+          ...allSymbols(DieSymbol.yellow),
+          ...allSymbols(DieSymbol.red),
+        ];
+      case 'vert-vert-013':
+      case 'vert-vert-019':
+      case 'bleu-vert-023':
+        return allSymbols(DieSymbol.red);
+      case 'vert-vert-015':
+        return firstSymbols(DieSymbol.red);
+      case 'vert-vert-018':
+      case 'bleu-vert-022':
+      case 'bleu-bleu-003':
+        return [
+          ...allSymbols(DieSymbol.yellow),
+          ...allSymbols(DieSymbol.red),
+        ];
+      case 'vert-vert-021':
+        return allSymbols(DieSymbol.yellow);
+      case 'rat-de-la-rue':
+        return [
+          ...firstSymbols(DieSymbol.yellow, 2),
+          ...firstSymbols(DieSymbol.red, 2),
+        ];
+      default:
+        return rolled.map((die) => die.id);
+    }
   }
 
   void _resolveMinionAttackFromDice() {

@@ -27,6 +27,9 @@ function sendFile(response, filePath) {
     }
     response.writeHead(200, {
       'Content-Type': types[path.extname(filePath)] || 'application/octet-stream',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      Pragma: 'no-cache',
+      Expires: '0',
     });
     response.end(data);
   });
