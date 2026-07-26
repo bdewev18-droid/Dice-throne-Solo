@@ -20,7 +20,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.24';
+const String appVersionLabel = 'Version 1.3.45';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -63,12 +63,103 @@ enum HeroType {
     Color(0xff64b7e8),
     [HeroSegment.season1],
   ),
+  treant(
+    'Treant',
+    'assets/treant_hero.webp',
+    Alignment.center,
+    Color(0xff70b85a),
+    [HeroSegment.season1],
+  ),
+  ninja(
+    'Ninja',
+    'assets/ninja_hero.webp',
+    Alignment.center,
+    Color(0xff2cc6a8),
+    [HeroSegment.season1],
+  ),
   tacticien(
     'Tactician',
     'assets/tactician_hero.png',
     Alignment.center,
     Color(0xffd92f2f),
     [HeroSegment.season2],
+  ),
+  artificer(
+    'Artificer',
+    'assets/artificer_hero.webp',
+    Alignment.center,
+    Color(0xff37b8ff),
+    [HeroSegment.season2],
+  ),
+  cursedPirate(
+    'Cursed Pirate',
+    'assets/cursed_pirate_hero.webp',
+    Alignment.center,
+    Color(0xff20c7b8),
+    [HeroSegment.season2],
+  ),
+  gunslinger(
+    'Gunslinger',
+    'assets/gunslinger_hero.webp',
+    Alignment.center,
+    Color(0xffc57a35),
+    [HeroSegment.season2],
+  ),
+  samurai(
+    'Samurai',
+    'assets/samurai_hero.webp',
+    Alignment.center,
+    Color(0xffa82828),
+    [HeroSegment.season2],
+  ),
+  seraph(
+    'Seraph',
+    'assets/seraph_hero.webp',
+    Alignment.center,
+    Color(0xffffd35c),
+    [HeroSegment.season2],
+  ),
+  vampireLord(
+    'Vampire Lord',
+    'assets/vampire_lord_hero.webp',
+    Alignment.center,
+    Color(0xff9f2035),
+    [HeroSegment.season2],
+  ),
+  huntress(
+    'Huntress',
+    'assets/huntress_hero.webp',
+    Alignment.center,
+    Color(0xff4fa95b),
+    [HeroSegment.season2],
+  ),
+  headlessHorseman(
+    'Headless Horseman',
+    'assets/Headless-Horseman.webp',
+    Alignment.center,
+    Color(0xfff06a2b),
+    [HeroSegment.outcast],
+  ),
+  paleLady(
+    'Pale Lady',
+    'assets/Pale-Lady.webp',
+    Alignment.center,
+    Color(0xffcfd6ff),
+    [HeroSegment.outcast],
+  ),
+  raveness(
+    'Raveness',
+    'assets/Raveness.webp',
+    Alignment.center,
+    Color(0xff7f5cff),
+    [HeroSegment.outcast],
+  ),
+  necromancer(
+    'Necromancer',
+    'assets/Necromancer.webp',
+    Alignment.center,
+    Color(0xff75d16b),
+    [HeroSegment.outcast],
   ),
   monk('Monk', 'assets/monk_hero.png', Alignment.topCenter, Color(0xffd7a55a), [
     HeroSegment.season1,
@@ -100,8 +191,28 @@ enum HeroType {
     'assets/deadpool_hero.jpg',
     Alignment.center,
     Color(0xffc91922),
-    [HeroSegment.marvel, HeroSegment.xmen],
-  );
+    [HeroSegment.marvel],
+  ),
+  loki('Loki', 'assets/loki.webp', Alignment.center, Color(0xff57b966), [
+    HeroSegment.marvel,
+  ]),
+  scarletWitch(
+    'Scarlet Witch',
+    'assets/scarlet.webp',
+    Alignment.center,
+    Color(0xffd8233f),
+    [HeroSegment.marvel],
+  ),
+  spiderman(
+    'Spider-Man',
+    'assets/spiderman.webp',
+    Alignment.center,
+    Color(0xffe02c35),
+    [HeroSegment.marvel],
+  ),
+  thor('Thor', 'assets/thor.webp', Alignment.center, Color(0xff5ca7ff), [
+    HeroSegment.marvel,
+  ]);
 
   const HeroType(
     this.label,
@@ -754,12 +865,6 @@ class EnemyNode {
     }
     final filename = cardAsset.split('/').last;
     final base = filename.split('.').first.toLowerCase();
-    if (cardAsset.contains('/bleu/vert-022')) {
-      return 'assets/enemy_previews/bleu-022.webp';
-    }
-    if (cardAsset.contains('/bleu/vert-023')) {
-      return 'assets/enemy_previews/bleu-023.webp';
-    }
     final greenLegacyPreview = switch (base) {
       'enemy_green_fairy' => 'vert-001',
       'enemy_green_ronin' => 'vert-002',
@@ -1072,8 +1177,11 @@ class AdventureState {
     }
 
     if (lockedBranch == null) {
-      _firstAvailableInBranch(BranchSide.left)?.current = true;
-      _firstAvailableInBranch(BranchSide.right)?.current = true;
+      for (final branch in BranchSide.values) {
+        for (final enemy in _availableInBranch(branch)) {
+          enemy.current = true;
+        }
+      }
       return;
     }
 
@@ -1088,31 +1196,74 @@ class AdventureState {
     log('${branch.label} path engaged.');
   }
 
+  bool canSelectEnemy(EnemyNode enemy) {
+    if (finished || enemy.defeated) {
+      return false;
+    }
+    final start = enemyById(0);
+    if (enemy.id == start.id) {
+      return !start.defeated;
+    }
+    if (!start.defeated || enemy.branch == null) {
+      return false;
+    }
+
+    var activeBranch = lockedBranch;
+    if (activeBranch != null && _branchComplete(activeBranch)) {
+      activeBranch = null;
+    }
+    if (activeBranch != null && enemy.branch != activeBranch) {
+      return false;
+    }
+    if (activeBranch == null && _branchComplete(enemy.branch!)) {
+      return false;
+    }
+
+    return _availableInBranch(
+      enemy.branch!,
+    ).any((candidate) => candidate.id == enemy.id);
+  }
+
   bool _branchComplete(BranchSide branch) {
     return enemies
         .where((enemy) => enemy.branch == branch)
         .every((enemy) => enemy.defeated);
   }
 
-  EnemyNode? _firstAvailableInBranch(BranchSide branch) {
-    final available = _availableInBranch(branch);
-    return available.isEmpty ? null : available.first;
-  }
-
   List<EnemyNode> _availableInBranch(BranchSide branch) {
     final branchEnemies =
         enemies.where((enemy) => enemy.branch == branch).toList()
           ..sort((a, b) => a.step.compareTo(b.step));
+    if (branchEnemies.isEmpty) {
+      return [];
+    }
 
-    final sequentialLimit = branchEnemies.length > 6 ? 5 : 3;
+    EnemyNode? enemyAt(int step) {
+      for (final enemy in branchEnemies) {
+        if (enemy.step == step) {
+          return enemy;
+        }
+      }
+      return null;
+    }
+
+    final terminalViseer =
+        branchEnemies.length >= 2 &&
+        branchEnemies.last.rank == EnemyRank.viseer &&
+        branchEnemies[branchEnemies.length - 2].rank == EnemyRank.orange;
+    final boss = terminalViseer
+        ? branchEnemies[branchEnemies.length - 2]
+        : branchEnemies.last;
+    final bossStep = boss.step;
+    final sequentialLimit = bossStep - 3;
     for (var step = 1; step <= sequentialLimit; step++) {
-      final enemy = branchEnemies.firstWhere((enemy) => enemy.step == step);
-      if (!enemy.defeated) {
+      final enemy = enemyAt(step);
+      if (enemy != null && !enemy.defeated) {
         return [enemy];
       }
     }
 
-    final unlockedSteps = branchEnemies.length > 6 ? [6, 7] : [4, 5];
+    final unlockedSteps = {bossStep - 2, bossStep - 1};
     final unlocked = branchEnemies
         .where((enemy) => unlockedSteps.contains(enemy.step) && !enemy.defeated)
         .toList();
@@ -1120,11 +1271,11 @@ class AdventureState {
       return unlocked;
     }
 
-    if (branchEnemies.length <= 6) {
-      final boss = branchEnemies.firstWhere((enemy) => enemy.step == 6);
-      if (!boss.defeated) {
-        return [boss];
-      }
+    if (!boss.defeated) {
+      return [boss];
+    }
+    if (terminalViseer && !branchEnemies.last.defeated) {
+      return [branchEnemies.last];
     }
     return [];
   }

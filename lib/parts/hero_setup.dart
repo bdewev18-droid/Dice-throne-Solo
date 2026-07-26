@@ -28,14 +28,16 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
   @override
   Widget build(BuildContext context) {
     final query = _searchController.text.trim().toLowerCase();
-    final heroes = HeroType.values
-        .where((hero) => hero.label.toLowerCase().contains(query))
-        .where(
-          (hero) =>
-              _selectedSegments.isEmpty ||
-              hero.segments.any(_selectedSegments.contains),
-        )
-        .toList();
+    final heroes =
+        HeroType.values
+            .where((hero) => hero.label.toLowerCase().contains(query))
+            .where(
+              (hero) =>
+                  _selectedSegments.isEmpty ||
+                  hero.segments.any(_selectedSegments.contains),
+            )
+            .toList()
+          ..sort((a, b) => a.label.compareTo(b.label));
     if (!heroes.contains(_selectedHero) && heroes.isNotEmpty) {
       _selectedHero = heroes.first;
     }
@@ -634,4 +636,3 @@ class RoundIconButton extends StatelessWidget {
     );
   }
 }
-

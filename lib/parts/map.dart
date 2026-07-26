@@ -169,6 +169,7 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     final adventure = widget.adventure;
+    final availableTargets = _availableTargets();
     final currentTarget = _currentTarget();
     if (adventure.finished) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -251,18 +252,21 @@ class _MapPageState extends State<MapPage> {
                               ).popUntil((route) => route.isFirst),
                             ),
                           ),
-                        Positioned(
-                          left: 12,
-                          right: 12,
-                          bottom: 126,
-                          child: MapObjectiveCard(adventure: adventure),
-                        ),
+                        if (adventure.defeatedEnemies.isEmpty)
+                          Positioned(
+                            left: 12,
+                            right: 12,
+                            bottom: 126,
+                            child: MapObjectiveCard(adventure: adventure),
+                          ),
                         Positioned(
                           left: 12,
                           right: 12,
                           bottom: 12,
                           child: CurrentTargetCard(
                             enemy: currentTarget,
+                            choices: availableTargets,
+                            onSelectChoice: _selectEnemy,
                             onFight: currentTarget == null
                                 ? null
                                 : () => _openFight(currentTarget),
@@ -281,9 +285,7 @@ class _MapPageState extends State<MapPage> {
   }
 
   EnemyNode? _currentTarget() {
-    final currentEnemies = widget.adventure.enemies
-        .where((enemy) => enemy.current && !enemy.defeated)
-        .toList();
+    final currentEnemies = _availableTargets();
     if (currentEnemies.isEmpty) {
       _selectedEnemyId = null;
       return null;
@@ -300,6 +302,12 @@ class _MapPageState extends State<MapPage> {
     return target;
   }
 
+  List<EnemyNode> _availableTargets() {
+    return widget.adventure.enemies
+        .where((enemy) => widget.adventure.canSelectEnemy(enemy))
+        .toList();
+  }
+
   List<Widget> _buildMapNodes(BuildContext context, Size size) {
     final positions = _positionsFor(
       size,
@@ -314,6 +322,7 @@ class _MapPageState extends State<MapPage> {
       ),
       ...widget.adventure.enemies.map((enemy) {
         final offset = positions[enemy.id]!;
+        final available = widget.adventure.canSelectEnemy(enemy);
         final width = enemy.id == 0 || enemy.rank == EnemyRank.orange
             ? 132.0
             : 112.0;
@@ -327,6 +336,7 @@ class _MapPageState extends State<MapPage> {
           height: height,
           child: EnemyMapTile(
             enemy: enemy,
+            available: available,
             selected: _selectedEnemyId == enemy.id,
             onTap: () => _selectEnemy(enemy),
           ),
@@ -340,7 +350,7 @@ class _MapPageState extends State<MapPage> {
       _openDefeatedEnemyPreview(enemy);
       return;
     }
-    if (!enemy.current || widget.adventure.finished) {
+    if (!widget.adventure.canSelectEnemy(enemy)) {
       return;
     }
     setState(() => _selectedEnemyId = enemy.id);
@@ -391,27 +401,63 @@ class _MapPageState extends State<MapPage> {
               .toList()
             ..sort((a, b) => a.step.compareTo(b.step));
       final sign = branch == BranchSide.left ? -1.0 : 1.0;
+      final choiceSteps = _choiceStepsBeforeBoss(branchEnemies);
       for (final enemy in branchEnemies) {
-        final pairOffset = switch (enemy.step) {
-          4 || 6 => -0.1,
-          5 || 7 => 0.1,
-          _ => 0,
-        };
+        final visualBossStep = _visualBossStep(branchEnemies);
+        final isAttachedViseer =
+            enemy.rank == EnemyRank.viseer && enemy.step == visualBossStep + 1;
+        final isBossWithAttachedViseer =
+            enemy.rank == EnemyRank.orange &&
+            branchEnemies.any(
+              (candidate) =>
+                  candidate.rank == EnemyRank.viseer &&
+                  candidate.step == enemy.step + 1,
+            );
+        final pairOffset = enemy.step == choiceSteps.$1
+            ? -0.1
+            : enemy.step == choiceSteps.$2
+            ? 0.1
+            : isBossWithAttachedViseer
+            ? -0.055 * sign
+            : isAttachedViseer
+            ? 0.055 * sign
+            : 0.0;
         final x =
             centerX +
             sign * width * (0.075 + enemy.step * 0.032) +
             width * pairOffset * 0.72;
-        final y = bottom - rowGap * enemy.step;
+        final visualStep =
+            enemy.step == choiceSteps.$1 || enemy.step == choiceSteps.$2
+            ? (choiceSteps.$1 + choiceSteps.$2) / 2
+            : isAttachedViseer
+            ? visualBossStep.toDouble()
+            : enemy.step.toDouble();
+        final y = bottom - rowGap * visualStep;
         positions[enemy.id] = position(Offset(x, y));
       }
     }
     return positions;
   }
 
+  (int, int) _choiceStepsBeforeBoss(List<EnemyNode> branchEnemies) {
+    final bossStep = _visualBossStep(branchEnemies);
+    return (bossStep - 2, bossStep - 1);
+  }
+
+  int _visualBossStep(List<EnemyNode> branchEnemies) {
+    if (branchEnemies.length >= 2 &&
+        branchEnemies.last.rank == EnemyRank.viseer &&
+        branchEnemies[branchEnemies.length - 2].rank == EnemyRank.orange) {
+      return branchEnemies[branchEnemies.length - 2].step;
+    }
+    return branchEnemies.isEmpty ? 0 : branchEnemies.last.step;
+  }
+
   Future<void> _openFight(EnemyNode enemy) async {
-    if (!enemy.current || enemy.defeated || widget.adventure.finished) {
+    if (!widget.adventure.canSelectEnemy(enemy)) {
       return;
     }
+    final secondaryEnemy = _attachedViseerFor(enemy);
     final selectedProfile = await Navigator.of(context).push<EnemyProfile>(
       MaterialPageRoute<EnemyProfile>(
         builder: (_) => RecipeEnemySelectionPage(enemy: enemy),
@@ -421,6 +467,17 @@ class _MapPageState extends State<MapPage> {
       return;
     }
     enemy.applyProfile(selectedProfile);
+    if (secondaryEnemy != null) {
+      final viseerProfile =
+          _profileByKey('viseer') ?? _profilesForRank(EnemyRank.viseer).first;
+      secondaryEnemy.applyProfile(viseerProfile);
+      secondaryEnemy
+        ..label = 'Viseer'
+        ..rank = EnemyRank.viseer
+        ..cardAsset = 'assets/enemy_viseer.jpg'
+        ..health = viseerProfile.maxHealth
+        ..combatPoints = viseerProfile.pc;
+    }
     widget.onChanged();
     if (enemy.branch != null) {
       widget.adventure.lockBranch(enemy.branch!);
@@ -439,6 +496,7 @@ class _MapPageState extends State<MapPage> {
                       adventure: widget.adventure,
                       historyRecords: widget.historyRecords,
                       enemyId: enemy.id,
+                      secondaryEnemyId: secondaryEnemy?.id,
                       onChanged: widget.onChanged,
                       onPauseExit: widget.onPauseExit,
                       onAbandon: widget.onAbandon,
@@ -486,12 +544,32 @@ class _MapPageState extends State<MapPage> {
         });
   }
 
+  EnemyNode? _attachedViseerFor(EnemyNode enemy) {
+    if (enemy.rank != EnemyRank.orange || enemy.branch == null) {
+      return null;
+    }
+    final branchEnemies =
+        widget.adventure.enemies
+            .where((candidate) => candidate.branch == enemy.branch)
+            .toList()
+          ..sort((a, b) => a.step.compareTo(b.step));
+    if (branchEnemies.length < 2) {
+      return null;
+    }
+    final last = branchEnemies.last;
+    final beforeLast = branchEnemies[branchEnemies.length - 2];
+    if (last.rank == EnemyRank.viseer &&
+        beforeLast.id == enemy.id &&
+        !last.defeated) {
+      return last;
+    }
+    return null;
+  }
+
   void _centerOnEnemy(EnemyNode? enemy, {bool immediate = false}) {
     final mapSize = _latestMapSize;
     final viewportSize = _latestMapViewportSize;
-    if (enemy == null ||
-        mapSize == null ||
-        viewportSize == null) {
+    if (enemy == null || mapSize == null || viewportSize == null) {
       return;
     }
     final positions = _positionsFor(
@@ -523,7 +601,7 @@ class _MapPageState extends State<MapPage> {
 
   Offset? _mapFocusFor(EnemyNode fallback, Map<int, Offset> positions) {
     final currentEnemies = widget.adventure.enemies
-        .where((enemy) => enemy.current && !enemy.defeated)
+        .where((enemy) => widget.adventure.canSelectEnemy(enemy))
         .toList();
     if (currentEnemies.length >= 2) {
       final currentPositions = currentEnemies
@@ -554,7 +632,7 @@ class _MapPageState extends State<MapPage> {
 
   bool _isBranchChoiceFocus() {
     final currentEnemies = widget.adventure.enemies
-        .where((enemy) => enemy.current && !enemy.defeated)
+        .where((enemy) => widget.adventure.canSelectEnemy(enemy))
         .toList();
     return currentEnemies.length >= 2;
   }
@@ -880,11 +958,15 @@ class MapStatChip extends StatelessWidget {
 class CurrentTargetCard extends StatelessWidget {
   const CurrentTargetCard({
     required this.enemy,
+    required this.choices,
+    required this.onSelectChoice,
     required this.onFight,
     super.key,
   });
 
   final EnemyNode? enemy;
+  final List<EnemyNode> choices;
+  final ValueChanged<EnemyNode> onSelectChoice;
   final VoidCallback? onFight;
 
   @override
@@ -953,27 +1035,85 @@ class CurrentTargetCard extends StatelessWidget {
           ),
           SizedBox(
             width: 132,
-            height: 58,
-            child: FilledButton(
-              onPressed: onFight,
-              style: FilledButton.styleFrom(
-                backgroundColor: accent,
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (choices.length > 1) ...[
+                  Row(
+                    children: [
+                      for (var index = 0; index < choices.length; index++) ...[
+                        if (index > 0) const SizedBox(width: 6),
+                        Expanded(
+                          child: SizedBox(
+                            height: 34,
+                            child: FilledButton(
+                              onPressed: () => onSelectChoice(choices[index]),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: choices[index].id == target?.id
+                                    ? choices[index].rank.color
+                                    : const Color(0xff202020),
+                                foregroundColor: choices[index].id == target?.id
+                                    ? Colors.black
+                                    : choices[index].rank.color,
+                                side: BorderSide(
+                                  color: choices[index].rank.color,
+                                  width: choices[index].id == target?.id
+                                      ? 2
+                                      : 1,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              child: Text(_rankLevelRoman(choices[index].rank)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                ],
+                SizedBox(
+                  height: 58,
+                  child: FilledButton(
+                    onPressed: onFight,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: accent,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    child: const Text('FIGHT'),
+                  ),
                 ),
-                textStyle: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              child: const Text('FIGHT'),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+}
+
+String _rankLevelRoman(EnemyRank rank) {
+  return switch (rank) {
+    EnemyRank.green => 'I',
+    EnemyRank.blue => 'II',
+    EnemyRank.violet => 'III',
+    EnemyRank.orange || EnemyRank.viseer => 'IV',
+    EnemyRank.naraxus => '',
+  };
 }
 
 class MapObjectiveCard extends StatelessWidget {
@@ -992,9 +1132,7 @@ class MapObjectiveCard extends StatelessWidget {
         color: const Color(0xf2121212),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: panelBorderGrey, width: 2),
-        boxShadow: const [
-          BoxShadow(color: Colors.black87, blurRadius: 10),
-        ],
+        boxShadow: const [BoxShadow(color: Colors.black87, blurRadius: 10)],
       ),
       child: Text(
         "The hero's objective is to defeat $enemyCount enemies and score $pointCount points.",
@@ -1080,10 +1218,49 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
   late final List<EnemyProfile> _profiles = _recipeProfilesFor(
     widget.rank ?? widget.enemy.rank,
   );
-  late EnemyProfile _selected = _profiles.firstWhere(
-    (profile) => profile.key == widget.enemy.profileKey,
-    orElse: () => _profiles[Random().nextInt(_profiles.length)],
-  );
+  late EnemyProfile _selected = _profiles[Random().nextInt(_profiles.length)];
+
+  Future<void> _pickProfile() async {
+    final selected = await showModalBottomSheet<EnemyProfile>(
+      context: context,
+      backgroundColor: const Color(0xff111111),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+      ),
+      builder: (context) => SafeArea(
+        child: ListView.separated(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
+          itemCount: _profiles.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final profile = _profiles[index];
+            final selected = profile.key == _selected.key;
+            return ListTile(
+              selected: selected,
+              leading: Text(
+                _recipeProfileCode(profile),
+                style: TextStyle(
+                  color: profile.rank.color,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              title: Text(
+                profile.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+              trailing: selected ? const Icon(Icons.check) : null,
+              onTap: () => Navigator.of(context).pop(profile),
+            );
+          },
+        ),
+      ),
+    );
+    if (selected != null) {
+      setState(() => _selected = selected);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1102,30 +1279,25 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<EnemyProfile>(
-                initialValue: _selected,
-                isExpanded: true,
-                menuMaxHeight: 420,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Minion',
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  side: BorderSide(color: _selected.rank.color, width: 1.6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                items: _profiles
-                    .map(
-                      (profile) => DropdownMenuItem(
-                        value: profile,
-                        child: Text(
-                          _recipeProfileLabel(profile),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (profile) {
-                  if (profile != null) {
-                    setState(() => _selected = profile);
-                  }
-                },
+                onPressed: _pickProfile,
+                icon: const Icon(Icons.expand_more),
+                label: Text(
+                  _recipeProfileLabel(_selected),
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
               ),
               const SizedBox(height: 16),
               Expanded(
@@ -1424,12 +1596,14 @@ class PauseRunDialog extends StatelessWidget {
 class EnemyMapTile extends StatelessWidget {
   const EnemyMapTile({
     required this.enemy,
+    required this.available,
     required this.selected,
     required this.onTap,
     super.key,
   });
 
   final EnemyNode enemy;
+  final bool available;
   final bool selected;
   final VoidCallback onTap;
 
@@ -1451,14 +1625,14 @@ class EnemyMapTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: accent,
-              width: selected || enemy.current || isStart ? 4 : 2,
+              width: selected || available || isStart ? 4 : 2,
             ),
             color: const Color(0xdd131313),
             boxShadow: [
               BoxShadow(
-                color: accent.withValues(alpha: enemy.current ? 0.8 : 0.55),
-                blurRadius: enemy.current ? 20 : 12,
-                spreadRadius: enemy.current ? 2 : 0,
+                color: accent.withValues(alpha: available ? 0.8 : 0.55),
+                blurRadius: available ? 20 : 12,
+                spreadRadius: available ? 2 : 0,
               ),
               BoxShadow(
                 color: accent.withValues(alpha: 0.35),
@@ -1615,14 +1789,34 @@ class MapLinePainter extends CustomPainter {
       if (branchEnemies.isEmpty) {
         continue;
       }
+      EnemyNode? enemyAt(int step) {
+        for (final enemy in branchEnemies) {
+          if (enemy.step == step) {
+            return enemy;
+          }
+        }
+        return null;
+      }
+
+      final terminalViseer =
+          branchEnemies.length >= 2 &&
+          branchEnemies.last.rank == EnemyRank.viseer &&
+          branchEnemies[branchEnemies.length - 2].rank == EnemyRank.orange;
+      final boss = terminalViseer
+          ? branchEnemies[branchEnemies.length - 2]
+          : branchEnemies.last;
+      final attachedViseer = terminalViseer ? branchEnemies.last : null;
+      final splitFrom = enemyAt(boss.step - 3);
+      final choiceA = enemyAt(boss.step - 2);
+      final choiceB = enemyAt(boss.step - 1);
       line(start, branchEnemies.first);
       for (var index = 0; index < branchEnemies.length - 1; index++) {
         final current = branchEnemies[index];
         final next = branchEnemies[index + 1];
-        if (branchEnemies.length == 6 && current.step == 3) {
-          final choiceA = branchEnemies.firstWhere((enemy) => enemy.step == 4);
-          final choiceB = branchEnemies.firstWhere((enemy) => enemy.step == 5);
-          final boss = branchEnemies.last;
+        if (splitFrom != null &&
+            choiceA != null &&
+            choiceB != null &&
+            current.id == splitFrom.id) {
           line(current, choiceA);
           line(current, choiceB);
           line(choiceA, choiceB);
@@ -1631,6 +1825,9 @@ class MapLinePainter extends CustomPainter {
             (positions[choiceA.id]!.dy + positions[choiceB.id]!.dy) / 2,
           );
           canvas.drawLine(union, positions[boss.id]!, paint);
+          if (attachedViseer != null) {
+            line(boss, attachedViseer);
+          }
           break;
         }
         line(current, next);

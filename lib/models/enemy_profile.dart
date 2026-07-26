@@ -4,7 +4,7 @@ enum EnemyRank {
   green('Level 1', 1, Color(0xff34d36d), 'assets/map_green.jpg'),
   blue('Level 2', 2, Color(0xff3bb9ff), 'assets/map_blue.png'),
   violet('Level 3', 3, Color(0xff9b58ff), 'assets/map_violet.png'),
-  viseer('Viseer', 4, Color(0xff8a5a2c), 'assets/enemy_viseer.jpg'),
+  viseer('Viseer', 4, Color(0xffff8a2b), 'assets/viser.webp'),
   orange('Level 4', 6, Color(0xffff8a2b), 'assets/map_orange.png'),
   naraxus('Naraxus', 0, Color(0xffd51f2a), 'assets/home_background_v4.png');
 

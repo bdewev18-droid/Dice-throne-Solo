@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.3.24+68
+version: 1.3.45+89
 
 environment:
   sdk: ">=3.8.0 <4.0.0"
@@ -63,6 +63,19 @@ flutter:
     - assets/barbarian_hero.jpg
     - assets/moon_elf_hero.png
     - assets/tactician_hero.png
+    - assets/treant_hero.webp
+    - assets/ninja_hero.webp
+    - assets/artificer_hero.webp
+    - assets/cursed_pirate_hero.webp
+    - assets/gunslinger_hero.webp
+    - assets/samurai_hero.webp
+    - assets/seraph_hero.webp
+    - assets/vampire_lord_hero.webp
+    - assets/huntress_hero.webp
+    - assets/Headless-Horseman.webp
+    - assets/Pale-Lady.webp
+    - assets/Raveness.webp
+    - assets/Necromancer.webp
     - assets/deadpool_hero.jpg
     - assets/monk_hero.png
     - assets/paladin_hero.png
@@ -88,6 +101,13 @@ flutter:
     - assets/enemy_green_chaos_elf.png
     - assets/enemy_green_raving_oni.png
     - assets/enemy_viseer.jpg
+    - assets/viser.webp
+    - assets/thor.webp
+    - assets/scarlet.webp
+    - assets/spiderman.webp
+    - assets/loki.webp
+    - assets/token/
+    - assets/illustration/
     - assets/vert/
     - assets/bleu/
     - assets/violet/
