@@ -16,7 +16,8 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
   Timer? _holdTimer;
   HeroType? _holdingHero;
   double _holdProgress = 0;
-  static const Duration _holdToValidateDuration = Duration(milliseconds: 1500);
+  bool _holdingRandomHero = false;
+  static const Duration _holdToValidateDuration = Duration(seconds: 3);
 
   @override
   void dispose() {
@@ -95,9 +96,17 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
                   mainAxisSpacing: 12,
                   childAspectRatio: 0.58,
                 ),
-                itemCount: heroes.length,
+                itemCount: heroes.length + 1,
                 itemBuilder: (context, index) {
-                  final hero = heroes[index];
+                  if (index == 0) {
+                    return RandomHeroCard(
+                      holdProgress: _holdingRandomHero ? _holdProgress : 0,
+                      onTap: () => _selectRandomHero(heroes),
+                      onHoldStart: () => _startRandomHeroHold(heroes),
+                      onHoldEnd: _cancelHeroHold,
+                    );
+                  }
+                  final hero = heroes[index - 1];
                   return HeroCard(
                     hero: hero,
                     selected: _selectedHero == hero,
@@ -122,11 +131,33 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
     );
   }
 
-  void _startHeroHold(HeroType hero) {
+  void _selectRandomHero(List<HeroType> heroes) {
+    if (heroes.isEmpty) {
+      return;
+    }
+    setState(() => _selectedHero = _pickRandomHero(heroes));
+  }
+
+  void _startRandomHeroHold(List<HeroType> heroes) {
+    if (heroes.isEmpty) {
+      return;
+    }
+    _startHeroHold(_pickRandomHero(heroes), random: true);
+  }
+
+  HeroType _pickRandomHero(List<HeroType> heroes) {
+    final pool = heroes.length == 1
+        ? heroes
+        : heroes.where((hero) => hero != _selectedHero).toList();
+    return pool[Random().nextInt(pool.length)];
+  }
+
+  void _startHeroHold(HeroType hero, {bool random = false}) {
     _holdTimer?.cancel();
     setState(() {
       _selectedHero = hero;
       _holdingHero = hero;
+      _holdingRandomHero = random;
       _holdProgress = 0;
     });
 
@@ -143,6 +174,7 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
         setState(() {
           _holdProgress = 1;
           _holdingHero = null;
+          _holdingRandomHero = false;
         });
         widget.onNext(hero);
         return;
@@ -161,6 +193,7 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
     if (mounted) {
       setState(() {
         _holdingHero = null;
+        _holdingRandomHero = false;
         _holdProgress = 0;
       });
     }
@@ -196,6 +229,175 @@ class HeroSegmentFilters extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class RandomHeroCard extends StatefulWidget {
+  const RandomHeroCard({
+    required this.holdProgress,
+    required this.onTap,
+    required this.onHoldStart,
+    required this.onHoldEnd,
+    super.key,
+  });
+
+  final double holdProgress;
+  final VoidCallback onTap;
+  final VoidCallback onHoldStart;
+  final VoidCallback onHoldEnd;
+
+  @override
+  State<RandomHeroCard> createState() => _RandomHeroCardState();
+}
+
+class _RandomHeroCardState extends State<RandomHeroCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: widget.onTap,
+      onTapDown: (_) => widget.onHoldStart(),
+      onTapUp: (_) => widget.onHoldEnd(),
+      onTapCancel: widget.onHoldEnd,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        height: 280,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white30),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xff171717), Color(0xff37204e)],
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(7),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  final angle = _controller.value * pi * 2;
+                  return Center(
+                    child: Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()
+                        ..setEntry(3, 2, 0.001)
+                        ..rotateY(angle),
+                      child: child,
+                    ),
+                  );
+                },
+                child: SizedBox(
+                  width: 108,
+                  height: 148,
+                  child: Stack(
+                    children: const [
+                      _RandomStackedCard(offset: Offset(-16, 10), angle: -0.16),
+                      _RandomStackedCard(offset: Offset(16, 10), angle: 0.16),
+                      _RandomStackedCard(offset: Offset.zero, angle: 0),
+                    ],
+                  ),
+                ),
+              ),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black87],
+                  ),
+                ),
+              ),
+              if (widget.holdProgress > 0)
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(7),
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: LinearProgressIndicator(
+                        minHeight: 8,
+                        value: widget.holdProgress,
+                        backgroundColor: Colors.black54,
+                        color: heroAccent,
+                      ),
+                    ),
+                  ),
+                ),
+              const Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    'Random hero',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RandomStackedCard extends StatelessWidget {
+  const _RandomStackedCard({required this.offset, required this.angle});
+
+  final Offset offset;
+  final double angle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Transform.translate(
+        offset: offset,
+        child: Transform.rotate(
+          angle: angle,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: heroAccent, width: 2),
+              color: const Color(0xff262626),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black54,
+                  blurRadius: 16,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Icon(Icons.shuffle, size: 52, color: heroAccent),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

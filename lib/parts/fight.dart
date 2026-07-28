@@ -9060,7 +9060,7 @@ Alignment _heroEyeAlignment(HeroType hero) {
     HeroType.paladin => const Alignment(0, -0.72),
     HeroType.pyromancer => const Alignment(0, -0.76),
     HeroType.shadowThief => const Alignment(0, -0.72),
-    HeroType.deadpool => const Alignment(0, -0.58),
+    HeroType.spiderman => const Alignment(0, -0.58),
     _ => const Alignment(0, -0.66),
   };
 }
