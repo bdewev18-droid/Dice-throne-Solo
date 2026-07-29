@@ -17,6 +17,7 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
   HeroType? _holdingHero;
   double _holdProgress = 0;
   bool _holdingRandomHero = false;
+  bool _randomHeroLocked = false;
   static const Duration _holdToValidateDuration = Duration(seconds: 3);
 
   @override
@@ -41,6 +42,7 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
           ..sort((a, b) => a.label.compareTo(b.label));
     if (!heroes.contains(_selectedHero) && heroes.isNotEmpty) {
       _selectedHero = heroes.first;
+      _randomHeroLocked = false;
     }
 
     return Scaffold(
@@ -100,6 +102,8 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return RandomHeroCard(
+                      heroes: heroes,
+                      selectedHero: _randomHeroLocked ? _selectedHero : null,
                       holdProgress: _holdingRandomHero ? _holdProgress : 0,
                       onTap: () => _selectRandomHero(heroes),
                       onHoldStart: () => _startRandomHeroHold(heroes),
@@ -111,7 +115,10 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
                     hero: hero,
                     selected: _selectedHero == hero,
                     holdProgress: _holdingHero == hero ? _holdProgress : 0,
-                    onTap: () => setState(() => _selectedHero = hero),
+                    onTap: () => setState(() {
+                      _selectedHero = hero;
+                      _randomHeroLocked = false;
+                    }),
                     onHoldStart: () => _startHeroHold(hero),
                     onHoldEnd: _cancelHeroHold,
                   );
@@ -135,14 +142,21 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
     if (heroes.isEmpty) {
       return;
     }
-    setState(() => _selectedHero = _pickRandomHero(heroes));
+    setState(() {
+      _selectedHero = _pickRandomHero(heroes);
+      _randomHeroLocked = true;
+    });
   }
 
   void _startRandomHeroHold(List<HeroType> heroes) {
     if (heroes.isEmpty) {
       return;
     }
-    _startHeroHold(_pickRandomHero(heroes), random: true);
+    final hero = _randomHeroLocked && heroes.contains(_selectedHero)
+        ? _selectedHero
+        : _pickRandomHero(heroes);
+    _randomHeroLocked = true;
+    _startHeroHold(hero, random: true);
   }
 
   HeroType _pickRandomHero(List<HeroType> heroes) {
@@ -158,6 +172,7 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
       _selectedHero = hero;
       _holdingHero = hero;
       _holdingRandomHero = random;
+      _randomHeroLocked = random;
       _holdProgress = 0;
     });
 
@@ -235,6 +250,8 @@ class HeroSegmentFilters extends StatelessWidget {
 
 class RandomHeroCard extends StatefulWidget {
   const RandomHeroCard({
+    required this.heroes,
+    required this.selectedHero,
     required this.holdProgress,
     required this.onTap,
     required this.onHoldStart,
@@ -242,6 +259,8 @@ class RandomHeroCard extends StatefulWidget {
     super.key,
   });
 
+  final List<HeroType> heroes;
+  final HeroType? selectedHero;
   final double holdProgress;
   final VoidCallback onTap;
   final VoidCallback onHoldStart;
@@ -260,7 +279,7 @@ class _RandomHeroCardState extends State<RandomHeroCard>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 3600),
     )..repeat();
   }
 
@@ -272,6 +291,7 @@ class _RandomHeroCardState extends State<RandomHeroCard>
 
   @override
   Widget build(BuildContext context) {
+    final selectedHero = widget.selectedHero;
     return InkWell(
       onTap: widget.onTap,
       onTapDown: (_) => widget.onHoldStart(),
@@ -283,43 +303,29 @@ class _RandomHeroCardState extends State<RandomHeroCard>
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.white30),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xff171717), Color(0xff37204e)],
-          ),
+          color: const Color(0xff121212),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(7),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  final angle = _controller.value * pi * 2;
-                  return Center(
-                    child: Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.identity()
-                        ..setEntry(3, 2, 0.001)
-                        ..rotateY(angle),
-                      child: child,
-                    ),
-                  );
-                },
-                child: SizedBox(
-                  width: 108,
-                  height: 148,
-                  child: Stack(
-                    children: const [
-                      _RandomStackedCard(offset: Offset(-16, 10), angle: -0.16),
-                      _RandomStackedCard(offset: Offset(16, 10), angle: 0.16),
-                      _RandomStackedCard(offset: Offset.zero, angle: 0),
-                    ],
-                  ),
-                ),
-              ),
+              if (selectedHero == null)
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    final heroes = widget.heroes.isEmpty
+                        ? HeroType.values
+                        : widget.heroes;
+                    final heroIndex =
+                        (_controller.value * heroes.length).floor() %
+                        heroes.length;
+                    final hero = heroes[heroIndex];
+                    return _RandomHeroFullArt(hero: hero);
+                  },
+                )
+              else
+                _RandomHeroFullArt(hero: selectedHero),
               const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -342,19 +348,37 @@ class _RandomHeroCardState extends State<RandomHeroCard>
                         minHeight: 8,
                         value: widget.holdProgress,
                         backgroundColor: Colors.black54,
-                        color: heroAccent,
+                        color: selectedHero?.color ?? heroAccent,
                       ),
                     ),
                   ),
                 ),
-              const Align(
+              Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Text(
-                    'Random hero',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (selectedHero != null)
+                        Text(
+                          selectedHero.label,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: selectedHero.color,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      const Text(
+                        'Random hero',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 21,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -366,37 +390,19 @@ class _RandomHeroCardState extends State<RandomHeroCard>
   }
 }
 
-class _RandomStackedCard extends StatelessWidget {
-  const _RandomStackedCard({required this.offset, required this.angle});
+class _RandomHeroFullArt extends StatelessWidget {
+  const _RandomHeroFullArt({required this.hero});
 
-  final Offset offset;
-  final double angle;
+  final HeroType hero;
 
   @override
   Widget build(BuildContext context) {
-    return Positioned.fill(
-      child: Transform.translate(
-        offset: offset,
-        child: Transform.rotate(
-          angle: angle,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: heroAccent, width: 2),
-              color: const Color(0xff262626),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black54,
-                  blurRadius: 16,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
-            child: const Center(
-              child: Icon(Icons.shuffle, size: 52, color: heroAccent),
-            ),
-          ),
-        ),
+    return Transform.scale(
+      scale: hero.imageScale,
+      child: Image.asset(
+        hero.asset,
+        fit: BoxFit.cover,
+        alignment: hero.imageAlignment,
       ),
     );
   }

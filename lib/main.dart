@@ -20,7 +20,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.47';
+const String appVersionLabel = 'Version 1.3.48';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -32,6 +32,7 @@ final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EnemyProfileRepository.load();
+  await TokenCatalogRepository.load();
   runApp(const DiceThroneSurvieApp());
 }
 
@@ -303,7 +304,7 @@ enum HeroType {
   ),
   spiderman(
     'Miles Morales Spider-Man',
-    'assets/heroes.jpg',
+    'assets/personnages/Spiderman.png',
     Alignment.center,
     Color(0xffe02c35),
     [HeroSegment.avengers],
@@ -491,190 +492,148 @@ class StatusTokenRule {
     required this.kind,
     required this.maxStack,
     required this.persistent,
+    required this.removable,
+    required this.appSupported,
+    required this.description,
+    this.frLabel = '',
+    this.imageAsset,
+    this.aliases = const [],
     this.minionAllowed = true,
+    this.editorVisible = true,
   });
 
   final String label;
+  final String frLabel;
   final StatusTokenKind kind;
   final int maxStack;
   final bool persistent;
+  final bool removable;
+  final bool appSupported;
+  final String description;
+  final String? imageAsset;
+  final List<String> aliases;
   final bool minionAllowed;
+  final bool editorVisible;
+
+  bool matches(String value) {
+    final key = _normalizeTokenKey(value);
+    return _normalizeTokenKey(label) == key ||
+        _normalizeTokenKey(frLabel) == key ||
+        aliases.any((alias) => _normalizeTokenKey(alias) == key);
+  }
 }
 
-const List<StatusTokenRule> statusTokenRules = [
-  StatusTokenRule(
-    label: 'A terre',
-    kind: StatusTokenKind.negative,
-    maxStack: 1,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Brulure',
-    kind: StatusTokenKind.negative,
-    maxStack: 1,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Chaos',
-    kind: StatusTokenKind.negative,
-    maxStack: 6,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Commotion',
-    kind: StatusTokenKind.negative,
-    maxStack: 1,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Dégat Bonus',
-    kind: StatusTokenKind.positive,
-    maxStack: 2,
-    persistent: false,
-  ),
-  StatusTokenRule(
-    label: 'Dépérissement',
-    kind: StatusTokenKind.negative,
-    maxStack: 2,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Domination',
-    kind: StatusTokenKind.negative,
-    maxStack: 1,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Eboulissement',
-    kind: StatusTokenKind.negative,
-    maxStack: 1,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Enchevêtrement',
-    kind: StatusTokenKind.negative,
-    maxStack: 1,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Evitement',
-    kind: StatusTokenKind.positive,
-    maxStack: 3,
-    persistent: false,
-  ),
-  StatusTokenRule(
-    label: 'Hémorragie',
-    kind: StatusTokenKind.negative,
-    maxStack: 2,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Main du roi',
-    kind: StatusTokenKind.positive,
-    maxStack: 99,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Ombre',
-    kind: StatusTokenKind.positive,
-    maxStack: 1,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Parasite',
-    kind: StatusTokenKind.negative,
-    maxStack: 1,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Poison',
-    kind: StatusTokenKind.negative,
-    maxStack: 3,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Première Frappe',
-    kind: StatusTokenKind.unique,
-    maxStack: 1,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Prime',
-    kind: StatusTokenKind.positive,
-    maxStack: 1,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Pris pour cible',
-    kind: StatusTokenKind.negative,
-    maxStack: 1,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Riposte',
-    kind: StatusTokenKind.positive,
-    maxStack: 1,
-    persistent: false,
-  ),
-  StatusTokenRule(
-    label: 'Ronces',
-    kind: StatusTokenKind.negative,
-    maxStack: 1,
-    persistent: false,
-  ),
-  StatusTokenRule(
-    label: 'Salve',
-    kind: StatusTokenKind.positive,
-    maxStack: 99,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Silence',
-    kind: StatusTokenKind.unique,
-    maxStack: 1,
-    persistent: false,
-    minionAllowed: false,
-  ),
-  StatusTokenRule(
-    label: 'Siphon vital',
-    kind: StatusTokenKind.positive,
-    maxStack: 2,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Sort 6',
-    kind: StatusTokenKind.positive,
-    maxStack: 1,
-    persistent: true,
-  ),
-  StatusTokenRule(
-    label: 'Vol',
-    kind: StatusTokenKind.positive,
-    maxStack: 3,
-    persistent: false,
-  ),
-  StatusTokenRule(
-    label: 'Hoarding',
-    kind: StatusTokenKind.negative,
-    maxStack: 99,
-    persistent: false,
-  ),
-];
+class TokenCatalogRepository {
+  const TokenCatalogRepository._();
 
-final List<String> knownStatusTokens = [
+  static List<StatusTokenRule> _rules = const [];
+  static Map<String, List<String>> _heroTokens = const {};
+
+  static Future<void> load() async {
+    final source = await rootBundle.loadString(
+      'assets/data/token_catalog.json',
+    );
+    final json = jsonDecode(source) as Map<String, dynamic>;
+    final rawTokens = json['tokens'] as List<dynamic>? ?? const [];
+    _rules =
+        rawTokens
+            .whereType<Map<String, dynamic>>()
+            .map(_tokenFromJson)
+            .where((rule) => rule.label.isNotEmpty)
+            .toList(growable: false)
+          ..sort((a, b) => a.label.compareTo(b.label));
+
+    final rawHeroTokens = json['heroTokens'];
+    if (rawHeroTokens is Map<String, dynamic>) {
+      _heroTokens = rawHeroTokens.map(
+        (key, value) => MapEntry(
+          key,
+          value is List
+              ? value.whereType<String>().toList(growable: false)
+              : const <String>[],
+        ),
+      );
+    } else {
+      _heroTokens = const {};
+    }
+  }
+
+  static List<StatusTokenRule> get rules => _rules;
+
+  static List<String> heroTokens(HeroType hero) {
+    return _heroTokens[hero.label] ?? const [];
+  }
+
+  static StatusTokenRule? byLabel(String value) {
+    for (final rule in _rules) {
+      if (rule.matches(value)) {
+        return rule;
+      }
+    }
+    return null;
+  }
+
+  static StatusTokenRule _tokenFromJson(Map<String, dynamic> json) {
+    final image = (json['imageAsset'] as String?)?.trim();
+    return StatusTokenRule(
+      label: json['label'] as String? ?? '',
+      frLabel: json['frLabel'] as String? ?? '',
+      kind: _kindFromName(json['kind'] as String?),
+      maxStack: _intValue(json['maxStack'], fallback: 99),
+      persistent: json['persistent'] as bool? ?? true,
+      removable: json['removable'] as bool? ?? true,
+      appSupported: json['appSupported'] as bool? ?? false,
+      description: json['description'] as String? ?? '',
+      imageAsset: image == null || image.isEmpty ? null : image,
+      aliases: _stringList(json['aliases']),
+      minionAllowed: json['minionAllowed'] as bool? ?? true,
+      editorVisible: json['editorVisible'] as bool? ?? true,
+    );
+  }
+
+  static StatusTokenKind _kindFromName(String? value) {
+    return switch ((value ?? '').toLowerCase()) {
+      'positive' => StatusTokenKind.positive,
+      'unique' => StatusTokenKind.unique,
+      _ => StatusTokenKind.negative,
+    };
+  }
+
+  static List<String> _stringList(Object? value) {
+    if (value is! List) {
+      return const [];
+    }
+    return value.whereType<String>().toList(growable: false);
+  }
+
+  static int _intValue(Object? value, {required int fallback}) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value) ?? fallback;
+    }
+    return fallback;
+  }
+}
+
+List<StatusTokenRule> get statusTokenRules => TokenCatalogRepository.rules;
+
+List<String> get knownStatusTokens => [
   for (final rule in statusTokenRules) rule.label,
 ];
 
 StatusTokenRule _tokenRule(String label) {
-  return statusTokenRules.firstWhere(
-    (rule) => rule.label == label,
-    orElse: () => StatusTokenRule(
-      label: label,
-      kind: StatusTokenKind.negative,
-      maxStack: 99,
-      persistent: true,
-    ),
-  );
+  final rule = TokenCatalogRepository.byLabel(label);
+  if (rule == null) {
+    throw StateError(
+      'Token "$label" is missing from assets/data/token_catalog.json',
+    );
+  }
+  return rule;
 }
 
 String _normalizeTokenKey(String value) {
@@ -685,49 +644,41 @@ String _normalizeTokenKey(String value) {
       .replaceAll(RegExp(r'[îï]'), 'i')
       .replaceAll(RegExp(r'[ôö]'), 'o')
       .replaceAll(RegExp(r'[ûü]'), 'u')
+      .replaceAll(RegExp(r'[ç]'), 'c')
       .replaceAll(RegExp(r'[^a-z0-9]+'), '');
 }
 
 StatusTokenRule _tokenRuleFromTag(String value) {
-  final key = _normalizeTokenKey(value);
-  return statusTokenRules.firstWhere(
-    (rule) => _normalizeTokenKey(rule.label) == key,
-    orElse: () => _tokenRule(value),
-  );
+  return _tokenRule(value);
 }
 
 String _tokenShortLabel(String label) {
-  return switch (_normalizeTokenKey(label)) {
-    'premierefrappe' => '1ST',
-    'aterre' => 'DOWN',
-    'brulure' => 'BRN',
+  final rule = TokenCatalogRepository.byLabel(label);
+  final source = rule?.label ?? label;
+  return switch (_normalizeTokenKey(source)) {
+    'firststrike' || 'premierefrappe' => '1ST',
+    'knockdown' || 'aterre' => 'DOWN',
+    'burn' || 'brulure' => 'BRN',
     'chaos' => 'CH',
-    'commotion' => 'COM',
-    'degatbonus' => 'DMG+',
-    'deperissement' => 'DEC',
-    'domination' => 'DOM',
-    'eboulissement' => 'EBO',
-    'enchevetrement' => 'ROOT',
-    'evitement' => 'EVA',
-    'hemorragie' => 'HEM',
-    'mainduroi' => 'KH',
-    'ombre' => 'SHD',
+    'concussion' || 'commotion' => 'COM',
+    'blindinglight' || 'eboulissement' => 'EBO',
+    'entangle' || 'enchevetrement' => 'ROOT',
+    'evasive' || 'evitement' => 'EVA',
+    'bleed' || 'hemorragie' => 'HEM',
+    'kingshand' || 'mainduroi' => 'KH',
+    'shadows' || 'ombre' => 'SHD',
     'parasite' => 'PAR',
     'poison' => 'PO',
-    'prime' => 'PRI',
-    'prispourcible' => 'TGT',
-    'riposte' => 'RIP',
-    'ronces' => 'THR',
-    'salve' => 'SAL',
+    'targeted' || 'prispourcible' => 'TGT',
+    'barbedvine' || 'ronces' => 'THR',
+    'salvo' || 'salve' => 'SAL',
     'silence' => 'SIL',
-    'siphonvital' => 'SIP',
-    'sort' => 'SPL',
-    'vol' => 'VOL',
+    'spellbound' || 'sort6' => 'SPL',
     'hoarding' => 'HLD',
     _ =>
-      label.length <= 4
-          ? label.toUpperCase()
-          : label.substring(0, 4).toUpperCase(),
+      source.length <= 4
+          ? source.toUpperCase()
+          : source.substring(0, 4).toUpperCase(),
   };
 }
 

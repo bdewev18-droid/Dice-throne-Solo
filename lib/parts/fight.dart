@@ -2931,9 +2931,12 @@ class _CompactItemStripState extends State<CompactItemStrip> {
 
   @override
   Widget build(BuildContext context) {
+    final visibleItems = widget.items
+        .where((value) => _isVisibleStatusTokenLabel(value))
+        .toList(growable: false);
     final displayItems = widget.compactDuplicates
-        ? _compactItemModels(widget.items)
-        : widget.items
+        ? _compactItemModels(visibleItems)
+        : visibleItems
               .map(
                 (value) => CompactItemModel(
                   label: value,
@@ -2942,7 +2945,7 @@ class _CompactItemStripState extends State<CompactItemStrip> {
                 ),
               )
               .toList();
-    final displayLabel = widget.items.isEmpty ? widget.emptyText : '';
+    final displayLabel = visibleItems.isEmpty ? widget.emptyText : '';
     return Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -2953,7 +2956,7 @@ class _CompactItemStripState extends State<CompactItemStrip> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final showLabel = widget.items.isEmpty || constraints.maxWidth >= 190;
+          final showLabel = visibleItems.isEmpty || constraints.maxWidth >= 190;
 
           return Row(
             children: [
@@ -2993,17 +2996,28 @@ class _CompactItemStripState extends State<CompactItemStrip> {
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(6),
                                     onTap: () {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(content: Text(item.tooltip)),
-                                      );
+                                      final rule =
+                                          TokenCatalogRepository.byLabel(
+                                            _compactTokenBaseLabel(
+                                              item.tooltip,
+                                            ),
+                                          );
+                                      if (rule != null) {
+                                        showTokenDetails(context, rule);
+                                      } else {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(content: Text(item.tooltip)),
+                                        );
+                                      }
                                     },
                                     child: Tooltip(
                                       message: item.tooltip,
                                       child: item.rewardCardColor == null
                                           ? CompactItemBadge(
                                               value: item.label,
+                                              tooltip: item.tooltip,
                                               color: widget.accent,
                                             )
                                           : RewardCardBadge(
@@ -3126,13 +3140,52 @@ String? _rewardCardAsset(String value) {
 }
 
 class CompactItemBadge extends StatelessWidget {
-  const CompactItemBadge({required this.value, required this.color, super.key});
+  const CompactItemBadge({
+    required this.value,
+    required this.tooltip,
+    required this.color,
+    super.key,
+  });
 
   final String value;
+  final String tooltip;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
+    final rule = TokenCatalogRepository.byLabel(
+      _compactTokenBaseLabel(tooltip),
+    );
+    if (rule != null) {
+      final countMatch = RegExp(r' x(\d+)').firstMatch(tooltip);
+      final count = countMatch?.group(1);
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          StatusTokenImage(rule: rule, size: 30),
+          if (count != null)
+            Positioned(
+              right: -2,
+              bottom: -2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: Colors.white54),
+                ),
+                child: Text(
+                  count,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+    }
     return Container(
       constraints: BoxConstraints(minWidth: 30 + max(0, value.length - 2) * 8),
       height: 28,
@@ -3155,6 +3208,10 @@ class CompactItemBadge extends StatelessWidget {
       ),
     );
   }
+}
+
+String _compactTokenBaseLabel(String value) {
+  return value.replaceFirst(RegExp(r' x\d+$'), '').trim();
 }
 
 List<CompactItemModel> _compactItemModels(List<String> values) {
@@ -3252,6 +3309,9 @@ class HeroCombatPanel extends StatelessWidget {
                   final values = await showAlterationDialog(
                     context,
                     adventure.alterations,
+                    duelTokens: TokenCatalogRepository.heroTokens(
+                      adventure.hero,
+                    ),
                   );
                   if (values != null) {
                     adventure.setAlterations(values);
@@ -6335,10 +6395,7 @@ InlineSpan? _chatTagVisualSpan(
         padding: const EdgeInsets.symmetric(horizontal: 2),
         child: Tooltip(
           message: rule.label,
-          child: TokenBadge(
-            label: _tokenShortLabel(rule.label),
-            color: enemyColor,
-          ),
+          child: TokenBadge(label: rule.label, color: enemyColor),
         ),
       ),
     );
@@ -8005,6 +8062,19 @@ class TokenBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rule = TokenCatalogRepository.byLabel(label);
+    if (rule != null) {
+      if (!rule.editorVisible) {
+        return const SizedBox.shrink();
+      }
+      return Tooltip(
+        message: rule.label,
+        child: GestureDetector(
+          onTap: () => showTokenDetails(context, rule),
+          child: StatusTokenImage(rule: rule, size: 30),
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
@@ -8756,6 +8826,11 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
     final values = await showAlterationDialog(
       context,
       widget.adventure.alterations,
+      duelTokens: [
+        ...TokenCatalogRepository.heroTokens(widget.adventure.hero),
+        ...widget.adventure.alterations,
+        ...widget.enemy.alterations,
+      ],
     );
     if (values != null) {
       widget.adventure.setAlterations(values);
@@ -8769,6 +8844,11 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       context,
       widget.enemy.alterations,
       forMinion: true,
+      duelTokens: [
+        ...TokenCatalogRepository.heroTokens(widget.adventure.hero),
+        ...widget.adventure.alterations,
+        ...widget.enemy.alterations,
+      ],
     );
     if (values != null) {
       widget.enemy.alterations
@@ -9491,9 +9571,13 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          enemy.alterations.isEmpty
+                          enemy.alterations
+                                  .where(_isVisibleStatusTokenLabel)
+                                  .isEmpty
                               ? 'Tokens'
-                              : enemy.alterations.join(', '),
+                              : enemy.alterations
+                                    .where(_isVisibleStatusTokenLabel)
+                                    .join(', '),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -9505,6 +9589,7 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
                             context,
                             enemy.alterations,
                             forMinion: true,
+                            duelTokens: enemy.alterations,
                           );
                           if (values != null) {
                             setState(() {

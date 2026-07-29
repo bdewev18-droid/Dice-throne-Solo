@@ -22,10 +22,7 @@ class _RewardPageState extends State<RewardPage> {
     final currentRewardRank = _rewardRankFor(_confirmed);
     final outcome = d20 == null
         ? null
-        : GameEngine.rewardForD20(
-            d20,
-            chest: currentRewardRank.rewardChestKey,
-          );
+        : GameEngine.rewardForD20(d20, chest: currentRewardRank.rewardChestKey);
     return Scaffold(
       appBar: AppBar(title: const Text('Reward')),
       body: SafeArea(
@@ -99,10 +96,7 @@ class _RewardPageState extends State<RewardPage> {
                 onPressed: d20 == null
                     ? null
                     : () {
-                        widget.adventure.applyReward(
-                          d20,
-                          currentRewardRank,
-                        );
+                        widget.adventure.applyReward(d20, currentRewardRank);
                         if (_confirmed + 1 >= total) {
                           Navigator.of(context).pop();
                         } else {
@@ -379,89 +373,368 @@ Future<List<String>?> showAlterationDialog(
   BuildContext context,
   List<String> current, {
   bool forMinion = false,
+  List<String> duelTokens = const [],
 }) {
   final alterations = statusTokenRules
+      .where((rule) => rule.editorVisible)
       .where((rule) => !forMinion || rule.minionAllowed)
-      .map((rule) => rule.label)
-      .toList();
-  final counts = <String, int>{for (final value in alterations) value: 0};
+      .toList(growable: false);
+  final hiddenCurrent = <String>[];
+  final counts = <String, int>{for (final rule in alterations) rule.label: 0};
   for (final value in current) {
-    counts[value] = (counts[value] ?? 0) + 1;
+    final rule = TokenCatalogRepository.byLabel(value);
+    if (rule != null && !rule.editorVisible) {
+      hiddenCurrent.add(value);
+      continue;
+    }
+    final label = rule?.label ?? value;
+    counts[label] = (counts[label] ?? 0) + 1;
   }
+  var filter = 'duel';
+  var query = '';
   return showDialog<List<String>>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) {
-        final selected = <String>[];
+        final selected = <String>[...hiddenCurrent];
         for (final entry in counts.entries) {
           selected.addAll(List.filled(entry.value, entry.key));
         }
-        return AlertDialog(
-          titlePadding: const EdgeInsets.fromLTRB(24, 18, 8, 0),
-          title: Row(
-            children: [
-              const Expanded(child: Text('Edit status tokens')),
-              IconButton(
-                tooltip: 'Cancel',
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: alterations.map((value) {
-                final count = counts[value] ?? 0;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
+        final duelKeys = {
+          ...duelTokens.map(_normalizeTokenKey),
+          ...current
+              .where((token) => _isVisibleStatusTokenLabel(token))
+              .map(_normalizeTokenKey),
+        };
+        List<StatusTokenRule> visibleRules;
+        if (filter == 'positive') {
+          visibleRules = alterations
+              .where((rule) => rule.kind == StatusTokenKind.positive)
+              .toList(growable: false);
+        } else if (filter == 'negative') {
+          visibleRules = alterations
+              .where((rule) => rule.kind == StatusTokenKind.negative)
+              .toList(growable: false);
+        } else {
+          visibleRules = alterations
+              .where(
+                (rule) =>
+                    duelKeys.contains(_normalizeTokenKey(rule.label)) ||
+                    rule.aliases.any(
+                      (alias) => duelKeys.contains(_normalizeTokenKey(alias)),
+                    ),
+              )
+              .toList(growable: false);
+          if (visibleRules.isEmpty) {
+            visibleRules = alterations.take(12).toList(growable: false);
+          }
+        }
+        final normalizedQuery = query.trim().toLowerCase();
+        if (normalizedQuery.isNotEmpty) {
+          visibleRules = visibleRules
+              .where((rule) {
+                final searchable = [
+                  rule.label,
+                  rule.frLabel,
+                  rule.description,
+                  ...rule.aliases,
+                ].join(' ').toLowerCase();
+                return searchable.contains(normalizedQuery);
+              })
+              .toList(growable: false);
+        }
+        visibleRules.sort((a, b) => a.label.compareTo(b.label));
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 18),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
                     children: [
-                      Expanded(child: Text(value)),
-                      RoundIconButton(
-                        icon: Icons.remove,
-                        tooltip: 'Remove',
-                        onPressed: count <= 0
-                            ? null
-                            : () => setDialogState(() {
-                                counts[value] = count - 1;
-                              }),
-                      ),
-                      SizedBox(
-                        width: 40,
+                      const Expanded(
                         child: Text(
-                          count.toString(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18,
+                          'Status tokens',
+                          style: TextStyle(
+                            fontSize: 20,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                       ),
-                      RoundIconButton(
-                        icon: Icons.add,
-                        tooltip: 'Add',
-                        onPressed: count >= _tokenRule(value).maxStack
-                            ? null
-                            : () => setDialogState(() {
-                                counts[value] = count + 1;
-                              }),
+                      IconButton(
+                        tooltip: 'Cancel',
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
                       ),
                     ],
                   ),
-                );
-              }).toList(),
+                  const SizedBox(height: 8),
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'duel', label: Text('Current duel')),
+                      ButtonSegment(value: 'positive', label: Text('Positive')),
+                      ButtonSegment(value: 'negative', label: Text('Negative')),
+                    ],
+                    selected: {filter},
+                    onSelectionChanged: (selection) =>
+                        setDialogState(() => filter = selection.first),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.search),
+                      labelText: 'Search token',
+                    ),
+                    onChanged: (value) => setDialogState(() => query = value),
+                  ),
+                  const SizedBox(height: 10),
+                  Flexible(
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 10,
+                            crossAxisSpacing: 10,
+                            childAspectRatio: 0.72,
+                          ),
+                      itemCount: visibleRules.length,
+                      itemBuilder: (context, index) {
+                        final rule = visibleRules[index];
+                        final count = counts[rule.label] ?? 0;
+                        return TokenPickerCard(
+                          rule: rule,
+                          count: count,
+                          onImageTap: () => showTokenDetails(context, rule),
+                          onMinus: count <= 0
+                              ? null
+                              : () => setDialogState(
+                                  () => counts[rule.label] = count - 1,
+                                ),
+                          onPlus: count >= rule.maxStack
+                              ? null
+                              : () => setDialogState(
+                                  () => counts[rule.label] = count + 1,
+                                ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Not every token is listed here: character-only tokens or tokens that cannot affect an enemy are not included. The green or orange dot shows whether the app handles the token automatically or whether you must resolve it manually.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.white70,
+                      height: 1.25,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton(
+                    onPressed: () => Navigator.of(context).pop(selected),
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
             ),
           ),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(selected),
-              child: const Text('Save'),
-            ),
-          ],
         );
       },
     ),
   );
 }
 
+bool _isVisibleStatusTokenLabel(String value) {
+  final rule = TokenCatalogRepository.byLabel(_compactTokenBaseLabel(value));
+  return rule?.editorVisible ?? true;
+}
+
+void showTokenDetails(BuildContext context, StatusTokenRule rule) {
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: const Color(0xff111111),
+    showDragHandle: true,
+    builder: (context) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              StatusTokenImage(rule: rule, size: 54),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      rule.label,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    if (rule.frLabel.isNotEmpty && rule.frLabel != rule.label)
+                      Text(
+                        rule.frLabel,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                  ],
+                ),
+              ),
+              _TokenSupportDot(rule: rule),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            rule.description.isEmpty ? 'No description yet.' : rule.description,
+            style: const TextStyle(height: 1.35),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class TokenPickerCard extends StatelessWidget {
+  const TokenPickerCard({
+    required this.rule,
+    required this.count,
+    required this.onImageTap,
+    required this.onMinus,
+    required this.onPlus,
+    super.key,
+  });
+
+  final StatusTokenRule rule;
+  final int count;
+  final VoidCallback onImageTap;
+  final VoidCallback? onMinus;
+  final VoidCallback? onPlus;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(7),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.34),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: panelBorderGrey),
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: onImageTap,
+              child: Stack(
+                alignment: Alignment.topRight,
+                children: [
+                  Center(child: StatusTokenImage(rule: rule, size: 64)),
+                  _TokenSupportDot(rule: rule),
+                ],
+              ),
+            ),
+          ),
+          Text(
+            rule.label,
+            maxLines: 2,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              RoundIconButton(
+                icon: Icons.add,
+                tooltip: 'Add',
+                onPressed: onPlus,
+              ),
+              SizedBox(
+                width: 28,
+                child: Text(
+                  count.toString(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+              ),
+              RoundIconButton(
+                icon: Icons.remove,
+                tooltip: 'Remove',
+                onPressed: onMinus,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class StatusTokenImage extends StatelessWidget {
+  const StatusTokenImage({required this.rule, this.size = 34, super.key});
+
+  final StatusTokenRule rule;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final image = rule.imageAsset;
+    if (image != null) {
+      return Image.asset(image, width: size, height: size, fit: BoxFit.contain);
+    }
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: rule.kind == StatusTokenKind.positive
+            ? const Color(0xff246b39)
+            : const Color(0xff6d1f28),
+        border: Border.all(color: Colors.white70),
+      ),
+      child: Text(
+        _tokenShortLabel(rule.label),
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: max(8, size * 0.22),
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _TokenSupportDot extends StatelessWidget {
+  const _TokenSupportDot({required this.rule});
+
+  final StatusTokenRule rule;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: rule.appSupported ? 'Handled by app' : 'Manual resolution',
+      child: Container(
+        width: 12,
+        height: 12,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: rule.appSupported
+              ? const Color(0xff41dd74)
+              : const Color(0xffff9f1c),
+          border: Border.all(color: Colors.black87, width: 1.5),
+        ),
+      ),
+    );
+  }
+}
