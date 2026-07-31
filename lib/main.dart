@@ -10,7 +10,9 @@ import 'active_adventure_storage.dart';
 import 'data/enemy_profile_repository.dart';
 import 'data/fallback_enemy_profiles.dart';
 import 'game_engine.dart';
+import 'history_repository.dart';
 import 'models/enemy_profile.dart';
+import 'supabase_service.dart';
 
 part 'parts/app_shell.dart';
 part 'parts/history.dart';
@@ -20,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.48';
+const String appVersionLabel = 'Version 1.3.49';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -33,6 +35,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EnemyProfileRepository.load();
   await TokenCatalogRepository.load();
+  await SupabaseService.instance.initialize();
   runApp(const DiceThroneSurvieApp());
 }
 
@@ -639,12 +642,16 @@ StatusTokenRule _tokenRule(String label) {
 String _normalizeTokenKey(String value) {
   return value
       .toLowerCase()
-      .replaceAll(RegExp(r'[éèêë]'), 'e')
-      .replaceAll(RegExp(r'[àâä]'), 'a')
-      .replaceAll(RegExp(r'[îï]'), 'i')
-      .replaceAll(RegExp(r'[ôö]'), 'o')
-      .replaceAll(RegExp(r'[ûü]'), 'u')
-      .replaceAll(RegExp(r'[ç]'), 'c')
+      .replaceAll(RegExp(r'[àáâãäåā]'), 'a')
+      .replaceAll(RegExp(r'[çć]'), 'c')
+      .replaceAll(RegExp(r'[èéêëēė]'), 'e')
+      .replaceAll(RegExp(r'[ìíîïī]'), 'i')
+      .replaceAll(RegExp(r'ñ'), 'n')
+      .replaceAll(RegExp(r'[òóôõö]'), 'o')
+      .replaceAll(RegExp(r'œ'), 'oe')
+      .replaceAll(RegExp(r'æ'), 'ae')
+      .replaceAll(RegExp(r'[ùúûüū]'), 'u')
+      .replaceAll(RegExp(r'[ÿý]'), 'y')
       .replaceAll(RegExp(r'[^a-z0-9]+'), '');
 }
 
@@ -841,13 +848,18 @@ class GameRecord {
     required this.hero,
     required this.date,
     required this.score,
+    this.id,
     this.mode = SurvivalMode.mediumFixed,
     this.healthRemaining,
     this.bossHealthRemaining,
     this.enemiesDefeated = 0,
     this.duration = Duration.zero,
+    this.isVictory = false,
   });
 
+  /// Identifiant Supabase (UUID) quand le record est issu de la base.
+  /// Null pour un record créé localement non encore synchronisé.
+  final String? id;
   final HeroType hero;
   final DateTime date;
   final int score;
@@ -856,6 +868,62 @@ class GameRecord {
   final int? bossHealthRemaining;
   final int enemiesDefeated;
   final Duration duration;
+  final bool isVictory;
+
+  /// Sérialisation pour Supabase (table game_records).
+  /// Ne contient pas user_id (ajouté côté service via la session).
+  Map<String, dynamic> toSupabase() => {
+        'hero': hero.name,
+        'mode': mode.name,
+        'score': score,
+        'enemies_defeated': enemiesDefeated,
+        'health_remaining': healthRemaining,
+        'boss_health_remaining': bossHealthRemaining,
+        'duration_ms': duration.inMilliseconds,
+        'is_victory': isVictory,
+        'played_at': date.toUtc().toIso8601String(),
+      };
+
+  /// Désérialisation depuis une ligne Supabase (game_records).
+  factory GameRecord.fromSupabase(Map<String, dynamic> row) {
+    final heroName = row['hero'] as String?;
+    final modeName = row['mode'] as String?;
+    final playedAt = row['played_at'];
+    final durationMs = (row['duration_ms'] as num?)?.toInt() ?? 0;
+    return GameRecord(
+      id: row['id'] as String?,
+      hero:
+          _enumByName(HeroType.values, heroName) ?? HeroType.alchemist,
+      date: _parseDateTime(playedAt) ?? DateTime.now(),
+      score: (row['score'] as num?)?.toInt() ?? 0,
+      mode: _enumByName(SurvivalMode.values, modeName) ??
+          SurvivalMode.mediumFixed,
+      healthRemaining: (row['health_remaining'] as num?)?.toInt(),
+      bossHealthRemaining:
+          (row['boss_health_remaining'] as num?)?.toInt(),
+      enemiesDefeated:
+          (row['enemies_defeated'] as num?)?.toInt() ?? 0,
+      duration: Duration(milliseconds: durationMs),
+      isVictory: (row['is_victory'] as bool?) ?? false,
+    );
+  }
+
+  static DateTime? _parseDateTime(Object? value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
 }
 
 class SurvivalConfig {
@@ -904,7 +972,7 @@ class EnemyNode {
     required this.label,
     required this.rank,
     required this.maxHealth,
-    required this.pc,
+    required this.cp,
     required this.attacks,
     required this.defense,
     required this.defenseDice,
@@ -918,7 +986,7 @@ class EnemyNode {
     this.branch,
     this.step = 0,
   }) : health = maxHealth,
-       combatPoints = pc,
+       combatPoints = cp,
        rewardRank = rewardRank ?? rank,
        rewardRanks = rewardRanks.isEmpty
            ? List<EnemyRank>.filled(
@@ -933,7 +1001,7 @@ class EnemyNode {
   String label;
   EnemyRank rank;
   int maxHealth;
-  int pc;
+  int cp;
   List<String> attacks;
   String defense;
   int defenseDice;
@@ -1001,7 +1069,7 @@ class EnemyNode {
       label = restoredProfile.name;
       rank = restoredProfile.rank;
       maxHealth = restoredProfile.maxHealth;
-      pc = restoredProfile.pc;
+      cp = restoredProfile.cp;
       attacks = restoredProfile.attacks;
       defense = restoredProfile.defense;
       defenseDice = restoredProfile.defenseDice;
@@ -1039,7 +1107,7 @@ class EnemyNode {
     label = profile.name;
     rank = profile.rank;
     maxHealth = profile.maxHealth;
-    pc = profile.pc;
+    cp = profile.cp;
     attacks = profile.attacks;
     defense = profile.defense;
     defenseDice = profile.defenseDice;
@@ -1052,7 +1120,7 @@ class EnemyNode {
         ? List<EnemyRank>.filled(rewardChests, rewardRank)
         : List<EnemyRank>.from(profile.rewardRanks);
     health = maxHealth;
-    combatPoints = pc;
+    combatPoints = cp;
     alterations
       ..clear()
       ..addAll(profile.initialTokens);

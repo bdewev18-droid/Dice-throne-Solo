@@ -63,7 +63,7 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
       label: naraxusProfile.name,
       rank: EnemyRank.naraxus,
       maxHealth: naraxusProfile.maxHealth,
-      pc: naraxusProfile.pc,
+      cp: naraxusProfile.cp,
       attacks: naraxusProfile.attacks,
       defense: naraxusProfile.defense,
       defenseDice: naraxusProfile.defenseDice,
@@ -476,7 +476,7 @@ class _MapPageState extends State<MapPage> {
         ..rank = EnemyRank.viseer
         ..cardAsset = 'assets/enemy_viseer.jpg'
         ..health = viseerProfile.maxHealth
-        ..combatPoints = viseerProfile.pc;
+        ..combatPoints = viseerProfile.cp;
     }
     widget.onChanged();
     if (enemy.branch != null) {

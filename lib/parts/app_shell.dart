@@ -12,11 +12,98 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   final _store = ActiveAdventureStore();
   AdventureState? _activeAdventure;
   bool _storageReady = false;
+  AuthSession _auth = AuthSession.unknown;
 
   @override
   void initState() {
     super.initState();
     _loadActiveAdventure();
+    _initAuthAndHistory();
+  }
+
+  Future<void> _initAuthAndHistory() async {
+    final session = SupabaseService.instance.currentSession();
+    setState(() => _auth = session);
+    await _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    final records = await HistoryRepository.instance.load();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _history
+        ..clear()
+        ..addAll(records);
+    });
+  }
+
+  Future<void> _refreshHistory() async {
+    await _loadHistory();
+  }
+
+  Future<void> _handleAddRecord(GameRecord record) async {
+    final saved = await HistoryRepository.instance.add(record);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _history.removeWhere((r) => r.id == saved.id && saved.id != null);
+      _history.insert(0, saved);
+    });
+  }
+
+  Future<void> _handleDeleteRecord(GameRecord record) async {
+    await HistoryRepository.instance.delete(record);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _history.remove(record));
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _auth = const AuthSession(status: AuthStatus.signingIn));
+    try {
+      final session = await SupabaseService.instance.signInWithGoogle();
+      setState(() => _auth = session);
+      if (session.isSignedIn) {
+        await _loadHistory();
+      }
+    } catch (e) {
+      setState(() => _auth = AuthSession.signedOut);
+      _showAuthError(context, e);
+    }
+  }
+
+  Future<void> _signInAnonymously() async {
+    setState(() => _auth = const AuthSession(status: AuthStatus.signingIn));
+    try {
+      final session = await SupabaseService.instance.signInAnonymously();
+      setState(() => _auth = session);
+      if (session.isSignedIn) {
+        await _loadHistory();
+      }
+    } catch (e) {
+      setState(() => _auth = AuthSession.signedOut);
+      _showAuthError(context, e);
+    }
+  }
+
+  Future<void> _signOut() async {
+    await SupabaseService.instance.signOut();
+    setState(() {
+      _auth = AuthSession.signedOut;
+      _history.clear();
+    });
+    await _loadHistory();
+  }
+
+  void _showAuthError(BuildContext context, Object error) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.showSnackBar(
+      SnackBar(content: Text('Connexion impossible : $error')),
+    );
   }
 
   @override
@@ -69,6 +156,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
           }
           return HomePage(
             activeAdventure: _activeAdventure,
+            auth: _auth,
             onHistory: () => _openHistory(context),
             onSurvival: () => _openHeroChoice(context),
             onResume: () {
@@ -84,6 +172,9 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
             },
             onStopCampaign: _stopActiveCampaign,
             onNaraxus: () => _openNaraxusHeroChoice(context),
+            onSignInGoogle: _signInWithGoogle,
+            onSignInAnonymous: _signInAnonymously,
+            onSignOut: _signOut,
           );
         },
       ),
@@ -138,8 +229,8 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
         builder: (_) => HistoryPage(
           records: _history,
           initialDifficulty: initialDifficulty,
-          onAddRecord: (record) => setState(() => _history.insert(0, record)),
-          onDeleteRecord: (record) => setState(() => _history.remove(record)),
+          onAddRecord: (record) => _handleAddRecord(record),
+          onDeleteRecord: (record) => _handleDeleteRecord(record),
         ),
       ),
     );
@@ -182,8 +273,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
                 builder: (_) => NaraxusBattlePage(
                   hero: hero,
                   historyRecords: _history,
-                  onRecord: (record) =>
-                      setState(() => _history.insert(0, record)),
+                  onRecord: (record) => _handleAddRecord(record),
                   onOpenHistory: () => _openHistory(
                     appNavigatorKey.currentContext ?? context,
                     initialDifficulty: RunDifficulty.naraxus,
@@ -240,19 +330,18 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
       return;
     }
     adventure.recorded = true;
+    final record = GameRecord(
+      hero: adventure.hero,
+      date: DateTime.now(),
+      score: adventure.score,
+      mode: adventure.config.mode,
+      healthRemaining: adventure.health,
+      enemiesDefeated: adventure.defeatedEnemies.length,
+      duration: adventure.elapsed,
+      isVictory: adventure.victory,
+    );
+    _handleAddRecord(record);
     setState(() {
-      _history.insert(
-        0,
-        GameRecord(
-          hero: adventure.hero,
-          date: DateTime.now(),
-          score: adventure.score,
-          mode: adventure.config.mode,
-          healthRemaining: adventure.health,
-          enemiesDefeated: adventure.defeatedEnemies.length,
-          duration: adventure.elapsed,
-        ),
-      );
       if (identical(_activeAdventure, adventure)) {
         _activeAdventure = null;
         _store.clear();
@@ -287,20 +376,28 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
 class HomePage extends StatefulWidget {
   const HomePage({
     required this.activeAdventure,
+    required this.auth,
     required this.onHistory,
     required this.onSurvival,
     required this.onResume,
     required this.onStopCampaign,
     required this.onNaraxus,
+    required this.onSignInGoogle,
+    required this.onSignInAnonymous,
+    required this.onSignOut,
     super.key,
   });
 
   final AdventureState? activeAdventure;
+  final AuthSession auth;
   final VoidCallback onHistory;
   final VoidCallback onSurvival;
   final VoidCallback onResume;
   final VoidCallback onStopCampaign;
   final VoidCallback onNaraxus;
+  final VoidCallback onSignInGoogle;
+  final VoidCallback onSignInAnonymous;
+  final VoidCallback onSignOut;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -358,6 +455,15 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: AccountChip(
+                      auth: widget.auth,
+                      onSignInGoogle: widget.onSignInGoogle,
+                      onSignInAnonymous: widget.onSignInAnonymous,
+                      onSignOut: widget.onSignOut,
+                    ),
+                  ),
                   const Spacer(),
                   Transform.translate(
                     offset: const Offset(0, -30),
@@ -556,3 +662,134 @@ class ImageActionButton extends StatelessWidget {
   }
 }
 
+/// Chip de compte : connecté (email + déconnexion) ou invité
+/// (boutons Google / Anonyme). Compact pour ne pas encombrer l'accueil.
+class AccountChip extends StatelessWidget {
+  const AccountChip({
+    required this.auth,
+    required this.onSignInGoogle,
+    required this.onSignInAnonymous,
+    required this.onSignOut,
+    super.key,
+  });
+
+  final AuthSession auth;
+  final VoidCallback onSignInGoogle;
+  final VoidCallback onSignInAnonymous;
+  final VoidCallback onSignOut;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSigningIn = auth.status == AuthStatus.signingIn;
+    if (isSigningIn) {
+      return _pill(
+        child: const SizedBox(
+          height: 18,
+          width: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+    if (auth.isSignedIn) {
+      final label = (auth.email?.isNotEmpty ?? false)
+          ? auth.email!
+          : (auth.isAnonymous ? 'Invité' : 'Connecté');
+      return _pill(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              auth.isAnonymous ? Icons.person_outline : Icons.verified_user,
+              size: 16,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 6),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 140),
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            _signOutButton(),
+          ],
+        ),
+      );
+    }
+    return _pill(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _iconButton(
+            icon: Icons.login,
+            label: 'Google',
+            onTap: onSignInGoogle,
+          ),
+          const SizedBox(width: 6),
+          _iconButton(
+            icon: Icons.person,
+            label: 'Invité',
+            onTap: onSignInAnonymous,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _signOutButton() {
+    return InkWell(
+      onTap: onSignOut,
+      borderRadius: BorderRadius.circular(12),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Icon(Icons.logout, size: 16, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _iconButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: Colors.white),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _pill({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.58),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: child,
+    );
+  }
+}
