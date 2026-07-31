@@ -52,7 +52,7 @@ class EnemyProfileJson {
       name: json['name'] as String? ?? 'Unknown',
       rank: rank,
       maxHealth: _intValue(json['maxHealth'], fallback: 1),
-      pc: _intValue(json['cp'] ?? json['pc'], fallback: 0),
+      cp: _intValue(json['cp'] ?? json['pc'], fallback: 0),
       cardAsset: json['cardAsset'] as String? ?? rank.asset,
       initialTokens: _stringList(json['initialTokens']),
       rewardChests: _intValue(json['rewardChests'], fallback: 1),
@@ -109,25 +109,105 @@ class EnemyProfileJson {
     return fallback;
   }
 
+  /// Finds the action whose symbol condition matches the given goal thresholds
+  /// and returns its effects. Returns null when no matching action exists.
+  static SymbolGoalEffect? _effectFromActions(
+    List<Map<String, dynamic>> actions, {
+    required int white,
+    required int yellow,
+    required int red,
+  }) {
+    for (final action in actions) {
+      final condition = action['condition'];
+      if (condition is! Map<String, dynamic>) {
+        continue;
+      }
+      final symbols = condition['symbols'];
+      if (symbols is! Map<String, dynamic>) {
+        continue;
+      }
+      final matchesWhite = _intValue(symbols['white'], fallback: 0) == white;
+      final matchesYellow =
+          _intValue(symbols['orange'] ?? symbols['yellow'], fallback: 0) ==
+          yellow;
+      final matchesRed = _intValue(symbols['red'], fallback: 0) == red;
+      if (matchesWhite && matchesYellow && matchesRed) {
+        return SymbolGoalEffect(
+          damage: _intValue(action['damage'], fallback: 0),
+          undefendable: action['undefendable'] as bool? ?? false,
+          stealHp: _intValue(action['stealHp'], fallback: 0),
+          stealCp: _intValue(action['stealCp'], fallback: 0),
+          heal: _intValue(action['heal'], fallback: 0),
+          heroTokens: _stringList(action['tokens']),
+          minionTokens: const [],
+          label: (action['label'] as String?)?.trim(),
+        );
+      }
+    }
+    return null;
+  }
+
   static MinionAttackPlan _attackPlanFromJson(Object? value) {
     if (value is! Map<String, dynamic>) {
       return const MinionAttackPlan.none();
     }
     final style = value['style'] as String? ?? 'none';
     if (style == 'suite') {
-      return const MinionAttackPlan.suite();
+      final actions = (value['actions'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .toList();
+      final suiteEffects = <int, SymbolGoalEffect>{};
+      for (final action in actions) {
+        final condition = action['condition'];
+        if (condition is! Map<String, dynamic>) {
+          continue;
+        }
+        if (condition['type'] != 'suite') {
+          continue;
+        }
+        final length = _intValue(condition['length'], fallback: -1);
+        if (length < 3) {
+          continue;
+        }
+        suiteEffects[length] = SymbolGoalEffect(
+          damage: _intValue(action['damage'], fallback: 0),
+          undefendable: action['undefendable'] as bool? ?? false,
+          stealHp: _intValue(action['stealHp'], fallback: 0),
+          stealCp: _intValue(action['stealCp'], fallback: 0),
+          heal: _intValue(action['heal'], fallback: 0),
+          heroTokens: _stringList(action['tokens']),
+          minionTokens: const [],
+          label: (action['label'] as String?)?.trim(),
+        );
+      }
+      return MinionAttackPlan.suite(suiteEffects: suiteEffects);
     }
     if (style == 'symbols') {
-      final goals = (value['goals'] as List<dynamic>? ?? const [])
+      final rawGoals = (value['goals'] as List<dynamic>? ?? const [])
           .whereType<Map<String, dynamic>>()
-          .map(
-            (goal) => SymbolGoal(
-              white: _intValue(goal['white'], fallback: 0),
-              yellow: _intValue(goal['orange'] ?? goal['yellow'], fallback: 0),
-              red: _intValue(goal['red'], fallback: 0),
+          .toList();
+      final actions = (value['actions'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .toList();
+      final goals = <SymbolGoal>[];
+      for (final goal in rawGoals) {
+        final white = _intValue(goal['white'], fallback: 0);
+        final yellow = _intValue(goal['orange'] ?? goal['yellow'], fallback: 0);
+        final red = _intValue(goal['red'], fallback: 0);
+        goals.add(
+          SymbolGoal(
+            white: white,
+            yellow: yellow,
+            red: red,
+            effect: _effectFromActions(
+              actions,
+              white: white,
+              yellow: yellow,
+              red: red,
             ),
-          )
-          .toList(growable: false);
+          ),
+        );
+      }
       return MinionAttackPlan.symbols(goals);
     }
     return const MinionAttackPlan.none();

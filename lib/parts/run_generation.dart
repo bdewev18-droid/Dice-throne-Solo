@@ -261,7 +261,7 @@ EnemyNode _enemy(
     branch: branch,
     step: step,
     maxHealth: selectedProfile.maxHealth,
-    pc: selectedProfile.pc,
+    cp: selectedProfile.cp,
     attacks: selectedProfile.attacks,
     defense: selectedProfile.defense,
     defenseDice: selectedProfile.defenseDice,

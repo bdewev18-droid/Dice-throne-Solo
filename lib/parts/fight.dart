@@ -135,6 +135,7 @@ class _FightPageState extends State<FightPage> {
   late CombatPhase _phase;
   bool _upkeepApplied = false;
   bool _heroUpkeepApplied = false;
+  List<String> _upkeepNotes = [];
   bool _specialAttackReady = false;
   bool _specialAttackMode = false;
   bool _aiMode = true;
@@ -585,6 +586,20 @@ class _FightPageState extends State<FightPage> {
     _refreshBattleResolutionFromDice();
     if (_rollCount == _maxRolls) {
       _specialAttackReady = _shouldResolveSpecialAttack();
+      if (_phase == CombatPhase.minionAttack &&
+          !_specialAttackReady &&
+          !_currentAttackGoalMet() &&
+          _currentMinionAttackResult() == null) {
+        final hadReserved = _dice.any((die) => die.reserved);
+        for (final die in _dice) {
+          die.reserved = false;
+        }
+        if (hadReserved) {
+          widget.adventure.log(
+            'After $_rollCount attack rolls, no valid attack combination: dice deselected.',
+          );
+        }
+      }
     }
   }
 
@@ -2436,7 +2451,7 @@ class _FightPageState extends State<FightPage> {
       label: profile.name,
       rank: EnemyRank.violet,
       maxHealth: profile.maxHealth,
-      pc: profile.pc,
+      cp: profile.cp,
       attacks: profile.attacks,
       defense: profile.defense,
       defenseDice: profile.defenseDice,
@@ -2470,25 +2485,33 @@ class _FightPageState extends State<FightPage> {
     if (captureUndo) {
       _captureStepUndo();
     }
+    UpkeepOutcome? heroOutcome;
     setState(() {
       _heroUpkeepApplied = true;
-      final poisonCount = widget.adventure.alterations
-          .where((token) => token == 'Poison')
-          .length;
-      widget.adventure.setHeroPc(
-        widget.adventure.combatPoints + GameEngine.combatPointStartGain(),
+      heroOutcome = GameEngine.heroUpkeep(
+        tokens: widget.adventure.alterations,
+        rollD6: () => _random.nextInt(6) + 1,
       );
-      var upkeepLog = '${widget.adventure.hero.label} gains 1 CP';
-      if (poisonCount > 0) {
-        widget.adventure.setHeroHealth(widget.adventure.health - poisonCount);
-        upkeepLog += ', loses $poisonCount HP from Poison';
+      widget.adventure.setHeroPc(
+        widget.adventure.combatPoints + heroOutcome!.cpDelta,
+      );
+      widget.adventure.setHeroHealth(
+        widget.adventure.health + heroOutcome!.healthDelta,
+      );
+      for (final t in heroOutcome!.removedTokens) {
+        widget.adventure.alterations.remove(t);
       }
-      if (widget.adventure.alterations.contains('Hémorragie')) {
-        upkeepLog += '. Hémorragie requires a manual upkeep roll';
-      }
-      widget.adventure.log('$upkeepLog.');
+      widget.adventure
+          .log('${widget.adventure.hero.label} upkeep: ${heroOutcome!.log}.');
       widget.onChanged();
     });
+    if (heroOutcome != null && heroOutcome!.notes.isNotEmpty) {
+      for (final note in heroOutcome!.notes) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(note), duration: const Duration(seconds: 5)),
+        );
+      }
+    }
     _maybeShowGameOverDialog();
   }
 
@@ -2545,6 +2568,7 @@ class _FightPageState extends State<FightPage> {
       }
       _lastBattleOutcomeMessage = _isViseerNode(enemy) ? passiveLog : '';
       widget.onChanged();
+      _upkeepNotes = outcome.notes;
     });
     if (enemy.health <= 0) {
       if (!_isNaraxus) {
@@ -8361,6 +8385,8 @@ bool _isDruidBearForm(EnemyNode enemy) {
 _AttackDamage? _damageForSymbolGoal(EnemyNode enemy, SymbolGoal goal) {
   final key = enemy.profileKey;
   final goalIndex = _goalIndex(enemy.attackPlan.goals, goal);
+  // Special hardcoded resolvers take precedence (they encode logic that the
+  // JSON effect model cannot express, e.g. dynamic damage from goal values).
   if (key == 'ronin-vagabond') {
     return _AttackDamage(goal.white + 2);
   }
@@ -8425,11 +8451,32 @@ _AttackDamage? _damageForSymbolGoal(EnemyNode enemy, SymbolGoal goal) {
   if (key == 'bleu-bleu-004') {
     return const _AttackDamage(0);
   }
+  // Prefer the structured effect parsed from the JSON `attackPlan.actions`
+  // entry for this goal. This is the source of truth and avoids fragile text
+  // parsing of the localized `attacks` strings (which caused wrong damage and
+  // missed attacks for profiles like Roi Vautour / vert-vert-011).
+  final effect = goal.effect;
+  if (effect != null) {
+    return _AttackDamage(
+      effect.damage,
+      imparable: effect.undefendable,
+    );
+  }
   return _damageFromAttackText(enemy, goalIndex);
 }
 
 _AttackDamage? _suiteDamage(EnemyNode enemy, int length) {
   final key = enemy.profileKey;
+  // Prefer the structured effect parsed from the JSON `attackPlan.actions`
+  // entry for this suite length. Same rationale as `_damageForSymbolGoal`:
+  // the JSON is the source of truth and avoids fragile text parsing.
+  final effect = enemy.attackPlan.suiteEffects[length];
+  if (effect != null) {
+    return _AttackDamage(
+      effect.damage,
+      imparable: effect.undefendable,
+    );
+  }
   if (key == 'fee') {
     return switch (length) {
       3 => const _AttackDamage(2, imparable: true),
@@ -8519,6 +8566,7 @@ List<int> _attackDamageValues(List<String> attacks) {
   final values = <int>[];
   for (final line in attacks.skip(1)) {
     final normalized = _normalizeAttackText(line);
+    // Primary: "<number>[/<number>...] (degats|damage)" anywhere on the line.
     for (final match in RegExp(
       r'(\d+(?:\s*/\s*\d+)*)\s*(?:degats|damage)',
     ).allMatches(normalized)) {
@@ -8533,15 +8581,31 @@ List<int> _attackDamageValues(List<String> attacks) {
             .whereType<int>(),
       );
     }
-    if (!normalized.contains('degats') && !normalized.contains('damage')) {
-      final afterEquals = normalized.split('=').last;
-      final fallbackValues = RegExp(r'\d+')
-          .allMatches(afterEquals)
-          .map((match) => int.tryParse(match.group(0) ?? ''))
-          .whereType<int>()
-          .toList();
-      if (fallbackValues.isNotEmpty) {
-        values.add(fallbackValues.last);
+    if (values.isNotEmpty) {
+      continue;
+    }
+    // Fallback A: "X orange = N" style lines (e.g. "3 orange = 4 degats"
+    // where the word was not recognized — take the number right after '=').
+    final equalsMatch = RegExp(r'=\s*(\d+)').firstMatch(normalized);
+    if (equalsMatch != null) {
+      final value = int.tryParse(equalsMatch.group(1) ?? '');
+      if (value != null) {
+        values.add(value);
+        continue;
+      }
+    }
+    // Fallback B: bare trailing number when no damage keyword and no '='.
+    // Only used as a last resort and only takes the FIRST number to avoid
+    // grabbing unrelated counts (e.g. CP cost, symbol thresholds).
+    if (!normalized.contains('degats') &&
+        !normalized.contains('damage') &&
+        !normalized.contains('=')) {
+      final bare = RegExp(r'(\d+)').firstMatch(normalized);
+      if (bare != null) {
+        final value = int.tryParse(bare.group(1) ?? '');
+        if (value != null) {
+          values.add(value);
+        }
       }
     }
   }
@@ -8553,33 +8617,69 @@ bool _attackTextIsImparable(List<String> attacks) {
   return text.contains('imparable') || text.contains('undefendable');
 }
 
-String _normalizeAttackText(String value) {
+/// Strips French (and common Latin-1) diacritics and lowercases the input.
+///
+/// Used by attack/defense text parsing so that localized words like `dégâts`,
+/// `défensif`, `hémorragie` can be matched against simple ASCII patterns
+/// (`degats`, `defensif`, `hemorragie`). Keep this exhaustive: any missing
+/// diacritic leaks through and silently breaks the regex matches, which is
+/// exactly what caused wrong damage values for Roi Vautour.
+String _stripDiacritics(String value) {
   return value
       .toLowerCase()
-      .replaceAll('é', 'e')
-      .replaceAll('è', 'e')
-      .replaceAll('ê', 'e')
       .replaceAll('à', 'a')
+      .replaceAll('á', 'a')
       .replaceAll('â', 'a')
+      .replaceAll('ä', 'a')
+      .replaceAll('å', 'a')
+      .replaceAll('ã', 'a')
+      .replaceAll('ā', 'a')
+      .replaceAll('ç', 'c')
+      .replaceAll('ć', 'c')
+      .replaceAll('è', 'e')
+      .replaceAll('é', 'e')
+      .replaceAll('ê', 'e')
+      .replaceAll('ë', 'e')
+      .replaceAll('ē', 'e')
+      .replaceAll('ė', 'e')
+      .replaceAll('î', 'i')
+      .replaceAll('ï', 'i')
+      .replaceAll('í', 'i')
+      .replaceAll('ī', 'i')
+      .replaceAll('ñ', 'n')
+      .replaceAll('ô', 'o')
+      .replaceAll('ö', 'o')
+      .replaceAll('ò', 'o')
+      .replaceAll('ó', 'o')
+      .replaceAll('õ', 'o')
+      .replaceAll('œ', 'oe')
+      .replaceAll('æ', 'ae')
       .replaceAll('ù', 'u')
       .replaceAll('û', 'u')
-      .replaceAll('ï', 'i')
-      .replaceAll('î', 'i')
-      .replaceAll('ô', 'o');
+      .replaceAll('ü', 'u')
+      .replaceAll('ú', 'u')
+      .replaceAll('ū', 'u')
+      .replaceAll('ÿ', 'y')
+      .replaceAll('ý', 'y');
+}
+
+String _normalizeAttackText(String value) {
+  return _stripDiacritics(value);
 }
 
 String _compactDefenseText(String value) {
-  return value
+  final stripped = _stripDiacritics(value);
+  return stripped
       .replaceAll('jaunes', 'orange')
       .replaceAll('jaune', 'orange')
       .replaceAll('symboles', 'symbols')
       .replaceAll('symbole', 'symbol')
-      .replaceAll('dés', 'dice')
-      .replaceAll('dé', 'die')
-      .replaceAll('dégâts', 'damage')
-      .replaceAll('dégât', 'damage')
-      .replaceAll('Jet défensif ', '')
-      .replaceAll('Jet defensif ', '');
+      .replaceAll('des', 'dice')
+      .replaceAll('de', 'die')
+      .replaceAll('degats', 'damage')
+      .replaceAll('degat', 'damage')
+      .replaceAll('jet defensif ', '')
+      .replaceAll('jetdefensif ', '');
 }
 
 class FightStatusPanel extends StatefulWidget {
