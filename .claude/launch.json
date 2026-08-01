@@ -1,0 +1,21 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "flutter-web-dev",
+      "runtimeExecutable": "C:\\dev\\flutter\\bin\\flutter.bat",
+      "runtimeArgs": ["run", "-d", "chrome", "--web-port=8080"],
+      "port": 8080,
+      "autoPort": false
+    },
+    {
+      "name": "flutter-web-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:\\Users\\Focus on you\\Desktop\\projet app\\dice_throne_survie\\tool\\local-web-preview.js"],
+      "env": {"PORT": "8082"},
+      "port": 8082,
+      "url": "http://127.0.0.1:8082",
+      "autoPort": false
+    }
+  ]
+}

@@ -2501,8 +2501,9 @@ class _FightPageState extends State<FightPage> {
       for (final t in heroOutcome!.removedTokens) {
         widget.adventure.alterations.remove(t);
       }
-      widget.adventure
-          .log('${widget.adventure.hero.label} upkeep: ${heroOutcome!.log}.');
+      widget.adventure.log(
+        '${widget.adventure.hero.label} upkeep: ${heroOutcome!.log}.',
+      );
       widget.onChanged();
     });
     if (heroOutcome != null && heroOutcome!.notes.isNotEmpty) {
@@ -3038,16 +3039,10 @@ class _CompactItemStripState extends State<CompactItemStrip> {
                                     },
                                     child: Tooltip(
                                       message: item.tooltip,
-                                      child: item.rewardCardColor == null
-                                          ? CompactItemBadge(
-                                              value: item.label,
-                                              tooltip: item.tooltip,
-                                              color: widget.accent,
-                                            )
-                                          : RewardCardBadge(
-                                              color: item.rewardCardColor!,
-                                              tooltip: item.tooltip,
-                                            ),
+                                      child: _CompactItemVisual(
+                                        item: item,
+                                        color: widget.accent,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -3062,6 +3057,53 @@ class _CompactItemStripState extends State<CompactItemStrip> {
           );
         },
       ),
+    );
+  }
+}
+
+class _CompactItemVisual extends StatelessWidget {
+  const _CompactItemVisual({required this.item, required this.color});
+
+  static final RegExp _healthRewardPattern = RegExp(r'^\+(\d+) HP$');
+  static final RegExp _cpRewardPattern = RegExp(r'^\+(\d+) CP$');
+
+  final CompactItemModel item;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final healthMatch = _healthRewardPattern.firstMatch(item.label);
+    if (healthMatch != null) {
+      return _EffectImageBadge(
+        value: '+${healthMatch.group(1)!}',
+        asset: 'assets/illustration/soin.webp',
+        textColor: Colors.white,
+        size: 34,
+        fontSize: 12,
+      );
+    }
+    final cpMatch = _cpRewardPattern.firstMatch(item.label);
+    if (cpMatch != null) {
+      final value = int.tryParse(cpMatch.group(1)!);
+      if (value != null) {
+        return SizedBox(
+          width: 36,
+          height: 36,
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: _PcTriangleBadge(value: value),
+          ),
+        );
+      }
+    }
+    final rewardCardColor = item.rewardCardColor;
+    if (rewardCardColor != null) {
+      return RewardCardBadge(color: rewardCardColor, tooltip: item.tooltip);
+    }
+    return CompactItemBadge(
+      value: item.label,
+      tooltip: item.tooltip,
+      color: color,
     );
   }
 }
@@ -8457,10 +8499,7 @@ _AttackDamage? _damageForSymbolGoal(EnemyNode enemy, SymbolGoal goal) {
   // missed attacks for profiles like Roi Vautour / vert-vert-011).
   final effect = goal.effect;
   if (effect != null) {
-    return _AttackDamage(
-      effect.damage,
-      imparable: effect.undefendable,
-    );
+    return _AttackDamage(effect.damage, imparable: effect.undefendable);
   }
   return _damageFromAttackText(enemy, goalIndex);
 }
@@ -8472,10 +8511,7 @@ _AttackDamage? _suiteDamage(EnemyNode enemy, int length) {
   // the JSON is the source of truth and avoids fragile text parsing.
   final effect = enemy.attackPlan.suiteEffects[length];
   if (effect != null) {
-    return _AttackDamage(
-      effect.damage,
-      imparable: effect.undefendable,
-    );
+    return _AttackDamage(effect.damage, imparable: effect.undefendable);
   }
   if (key == 'fee') {
     return switch (length) {

@@ -22,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.49';
+const String appVersionLabel = 'Version 1.3.50';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -33,10 +33,61 @@ final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await EnemyProfileRepository.load();
-  await TokenCatalogRepository.load();
-  await SupabaseService.instance.initialize();
-  runApp(const DiceThroneSurvieApp());
+  runApp(const _AppBootstrap());
+  unawaited(_initializeOptionalServices());
+}
+
+class _AppBootstrap extends StatefulWidget {
+  const _AppBootstrap();
+
+  @override
+  State<_AppBootstrap> createState() => _AppBootstrapState();
+}
+
+class _AppBootstrapState extends State<_AppBootstrap> {
+  late final Future<void> _requiredData = _loadRequiredData();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _requiredData,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return const DiceThroneSurvieApp();
+        }
+        return const MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(child: CircularProgressIndicator()),
+          ),
+        );
+      },
+    );
+  }
+}
+
+Future<void> _loadRequiredData() async {
+  try {
+    await Future.wait<void>([
+      EnemyProfileRepository.load(),
+      TokenCatalogRepository.load(),
+    ]).timeout(const Duration(seconds: 8));
+  } catch (error, stackTrace) {
+    debugPrint('Required local data initialization failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
+}
+
+Future<void> _initializeOptionalServices() async {
+  try {
+    await SupabaseService.instance.initialize().timeout(
+      const Duration(seconds: 8),
+    );
+  } catch (error, stackTrace) {
+    debugPrint('Optional service initialization skipped: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
 }
 
 enum HeroSegment {
@@ -873,16 +924,16 @@ class GameRecord {
   /// Sérialisation pour Supabase (table game_records).
   /// Ne contient pas user_id (ajouté côté service via la session).
   Map<String, dynamic> toSupabase() => {
-        'hero': hero.name,
-        'mode': mode.name,
-        'score': score,
-        'enemies_defeated': enemiesDefeated,
-        'health_remaining': healthRemaining,
-        'boss_health_remaining': bossHealthRemaining,
-        'duration_ms': duration.inMilliseconds,
-        'is_victory': isVictory,
-        'played_at': date.toUtc().toIso8601String(),
-      };
+    'hero': hero.name,
+    'mode': mode.name,
+    'score': score,
+    'enemies_defeated': enemiesDefeated,
+    'health_remaining': healthRemaining,
+    'boss_health_remaining': bossHealthRemaining,
+    'duration_ms': duration.inMilliseconds,
+    'is_victory': isVictory,
+    'played_at': date.toUtc().toIso8601String(),
+  };
 
   /// Désérialisation depuis une ligne Supabase (game_records).
   factory GameRecord.fromSupabase(Map<String, dynamic> row) {
@@ -892,17 +943,15 @@ class GameRecord {
     final durationMs = (row['duration_ms'] as num?)?.toInt() ?? 0;
     return GameRecord(
       id: row['id'] as String?,
-      hero:
-          _enumByName(HeroType.values, heroName) ?? HeroType.alchemist,
+      hero: _enumByName(HeroType.values, heroName) ?? HeroType.alchemist,
       date: _parseDateTime(playedAt) ?? DateTime.now(),
       score: (row['score'] as num?)?.toInt() ?? 0,
-      mode: _enumByName(SurvivalMode.values, modeName) ??
+      mode:
+          _enumByName(SurvivalMode.values, modeName) ??
           SurvivalMode.mediumFixed,
       healthRemaining: (row['health_remaining'] as num?)?.toInt(),
-      bossHealthRemaining:
-          (row['boss_health_remaining'] as num?)?.toInt(),
-      enemiesDefeated:
-          (row['enemies_defeated'] as num?)?.toInt() ?? 0,
+      bossHealthRemaining: (row['boss_health_remaining'] as num?)?.toInt(),
+      enemiesDefeated: (row['enemies_defeated'] as num?)?.toInt() ?? 0,
       duration: Duration(milliseconds: durationMs),
       isVictory: (row['is_victory'] as bool?) ?? false,
     );
