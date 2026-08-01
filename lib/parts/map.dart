@@ -747,30 +747,26 @@ class _MapHeaderState extends State<MapHeader> {
             Row(
               children: [
                 SizedBox(
-                  width: 74,
-                  child: MapStatChip(
-                    icon: Icons.favorite,
-                    label: '',
-                    value: adventure.health.toString(),
-                    color: heroAccent,
-                    accent: heroAccent,
-                    borderColor: panelBorderGrey,
+                  width: 62,
+                  child: _MapCombatBadgeButton(
+                    tooltip: 'HP: ${adventure.health}',
                     onTap: () => _openStatEditor('HP', adventure.health),
+                    child: _HpHeartBadge(
+                      value: adventure.health,
+                      style: _CombatHpStyle.hero,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 2),
                 SizedBox(
-                  width: 74,
-                  child: MapStatChip(
-                    label: 'CP',
-                    value: adventure.combatPoints.toString(),
-                    color: heroAccent,
-                    accent: heroAccent,
-                    borderColor: panelBorderGrey,
+                  width: 62,
+                  child: _MapCombatBadgeButton(
+                    tooltip: 'CP: ${adventure.combatPoints}',
                     onTap: () => _openStatEditor('CP', adventure.combatPoints),
+                    child: _PcTriangleBadge(value: adventure.combatPoints),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 Expanded(
                   child: HeroTokenStrip(
                     tokens: adventure.alterations,
@@ -889,6 +885,42 @@ class _MapHeaderState extends State<MapHeader> {
     }
     setState(() => _editing = null);
     widget.onChanged();
+  }
+}
+
+class _MapCombatBadgeButton extends StatelessWidget {
+  const _MapCombatBadgeButton({
+    required this.tooltip,
+    required this.onTap,
+    required this.child,
+  });
+
+  final String tooltip;
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: SizedBox(
+            height: 44,
+            child: Center(
+              child: SizedBox(
+                width: 58,
+                height: 42,
+                child: FittedBox(fit: BoxFit.contain, child: child),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

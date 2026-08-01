@@ -64,11 +64,14 @@ class _RewardPageState extends State<RewardPage> {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    Text(
-                      d20 == null ? 'Roll the die' : outcome!.label,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
+                    if (outcome == null)
+                      const Text(
+                        'Roll the die',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      )
+                    else
+                      _RewardOutcomeDisplay(outcome: outcome),
                     const SizedBox(height: 12),
                     Wrap(
                       alignment: WrapAlignment.center,
@@ -158,6 +161,54 @@ class _RewardPageState extends State<RewardPage> {
     if (value != null) {
       setState(() => _d20 = value);
     }
+  }
+}
+
+class _RewardOutcomeDisplay extends StatelessWidget {
+  const _RewardOutcomeDisplay({required this.outcome});
+
+  final RewardOutcome outcome;
+
+  @override
+  Widget build(BuildContext context) {
+    final badges = <Widget>[
+      if (outcome.healthDelta > 0)
+        _EffectImageBadge(
+          value: '+${outcome.healthDelta}',
+          asset: 'assets/illustration/soin.webp',
+          textColor: Colors.white,
+          size: 42,
+          fontSize: 15,
+        ),
+      if (outcome.cpDelta > 0)
+        SizedBox(
+          width: 46,
+          height: 46,
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: _PcTriangleBadge(value: outcome.cpDelta),
+          ),
+        ),
+    ];
+    if (badges.isEmpty) {
+      return Text(
+        outcome.label,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontWeight: FontWeight.w900),
+      );
+    }
+    return Semantics(
+      label: outcome.label,
+      child: ExcludeSemantics(
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: badges,
+        ),
+      ),
+    );
   }
 }
 
