@@ -2,11 +2,11 @@
 
 ## Statut
 
-Fiche generee automatiquement pour rendre la carte jouable dans l'application. Les valeurs ci-dessous sont un profil generique de niveau 2 a remplacer quand la carte sera lue precisement.
+Fiche precise de la carte Dark Specter (lue depuis `docs/enemy_profiles.json`).
 
 ## Image
 
-- Fichier : ssets/bleu/bleu-008.png
+- Fichier : assets/bleu/bleu-008.png
 
 ## Couleur
 
@@ -15,7 +15,7 @@ bleu, niveau 2.
 ## Points de vie et PC
 
 - Points de vie : 13
-- PC : 2
+- PC : 1
 
 ## Tokens
 
@@ -23,22 +23,16 @@ bleu, niveau 2.
 
 ## Recompense
 
-- Recompense : 1 lance de D20 bleu.
+- Recompense : 0 coffre (rank null).
 
-## Jet a faire
+## Attaque (style suite)
 
-Objectif de lancer :
-
-- 4 symboles jaunes
-
-## Attaque
-
-### Attaque generique niveau 2
-
-- 3 symboles jaunes : inflige 5 degats.`n- 4 symboles jaunes : inflige 7 degats.
+- Micro suite (3) : token Enchevetrement + 4 degats.
+- Petite suite (4) : token Silence + 6 degats.
+- Grande suite (5) : Sort 6 + 8 degats.
 
 ## Defense
 
 ### Defense generique niveau 2
 
-- Jet defensif 3 des : previent 2 degats.
+- Jet defensif 3 des : previent 2 degats par jaune.

@@ -22,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.50';
+const String appVersionLabel = 'Version 1.3.56';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -33,8 +33,11 @@ final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Supabase doit s'initialiser AVANT runApp pour que le flux PKCE web
+  // puisse échanger le `code` du redirect OAuth au chargement de la page.
+  // Si l'init est différée, la session OAuth n'est jamais restaurée.
+  await _initializeOptionalServices();
   runApp(const _AppBootstrap());
-  unawaited(_initializeOptionalServices());
 }
 
 class _AppBootstrap extends StatefulWidget {
@@ -1032,6 +1035,7 @@ class EnemyNode {
     this.rewardChests = 1,
     EnemyRank? rewardRank,
     List<EnemyRank> rewardRanks = const [],
+    List<MinionPassive> passives = const [],
     this.branch,
     this.step = 0,
   }) : health = maxHealth,
@@ -1042,7 +1046,8 @@ class EnemyNode {
                rewardChests.clamp(1, 4).toInt(),
                rewardRank ?? rank,
              )
-           : List<EnemyRank>.from(rewardRanks) {
+           : List<EnemyRank>.from(rewardRanks),
+       passives = List<MinionPassive>.unmodifiable(passives) {
     alterations.addAll(initialTokens);
   }
 
@@ -1060,6 +1065,7 @@ class EnemyNode {
   int rewardChests;
   EnemyRank rewardRank;
   List<EnemyRank> rewardRanks;
+  final List<MinionPassive> passives;
   final BranchSide? branch;
   final int step;
   int health;

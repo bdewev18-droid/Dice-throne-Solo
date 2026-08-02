@@ -1208,7 +1208,7 @@
       "label": "Chaos",
       "frLabel": "Chaos",
       "kind": "negative",
-      "maxStack": 1,
+      "maxStack": 99,
       "persistent": true,
       "removable": true,
       "appSupported": false,

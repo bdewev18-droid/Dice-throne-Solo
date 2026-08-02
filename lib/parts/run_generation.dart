@@ -272,6 +272,7 @@ EnemyNode _enemy(
     rewardChests: selectedProfile.rewardChests,
     rewardRank: selectedProfile.rewardRank,
     rewardRanks: selectedProfile.rewardRanks,
+    passives: selectedProfile.passives,
   );
 }
 

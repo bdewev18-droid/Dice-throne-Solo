@@ -43,6 +43,7 @@ class EnemyProfile {
     this.rewardChests = 1,
     this.rewardRank,
     this.rewardRanks = const [],
+    this.passives = const [],
   });
 
   final String key;
@@ -59,6 +60,13 @@ class EnemyProfile {
   final int rewardChests;
   final EnemyRank? rewardRank;
   final List<EnemyRank> rewardRanks;
+
+  /// Passive abilities declared for this profile, parsed from the JSON
+  /// `passives` array (root) merged with `attackPlan.passives`. Each entry
+  /// carries a localized text and optional structured effects. The JSON is
+  /// the source of truth; the UI renders these when no dedicated hard-coded
+  /// view exists for the profile.
+  final List<MinionPassive> passives;
 }
 
 enum MinionAttackStyle { symbols, suite, none }
@@ -136,4 +144,78 @@ class MinionAttackPlan {
   /// Effects per suite length (3/4/5) for suite-style plans, parsed from the
   /// JSON `attackPlan.actions` array. Empty for symbols/none plans.
   final Map<int, SymbolGoalEffect> suiteEffects;
+}
+
+/// A passive ability attached to an enemy profile.
+///
+/// Parsed from the JSON `passives` entries (either at the profile root or
+/// inside `attackPlan.passives`). The `text` is the localized description
+/// shown in the UI passive zone; `timing` describes when it triggers
+/// (e.g. `offensiveRollFailed`, `upkeep`). `effect` mirrors the structured
+/// fields used by the attack/defense plans so the engine can apply it
+/// deterministically without parsing the text.
+class MinionPassive {
+  const MinionPassive({
+    required this.text,
+    this.timing,
+    this.effect,
+  });
+
+  factory MinionPassive.fromJson(Map<String, dynamic> json) {
+    final text = (json['text'] as String?)?.trim() ?? '';
+    final timing = (json['timing'] as String?)?.trim();
+    final effectsJson = json['effects'];
+    MinionPassiveEffect? effect;
+    if (effectsJson is Map<String, dynamic>) {
+      effect = MinionPassiveEffect(
+        damage: _asInt(effectsJson['damage']),
+        undefendable: effectsJson['undefendable'] as bool? ?? false,
+        stealHp: _asInt(effectsJson['stealHp']),
+        stealCp: _asInt(effectsJson['stealCp']),
+        heal: _asInt(effectsJson['heal']),
+        heroTokens: _asStringList(effectsJson['tokens']),
+      );
+    }
+    return MinionPassive(text: text, timing: timing, effect: effect);
+  }
+
+  final String text;
+  final String? timing;
+  final MinionPassiveEffect? effect;
+
+  @override
+  String toString() => text;
+
+  static int _asInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static List<String> _asStringList(Object? value) {
+    if (value is! List) return const [];
+    return value.whereType<String>().toList(growable: false);
+  }
+}
+
+/// Structured effects for a [MinionPassive], mirroring the fields used by
+/// [SymbolGoalEffect] so the engine can apply passive outcomes without text
+/// parsing.
+class MinionPassiveEffect {
+  const MinionPassiveEffect({
+    this.damage = 0,
+    this.undefendable = false,
+    this.stealHp = 0,
+    this.stealCp = 0,
+    this.heal = 0,
+    this.heroTokens = const [],
+  });
+
+  final int damage;
+  final bool undefendable;
+  final int stealHp;
+  final int stealCp;
+  final int heal;
+  final List<String> heroTokens;
 }

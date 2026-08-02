@@ -62,7 +62,35 @@ class EnemyProfileJson {
       defense: json['defense'] as String? ?? '',
       defenseDice: _intValue(json['defenseDice'], fallback: 0),
       attackPlan: _attackPlanFromJson(json['attackPlan']),
+      passives: _passivesFromJson(json),
     );
+  }
+
+  /// Merges root-level `passives` with `attackPlan.passives`, preserving the
+  /// JSON declaration order. Dedupes by `text` so a passive declared both at
+  /// the root and inside the attack plan is only listed once.
+  static List<MinionPassive> _passivesFromJson(Map<String, dynamic> json) {
+    final merged = <MinionPassive>[];
+    final seen = <String>{};
+
+    void addAll(Object? raw) {
+      if (raw is! List) return;
+      for (final entry in raw) {
+        if (entry is! Map<String, dynamic>) continue;
+        final passive = MinionPassive.fromJson(entry);
+        if (passive.text.isEmpty) continue;
+        if (seen.add(passive.text)) {
+          merged.add(passive);
+        }
+      }
+    }
+
+    addAll(json['passives']);
+    final attackPlan = json['attackPlan'];
+    if (attackPlan is Map<String, dynamic>) {
+      addAll(attackPlan['passives']);
+    }
+    return List<MinionPassive>.unmodifiable(merged);
   }
 
   static EnemyRank? _rankFromName(String? value) {

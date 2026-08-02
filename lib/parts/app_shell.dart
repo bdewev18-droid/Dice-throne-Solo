@@ -13,12 +13,37 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   AdventureState? _activeAdventure;
   bool _storageReady = false;
   AuthSession _auth = AuthSession.unknown;
+  StreamSubscription<AuthSessionEvent>? _authSub;
 
   @override
   void initState() {
     super.initState();
     _loadActiveAdventure();
     _initAuthAndHistory();
+    // Écoute les changements de session Supabase : la session restaurée
+    // après un redirect OAuth web (ou un refresh silencieux) est poussée
+    // ici automatiquement, sans rechargement de page ni intervention.
+    _authSub = SupabaseService.instance.sessionStream.listen((event) {
+      if (!mounted) {
+        return;
+      }
+      final wasSignedIn = _auth.isSignedIn;
+      final nowSignedIn = event.session.isSignedIn;
+      setState(() => _auth = event.session);
+      // Recharge l'historique uniquement lors d'une vraie transition de
+      // session (connexion/déconnexion), pas sur chaque refresh token.
+      if (event.transition && nowSignedIn && !wasSignedIn) {
+        _loadHistory();
+      } else if (event.transition && !nowSignedIn && wasSignedIn) {
+        setState(_history.clear);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _initAuthAndHistory() async {
