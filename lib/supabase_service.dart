@@ -225,7 +225,19 @@ class SupabaseService {
       account = await _googleSignIn.signIn();
     }
     if (account == null) {
-      return AuthSession.signedOut;
+      // signIn() retourne null silencieusement quand Google refuse
+      // d'émettre un token pour cette app : cause typique = SHA-1 du
+      // keystore non enregistré dans Google Cloud Console (OAuth Client
+      // Android manquant pour com.bdewev18.dicethronesolo). On lève
+      // explicitement au lieu de revenir muettement à signedOut, sinon
+      // l'UI ne montre aucune erreur (symptôme "rien ne se passe").
+      throw StateError(
+        'Google a renvoyé un compte nul. Cause probable : SHA-1 du '
+        'keystore de l\'APK non enregistré dans Google Cloud Console '
+        '(créer un OAuth Client Android pour le package '
+        'com.bdewev18.dicethronesolo), ou Google Play Services absent '
+        'de l\'appareil.',
+      );
     }
     return _exchangeWithSupabase(account);
   }

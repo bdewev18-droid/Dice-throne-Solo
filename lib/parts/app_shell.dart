@@ -125,9 +125,24 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   }
 
   void _showAuthError(BuildContext context, Object error) {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger?.showSnackBar(
-      SnackBar(content: Text('Connexion impossible : $error')),
+    // AlertDialog via la navigatorKey globale : garantie visible même si
+    // le contexte local n'a plus de Scaffold (cas du retour muet après
+    // picker Google). Le SnackBar pouvait être raté de justesse.
+    final navContext = appNavigatorKey.currentContext ?? context;
+    showDialog<void>(
+      context: navContext,
+      builder: (_) => AlertDialog(
+        title: const Text('Connexion impossible'),
+        content: SingleChildScrollView(
+          child: Text('$error'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(navContext).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 
