@@ -116,10 +116,9 @@ class SupabaseService {
       await Supabase.initialize(
         url: SupabaseConfig.url,
         anonKey: SupabaseConfig.anonKey,
-        // PKCE : méthode recommandée par Supabase pour le flux OAuth web.
-        // Accélère et fiabilise le retour de redirect (échange de code
-        // automatique, session stockée en localStorage).
-        pkceFlow: true,
+        // PKCE est activé par défaut dans supabase_flutter >= 2.5. L'échange
+        // du code OAuth au chargement de la page est géré automatiquement,
+        // à condition que initialize() s'exécute avant runApp (voir main()).
       );
       _googleSignIn = GoogleSignIn(
         scopes: const ['email', 'openid', 'profile'],
