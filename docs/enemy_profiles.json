@@ -1286,23 +1286,20 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 dé.",
+              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
               "outcomes": [
                 {
                   "face": "white",
-                  "label": "5 dégâts imparables",
                   "damage": 5,
                   "undefendable": true
                 },
                 {
                   "face": "yellow",
-                  "label": "6 dégâts imparables",
                   "damage": 6,
                   "undefendable": true
                 },
                 {
                   "face": "red",
-                  "label": "vole 4 PV",
                   "stealHp": 4
                 }
               ]
@@ -1540,7 +1537,7 @@
             "extraRoll": {
               "dice": 2,
               "mode": "simple",
-              "rollText": "Lancez 2 dés, infligez autant de dégâts que la valeur totale du jet."
+              "rollText": "Lancez 2 {die}, infligez autant de dégâts que la valeur totale du jet."
             },
             "notes": []
           }
@@ -1923,7 +1920,7 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 dé.",
+              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
               "outcomes": [
                 {
                   "face": "white",
@@ -1931,7 +1928,6 @@
                 },
                 {
                   "face": "yellow",
-                  "label": "vole 1 CP",
                   "stealCp": 1
                 },
                 {
@@ -2166,7 +2162,7 @@
             "extraRoll": {
               "dice": 1,
               "mode": "simple",
-              "rollText": "Lancez 1 dé, infligez autant de dégâts que la valeur du jet.",
+              "rollText": "Lancez 1 {die}, infligez autant de dégâts que la valeur du jet.",
               "outcomes": [
                 {
                   "face": "any",
@@ -2658,7 +2654,7 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 dé.",
+              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
               "outcomes": [
                 {
                   "face": "white",
@@ -3262,7 +3258,7 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 dé.",
+              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
               "outcomes": [
                 {
                   "face": "white",
@@ -3692,7 +3688,11 @@
             "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
+            "extraRoll": {
+              "dice": 1,
+              "mode": "simple",
+              "rollText": "Lancez 1 {die}, infligez sa valeur en dégâts supplémentaires."
+            },
             "notes": []
           }
         ],
@@ -3786,7 +3786,32 @@
             "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
+            "extraRoll": {
+              "dice": 1,
+              "mode": "perFace",
+              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
+              "outcomes": [
+                {
+                  "face": "white",
+                  "damage": 2,
+                  "undefendable": true
+                },
+                {
+                  "face": "yellow",
+                  "label": "inflige Wither",
+                  "tokens": [
+                    "Wither"
+                  ]
+                },
+                {
+                  "face": "red",
+                  "label": "inflige Burn",
+                  "tokens": [
+                    "Burn"
+                  ]
+                }
+              ]
+            },
             "notes": []
           },
           {
@@ -4049,7 +4074,20 @@
             "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
+            "extraRoll": {
+              "dice": 1,
+              "mode": "perFace",
+              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
+              "outcomes": [
+                {
+                  "face": "yellow",
+                  "label": "inflige Stun",
+                  "tokens": [
+                    "Stun"
+                  ]
+                }
+              ]
+            },
             "notes": []
           },
           {
@@ -5296,7 +5334,26 @@
             "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
+            "extraRoll": {
+              "dice": 1,
+              "mode": "perFace",
+              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
+              "outcomes": [
+                {
+                  "face": "white",
+                  "stealCp": 2
+                },
+                {
+                  "face": "yellow",
+                  "label": "héros défausse 1 carte"
+                },
+                {
+                  "face": "red",
+                  "label": "héros défausse 1 carte",
+                  "stealCp": 2
+                }
+              ]
+            },
             "notes": []
           },
           {
@@ -5659,22 +5716,19 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 dé.",
+              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
               "outcomes": [
                 {
                   "face": "white",
-                  "label": "4 dégâts imparables",
                   "damage": 4,
                   "undefendable": true
                 },
                 {
                   "face": "yellow",
-                  "label": "vole 3 PV",
                   "stealHp": 3
                 },
                 {
                   "face": "red",
-                  "label": "vole 4 PV",
                   "stealHp": 4
                 }
               ]

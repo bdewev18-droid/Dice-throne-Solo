@@ -3507,13 +3507,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
       icon: Icons.gps_fixed,
       color: enemy.rank.color,
       trailing: _isDruid
-          ? _DruidFormSwitcher(
-              isPreviewBear: _druidPreviewBearForm,
-              isRealBear: _druidRealBearForm,
-              onToggle: () => setState(() {
-                _druidFormPreview = !_druidPreviewBearForm;
-              }),
-            )
+          ? const SizedBox.shrink()
           : AttackObjectiveInline(enemy: enemy),
       expanded: widget.aiMode ? _showAttack : true,
       onTap: () => setState(() {
@@ -3525,10 +3519,27 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
           _showDefense = false;
         }
       }),
-      child: MinionAttackSummary(
-        enemy: enemy,
-        previewBearForm: _isDruid ? _druidPreviewBearForm : null,
-      ),
+      child: _isDruid
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _DruidFormSwitcher(
+                  isPreviewBear: _druidPreviewBearForm,
+                  isRealBear: _druidRealBearForm,
+                  onSelectBear: () => setState(() {
+                    _druidFormPreview = true;
+                  }),
+                  onSelectElk: () => setState(() {
+                    _druidFormPreview = false;
+                  }),
+                ),
+                MinionAttackSummary(
+                  enemy: enemy,
+                  previewBearForm: _druidPreviewBearForm,
+                ),
+              ],
+            )
+          : MinionAttackSummary(enemy: enemy),
     );
     final defenseContent = _CollapsibleRulesLine(
       key: widget.defenseKey,
@@ -3536,13 +3547,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
       icon: Icons.shield,
       color: enemy.rank.color,
       trailing: _isDruid
-          ? _DruidFormSwitcher(
-              isPreviewBear: _druidPreviewBearForm,
-              isRealBear: _druidRealBearForm,
-              onToggle: () => setState(() {
-                _druidFormPreview = !_druidPreviewBearForm;
-              }),
-            )
+          ? const SizedBox.shrink()
           : DefenseDiceInline(count: enemy.defenseDice),
       expanded: widget.aiMode ? _showDefense : true,
       onTap: () => setState(() {
@@ -3554,10 +3559,30 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
           _showAttack = false;
         }
       }),
-      child: MinionDefenseSummary(
-        enemy: enemy,
-        previewBearForm: _isDruid ? _druidPreviewBearForm : null,
-      ),
+      child: _isDruid
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _DruidFormSwitcher(
+                  isPreviewBear: _druidPreviewBearForm,
+                  isRealBear: _druidRealBearForm,
+                  onSelectBear: () => setState(() {
+                    _druidFormPreview = true;
+                  }),
+                  onSelectElk: () => setState(() {
+                    _druidFormPreview = false;
+                  }),
+                ),
+                MinionDefenseSummary(
+                  enemy: enemy,
+                  previewBearForm: _druidPreviewBearForm,
+                ),
+              ],
+            )
+          : MinionDefenseSummary(
+              enemy: enemy,
+              previewBearForm: null,
+            ),
     );
 
     return Column(
@@ -4103,40 +4128,54 @@ class _CollapsibleRulesLine extends StatelessWidget {
   }
 }
 
-/// Toggle chips shown next to the Attack/Defense labels for the Druid minion
-/// (vert-vert-014). Tapping a chip flips the preview form so the other form's
-/// text becomes visible; the real active form (determined by the upkeep roll)
-/// stays marked with a dot and is the one actually applied in combat.
+/// Form selector shown for the Druid minion (vert-vert-014). Tapping a chip
+/// selects that form's preview so the corresponding attack/defense text becomes
+/// visible for inspection, without changing the actual active form. The real
+/// active form (determined by the upkeep roll) stays marked with a dot and is
+/// the one actually applied in combat.
+///
+/// Rendered as a dedicated row above the attack/defense body (not inside the
+/// collapsible header) so the chips never compete with the expand chevron for
+/// horizontal space, and a tap on a chip cannot be swallowed by the header
+/// InkWell that would otherwise fold the text away.
 class _DruidFormSwitcher extends StatelessWidget {
   const _DruidFormSwitcher({
     required this.isPreviewBear,
     required this.isRealBear,
-    required this.onToggle,
+    required this.onSelectBear,
+    required this.onSelectElk,
   });
 
   final bool isPreviewBear;
   final bool isRealBear;
-  final VoidCallback onToggle;
+
+  /// Selects the Bear form preview.
+  final VoidCallback onSelectBear;
+
+  /// Selects the Elk form preview.
+  final VoidCallback onSelectElk;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 4,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        _formChip(
-          label: 'Ours',
-          isSelected: isPreviewBear,
-          isReal: isRealBear,
-          onTap: isPreviewBear ? onToggle : null,
-        ),
-        _formChip(
-          label: 'Élan',
-          isSelected: !isPreviewBear,
-          isReal: !isRealBear,
-          onTap: !isPreviewBear ? onToggle : null,
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          _formChip(
+            label: 'Bear',
+            isSelected: isPreviewBear,
+            isReal: isRealBear,
+            onTap: isPreviewBear ? null : onSelectBear,
+          ),
+          const SizedBox(width: 6),
+          _formChip(
+            label: 'Elk',
+            isSelected: !isPreviewBear,
+            isReal: !isRealBear,
+            onTap: !isPreviewBear ? null : onSelectElk,
+          ),
+        ],
+      ),
     );
   }
 
@@ -4147,9 +4186,10 @@ class _DruidFormSwitcher extends StatelessWidget {
     required VoidCallback? onTap,
   }) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xff3d4a3e).withValues(alpha: 0.85)
@@ -4180,7 +4220,7 @@ class _DruidFormSwitcher extends StatelessWidget {
               style: TextStyle(
                 color: isSelected ? Colors.white : const Color(0xffcbd8cc),
                 fontWeight: FontWeight.w900,
-                fontSize: 11,
+                fontSize: 12,
               ),
             ),
           ],
@@ -4538,6 +4578,25 @@ class MinionAttackSummary extends StatelessWidget {
           goal: goal,
           extraRoll: extraRoll,
           color: enemy.rank.color,
+        );
+      }
+      return const SizedBox.shrink();
+    }
+    if (enemy.profileKey == 'bleu-bleu-020' ||
+        enemy.profileKey == 'bleu-bleu-009' ||
+        enemy.profileKey == 'bleu-bleu-007' ||
+        enemy.profileKey == 'bleu-bleu-006') {
+      final goal = _extraRollGoalFor(enemy);
+      final extraRoll = _extraRollFor(enemy);
+      if (goal != null && extraRoll != null) {
+        return _ExtraRollAttackSummary(
+          enemy: enemy,
+          goal: goal,
+          extraRoll: extraRoll,
+          color: enemy.rank.color,
+          directDamage: _extraRollDirectDamageFor(enemy),
+          directUndefendable:
+              _extraRollDirectDamageFor(enemy)?.imparable ?? false,
         );
       }
       return const SizedBox.shrink();
@@ -7874,22 +7933,11 @@ class _ExtraRollAttackSummary extends StatelessWidget {
     }
     children.add(_AttackResultLine(goal: goal, result: result));
 
-    // L2: roll instruction + cube icon.
+    // L2: roll instruction with the die image inlined where `{die}` appears.
     if (extraRoll.rollText.isNotEmpty) {
       children.add(Padding(
         padding: const EdgeInsets.only(bottom: 6),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                extraRoll.rollText,
-                style: const TextStyle(fontWeight: FontWeight.w900),
-              ),
-            ),
-            const SizedBox(width: 6),
-            _CubeIcon(size: 28),
-          ],
-        ),
+        child: _RollTextWithDie(text: extraRoll.rollText),
       ));
     }
 
@@ -8006,6 +8054,64 @@ class _ResultLine extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Renders the extra-roll instruction ([MinionExtraRoll.rollText]) as a
+/// rich text where the `{die}` marker is replaced by an inline [_CubeIcon],
+/// so the die image appears in place of the word "die" instead of being a
+/// separate icon duplicated at the end of the line. When the text contains
+/// no `{die}` marker (legacy), a trailing cube icon is appended so the line
+/// still shows the roll icon.
+class _RollTextWithDie extends StatelessWidget {
+  const _RollTextWithDie({required this.text});
+
+  final String text;
+
+  static final RegExp _dieMarker = RegExp(r'\{die\}', caseSensitive: false);
+
+  @override
+  Widget build(BuildContext context) {
+    final style = const TextStyle(
+      fontWeight: FontWeight.w900,
+      fontSize: 13,
+      color: Color(0xffcbd8cc),
+    );
+    final iconSpan = WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: _CubeIcon(size: 22),
+      ),
+    );
+
+    if (!_dieMarker.hasMatch(text)) {
+      // Legacy text without the marker: append the icon after the text.
+      return Text.rich(
+        TextSpan(
+          style: style,
+          children: [
+            TextSpan(text: text),
+            const WidgetSpan(child: SizedBox(width: 6)),
+            iconSpan,
+          ],
+        ),
+      );
+    }
+
+    final spans = <InlineSpan>[];
+    var last = 0;
+    for (final match in _dieMarker.allMatches(text)) {
+      if (match.start > last) {
+        spans.add(TextSpan(text: text.substring(last, match.start)));
+      }
+      spans.add(iconSpan);
+      last = match.end;
+    }
+    if (last < text.length) {
+      spans.add(TextSpan(text: text.substring(last)));
+    }
+    return Text.rich(TextSpan(style: style, children: spans));
   }
 }
 
@@ -9049,6 +9155,26 @@ MinionExtraRoll? _extraRollFor(EnemyNode enemy) {
     return null;
   }
   return goal.effect?.extraRoll;
+}
+
+/// Returns the direct damage dealt by the triggering attack itself (before
+/// the extra roll), read from the first goal's effect. Used as the L1 result
+/// badge for extra-roll attacks whose action deals damage (The Butcher 3
+/// undefendable, The Hermit 3 undefendable, Farceur 4 undefendable, Cyclope
+/// Brutal 6). Null when the action only triggers the roll.
+_AttackDamage? _extraRollDirectDamageFor(EnemyNode enemy) {
+  final goal = _extraRollGoalFor(enemy);
+  if (goal == null) {
+    return null;
+  }
+  final effect = goal.effect;
+  if (effect == null) {
+    return null;
+  }
+  if (effect.damage <= 0) {
+    return null;
+  }
+  return _AttackDamage(effect.damage, imparable: effect.undefendable);
 }
 
 bool _isDruidBearForm(EnemyNode enemy) {
