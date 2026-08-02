@@ -243,27 +243,47 @@ class SupabaseService {
 
   /// Échange l'idToken Google contre une session Supabase. Centralise la
   /// logique de validation (idToken requis) pour les chemins silencieux et
-  /// interactifs.
+  /// interactif.
+  ///
+  /// Lève une exception explicite en cas d'échec (au lieu de revenir
+  /// silencieusement à signedOut) afin que l'UI affiche la cause réelle
+  /// via le SnackBar "Connexion impossible : ...".
   Future<AuthSession> _exchangeWithSupabase(GoogleSignInAccount account) async {
     final GoogleSignInAuthentication auth;
     try {
       auth = await account.authentication;
-    } catch (_) {
-      return AuthSession.signedOut;
+    } catch (error, stack) {
+      // Souvent : Google Play Services indisponible ou réseau coupé.
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: error, stack: stack),
+      );
+      throw StateError('Google auth indisponible: $error');
     }
     final idToken = auth.idToken;
     final accessToken = auth.accessToken;
     if (idToken == null || idToken.isEmpty) {
-      // Cause fréquente : serverClientId non configuré. Le token renvoyé
-      // n'a pas la bonne audience pour Supabase. On renvoie signedOut pour
-      // que l'UI propose le fallback anonyme.
-      return AuthSession.signedOut;
+      // Cause n°1 sur Android : aucun client OAuth Android (SHA-1 du
+      // keystore) enregistré dans Google Cloud Console pour ce package.
+      // Le picker s'ouvre mais Google refuse d'émettre un idToken.
+      throw StateError(
+        'idToken Google vide. Vérifiez que le SHA-1 du keystore de '
+        'l\'APK est enregistré dans Google Cloud Console (OAuth Client '
+        'Android, package com.bdewev18.dicethronesolo).',
+      );
     }
-    final response = await _client.auth.signInWithIdToken(
-      provider: OAuthProvider.google,
-      idToken: idToken,
-      accessToken: accessToken,
-    );
+    final AuthResponse response;
+    try {
+      response = await _client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: accessToken,
+      );
+    } on AuthException catch (error) {
+      // Erreur serveur Supabase : token invalide, audience, nonce, etc.
+      throw StateError('Supabase a refusé le token Google: ${error.message}');
+    } catch (error) {
+      throw StateError('Échange Supabase échoué: $error');
+    }
     final user = response.user;
     return AuthSession(
       status: AuthStatus.signedIn,
