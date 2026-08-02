@@ -169,10 +169,135 @@ class EnemyProfileJson {
           heroTokens: _stringList(action['tokens']),
           minionTokens: const [],
           label: (action['label'] as String?)?.trim(),
+          extraRoll: _extraRollFromJson(action['extraRoll']),
         );
       }
     }
     return null;
+  }
+
+  /// Parses the JSON `extraRoll` block into a [MinionExtraRoll] for display.
+  ///
+  /// Supports the unified structure (`mode`/`rollText`/`outcomes`/`finalText`)
+  /// and falls back to the legacy shapes (`{dice, text}`, `{dice, outcomes}`,
+  /// `{dice, effects}`) so the display stays correct while the JSON is being
+  /// migrated. Returns null when the block is absent or empty.
+  static MinionExtraRoll? _extraRollFromJson(Object? value) {
+    if (value is! Map<String, dynamic>) {
+      return null;
+    }
+    final dice = _intValue(value['dice'], fallback: 0);
+    if (dice <= 0) {
+      return null;
+    }
+    final modeStr = (value['mode'] as String?)?.trim().toLowerCase();
+    final outcomesRaw = value['outcomes'];
+    final effectsRaw = value['effects'];
+    final outcomes = <ExtraRollOutcome>[];
+
+    // Unified / legacy per-face outcomes.
+    if (outcomesRaw is List) {
+      for (final raw in outcomesRaw) {
+        if (raw is! Map<String, dynamic>) {
+          continue;
+        }
+        final outcome = _outcomeFromJson(raw);
+        if (outcome != null) {
+          outcomes.add(outcome);
+        }
+      }
+    }
+    // Legacy `{dice, effects[{condition:"any", damageFormula, tokens}]}`.
+    if (effectsRaw is List) {
+      for (final raw in effectsRaw) {
+        if (raw is! Map<String, dynamic>) {
+          continue;
+        }
+        final tokens = _stringList(raw['tokens']);
+        final damageFormula =
+            (raw['damageFormula'] as String?)?.trim().toLowerCase();
+        final label = (raw['label'] as String?)?.trim();
+        // A "roll" damage formula with no face condition means the roll value
+        // itself drives the damage — surfaced via rollText, not an outcome.
+        // Token-only "any" effects become an `any` outcome for display.
+        if (tokens.isNotEmpty && damageFormula != 'roll') {
+          outcomes.add(ExtraRollOutcome(
+            face: ExtraRollFace.any,
+            label: label,
+            tokens: tokens,
+          ));
+        }
+      }
+    }
+
+    final finalText = (value['finalText'] as String?)?.trim();
+    final rollText = (value['rollText'] as String?)?.trim() ??
+        (value['text'] as String?)?.trim() ??
+        '';
+    final mode = modeStr == 'simple'
+        ? ExtraRollMode.simple
+        : (modeStr == 'perFace'
+            ? ExtraRollMode.perFace
+            : (outcomes.isEmpty
+                ? ExtraRollMode.simple
+                : ExtraRollMode.perFace));
+    return MinionExtraRoll(
+      dice: dice,
+      mode: mode,
+      rollText: rollText,
+      outcomes: outcomes,
+      finalText: (finalText != null && finalText.isNotEmpty) ? finalText : null,
+    );
+  }
+
+  /// Parses one outcome entry (unified `face`/`label`/`damage`/... or legacy
+  /// `condition.symbols`-keyed outcome).
+  static ExtraRollOutcome? _outcomeFromJson(Map<String, dynamic> raw) {
+    final faceStr = (raw['face'] as String?)?.trim().toLowerCase();
+    ExtraRollFace face;
+    if (faceStr == 'white') {
+      face = ExtraRollFace.white;
+    } else if (faceStr == 'yellow' || faceStr == 'orange') {
+      face = ExtraRollFace.yellow;
+    } else if (faceStr == 'red') {
+      face = ExtraRollFace.red;
+    } else if (faceStr == 'any') {
+      face = ExtraRollFace.any;
+    } else {
+      // Legacy: derive face from condition.symbols.
+      final cond = raw['condition'];
+      if (cond is Map<String, dynamic>) {
+        final symbols = cond['symbols'];
+        if (symbols is Map<String, dynamic>) {
+          final w = _intValue(symbols['white'], fallback: 0);
+          final y = _intValue(symbols['orange'] ?? symbols['yellow'], fallback: 0);
+          final r = _intValue(symbols['red'], fallback: 0);
+          if (w > 0) {
+            face = ExtraRollFace.white;
+          } else if (r > 0) {
+            face = ExtraRollFace.red;
+          } else if (y > 0) {
+            face = ExtraRollFace.yellow;
+          } else {
+            face = ExtraRollFace.any;
+          }
+        } else {
+          face = ExtraRollFace.any;
+        }
+      } else {
+        face = ExtraRollFace.any;
+      }
+    }
+    final label = (raw['label'] as String?)?.trim();
+    return ExtraRollOutcome(
+      face: face,
+      label: label,
+      damage: _intValue(raw['damage'], fallback: 0),
+      undefendable: raw['undefendable'] as bool? ?? false,
+      stealHp: _intValue(raw['stealHp'], fallback: 0),
+      stealCp: _intValue(raw['stealCp'], fallback: 0),
+      tokens: _stringList(raw['tokens']),
+    );
   }
 
   static MinionAttackPlan _attackPlanFromJson(Object? value) {

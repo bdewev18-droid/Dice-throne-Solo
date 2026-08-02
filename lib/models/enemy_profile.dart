@@ -112,6 +112,7 @@ class SymbolGoalEffect {
     this.heroTokens = const [],
     this.minionTokens = const [],
     this.label,
+    this.extraRoll,
   });
 
   final int damage;
@@ -122,6 +123,84 @@ class SymbolGoalEffect {
   final List<String> heroTokens;
   final List<String> minionTokens;
   final String? label;
+
+  /// Optional additional dice roll triggered when this goal's attack
+  /// succeeds. Parsed from the JSON `attackPlan.actions[].extraRoll` block.
+  /// Used only for the attack display (the runtime resolution stays keyed on
+  /// `profileKey`); null when the action has no extra roll.
+  final MinionExtraRoll? extraRoll;
+}
+
+/// Face of a die referenced by an [ExtraRollOutcome].
+///
+/// `any` means the outcome applies regardless of the rolled face (e.g. a token
+/// applied systematically, like Homme Lezard's "À Terre").
+enum ExtraRollFace { white, yellow, red, any }
+
+/// Mode of an extra roll.
+///
+/// - `simple` : the roll value itself drives the effect (e.g. "deal damage
+///   equal to the total roll value"). No per-face outcome is shown.
+/// - `perFace` : the effect depends on the face obtained; one
+///   [ExtraRollOutcome] is rendered per face.
+enum ExtraRollMode { simple, perFace }
+
+/// A single per-face outcome of an [MinionExtraRoll] (e.g. "white: deal 5
+/// undefendable damage"). The `label` is the localized result text shown to
+/// the right of the die symbol; structured fields drive the badges.
+class ExtraRollOutcome {
+  const ExtraRollOutcome({
+    required this.face,
+    this.label,
+    this.damage = 0,
+    this.undefendable = false,
+    this.stealHp = 0,
+    this.stealCp = 0,
+    this.tokens = const [],
+  });
+
+  final ExtraRollFace face;
+  final String? label;
+  final int damage;
+  final bool undefendable;
+  final int stealHp;
+  final int stealCp;
+  final List<String> tokens;
+}
+
+/// Additional dice roll triggered by a successful attack.
+///
+/// Source of truth for the **display** of the extra-roll attacks (Roc, Oni,
+/// Mage de l'Entropie, Mage Lezard, Homme Lezard, Disciple, Yokai). The
+/// runtime resolution (`_resolveExtraDicePhase`) is intentionally not driven
+/// by this model to avoid changing gameplay.
+class MinionExtraRoll {
+  const MinionExtraRoll({
+    required this.dice,
+    required this.mode,
+    required this.rollText,
+    this.outcomes = const [],
+    this.finalText,
+  });
+
+  /// Number of additional dice to roll.
+  final int dice;
+
+  /// Whether the effect depends on the face (`perFace`) or just the roll
+  /// value (`simple`).
+  final ExtraRollMode mode;
+
+  /// Line-2 text shown beside the roll icon (e.g.
+  /// "Si l'attaque réussit, lancez 1 dé.").
+  final String rollText;
+
+  /// Per-face outcomes (L3-5). Empty for `simple` mode rolls whose only
+  /// per-roll effect is the token-less "any" outcome can still appear here.
+  final List<ExtraRollOutcome> outcomes;
+
+  /// Optional line-6 final effect text computed after the roll (e.g.
+  /// "Puis inflige 7 dégâts + nb Chaos."). Rendered via [InlineTokenText].
+  final String? finalText;
 }
 
 class MinionAttackPlan {

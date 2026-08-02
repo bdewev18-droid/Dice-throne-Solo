@@ -1285,75 +1285,25 @@
             "formulas": [],
             "extraRoll": {
               "dice": 1,
+              "mode": "perFace",
+              "rollText": "Si l'attaque réussit, lancez 1 dé.",
               "outcomes": [
                 {
-                  "condition": {
-                    "type": "symbols",
-                    "symbols": {
-                      "white": 1,
-                      "orange": 0,
-                      "red": 0
-                    }
-                  },
-                  "label": "Sur symbole blanc",
+                  "face": "white",
+                  "label": "5 dégâts imparables",
                   "damage": 5,
-                  "undefendable": true,
-                  "stealHp": 0,
-                  "stealCp": 0,
-                  "heal": 0,
-                  "drawCards": 0,
-                  "discardCards": 0,
-                  "topDeckToDiscard": 0,
-                  "tokens": [],
-                  "formulas": [],
-                  "extraRoll": null,
-                  "notes": []
+                  "undefendable": true
                 },
                 {
-                  "condition": {
-                    "type": "symbols",
-                    "symbols": {
-                      "white": 0,
-                      "orange": 1,
-                      "red": 0
-                    }
-                  },
-                  "label": "Sur symbole jaune",
+                  "face": "yellow",
+                  "label": "6 dégâts imparables",
                   "damage": 6,
-                  "undefendable": true,
-                  "stealHp": 0,
-                  "stealCp": 0,
-                  "heal": 0,
-                  "drawCards": 0,
-                  "discardCards": 0,
-                  "topDeckToDiscard": 0,
-                  "tokens": [],
-                  "formulas": [],
-                  "extraRoll": null,
-                  "notes": []
+                  "undefendable": true
                 },
                 {
-                  "condition": {
-                    "type": "symbols",
-                    "symbols": {
-                      "white": 0,
-                      "orange": 0,
-                      "red": 1
-                    }
-                  },
-                  "label": "Sur symbole rouge",
-                  "damage": 0,
-                  "undefendable": false,
-                  "stealHp": 4,
-                  "stealCp": 0,
-                  "heal": 0,
-                  "drawCards": 0,
-                  "discardCards": 0,
-                  "topDeckToDiscard": 0,
-                  "tokens": [],
-                  "formulas": [],
-                  "extraRoll": null,
-                  "notes": []
+                  "face": "red",
+                  "label": "vole 4 PV",
+                  "stealHp": 4
                 }
               ]
             },
@@ -1589,7 +1539,8 @@
             ],
             "extraRoll": {
               "dice": 2,
-              "text": "Roll 2 dice and deal damage equal to the total roll value."
+              "mode": "simple",
+              "rollText": "Lancez 2 dés, infligez autant de dégâts que la valeur totale du jet."
             },
             "notes": []
           }
@@ -1971,7 +1922,23 @@
             "formulas": [],
             "extraRoll": {
               "dice": 1,
-              "text": "Roll 1 die. White: nothing. Orange: steal 1 CP. Red: end this combat and engage a random level 3 minion."
+              "mode": "perFace",
+              "rollText": "Si l'attaque réussit, lancez 1 dé.",
+              "outcomes": [
+                {
+                  "face": "white",
+                  "label": "rien"
+                },
+                {
+                  "face": "yellow",
+                  "label": "vole 1 CP",
+                  "stealCp": 1
+                },
+                {
+                  "face": "red",
+                  "label": "termine ce combat et engage un minion violet aléatoire"
+                }
+              ]
             },
             "notes": []
           },
@@ -2198,10 +2165,12 @@
             "formulas": [],
             "extraRoll": {
               "dice": 1,
-              "effects": [
+              "mode": "simple",
+              "rollText": "Lancez 1 dé, infligez autant de dégâts que la valeur du jet.",
+              "outcomes": [
                 {
-                  "condition": "any",
-                  "damageFormula": "roll",
+                  "face": "any",
+                  "label": "inflige À Terre",
                   "tokens": [
                     "À Terre"
                   ]
@@ -2688,62 +2657,26 @@
             "formulas": [],
             "extraRoll": {
               "dice": 1,
+              "mode": "perFace",
+              "rollText": "Si l'attaque réussit, lancez 1 dé.",
               "outcomes": [
                 {
-                  "condition": {
-                    "type": "symbols",
-                    "symbols": {
-                      "white": 1,
-                      "orange": 0,
-                      "red": 0
-                    },
-                    "repeat": false
-                  },
-                  "label": "White: gain 2 Chaos",
-                  "damage": 0,
-                  "undefendable": false,
-                  "stealHp": 0,
-                  "stealCp": 0,
-                  "heal": 0,
-                  "drawCards": 0,
-                  "discardCards": 0,
-                  "topDeckToDiscard": 0,
+                  "face": "white",
+                  "label": "gagne 2 Chaos",
                   "tokens": [
                     "Chaos",
                     "Chaos"
-                  ],
-                  "formulas": [],
-                  "extraRoll": null,
-                  "notes": []
+                  ]
                 },
                 {
-                  "condition": {
-                    "type": "symbols",
-                    "symbols": {
-                      "white": 0,
-                      "orange": 1,
-                      "red": 0
-                    },
-                    "repeat": false
-                  },
-                  "label": "Orange: give Eboulissement",
-                  "damage": 0,
-                  "undefendable": false,
-                  "stealHp": 0,
-                  "stealCp": 0,
-                  "heal": 0,
-                  "drawCards": 0,
-                  "discardCards": 0,
-                  "topDeckToDiscard": 0,
+                  "face": "yellow",
+                  "label": "inflige Eboulissement",
                   "tokens": [
                     "Eboulissement"
-                  ],
-                  "formulas": [],
-                  "extraRoll": null,
-                  "notes": []
+                  ]
                 }
               ],
-              "text": "Then deal 6 damage plus 1 per Chaos."
+              "finalText": "Puis inflige 6 dégâts + 1 par Chaos."
             },
             "notes": []
           }
@@ -3328,62 +3261,26 @@
             "formulas": [],
             "extraRoll": {
               "dice": 1,
+              "mode": "perFace",
+              "rollText": "Si l'attaque réussit, lancez 1 dé.",
               "outcomes": [
                 {
-                  "condition": {
-                    "type": "symbols",
-                    "symbols": {
-                      "white": 1,
-                      "orange": 0,
-                      "red": 0
-                    },
-                    "repeat": false
-                  },
-                  "label": "White: gain 2 Chaos",
-                  "damage": 0,
-                  "undefendable": false,
-                  "stealHp": 0,
-                  "stealCp": 0,
-                  "heal": 0,
-                  "drawCards": 0,
-                  "discardCards": 0,
-                  "topDeckToDiscard": 0,
+                  "face": "white",
+                  "label": "gagne 2 Chaos",
                   "tokens": [
                     "Chaos",
                     "Chaos"
-                  ],
-                  "formulas": [],
-                  "extraRoll": null,
-                  "notes": []
+                  ]
                 },
                 {
-                  "condition": {
-                    "type": "symbols",
-                    "symbols": {
-                      "white": 0,
-                      "orange": 1,
-                      "red": 0
-                    },
-                    "repeat": false
-                  },
-                  "label": "Orange: give Sort 6",
-                  "damage": 0,
-                  "undefendable": false,
-                  "stealHp": 0,
-                  "stealCp": 0,
-                  "heal": 0,
-                  "drawCards": 0,
-                  "discardCards": 0,
-                  "topDeckToDiscard": 0,
+                  "face": "yellow",
+                  "label": "inflige Sort 6",
                   "tokens": [
                     "Sort 6"
-                  ],
-                  "formulas": [],
-                  "extraRoll": null,
-                  "notes": []
+                  ]
                 }
               ],
-              "text": "Then deal 7 damage plus nb Chaos."
+              "finalText": "Puis inflige 7 dégâts + nb Chaos."
             },
             "notes": []
           }
@@ -5759,7 +5656,29 @@
             "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
+            "extraRoll": {
+              "dice": 1,
+              "mode": "perFace",
+              "rollText": "Si l'attaque réussit, lancez 1 dé.",
+              "outcomes": [
+                {
+                  "face": "white",
+                  "label": "4 dégâts imparables",
+                  "damage": 4,
+                  "undefendable": true
+                },
+                {
+                  "face": "yellow",
+                  "label": "vole 3 PV",
+                  "stealHp": 3
+                },
+                {
+                  "face": "red",
+                  "label": "vole 4 PV",
+                  "stealHp": 4
+                }
+              ]
+            },
             "notes": []
           },
           {

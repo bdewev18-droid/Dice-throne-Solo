@@ -4291,33 +4291,17 @@ class MinionAttackSummary extends StatelessWidget {
       );
     }
     if (enemy.profileKey == 'oni-delirant') {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Text(
-                'If successful, roll ',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-              _CubeIcon(size: 28),
-            ],
-          ),
-          const SizedBox(height: 6),
-          const _ResultLine(
-            symbol: DieSymbol.white,
-            children: [DamageBadge(value: 5, imparable: true)],
-          ),
-          const _ResultLine(
-            symbol: DieSymbol.yellow,
-            children: [DamageBadge(value: 6, imparable: true)],
-          ),
-          _ResultLine(
-            symbol: DieSymbol.red,
-            children: [LifeStealBadge(value: 4, color: enemy.rank.color)],
-          ),
-        ],
-      );
+      final goal = _extraRollGoalFor(enemy);
+      final extraRoll = _extraRollFor(enemy);
+      if (goal != null && extraRoll != null) {
+        return _ExtraRollAttackSummary(
+          enemy: enemy,
+          goal: goal,
+          extraRoll: extraRoll,
+          color: enemy.rank.color,
+        );
+      }
+      return const SizedBox.shrink();
     }
     if (enemy.profileKey == 'bleu-vert-022') {
       return Column(
@@ -4386,33 +4370,17 @@ class MinionAttackSummary extends StatelessWidget {
       );
     }
     if (enemy.profileKey == 'bleu-bleu-003') {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _AttackResultLine(
-            goal: SymbolGoal(yellow: 2, red: 1),
-            result: [
-              DamageBadge(value: 7, imparable: false),
-              Text('+ nb Chaos'),
-              Text('1x'),
-              _CubeIcon(size: 28),
-            ],
-          ),
-          const SizedBox(height: 6),
-          _ResultLine(
-            symbol: DieSymbol.white,
-            children: [
-              Text('gain', style: TextStyle(color: enemy.rank.color, fontWeight: FontWeight.w900)),
-              TokenBadge(label: 'Chaos', color: enemy.rank.color),
-              const Text('x2'),
-            ],
-          ),
-          _ResultLine(
-            symbol: DieSymbol.yellow,
-            children: [TokenBadge(label: 'Sort 6', color: enemy.rank.color)],
-          ),
-        ],
-      );
+      final goal = _extraRollGoalFor(enemy);
+      final extraRoll = _extraRollFor(enemy);
+      if (goal != null && extraRoll != null) {
+        return _ExtraRollAttackSummary(
+          enemy: enemy,
+          goal: goal,
+          extraRoll: extraRoll,
+          color: enemy.rank.color,
+        );
+      }
+      return const SizedBox.shrink();
     }
     if (enemy.profileKey == 'bleu-bleu-004') {
       return Column(
@@ -4442,38 +4410,29 @@ class MinionAttackSummary extends StatelessWidget {
       );
     }
     if (enemy.profileKey == 'vert-vert-012') {
-      return const Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(child: SymbolGoalView(goal: SymbolGoal(yellow: 4))),
-          SizedBox(height: 6),
-          Center(
-            child: Wrap(
-              spacing: 5,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              alignment: WrapAlignment.center,
-              children: [
-                Text('Roll 2 x', style: TextStyle(fontWeight: FontWeight.w900)),
-                _CubeIcon(size: 28),
-                Text('= deal damage equal to the total roll value'),
-              ],
-            ),
-          ),
-          SizedBox(height: 6),
-          _PassiveNote(
+      final goal = _extraRollGoalFor(enemy);
+      final extraRoll = _extraRollFor(enemy);
+      if (goal != null && extraRoll != null) {
+        return _ExtraRollAttackSummary(
+          enemy: enemy,
+          goal: goal,
+          extraRoll: extraRoll,
+          color: enemy.rank.color,
+          passiveNote: _PassiveNote(
             child: Row(
               children: [
-                Text(
+                const Text(
                   'Passive: ',
                   style: TextStyle(fontWeight: FontWeight.w900),
                 ),
-                Text('if the offensive roll fails, '),
+                const Text('if the offensive roll fails, '),
                 DamageBadge(value: 1, imparable: true),
               ],
             ),
           ),
-        ],
-      );
+        );
+      }
+      return const SizedBox.shrink();
     }
     if (enemy.profileKey == 'vert-vert-013') {
       return Column(
@@ -4530,123 +4489,58 @@ class MinionAttackSummary extends StatelessWidget {
       );
     }
     if (enemy.profileKey == 'vert-vert-015') {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _AttackResultLine(
-            goal: SymbolGoal(white: 2, yellow: 3),
-            result: [
-              DamageBadge(value: 5, imparable: true),
-              SizedBox(width: 4),
-              Text('+'),
-              _CubeIcon(size: 28),
-            ],
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Extra die:',
-            style: TextStyle(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 4),
-          _ResultLine(
-            symbol: DieSymbol.yellow,
-            children: [
-              Text(
-                'steal 1 CP',
-                style: TextStyle(
-                  color: enemy.rank.color,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-          const _ResultLine(
-            symbol: DieSymbol.red,
-            children: [
-              Text('engage a random'),
-              SizedBox(width: 4),
-              Image(
-                image: AssetImage('assets/map_violet.png'),
-                width: 24,
-                height: 24,
-                fit: BoxFit.contain,
-              ),
-            ],
-          ),
-        ],
-      );
+      final goal = _extraRollGoalFor(enemy);
+      final extraRoll = _extraRollFor(enemy);
+      if (goal != null && extraRoll != null) {
+        return _ExtraRollAttackSummary(
+          enemy: enemy,
+          goal: goal,
+          extraRoll: extraRoll,
+          color: enemy.rank.color,
+          directDamage: const _AttackDamage(5, imparable: true),
+          directUndefendable: true,
+        );
+      }
+      return const SizedBox.shrink();
     }
     if (enemy.profileKey == 'vert-vert-017') {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _AttackResultLine(
-            goal: const SymbolGoal(white: 2, red: 1),
-            result: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Wrap(
-                    spacing: 5,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text('1x'),
-                      _CubeIcon(size: 28),
-                      Text('= deal damage equal to the extra die value'),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Wrap(
-                    spacing: 5,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      const Text('and'),
-                      TokenBadge(
-                        label: 'Knockdown',
-                        color: enemy.rank.color,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      );
+      final goal = _extraRollGoalFor(enemy);
+      final extraRoll = _extraRollFor(enemy);
+      if (goal != null && extraRoll != null) {
+        return _ExtraRollAttackSummary(
+          enemy: enemy,
+          goal: goal,
+          extraRoll: extraRoll,
+          color: enemy.rank.color,
+        );
+      }
+      return const SizedBox.shrink();
     }
     if (enemy.profileKey == 'vert-vert-021') {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _AttackResultLine(
-            goal: const SymbolGoal(yellow: 2, red: 1),
-            result: [
-              const DamageBadge(value: 6, imparable: false),
-              Text(
-                '+ nb Chaos',
-                style: TextStyle(
-                  color: enemy.rank.color,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const _CubeIcon(size: 28),
-            ],
-          ),
-          const SizedBox(height: 6),
-          _ResultLine(
-            symbol: DieSymbol.white,
-            children: [
-              Text('gain', style: TextStyle(color: enemy.rank.color, fontWeight: FontWeight.w900)),
-              TokenBadge(label: 'Chaos', color: enemy.rank.color),
-              const Text('x2'),
-            ],
-          ),
-          _ResultLine(
-            symbol: DieSymbol.yellow,
-            children: [TokenBadge(label: 'Blinding Light', color: enemy.rank.color)],
-          ),
-        ],
-      );
+      final goal = _extraRollGoalFor(enemy);
+      final extraRoll = _extraRollFor(enemy);
+      if (goal != null && extraRoll != null) {
+        return _ExtraRollAttackSummary(
+          enemy: enemy,
+          goal: goal,
+          extraRoll: extraRoll,
+          color: enemy.rank.color,
+        );
+      }
+      return const SizedBox.shrink();
+    }
+    if (enemy.profileKey == 'bleu-bleu-023') {
+      final goal = _extraRollGoalFor(enemy);
+      final extraRoll = _extraRollFor(enemy);
+      if (goal != null && extraRoll != null) {
+        return _ExtraRollAttackSummary(
+          enemy: enemy,
+          goal: goal,
+          extraRoll: extraRoll,
+          color: enemy.rank.color,
+        );
+      }
+      return const SizedBox.shrink();
     }
     if (enemy.profileKey == 'rat-de-la-rue') {
       return Column(
@@ -7922,6 +7816,171 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
   }
 }
 
+/// Harmonized summary for an attack that triggers an additional dice roll.
+///
+/// Layout (lines that apply are shown in order; absent lines are skipped):
+/// - L1: triggering attack's success dice ([SymbolGoalView]) + the attack's
+///   direct result (damage) when the action itself deals damage before the
+///   roll (e.g. Disciple "Abnégation" 5 undefendable).
+/// - L2: the roll instruction ([MinionExtraRoll.rollText]) + a cube icon.
+/// - L3-5: one [_ResultLine] per [ExtraRollOutcome] (face symbol on the left,
+///   badges/label on the right). `face: any` uses a cube icon as the marker.
+/// - L6: optional final effect ([MinionExtraRoll.finalText]) inside a
+///   [_PassiveNote], rendered via [InlineTokenText] so token names become
+///   images.
+///
+/// Replaces the previous hard-coded per-`profileKey` branches (Roc, Oni,
+/// Mage de l'Entropie, Mage Lezard, Homme Lezard, Disciple, Yokai) with a
+/// single data-driven renderer. The runtime resolution
+/// (`_resolveExtraDicePhase`, keyed on `profileKey`) is untouched.
+class _ExtraRollAttackSummary extends StatelessWidget {
+  const _ExtraRollAttackSummary({
+    required this.enemy,
+    required this.goal,
+    required this.extraRoll,
+    required this.color,
+    this.directDamage,
+    this.directUndefendable = false,
+    this.passiveNote,
+  });
+
+  final EnemyNode enemy;
+  final SymbolGoal goal;
+  final MinionExtraRoll extraRoll;
+  final Color color;
+
+  /// Direct damage dealt by the triggering attack itself (before the extra
+  /// roll), shown on L1. Null when the attack's only effect is the roll.
+  final _AttackDamage? directDamage;
+
+  /// Whether [directDamage] is undefendable.
+  final bool directUndefendable;
+
+  /// Optional passive note appended after the summary (e.g. Roc's "if the
+  /// offensive roll fails, deal 1 undefendable damage").
+  final Widget? passiveNote;
+
+  @override
+  Widget build(BuildContext context) {
+    final children = <Widget>[];
+
+    // L1: success dice + direct result.
+    final result = <Widget>[];
+    if (directDamage != null) {
+      result.add(DamageBadge(
+        value: directDamage!.value,
+        imparable: directUndefendable,
+      ));
+    }
+    children.add(_AttackResultLine(goal: goal, result: result));
+
+    // L2: roll instruction + cube icon.
+    if (extraRoll.rollText.isNotEmpty) {
+      children.add(Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                extraRoll.rollText,
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+            const SizedBox(width: 6),
+            _CubeIcon(size: 28),
+          ],
+        ),
+      ));
+    }
+
+    // L3-5: one line per outcome.
+    for (final outcome in extraRoll.outcomes) {
+      children.add(_buildOutcomeLine(outcome));
+    }
+
+    // L6: final effect note.
+    final finalText = extraRoll.finalText;
+    if (finalText != null && finalText.isNotEmpty) {
+      children.add(const SizedBox(height: 6));
+      children.add(_PassiveNote(
+        child: InlineTokenText(
+          finalText,
+          color: color,
+          style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
+        ),
+      ));
+    }
+
+    // Appended passive note (kept from the legacy branch, e.g. Roc).
+    if (passiveNote != null) {
+      children.add(const SizedBox(height: 6));
+      children.add(passiveNote!);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+
+  Widget _buildOutcomeLine(ExtraRollOutcome outcome) {
+    final badges = <Widget>[];
+
+    // Label text (may contain token names → InlineTokenText).
+    final label = outcome.label;
+    if (label != null && label.isNotEmpty) {
+      badges.add(InlineTokenText(
+        label,
+        color: color,
+        style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
+      ));
+    }
+    if (outcome.damage > 0) {
+      badges.add(DamageBadge(
+        value: outcome.damage,
+        imparable: outcome.undefendable,
+      ));
+    }
+    if (outcome.stealHp > 0) {
+      badges.add(LifeStealBadge(value: outcome.stealHp, color: color));
+    }
+    if (outcome.stealCp > 0) {
+      badges.add(CpStealBadge(value: outcome.stealCp, color: color));
+    }
+    for (final token in outcome.tokens) {
+      badges.add(TokenBadge(label: token, color: color));
+    }
+
+    // Left marker: die face symbol, or a cube icon for `any`.
+    if (outcome.face == ExtraRollFace.any) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 5),
+        child: Row(
+          children: [
+            const _CubeIcon(size: 24),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Wrap(
+                spacing: 5,
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: badges,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    final symbol = switch (outcome.face) {
+      ExtraRollFace.white => DieSymbol.white,
+      ExtraRollFace.yellow => DieSymbol.yellow,
+      ExtraRollFace.red => DieSymbol.red,
+      ExtraRollFace.any => DieSymbol.white,
+    };
+    return _ResultLine(symbol: symbol, children: badges);
+  }
+}
+
 class _ResultLine extends StatelessWidget {
   const _ResultLine({required this.symbol, required this.children});
 
@@ -8968,6 +9027,28 @@ class _AttackDamage {
 
   final int value;
   final bool imparable;
+}
+
+/// Returns the first goal of an extra-roll attack. Extra-roll attacks
+/// (Roc, Oni, Mage de l'Entropie, Mage Lezard, Homme Lezard, Disciple,
+/// Yokai) carry a single triggering goal in `attackPlan.goals`.
+SymbolGoal? _extraRollGoalFor(EnemyNode enemy) {
+  final goals = enemy.attackPlan.goals;
+  if (goals.isEmpty) {
+    return null;
+  }
+  return goals.first;
+}
+
+/// Returns the parsed [MinionExtraRoll] attached to the first goal of an
+/// extra-roll attack, or null when the action has no extra roll. The extra
+/// roll is attached to the goal's [SymbolGoalEffect] by the JSON parser.
+MinionExtraRoll? _extraRollFor(EnemyNode enemy) {
+  final goal = _extraRollGoalFor(enemy);
+  if (goal == null) {
+    return null;
+  }
+  return goal.effect?.extraRoll;
 }
 
 bool _isDruidBearForm(EnemyNode enemy) {
