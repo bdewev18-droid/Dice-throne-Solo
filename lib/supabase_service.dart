@@ -252,11 +252,8 @@ class SupabaseService {
     final GoogleSignInAuthentication auth;
     try {
       auth = await account.authentication;
-    } catch (error, stack) {
+    } catch (error) {
       // Souvent : Google Play Services indisponible ou réseau coupé.
-      FlutterError.reportError(
-        FlutterErrorDetails(exception: error, stack: stack),
-      );
       throw StateError('Google auth indisponible: $error');
     }
     final idToken = auth.idToken;
