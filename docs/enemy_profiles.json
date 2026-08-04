@@ -147,7 +147,76 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "suite",
+              "minLength": 5
+            },
+            "effect": {
+              "cpSteal": 2,
+              "damageFormula": "cp+cpSteal",
+              "undefendable": false,
+              "note": "Large suite: Rat steals 2 CP, then deals damage equal to its CP."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If suite ≥ 5",
+                  "=",
+                  "Steal 2 CP",
+                  "dmg = CP + 2"
+                ]
+              }
+            ]
+          },
+          {
+            "condition": {
+              "type": "suite",
+              "minLength": 4
+            },
+            "effect": {
+              "cpSteal": 1,
+              "damageFormula": "cp+cpSteal",
+              "undefendable": false,
+              "note": "Small suite: Rat steals 1 CP, then deals damage equal to its CP."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If suite ≥ 4",
+                  "=",
+                  "Steal 1 CP",
+                  "dmg = CP + 1"
+                ]
+              }
+            ]
+          },
+          {
+            "condition": {
+              "type": "suite",
+              "minLength": 3
+            },
+            "effect": {
+              "cpSteal": 1,
+              "damage": 0,
+              "undefendable": false,
+              "note": "Micro suite: Rat steals 1 CP."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If suite ≥ 3",
+                  "=",
+                  "Steal 1 CP"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [],
         "notes": []
       }
@@ -264,7 +333,28 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "suite",
+              "minLength": 5
+            },
+            "effect": {
+              "cpSteal": 1,
+              "note": "Large suite: steal 1 CP."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If suite ≥ 5",
+                  "=",
+                  "Steal 1 CP"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [],
         "notes": []
       }
@@ -405,25 +495,24 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [
-              "Back Strike"
-            ],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [
-                "Back Strike"
-              ],
-              "formulas": []
+            "condition": {
+              "type": "sameSymbol",
+              "count": 4
             },
-            "text": "If you roll 4 matching symbols, gain the Back Strike token."
+            "effect": {
+              "heroTokens": [
+                "Back Strike"
+              ]
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If you roll 4 matching symbols, gain the Back Strike token."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -535,7 +624,32 @@
             ]
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "symbols",
+              "white": 1,
+              "orange": 2,
+              "red": 1
+            },
+            "effect": {
+              "note": "Validated attack: hero discards 1 random card."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:white}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:red}",
+                  "=",
+                  "hero discards 1 card"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [],
         "notes": []
       }
@@ -707,25 +821,24 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [
-              "Silence"
-            ],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [
-                "Silence"
-              ],
-              "formulas": []
+            "condition": {
+              "type": "sameValue",
+              "count": 3
             },
-            "text": "If you roll 3 matching values, inflict Silence."
+            "effect": {
+              "heroTokens": [
+                "Silence"
+              ]
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If you roll 3 matching values, inflict Silence."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -874,25 +987,24 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [
-              "Bleed"
-            ],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [
-                "Bleed"
-              ],
-              "formulas": []
+            "condition": {
+              "type": "sameValue",
+              "count": 3
             },
-            "text": "If you roll 3 matching values, inflict Bleed."
+            "effect": {
+              "heroTokens": [
+                "Bleed"
+              ]
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If you roll 3 matching values, inflict Bleed."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -1201,7 +1313,30 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "suite",
+              "minLength": 5
+            },
+            "effect": {
+              "heroTokens": [
+                "Ronces"
+              ],
+              "note": "Large suite: hero receives Ronces."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If suite ≥ 5",
+                  "=",
+                  "{token:Ronces}"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [],
         "notes": []
       }
@@ -1307,7 +1442,32 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "symbols",
+              "orange": 4
+            },
+            "effect": {
+              "damage": 0,
+              "lifeSteal": 0,
+              "note": "Suppresses normal attack (triggers special dice phase)."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "=",
+                  "Special attack"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [],
         "notes": []
       }
@@ -1542,7 +1702,31 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "symbols",
+              "orange": 4,
+              "negate": true
+            },
+            "effect": {
+              "damage": 1,
+              "undefendable": true,
+              "note": "Passive: failed offensive roll, Roc deals 1 undefendable damage."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If attack NOT met + rollCount ≥ 3",
+                  "=",
+                  "{undef:1}"
+                ]
+              }
+            ],
+            "minRollCount": 3
+          }
+        ],
         "passives": [
           {
             "text": "Passive: if the offensive roll fails, Roc deals 1 undefendable damage.",
@@ -1678,7 +1862,34 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "symbols",
+              "white": 3,
+              "red": 1
+            },
+            "effect": {
+              "heroTokens": [
+                "Poison"
+              ],
+              "note": "Validated attack: hero receives Poison."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:white}",
+                  "{die:white}",
+                  "{die:white}",
+                  "{die:red}",
+                  "=",
+                  "{token:Poison}"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [],
         "notes": []
       }
@@ -1814,7 +2025,75 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "symbols",
+              "orange": 3,
+              "and": [
+                {
+                  "type": "alteration",
+                  "absent": [
+                    "Forme Elan"
+                  ]
+                }
+              ]
+            },
+            "effect": {
+              "heroTokens": [
+                "À Terre"
+              ],
+              "note": "Bear Form: hero receives À Terre."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "=",
+                  "{token:À Terre}",
+                  "(Bear)"
+                ]
+              }
+            ]
+          },
+          {
+            "condition": {
+              "type": "symbols",
+              "orange": 3,
+              "and": [
+                {
+                  "type": "alteration",
+                  "present": [
+                    "Forme Elan"
+                  ]
+                }
+              ]
+            },
+            "effect": {
+              "heroTokens": [
+                "Ronces"
+              ],
+              "note": "Elk Form: hero receives Ronces."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "=",
+                  "{token:Ronces}",
+                  "(Elk)"
+                ]
+              }
+            ],
+            "exclusive": false
+          }
+        ],
         "passives": [
           {
             "text": "Passive: start of turn, 1-3 Ours, 4-6 Elan.",
@@ -2342,7 +2621,33 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "symbols",
+              "white": 2,
+              "orange": 1
+            },
+            "effect": {
+              "heroTokens": [
+                "Enchevêtrement"
+              ],
+              "note": "Validated attack: hero receives Enchevêtrement."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:white}",
+                  "{die:white}",
+                  "{die:orange}",
+                  "=",
+                  "{token:Enchevêtrement}"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [],
         "notes": []
       }
@@ -2423,7 +2728,28 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "symbols",
+              "red": 2
+            },
+            "effect": {
+              "note": "Validated attack: hero discards 1 random card."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:red}",
+                  "{die:red}",
+                  "=",
+                  "hero discards 1 card"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [],
         "notes": []
       }
@@ -2552,7 +2878,30 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "suite",
+              "minLength": 5
+            },
+            "effect": {
+              "heroTokens": [
+                "À Terre"
+              ],
+              "note": "Large suite: hero receives À Terre."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If suite ≥ 5",
+                  "=",
+                  "{token:À Terre}"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [],
         "notes": []
       }
@@ -2841,7 +3190,62 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "symbols",
+              "white": 2,
+              "orange": 2,
+              "red": 1
+            },
+            "effect": {
+              "heroTokens": [
+                "Poison"
+              ],
+              "note": "Validated attack: hero receives Poison."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:white}",
+                  "{die:white}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:red}",
+                  "=",
+                  "{token:Poison}"
+                ]
+              }
+            ]
+          },
+          {
+            "condition": {
+              "type": "symbols",
+              "white": 2,
+              "orange": 2
+            },
+            "effect": {
+              "heroTokens": [
+                "Parasite"
+              ],
+              "note": "Validated attack: hero receives Parasite."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:white}",
+                  "{die:white}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "=",
+                  "{token:Parasite}"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [],
         "notes": []
       }
@@ -2927,7 +3331,34 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "symbols",
+              "white": 2,
+              "orange": 1,
+              "red": 1
+            },
+            "effect": {
+              "damage": 0,
+              "lifeSteal": 2,
+              "note": "Validated attack: steals 2 HP."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:white}",
+                  "{die:white}",
+                  "{die:orange}",
+                  "{die:red}",
+                  "=",
+                  "Steal 2 HP"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [],
         "notes": []
       }
@@ -3156,21 +3587,29 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [],
-              "formulas": []
+            "condition": {
+              "type": "attackSucceededAnd",
+              "inner": {
+                "type": "sameValue",
+                "count": 3
+              }
             },
-            "text": "Si 3 chiffres identiques, deals Eboulissement."
+            "effect": {
+              "heroTokens": [
+                "Eboulissement"
+              ],
+              "note": "Successful attack and 3 identical values: hero receives Eboulissement."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If attack succeeded + 3 identical values",
+                  "=",
+                  "{token:Eboulissement}"
+                ]
+              }
+            ]
           }
         ],
         "passives": [],
@@ -3281,7 +3720,32 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "symbols",
+              "orange": 2,
+              "red": 1
+            },
+            "effect": {
+              "damage": 0,
+              "note": "Sorcellerie Chaotique: roll 1 {die:any}; then deal 7 damage plus current Chaos."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:red}",
+                  "=",
+                  "Roll 1 {die:any}",
+                  "→ 7 + Chaos dmg"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [],
         "notes": []
       }
@@ -3447,7 +3911,83 @@
             "notes": []
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "symbols",
+              "orange": 5
+            },
+            "effect": {
+              "damage": 0,
+              "lifeSteal": 5,
+              "note": "Hemo-Siphon: steals 5 health."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "=",
+                  "Hemo-Siphon",
+                  "Steal 5 HP"
+                ]
+              }
+            ]
+          },
+          {
+            "condition": {
+              "type": "symbols",
+              "orange": 4
+            },
+            "effect": {
+              "damage": 0,
+              "lifeSteal": 4,
+              "note": "Hemo-Siphon: steals 4 health."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "=",
+                  "Hemo-Siphon",
+                  "Steal 4 HP"
+                ]
+              }
+            ]
+          },
+          {
+            "condition": {
+              "type": "symbols",
+              "orange": 3
+            },
+            "effect": {
+              "damage": 0,
+              "lifeSteal": 3,
+              "note": "Hemo-Siphon: steals 3 health."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "{die:orange}",
+                  "{die:orange}",
+                  "{die:orange}",
+                  "=",
+                  "Hemo-Siphon",
+                  "Steal 3 HP"
+                ]
+              }
+            ]
+          }
+        ],
         "passives": [
           {
             "text": "Passive: start of turn gains Chaos; a 3 Chaos, spends them pour stealsr 3 HP.",
@@ -4434,25 +4974,25 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [
-              "Parasite"
-            ],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [
+            "condition": {
+              "type": "text",
+              "text": "Si 3 chiffres identiques, deals Parasite."
+            },
+            "effect": {
+              "heroTokens": [
                 "Parasite"
               ],
-              "formulas": []
+              "note": "Si 3 chiffres identiques, deals Parasite."
             },
-            "text": "Si 3 chiffres identiques, deals Parasite."
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "Si 3 chiffres identiques, deals Parasite."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -4663,25 +5203,25 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [
-              "Silence"
-            ],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [
+            "condition": {
+              "type": "text",
+              "text": "Si a single opponent, deals Silence."
+            },
+            "effect": {
+              "heroTokens": [
                 "Silence"
               ],
-              "formulas": []
+              "note": "Si a single opponent, deals Silence."
             },
-            "text": "Si a single opponent, deals Silence."
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "Si a single opponent, deals Silence."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -5030,25 +5570,25 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [
-              "Bleed"
-            ],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [
+            "condition": {
+              "type": "text",
+              "text": "Si 3 chiffres identiques, deals Bleed."
+            },
+            "effect": {
+              "heroTokens": [
                 "Bleed"
               ],
-              "formulas": []
+              "note": "Si 3 chiffres identiques, deals Bleed."
             },
-            "text": "Si 3 chiffres identiques, deals Bleed."
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "Si 3 chiffres identiques, deals Bleed."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -5517,21 +6057,20 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [],
-              "formulas": []
+            "condition": {
+              "type": "sameValue",
+              "count": 3
             },
-            "text": "If 3 matching values are rolled, all engaged opponents lose 1 CP."
+            "effect": {},
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If 3 matching values are rolled, all engaged opponents lose 1 CP."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -6536,25 +7075,25 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [
-              "Parasite"
-            ],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [
+            "condition": {
+              "type": "text",
+              "text": "Si total lower a 6, deals Parasite."
+            },
+            "effect": {
+              "heroTokens": [
                 "Parasite"
               ],
-              "formulas": []
+              "note": "Si total lower a 6, deals Parasite."
             },
-            "text": "Si total lower a 6, deals Parasite."
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "Si total lower a 6, deals Parasite."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -7003,21 +7542,22 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [],
-              "formulas": []
+            "condition": {
+              "type": "text",
+              "text": "Si total lower a 7, deals Concussion."
             },
-            "text": "Si total lower a 7, deals Concussion."
+            "effect": {
+              "note": "Si total lower a 7, deals Concussion."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "Si total lower a 7, deals Concussion."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -7909,25 +8449,25 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [
-              "Back Strike"
-            ],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [
+            "condition": {
+              "type": "text",
+              "text": "Si 3 chiffres identiques, gains Back Strike."
+            },
+            "effect": {
+              "heroTokens": [
                 "Back Strike"
               ],
-              "formulas": []
+              "note": "Si 3 chiffres identiques, gains Back Strike."
             },
-            "text": "Si 3 chiffres identiques, gains Back Strike."
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "Si 3 chiffres identiques, gains Back Strike."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -8185,25 +8725,25 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [
-              "Barbed Vine"
-            ],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [
+            "condition": {
+              "type": "text",
+              "text": "Si 3 chiffres identiques, deals Barbed Vine to all opponents."
+            },
+            "effect": {
+              "heroTokens": [
                 "Barbed Vine"
               ],
-              "formulas": []
+              "note": "Si 3 chiffres identiques, deals Barbed Vine to all opponents."
             },
-            "text": "Si 3 chiffres identiques, deals Barbed Vine to all opponents."
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "Si 3 chiffres identiques, deals Barbed Vine to all opponents."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -8316,27 +8856,26 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [
-              "Silence",
-              "Bleed"
-            ],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [
+            "condition": {
+              "type": "text",
+              "text": "Si 3 chiffres identiques, deals Bleed + Silence."
+            },
+            "effect": {
+              "heroTokens": [
                 "Silence",
                 "Bleed"
               ],
-              "formulas": []
+              "note": "Si 3 chiffres identiques, deals Bleed + Silence."
             },
-            "text": "Si 3 chiffres identiques, deals Bleed + Silence."
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "Si 3 chiffres identiques, deals Bleed + Silence."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -8786,25 +9325,25 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [
-              "Silence"
-            ],
-            "effects": {
-              "damage": 0,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [
+            "condition": {
+              "type": "text",
+              "text": "Si a single opponent est engage, deals aussi Wither et Silence."
+            },
+            "effect": {
+              "heroTokens": [
                 "Silence"
               ],
-              "formulas": []
+              "note": "Si a single opponent est engage, deals aussi Wither et Silence."
             },
-            "text": "Si a single opponent est engage, deals aussi Wither et Silence."
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "Si a single opponent est engage, deals aussi Wither et Silence."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [],
@@ -9035,25 +9574,26 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [
-              "Shadows"
-            ],
-            "effects": {
-              "damage": 4,
-              "undefendable": false,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [
+            "condition": {
+              "type": "text",
+              "text": "If Umbra has Shadows, all its attacks deal 4 extra damage."
+            },
+            "effect": {
+              "heroTokens": [
                 "Shadows"
               ],
-              "formulas": []
+              "damage": 4,
+              "note": "If Umbra has Shadows, all its attacks deal 4 extra damage."
             },
-            "text": "If Umbra has Shadows, all its attacks deal 4 extra damage."
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If Umbra has Shadows, all its attacks deal 4 extra damage."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [
@@ -9153,21 +9693,23 @@
         ],
         "conditionalRules": [
           {
-            "condition": "text",
-            "tokens": [],
-            "effects": {
-              "damage": 0,
-              "undefendable": true,
-              "stealHp": 0,
-              "stealCp": 0,
-              "heal": 0,
-              "drawCards": 0,
-              "discardCards": 0,
-              "topDeckToDiscard": 0,
-              "tokens": [],
-              "formulas": []
+            "condition": {
+              "type": "text",
+              "text": "Si les damage sont lowers ou equal a 5, cette attaque becomes imparable."
             },
-            "text": "Si les damage sont lowers ou equal a 5, cette attaque becomes imparable."
+            "effect": {
+              "undefendable": true,
+              "note": "Si les damage sont lowers ou equal a 5, cette attaque becomes imparable."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "Si les damage sont lowers ou equal a 5, cette attaque becomes imparable."
+                ]
+              }
+            ],
+            "exclusive": true
           }
         ],
         "passives": [

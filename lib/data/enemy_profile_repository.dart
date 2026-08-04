@@ -331,6 +331,7 @@ class EnemyProfileJson {
     }
     final style = value['style'] as String? ?? 'none';
     final displayRows = _displayRowsFromJson(value['displayRows']);
+    final conditionalRules = _conditionalRulesFromJson(value['conditionalRules']);
     if (style == 'suite') {
       final actions = (value['actions'] as List<dynamic>? ?? const [])
           .whereType<Map<String, dynamic>>()
@@ -362,6 +363,7 @@ class EnemyProfileJson {
       return MinionAttackPlan.suite(
         suiteEffects: suiteEffects,
         displayRows: displayRows,
+        conditionalRules: conditionalRules,
       );
     }
     if (style == 'symbols') {
@@ -390,9 +392,16 @@ class EnemyProfileJson {
           ),
         );
       }
-      return MinionAttackPlan.symbols(goals, displayRows: displayRows);
+      return MinionAttackPlan.symbols(
+        goals,
+        displayRows: displayRows,
+        conditionalRules: conditionalRules,
+      );
     }
-    return MinionAttackPlan.none(displayRows: displayRows);
+    return MinionAttackPlan.none(
+      displayRows: displayRows,
+      conditionalRules: conditionalRules,
+    );
   }
 
   static List<DisplayRow> _defenseDisplayRowsFromJson(Object? value) {
@@ -400,5 +409,147 @@ class EnemyProfileJson {
       return const [];
     }
     return _displayRowsFromJson(value['displayRows']);
+  }
+
+  /// Parses the JSON `attackPlan.conditionalRules` array into
+  /// [ConditionalRule]s. Supports two shapes:
+  ///
+  /// - **New (clean) format**: `{ condition: { type, count/... },
+  ///   effect: { heroTokens, ... }, displayRows, exclusive }`.
+  /// - **Legacy format**: `{ condition: "text", tokens, effects: {...},
+  ///   text }` — converted into a display-only `text` rule carrying the
+  ///   tokens as `heroTokens` and the authored `text`/`displayRows`.
+  static List<ConditionalRule> _conditionalRulesFromJson(Object? value) {
+    if (value is! List) {
+      return const [];
+    }
+    final rules = <ConditionalRule>[];
+    for (final raw in value) {
+      if (raw is! Map<String, dynamic>) continue;
+      final rule = _conditionalRuleFromJson(raw);
+      if (rule != null) rules.add(rule);
+    }
+    return List<ConditionalRule>.unmodifiable(rules);
+  }
+
+  static ConditionalRule? _conditionalRuleFromJson(Map<String, dynamic> raw) {
+    final condition = _conditionFromConditionalJson(raw['condition']);
+    if (condition == null) {
+      // Legacy shape: `condition` is a plain string ("text") carrying the
+      // authored rule text in a sibling `text` field. Promote it to a
+      // display-only text rule so it stays visible without being
+      // auto-applied by the generic runtime.
+      final legacyText = (raw['text'] as String?)?.trim();
+      if (legacyText == null || legacyText.isEmpty) return null;
+      final legacyTokens = _stringList(raw['tokens']);
+      return ConditionalRule(
+        condition: const ConditionalCondition(
+          type: ConditionalConditionType.text,
+        ),
+        effect: ConditionalEffect(heroTokens: legacyTokens, note: legacyText),
+        displayRows: _displayRowsFromJson(raw['displayRows']),
+        exclusive: false,
+      );
+    }
+    final effect = _effectFromConditionalJson(
+      raw['effect'],
+      fallbackTokens: _stringList(raw['tokens']),
+      fallbackText: (raw['text'] as String?)?.trim(),
+    );
+    return ConditionalRule(
+      condition: condition,
+      effect: effect,
+      displayRows: _displayRowsFromJson(raw['displayRows']),
+      exclusive: raw['exclusive'] as bool? ?? true,
+      minRollCount: _intValue(raw['minRollCount'], fallback: 0),
+    );
+  }
+
+  /// Parses the `condition` block of a conditional rule. Returns null when
+  /// the block is missing or has no resolvable `type`.
+  static ConditionalCondition? _conditionFromConditionalJson(Object? value) {
+    if (value is String) {
+      // Legacy: a bare "text" string. Treated as display-only.
+      return ConditionalCondition(
+        type: ConditionalConditionType.text,
+        text: value.trim().isEmpty ? null : value.trim(),
+      );
+    }
+    if (value is! Map<String, dynamic>) return null;
+    final typeStr = (value['type'] as String?)?.trim().toLowerCase();
+    final type = switch (typeStr) {
+      'samevalue' => ConditionalConditionType.sameValue,
+      'samesymbol' => ConditionalConditionType.sameSymbol,
+      'suite' => ConditionalConditionType.suite,
+      'symbols' => ConditionalConditionType.symbols,
+      'attacksucceededand' || 'attackokand' =>
+        ConditionalConditionType.attackSucceededAnd,
+      'alteration' => ConditionalConditionType.alteration,
+      'text' => ConditionalConditionType.text,
+      _ => ConditionalConditionType.text,
+    };
+    if (typeStr == null || typeStr.isEmpty) return null;
+    final inner = type == ConditionalConditionType.attackSucceededAnd
+        ? _conditionFromConditionalJson(value['inner'])
+        : null;
+    final andRaw = value['and'];
+    final and = <ConditionalCondition>[];
+    if (andRaw is List) {
+      for (final entry in andRaw) {
+        if (entry is! Map<String, dynamic>) continue;
+        final sub = _conditionFromConditionalJson(entry);
+        if (sub != null) and.add(sub);
+      }
+    }
+    return ConditionalCondition(
+      type: type,
+      count: _intValue(value['count'], fallback: 0),
+      minLength: _intValue(value['minLength'] ?? value['length'], fallback: 0),
+      white: _intValue(value['white'], fallback: 0),
+      orange: _intValue(value['orange'] ?? value['yellow'], fallback: 0),
+      red: _intValue(value['red'], fallback: 0),
+      inner: inner,
+      present: _stringList(value['present']),
+      absent: _stringList(value['absent']),
+      text: (value['text'] as String?)?.trim(),
+      negate: value['negate'] as bool? ?? false,
+      and: and,
+    );
+  }
+
+  /// Parses the `effect` block, with legacy fallbacks (`tokens` at the rule
+  /// root, `text` as a note) when the clean `effect` object is absent.
+  static ConditionalEffect _effectFromConditionalJson(
+    Object? value, {
+    required List<String> fallbackTokens,
+    required String? fallbackText,
+  }) {
+    if (value is! Map<String, dynamic>) {
+      return ConditionalEffect(
+        heroTokens: fallbackTokens,
+        note: (fallbackText != null && fallbackText.isNotEmpty)
+            ? fallbackText
+            : null,
+      );
+    }
+    final heroTokens = _stringList(value['heroTokens']);
+    final minionTokens = _stringList(value['minionTokens']);
+    final hasDamage = value['damage'] != null;
+    final damageFormula = (value['damageFormula'] as String?)?.trim();
+    return ConditionalEffect(
+      heroTokens: heroTokens.isEmpty ? fallbackTokens : heroTokens,
+      minionTokens: minionTokens,
+      damage: hasDamage ? _intValue(value['damage'], fallback: 0) : null,
+      damageFormula: (damageFormula != null && damageFormula.isNotEmpty)
+          ? damageFormula
+          : null,
+      undefendable: value['undefendable'] as bool? ?? false,
+      lifeSteal: _intValue(value['lifeSteal'] ?? value['stealHp'], fallback: 0),
+      cpSteal: _intValue(value['cpSteal'] ?? value['stealCp'], fallback: 0),
+      note: (value['note'] as String?)?.trim() ??
+          ((fallbackText != null && fallbackText.isNotEmpty)
+              ? fallbackText
+              : null),
+    );
   }
 }

@@ -1678,158 +1678,302 @@ class _FightPageState extends State<FightPage> {
     final hasThreeSameValue = _hasRepeatedValue(values, 3);
     final hasFourSameSymbol = _hasRepeatedSymbol(symbols, 4);
 
+    final acc = _ConditionalAccumulators(
+      result: result,
+      values: values,
+      symbols: symbols,
+      attack: attack,
+      attackUndefendable: attackUndefendable,
+      lifeSteal: lifeSteal,
+      cpSteal: cpSteal,
+      heroTokens: heroTokens,
+      minionTokens: minionTokens,
+      notes: notes,
+    );
+
+    // Generic data-driven conditional rules take precedence when authored;
+    // otherwise fall back to the legacy per-profile switch below.
+    if (enemy.attackPlan.conditionalRules.isNotEmpty) {
+      _applyConditionalRules(acc);
+    } else {
+      _applyLegacyConditionalSwitch(acc, hasThreeSameValue, hasFourSameSymbol);
+    }
+
+    _battleAttackValue = acc.attack.clamp(0, 99);
+    _battleAttackUndefendable = acc.attackUndefendable;
+    _battleLifeSteal = acc.lifeSteal.clamp(0, 99);
+    _battleEnemyHeal = 0;
+    _battleCpSteal = acc.cpSteal.clamp(0, 99);
+    _battleHeroTokens
+      ..clear()
+      ..addAll(acc.heroTokens);
+    _battleMinionTokens
+      ..clear()
+      ..addAll(acc.minionTokens);
+    _battleNotes
+      ..clear()
+      ..addAll(acc.notes);
+  }
+
+  /// Legacy per-profile conditional switch, preserved as a fallback when no
+  /// authored `conditionalRules` are declared. Kept verbatim so behavior is
+  /// identical to the pre-generic-runtime implementation for any enemy not
+  /// yet migrated to the data-driven rules.
+  void _applyLegacyConditionalSwitch(
+    _ConditionalAccumulators acc,
+    bool hasThreeSameValue,
+    bool hasFourSameSymbol,
+  ) {
+    final values = acc.values;
     switch (enemy.profileKey) {
       case 'fee':
         if (_bestSuiteLength(values) >= 5) {
-          cpSteal = 1;
-          notes.add('Large suite: steal 1 CP.');
+          acc.cpSteal = 1;
+          acc.notes.add('Large suite: steal 1 CP.');
         }
       case 'elfe-du-chaos':
         if (_bestSuiteLength(values) >= 5) {
-          heroTokens.add('Ronces');
-          notes.add('Large suite: hero receives Ronces.');
+          acc.heroTokens.add('Ronces');
+          acc.notes.add('Large suite: hero receives Ronces.');
         }
       case 'archer-de-lombre':
         if (hasThreeSameValue) {
-          heroTokens.add('Silence');
-          notes.add('3 identical values: hero receives Silence.');
+          acc.heroTokens.add('Silence');
+          acc.notes.add('3 identical values: hero receives Silence.');
         }
       case 'bleu-bleu-002':
-        if (result != null && hasThreeSameValue) {
-          heroTokens.add('Eboulissement');
-          notes.add(
+        if (acc.result != null && hasThreeSameValue) {
+          acc.heroTokens.add('Eboulissement');
+          acc.notes.add(
             'Successful attack and 3 identical values: hero receives Eboulissement.',
           );
         }
       case 'ombre-feline':
         if (hasThreeSameValue) {
-          heroTokens.add('Hémorragie');
-          notes.add('3 identical values: hero receives Hemorragie.');
+          acc.heroTokens.add('Hémorragie');
+          acc.notes.add('3 identical values: hero receives Hemorragie.');
         }
       case 'ronin-vagabond':
         if (hasFourSameSymbol) {
-          minionTokens.add('Riposte');
-          notes.add('4 identical symbols: minion gains Riposte.');
+          acc.minionTokens.add('Riposte');
+          acc.notes.add('4 identical symbols: minion gains Riposte.');
         }
       case 'enchanteur-gobelin':
         if (_symbolGoalMet(const SymbolGoal(white: 1, yellow: 2, red: 1))) {
-          notes.add('Validated attack: hero discards 1 random card.');
+          acc.notes.add('Validated attack: hero discards 1 random card.');
         }
       case 'oni-delirant':
         if (_symbolGoalMet(const SymbolGoal(yellow: 4))) {
-          attack = 0;
-          lifeSteal = 0;
+          acc.attack = 0;
+          acc.lifeSteal = 0;
         }
       case 'vert-vert-012':
         if (!_symbolGoalMet(const SymbolGoal(yellow: 4)) && _rollCount >= 3) {
-          attack = 1;
-          attackUndefendable = true;
-          notes.add(
+          acc.attack = 1;
+          acc.attackUndefendable = true;
+          acc.notes.add(
             'Passive: failed offensive roll, Roc deals 1 undefendable damage.',
           );
         }
       case 'vert-vert-013':
         if (_symbolGoalMet(const SymbolGoal(white: 3, red: 1))) {
-          heroTokens.add('Poison');
-          notes.add('Validated attack: hero receives Poison.');
+          acc.heroTokens.add('Poison');
+          acc.notes.add('Validated attack: hero receives Poison.');
         }
       case 'vert-vert-014':
         if (_symbolGoalMet(const SymbolGoal(yellow: 3))) {
           if (_isDruidBearForm(enemy)) {
-            heroTokens.add('À Terre');
-            notes.add('Bear Form: hero receives À Terre.');
+            acc.heroTokens.add('À Terre');
+            acc.notes.add('Bear Form: hero receives À Terre.');
           } else {
-            heroTokens.add('Ronces');
-            notes.add('Elk Form: hero receives Ronces.');
+            acc.heroTokens.add('Ronces');
+            acc.notes.add('Elk Form: hero receives Ronces.');
           }
         }
       case 'vert-vert-018':
         if (_symbolGoalMet(const SymbolGoal(white: 2, yellow: 1))) {
-          heroTokens.add('Enchevêtrement');
-          notes.add('Validated attack: hero receives Enchevêtrement.');
+          acc.heroTokens.add('Enchevêtrement');
+          acc.notes.add('Validated attack: hero receives Enchevêtrement.');
         }
       case 'vert-vert-019':
         if (_symbolGoalMet(const SymbolGoal(red: 2))) {
-          notes.add('Validated attack: hero discards 1 random card.');
+          acc.notes.add('Validated attack: hero discards 1 random card.');
         }
       case 'vert-vert-020':
         if (_bestSuiteLength(values) >= 5) {
-          heroTokens.add('À Terre');
-          notes.add('Large suite: hero receives À Terre.');
+          acc.heroTokens.add('À Terre');
+          acc.notes.add('Large suite: hero receives À Terre.');
         }
       case 'bleu-vert-022':
         if (_symbolGoalMet(const SymbolGoal(white: 2, yellow: 2, red: 1))) {
-          heroTokens.add('Poison');
-          notes.add('Validated attack: hero receives Poison.');
+          acc.heroTokens.add('Poison');
+          acc.notes.add('Validated attack: hero receives Poison.');
         } else if (_symbolGoalMet(const SymbolGoal(white: 2, yellow: 2))) {
-          heroTokens.add('Parasite');
-          notes.add('Validated attack: hero receives Parasite.');
+          acc.heroTokens.add('Parasite');
+          acc.notes.add('Validated attack: hero receives Parasite.');
         }
       case 'bleu-vert-023':
         if (_symbolGoalMet(const SymbolGoal(white: 2, yellow: 1, red: 1))) {
-          attack = 0;
-          lifeSteal = 2;
-          notes.add('Validated attack: steals 2 HP.');
+          acc.attack = 0;
+          acc.lifeSteal = 2;
+          acc.notes.add('Validated attack: steals 2 HP.');
         }
       case 'bleu-bleu-003':
         if (_symbolGoalMet(const SymbolGoal(yellow: 2, red: 1))) {
-          attack = 0;
-          notes.add(
+          acc.attack = 0;
+          acc.notes.add(
             'Sorcellerie Chaotique: roll 1 {die:any}; then deal 7 damage plus current Chaos.',
           );
         }
       case 'bleu-bleu-004':
         if (_symbolGoalMet(const SymbolGoal(yellow: 5))) {
-          attack = 0;
-          lifeSteal = 5;
-          notes.add('Hemo-Siphon: steals 5 health.');
+          acc.attack = 0;
+          acc.lifeSteal = 5;
+          acc.notes.add('Hemo-Siphon: steals 5 health.');
         } else if (_symbolGoalMet(const SymbolGoal(yellow: 4))) {
-          attack = 0;
-          lifeSteal = 4;
-          notes.add('Hemo-Siphon: steals 4 health.');
+          acc.attack = 0;
+          acc.lifeSteal = 4;
+          acc.notes.add('Hemo-Siphon: steals 4 health.');
         } else if (_symbolGoalMet(const SymbolGoal(yellow: 3))) {
-          attack = 0;
-          lifeSteal = 3;
-          notes.add('Hemo-Siphon: steals 3 health.');
+          acc.attack = 0;
+          acc.lifeSteal = 3;
+          acc.notes.add('Hemo-Siphon: steals 3 health.');
         }
       case 'rat-de-la-rue':
         final suite = _bestSuiteLength(values);
         if (suite >= 5) {
-          cpSteal = 2;
-          attack = (enemy.combatPoints + cpSteal).clamp(0, 99);
-          attackUndefendable = false;
-          notes.add(
-            'Large suite: Rat steals 2 CP, then deals damage equal to its CP ($attack).',
+          acc.cpSteal = 2;
+          acc.attack = (enemy.combatPoints + acc.cpSteal).clamp(0, 99);
+          acc.attackUndefendable = false;
+          acc.notes.add(
+            'Large suite: Rat steals 2 CP, then deals damage equal to its CP (${acc.attack}).',
           );
         } else if (suite >= 4) {
-          cpSteal = 1;
-          attack = (enemy.combatPoints + cpSteal).clamp(0, 99);
-          attackUndefendable = false;
-          notes.add(
-            'Small suite: Rat steals 1 CP, then deals damage equal to its CP ($attack).',
+          acc.cpSteal = 1;
+          acc.attack = (enemy.combatPoints + acc.cpSteal).clamp(0, 99);
+          acc.attackUndefendable = false;
+          acc.notes.add(
+            'Small suite: Rat steals 1 CP, then deals damage equal to its CP (${acc.attack}).',
           );
         } else if (suite >= 3) {
-          cpSteal = 1;
-          attack = 0;
-          attackUndefendable = false;
-          notes.add('Micro suite: Rat steals 1 CP.');
+          acc.cpSteal = 1;
+          acc.attack = 0;
+          acc.attackUndefendable = false;
+          acc.notes.add('Micro suite: Rat steals 1 CP.');
         }
     }
+  }
 
-    _battleAttackValue = attack.clamp(0, 99);
-    _battleAttackUndefendable = attackUndefendable;
-    _battleLifeSteal = lifeSteal.clamp(0, 99);
-    _battleEnemyHeal = 0;
-    _battleCpSteal = cpSteal.clamp(0, 99);
-    _battleHeroTokens
-      ..clear()
-      ..addAll(heroTokens);
-    _battleMinionTokens
-      ..clear()
-      ..addAll(minionTokens);
-    _battleNotes
-      ..clear()
-      ..addAll(notes);
+  /// Applies the authored [ConditionalRule]s from the attack plan, replacing
+  /// the legacy per-profile switch when rules are declared. Rules are
+  /// evaluated in order; the first matching [ConditionalRule.exclusive]
+  /// rule wins (the rest are skipped) — this models `if / else if`
+  /// cascades (Rat de la Rue, Hemo-Siphon, Plague Bearer). Non-exclusive
+  /// rules all fire. `text` rules are display-only and never auto-apply.
+  void _applyConditionalRules(_ConditionalAccumulators acc) {
+    final rules = enemy.attackPlan.conditionalRules;
+    if (rules.isEmpty) return;
+    for (final rule in rules) {
+      if (rule.minRollCount > 0 && _rollCount < rule.minRollCount) {
+        continue;
+      }
+      if (!_conditionalRuleMatches(rule, acc)) continue;
+      _applyConditionalEffect(rule.effect, acc);
+      if (rule.exclusive) break;
+    }
+  }
+
+  /// Returns true when [rule]'s condition matches the current roll state,
+  /// honoring `negate` and `and` conjunctions.
+  bool _conditionalRuleMatches(
+    ConditionalRule rule,
+    _ConditionalAccumulators acc,
+  ) {
+    final primary = _conditionMatches(rule.condition, acc);
+    if (!primary) return false;
+    for (final extra in rule.condition.and) {
+      if (!_conditionMatches(extra, acc)) return false;
+    }
+    return true;
+  }
+
+  /// Evaluates a single [ConditionalCondition] predicate against the roll
+  /// state, applying `negate`. `text` conditions never match (display-only).
+  bool _conditionMatches(
+    ConditionalCondition condition,
+    _ConditionalAccumulators acc,
+  ) {
+    bool matched;
+    switch (condition.type) {
+      case ConditionalConditionType.sameValue:
+        matched = _hasRepeatedValue(acc.values, condition.count);
+      case ConditionalConditionType.sameSymbol:
+        matched = _hasRepeatedSymbol(acc.symbols, condition.count);
+      case ConditionalConditionType.suite:
+        matched = _bestSuiteLength(acc.values) >= condition.minLength;
+      case ConditionalConditionType.symbols:
+        matched = _symbolGoalMet(
+          SymbolGoal(
+            white: condition.white,
+            yellow: condition.orange,
+            red: condition.red,
+          ),
+        );
+      case ConditionalConditionType.attackSucceededAnd:
+        final inner = condition.inner;
+        matched = acc.result != null &&
+            (inner == null || _conditionMatches(inner, acc));
+      case ConditionalConditionType.alteration:
+        final alterations = enemy.alterations;
+        matched = condition.present.every(alterations.contains) &&
+            !condition.absent.any(alterations.contains);
+      case ConditionalConditionType.text:
+        matched = false;
+    }
+    return condition.negate ? !matched : matched;
+  }
+
+  /// Applies a [ConditionalEffect] to the accumulators: tokens, damage
+  /// override (literal or formula), undefendable flag, lifeSteal, cpSteal,
+  /// and note.
+  void _applyConditionalEffect(
+    ConditionalEffect effect,
+    _ConditionalAccumulators acc,
+  ) {
+    acc.heroTokens.addAll(effect.heroTokens);
+    acc.minionTokens.addAll(effect.minionTokens);
+    if (effect.damage != null) {
+      acc.attack = effect.damage!;
+    } else if (effect.damageFormula != null) {
+      acc.attack = _resolveDamageFormula(effect.damageFormula!, acc);
+    }
+    if (effect.undefendable) {
+      acc.attackUndefendable = true;
+    }
+    if (effect.lifeSteal != 0) {
+      acc.lifeSteal = effect.lifeSteal;
+    }
+    if (effect.cpSteal != 0) {
+      acc.cpSteal = effect.cpSteal;
+    }
+    if (effect.note != null && effect.note!.isNotEmpty) {
+      acc.notes.add(effect.note!);
+    }
+  }
+
+  /// Resolves a state-dependent damage formula. Supports `cp` (minion's
+  /// current CP) and `cp+cpSteal` (CP plus the cpSteal applied by this
+  /// rule), mirroring the legacy Rat de la Rue computation. Unknown
+  /// formulas leave the existing attack value untouched.
+  int _resolveDamageFormula(String formula, _ConditionalAccumulators acc) {
+    switch (formula) {
+      case 'cp':
+        return enemy.combatPoints.clamp(0, 99).toInt();
+      case 'cp+cpSteal':
+        return (enemy.combatPoints + acc.cpSteal).clamp(0, 99).toInt();
+      default:
+        return acc.attack;
+    }
   }
 
   void _resolveNaraxusAttackFromDice() {
@@ -9257,6 +9401,36 @@ class _AttackDamage {
 
   final int value;
   final bool imparable;
+}
+
+/// Mutable accumulators passed through [ConditionalRule] application so the
+/// generic runtime can mutate attack resolution the same way the legacy
+/// per-profile switch did. Top-level (Dart forbids classes nested in other
+/// classes).
+class _ConditionalAccumulators {
+  _ConditionalAccumulators({
+    required this.result,
+    required this.values,
+    required this.symbols,
+    required this.attack,
+    required this.attackUndefendable,
+    required this.lifeSteal,
+    required this.cpSteal,
+    required this.heroTokens,
+    required this.minionTokens,
+    required this.notes,
+  });
+
+  final _AttackDamage? result;
+  final List<int> values;
+  final List<DieSymbol> symbols;
+  int attack;
+  bool attackUndefendable;
+  int lifeSteal;
+  int cpSteal;
+  final List<String> heroTokens;
+  final List<String> minionTokens;
+  final List<String> notes;
 }
 
 /// Returns the first goal of an extra-roll attack. Extra-roll attacks

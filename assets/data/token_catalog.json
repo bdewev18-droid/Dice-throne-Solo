@@ -1234,7 +1234,7 @@
       ]
     },
     {
-      "label": "Première Frappe",
+      "label": "First Strike",
       "frLabel": "Première Frappe",
       "kind": "unique",
       "maxStack": 1,
@@ -1246,7 +1246,9 @@
       "aliases": [
         "First Strike",
         "Première Frappe"
-      ]
+      ],
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Salve",

@@ -357,6 +357,7 @@ function renderEditor() {
 
   renderActions();
   renderDefense();
+  renderConditionalRules();
   renderPreview();
   renderDisplayRowsPreviews();
   renderFormulaList();
@@ -397,6 +398,9 @@ function collectCurrent() {
   selectedProfile.attackPlan.actions = [
     ...document.querySelectorAll('#attackActions .action-card'),
   ].map(readActionCard);
+  selectedProfile.attackPlan.conditionalRules = [
+    ...document.querySelectorAll('#conditionalRules .conditional-card'),
+  ].map(readConditionalRuleCard);
   selectedProfile.defensePlan ||= {
     dice: selectedProfile.defenseDice,
     effects: [],
@@ -439,6 +443,102 @@ function renderDefense() {
   const root = $('defenseEffects');
   root.innerHTML = '';
   (selectedProfile.defensePlan?.effects || []).forEach((effect, index) => root.appendChild(actionCard(effect, index, true)));
+}
+function defaultConditionalRule() {
+  return {
+    condition: { type: 'sameValue', count: 3 },
+    effect: { heroTokens: [], minionTokens: [], damage: null, damageFormula: null, undefendable: false, lifeSteal: 0, cpSteal: 0, note: '' },
+    displayRows: [],
+    exclusive: true,
+    minRollCount: 0,
+  };
+}
+function renderConditionalRules() {
+  const root = $('conditionalRules');
+  if (!root) return;
+  root.innerHTML = '';
+  (selectedProfile.attackPlan?.conditionalRules || []).forEach((rule, index) => root.appendChild(conditionalRuleCard(rule, index)));
+}
+function conditionalRuleCard(data, index) {
+  const node = document.createElement('article');
+  node.className = 'action-card conditional-card';
+  const condition = data.condition || {};
+  const effect = data.effect || {};
+  node.innerHTML = [
+    '<div class="action-head"><strong class="action-title">Conditional rule ' + (index + 1) + '</strong><button class="danger small remove-conditional">Remove</button></div>',
+    '<div class="condition-grid">' +
+      select('Condition type', 'cond-type', condition.type || 'sameValue', ['sameValue', 'sameSymbol', 'suite', 'symbols', 'attackSucceededAnd', 'alteration', 'text']) +
+      input('Count', 'cond-count', condition.count ?? '', 'number') +
+      input('Min length', 'cond-minlength', condition.minLength ?? condition.length ?? '', 'number') +
+      input('White', 'cond-white', condition.white ?? 0, 'number') +
+      input('Orange', 'cond-orange', condition.orange ?? condition.yellow ?? 0, 'number') +
+      input('Red', 'cond-red', condition.red ?? 0, 'number') +
+      input('Present tokens', 'cond-present', (condition.present || []).join(', ')) +
+      input('Absent tokens', 'cond-absent', (condition.absent || []).join(', ')) +
+      check('Negate', 'cond-negate', !!condition.negate) +
+      '<label class="checkline">Inner (JSON)<textarea class="cond-inner" rows="3" placeholder=\'{ "type": "sameValue", "count": 3 }\'>' + escapeText(JSON.stringify(condition.inner ?? null, null, 2)) + '</textarea></label>' +
+      '<label class="checkline">And (JSON array)<textarea class="cond-and" rows="3" placeholder=\'[]\'>' + escapeText(JSON.stringify(condition.and ?? [], null, 2)) + '</textarea></label>' +
+      '</div>',
+    '<div class="effect-grid">' +
+      input('Hero tokens', 'eff-herotokens', (effect.heroTokens || []).join(', ')) +
+      input('Minion tokens', 'eff-miniontokens', (effect.minionTokens || []).join(', ')) +
+      input('Damage', 'eff-damage', effect.damage ?? '', 'number') +
+      select('Damage formula', 'eff-damageformula', effect.damageFormula || '', ['', 'cp', 'cp+cpSteal']) +
+      check('Undefendable', 'eff-undef', !!effect.undefendable) +
+      input('Life steal', 'eff-lifesteal', effect.lifeSteal ?? 0, 'number') +
+      input('CP steal', 'eff-cpsteal', effect.cpSteal ?? 0, 'number') +
+      textarea('Note', 'eff-note', effect.note || '', 2) +
+      '</div>',
+    '<div class="display-row-head"><label class="wide-label">Display rows JSON<textarea class="cond-displayrows" rows="7" placeholder=\'[{"align":"left","items":["If 3 identical values","=","{token:Silence}"]}]\'>' + escapeText(JSON.stringify(data.displayRows || [], null, 2)) + '</textarea></label></div>',
+    '<label class="checkline"><input class="cond-exclusive" type="checkbox" ' + (data.exclusive !== false ? 'checked' : '') + ' />Exclusive (first match wins, else-if cascade)</label>',
+    input('Min roll count', 'cond-minroll', data.minRollCount ?? 0, 'number'),
+  ].join('');
+  node.querySelector('.remove-conditional').onclick = () => { node.remove(); collectCurrent(); setDirty('enemy'); renderPreview(); renderDisplayRowsPreviews(); };
+  attachTokenList(node);
+  node.addEventListener('input', () => { collectCurrent(); setDirty('enemy'); renderPreview(); renderDisplayRowsPreviews(); });
+  node.addEventListener('change', () => { collectCurrent(); setDirty('enemy'); renderPreview(); renderDisplayRowsPreviews(); });
+  return node;
+}
+function readConditionalRuleCard(card) {
+  const type = card.querySelector('.cond-type').value;
+  const innerRaw = card.querySelector('.cond-inner').value.trim();
+  let inner = null;
+  if (innerRaw) { try { inner = JSON.parse(innerRaw); } catch {} }
+  const andRaw = card.querySelector('.cond-and').value.trim();
+  let and = [];
+  if (andRaw) { try { const parsed = JSON.parse(andRaw); if (Array.isArray(parsed)) and = parsed; } catch {} }
+  const condition = { type, negate: card.querySelector('.cond-negate').checked, and };
+  if (inner) condition.inner = inner;
+  if (type === 'sameValue' || type === 'sameSymbol') condition.count = intVal(card.querySelector('.cond-count').value);
+  if (type === 'suite') condition.minLength = intVal(card.querySelector('.cond-minlength').value);
+  if (type === 'symbols' || type === 'attackSucceededAnd') {
+    condition.white = intVal(card.querySelector('.cond-white').value);
+    condition.orange = intVal(card.querySelector('.cond-orange').value);
+    condition.red = intVal(card.querySelector('.cond-red').value);
+  }
+  if (type === 'alteration') {
+    condition.present = csv(card.querySelector('.cond-present').value);
+    condition.absent = csv(card.querySelector('.cond-absent').value);
+  }
+  const damageRaw = card.querySelector('.eff-damage').value.trim();
+  const damageFormula = card.querySelector('.eff-damageformula').value;
+  const effect = {
+    heroTokens: csv(card.querySelector('.eff-herotokens').value),
+    minionTokens: csv(card.querySelector('.eff-miniontokens').value),
+    damage: damageRaw === '' ? null : intVal(damageRaw),
+    damageFormula: damageFormula || null,
+    undefendable: card.querySelector('.eff-undef').checked,
+    lifeSteal: intVal(card.querySelector('.eff-lifesteal').value),
+    cpSteal: intVal(card.querySelector('.eff-cpsteal').value),
+    note: card.querySelector('.eff-note').value.trim(),
+  };
+  return {
+    condition,
+    effect,
+    displayRows: parseDisplayRowsText(card.querySelector('.cond-displayrows')?.value || ''),
+    exclusive: card.querySelector('.cond-exclusive').checked,
+    minRollCount: intVal(card.querySelector('.cond-minroll').value),
+  };
 }
 function actionCard(data, index, isDefense) {
   const node = $('actionTemplate').content.firstElementChild.cloneNode(true);
@@ -579,6 +679,165 @@ function readExtra(card) {
     })),
   };
 }
+function conditionDisplayItems(condition = {}) {
+  const items = [];
+  const type = condition.type || 'symbols';
+  if (type === 'suite') {
+    const label = condition.suite ? String(condition.suite) : 'suite';
+    items.push(condition.length ? `${label} ${condition.length}` : label);
+    return items;
+  }
+  if (type === 'number') {
+    items.push(`{die:${condition.value ?? '?'}}`);
+    return items;
+  }
+  if (type === 'range') {
+    if (condition.from != null) items.push(`{die:${condition.from}}`);
+    items.push('-');
+    if (condition.to != null) items.push(`{die:${condition.to}}`);
+    return items;
+  }
+  if (type === 'any') return ['Any'];
+  if (type === 'text') return [condition.text || condition.label || 'Text rule'];
+  const symbols = condition.symbols || {};
+  const add = (face, count) => {
+    const total = intVal(count);
+    for (let i = 0; i < total; i += 1) items.push(`{die:${face}}`);
+  };
+  add('white', symbols.white);
+  add('orange', symbols.orange ?? symbols.yellow);
+  add('red', symbols.red);
+  return items;
+}
+function effectDisplayItems(effect = {}, { defense = false } = {}) {
+  const items = [];
+  if (effect.tokens) items.push(...effect.tokens.map((token) => `{token:${token}}`));
+  if (!defense && effect.damage) items.push(`{${effect.undefendable ? 'undef' : 'damage'}:${effect.damage}}`);
+  if (defense && effect.prevent) items.push(`{prevent:${effect.prevent}}`);
+  if (defense && effect.returnDamage) items.push(`{${effect.undefendable ? 'undef' : 'damage'}:${effect.returnDamage}}`);
+  if (effect.stealHp) items.push('Steal', `{heal:${effect.stealHp}}`);
+  if (effect.stealCp) items.push(`Steal ${effect.stealCp} CP`);
+  if (effect.heal) items.push(`{heal:${effect.heal}}`);
+  if (effect.drawCards) items.push(`Draw ${effect.drawCards}`);
+  if (effect.discardCards) items.push(`Discard ${effect.discardCards}`);
+  if (effect.topDeckToDiscard) items.push(`Top ${effect.topDeckToDiscard} discard`);
+  if (effect.formulas) items.push(...effect.formulas);
+  if (effect.extraRoll?.dice) items.push('Roll', `${effect.extraRoll.dice}x`, '{die:white}');
+  if (effect.notes) items.push(...effect.notes);
+  return items;
+}
+function actionToDisplayRows(action = {}) {
+  const rows = [];
+  const condition = conditionDisplayItems(action.condition);
+  const effect = effectDisplayItems(action);
+  const first = [...condition];
+  if (action.label) first.push(action.label);
+  if (effect.length) first.push('=', ...effect);
+  if (first.length) rows.push({ align: 'left', items: first });
+  if (action.extraRoll?.displayRows?.length) {
+    rows.push(...action.extraRoll.displayRows);
+  } else if (action.extraRoll?.dice) {
+    rows.push({ align: 'center', items: ['Extra roll:', `${action.extraRoll.dice}x`, '{die:white}'] });
+    const outcomes = action.extraRoll.outcomes || [];
+    for (const outcome of outcomes) {
+      const outcomeItems = [`{die:${outcome.face || 'white'}}`, '=', ...effectDisplayItems(outcome)];
+      if (outcome.label) outcomeItems.splice(2, 0, outcome.label);
+      if (outcomeItems.length > 2) rows.push({ align: 'left', items: outcomeItems });
+    }
+    if (action.extraRoll.finalText) rows.push({ align: 'left', items: [action.extraRoll.finalText] });
+  }
+  return rows;
+}
+function defenseToDisplayRows(effect = {}) {
+  const condition = conditionDisplayItems(effect.condition);
+  const result = effectDisplayItems(effect, { defense: true });
+  const items = [...condition];
+  if (result.length) items.push('=', ...result);
+  return items.length ? [{ align: 'left', items }] : [];
+}
+function passiveToDisplayRows(passive = {}) {
+  if (typeof passive === 'string') return passive.trim() ? [{ align: 'left', items: [passive.trim()] }] : [];
+  const text = passive.text || passive.label || passive.name || '';
+  return text ? [{ align: 'left', items: [text] }] : [];
+}
+function writeGeneratedRows(inputId, rows, label) {
+  const input = $(inputId);
+  if (!input) return;
+  input.value = JSON.stringify(rows, null, 2);
+  collectCurrent();
+  setDirty('enemy');
+  renderDisplayRowsPreviews();
+  flash(`${label} display rows generated.`);
+}
+function conditionalRuleToDisplayRows(rule = {}) {
+  if (Array.isArray(rule.displayRows) && rule.displayRows.length) {
+    return rule.displayRows;
+  }
+  const condition = rule.condition || {};
+  const effect = rule.effect || {};
+  const condItems = conditionalConditionDisplayItems(condition);
+  const effItems = conditionalEffectDisplayItems(effect);
+  const items = [...condItems];
+  if (effItems.length) items.push('=', ...effItems);
+  return items.length ? [{ align: 'left', items }] : [];
+}
+function conditionalConditionDisplayItems(condition = {}) {
+  switch (condition.type) {
+    case 'sameValue':
+      return ['If ' + (condition.count || 3) + ' identical values'];
+    case 'sameSymbol':
+      return ['If ' + (condition.count || 4) + ' identical symbols'];
+    case 'suite':
+      return ['If suite ≥ ' + (condition.minLength || 5)];
+    case 'symbols': {
+      const symbols = { white: condition.white, orange: condition.orange, red: condition.red };
+      return conditionDisplayItems({ type: 'symbols', symbols });
+    }
+    case 'attackSucceededAnd': {
+      const inner = condition.inner ? conditionalConditionDisplayItems(condition.inner) : ['successful attack'];
+      return ['If attack succeeded', ...inner];
+    }
+    case 'alteration': {
+      const bits = [];
+      if ((condition.present || []).length) bits.push('has ' + condition.present.join('/'));
+      if ((condition.absent || []).length) bits.push('no ' + condition.absent.join('/'));
+      return bits.length ? ['If ' + bits.join(' and ')] : ['Alteration rule'];
+    }
+    case 'text':
+      return [condition.text || 'Text rule'];
+    default:
+      return ['Conditional rule'];
+  }
+}
+function conditionalEffectDisplayItems(effect = {}) {
+  const items = [];
+  if (effect.heroTokens) items.push(...effect.heroTokens.map((token) => `{token:${token}}`));
+  if (effect.minionTokens) items.push(...effect.minionTokens.map((token) => `{token:${token}}`));
+  if (effect.damage != null) items.push(`{${effect.undefendable ? 'undef' : 'damage'}:${effect.damage}}`);
+  if (effect.damageFormula) items.push('dmg:' + effect.damageFormula);
+  if (effect.lifeSteal) items.push(`Steal ${effect.lifeSteal} HP`);
+  if (effect.cpSteal) items.push(`Steal ${effect.cpSteal} CP`);
+  if (effect.note) items.push(effect.note);
+  return items;
+}
+function generateAttackRows() {
+  collectCurrent();
+  const actionRows = (selectedProfile?.attackPlan?.actions || []).flatMap(actionToDisplayRows);
+  const ruleRows = (selectedProfile?.attackPlan?.conditionalRules || []).flatMap(conditionalRuleToDisplayRows);
+  writeGeneratedRows('attacksDisplayRowsInput', [...actionRows, ...ruleRows], 'Attack');
+}
+function generateDefenseRows() {
+  collectCurrent();
+  const rows = (selectedProfile?.defensePlan?.effects || []).flatMap(defenseToDisplayRows);
+  writeGeneratedRows('defenseDisplayRowsInput', rows, 'Defense');
+}
+function generatePassiveRows() {
+  collectCurrent();
+  const rootPassives = selectedProfile?.passives || [];
+  const attackPassives = selectedProfile?.attackPlan?.passives || [];
+  const rows = [...rootPassives, ...attackPassives].flatMap(passiveToDisplayRows);
+  writeGeneratedRows('passivesDisplayRowsInput', rows, 'Passive');
+}
 function parseDisplayRowsText(raw) {
   raw = String(raw || '').trim();
   if (!raw) return [];
@@ -604,8 +863,16 @@ function readDisplayRows(card) {
 function renderPreview() {
   if (!selectedProfile) return;
   $('previewName').textContent = selectedProfile.name;
-  $('attackPreview').innerHTML = (selectedProfile.attackPlan?.actions || []).map(actionPreview).join('') || '<em>No attack actions.</em>';
+  const actions = (selectedProfile.attackPlan?.actions || []).map(actionPreview);
+  const rules = (selectedProfile.attackPlan?.conditionalRules || []).map(conditionalRulePreview);
+  const attackHtml = [...actions, ...rules].join('');
+  $('attackPreview').innerHTML = attackHtml || '<em>No attack actions.</em>';
   $('defensePreview').innerHTML = (selectedProfile.defensePlan?.effects || []).map(defensePreview).join('') || '<em>No defense effects.</em>';
+}
+function conditionalRulePreview(rule = {}) {
+  const rows = conditionalRuleToDisplayRows(rule);
+  const body = rows.length ? displayRowsHtml(rows) : '<span class="token-chip">Empty rule</span>';
+  return '<div class="preview-row conditional-preview"><div>⚙ Conditional</div><div>' + body + '</div></div>';
 }
 function conditionHtml(condition = {}) {
   if (condition.type === 'suite') return `<span class="token-chip">${condition.suite || 'suite'} ${condition.length || ''}</span>`;
@@ -687,6 +954,14 @@ function addAction() {
   collectCurrent();
   selectedProfile.attackPlan.actions.push(defaultAction());
   renderActions();
+  renderPreview();
+}
+function addConditionalRule() {
+  collectCurrent();
+  selectedProfile.attackPlan ||= { style: 'symbols', goals: [], name: '', actions: [], conditionalRules: [], passives: [], notes: [] };
+  selectedProfile.attackPlan.conditionalRules ||= [];
+  selectedProfile.attackPlan.conditionalRules.push(defaultConditionalRule());
+  renderConditionalRules();
   renderPreview();
 }
 function addDefense() {
@@ -822,8 +1097,12 @@ document.addEventListener('DOMContentLoaded', () => {
   $('enemySearch').oninput = renderLists;
   $('tokenSearch').oninput = renderTokenAdmin;
   $('addAttackActionBtn').onclick = addAction;
+  $('addConditionalRuleBtn').onclick = addConditionalRule;
   $('addDefenseEffectBtn').onclick = addDefense;
   $('syncDefenseDiceBtn').onclick = () => { selectedProfile.defensePlan ||= {}; selectedProfile.defensePlan.dice = intVal($('defenseDiceInput').value); setDirty('enemy'); flash('Defense dice synced.'); };
+  $('generateAttackRowsBtn').onclick = generateAttackRows;
+  $('generateDefenseRowsBtn').onclick = generateDefenseRows;
+  $('generatePassiveRowsBtn').onclick = generatePassiveRows;
   $('addDevNoteBtn').onclick = addDevNote;
   document.querySelectorAll('.tab').forEach((tab) => {
     tab.onclick = () => {

@@ -221,6 +221,158 @@ class MinionExtraRoll {
   final List<DisplayRow> displayRows;
 }
 
+enum ConditionalConditionType {
+  /// N identical die *values* (e.g. three 4s). Matches when at least one
+  /// value appears `count` times among the rolled dice.
+  sameValue,
+
+  /// N identical die *symbols/faces* (e.g. four orange). Matches when at
+  /// least one symbol appears `count` times.
+  sameSymbol,
+
+  /// A straight (suite) of at least `minLength` consecutive values.
+  suite,
+
+  /// A symbol goal (white/orange/red thresholds) is met, as for a regular
+  /// attack action.
+  symbols,
+
+  /// The attack succeeded (a non-null attack result) AND the `inner`
+  /// sub-condition is met. Used for rules like "successful attack + 3
+  /// identical values".
+  attackSucceededAnd,
+
+  /// Presence/absence of alterations (tokens) on the minion. Matches when
+  /// all `present` tokens are set and none of `absent` are. Used for
+  /// form-dependent rules (e.g. Druid bear/elk form via 'Forme Elan').
+  alteration,
+
+  /// Free-form authored rule (display-only; never auto-applied by the
+  /// generic runtime). Carries a `text` used for display.
+  text,
+}
+
+/// Condition part of a [ConditionalRule].
+///
+/// Parsed from the JSON `conditionalRules[].condition` block. The `type`
+/// field selects which predicate the runtime evaluates; the remaining
+/// fields are only meaningful for the matching type. `negate` inverts the
+/// predicate (used for "passive when goal NOT met" rules). `and` adds a
+/// conjunctive sub-condition evaluated alongside the primary predicate,
+/// allowing compound rules like `symbols(yellow:3) AND alteration(absent
+/// 'Forme Elan')`.
+class ConditionalCondition {
+  const ConditionalCondition({
+    required this.type,
+    this.count = 0,
+    this.minLength = 0,
+    this.white = 0,
+    this.orange = 0,
+    this.red = 0,
+    this.inner,
+    this.present = const [],
+    this.absent = const [],
+    this.text,
+    this.negate = false,
+    this.and = const [],
+  });
+
+  final ConditionalConditionType type;
+  final int count;
+  final int minLength;
+  final int white;
+
+  /// Orange symbol threshold (JSON historically uses `orange`; `yellow` is
+  /// accepted as an alias during parsing).
+  final int orange;
+  final int red;
+
+  /// Sub-condition for `attackSucceededAnd` rules.
+  final ConditionalCondition? inner;
+
+  /// Alterations that must be present (and `absent` that must be missing)
+  /// for an `alteration` condition to match.
+  final List<String> present;
+  final List<String> absent;
+
+  /// Free-form label for `text` rules (display-only).
+  final String? text;
+
+  /// Inverts the predicate when true (e.g. "goal NOT met").
+  final bool negate;
+
+  /// Additional conjunctive sub-conditions (all must also match).
+  final List<ConditionalCondition> and;
+}
+
+/// Effect applied when a [ConditionalRule]'s condition is met.
+///
+/// Mirrors the structured fields used by [SymbolGoalEffect] so the runtime
+/// can apply the outcome without text parsing. Tokens target the hero
+/// (`heroTokens`) or the minion (`minionTokens`). `damage` overrides the
+/// attack damage when non-null (0 cancels it); `damageFormula` is an
+/// alternative to `damage` for state-dependent damage (e.g. "cp+cpSteal").
+class ConditionalEffect {
+  const ConditionalEffect({
+    this.heroTokens = const [],
+    this.minionTokens = const [],
+    this.damage,
+    this.damageFormula,
+    this.undefendable = false,
+    this.lifeSteal = 0,
+    this.cpSteal = 0,
+    this.note,
+  });
+
+  final List<String> heroTokens;
+  final List<String> minionTokens;
+
+  /// When non-null, overrides the attack damage (0 cancels it).
+  final int? damage;
+
+  /// When non-null, overrides the attack damage with a state-dependent
+  /// formula. Supported: `cp` (minion's CP), `cp+cpSteal` (CP plus the
+  /// cpSteal applied by this very rule). Mutually exclusive with [damage].
+  final String? damageFormula;
+  final bool undefendable;
+  final int lifeSteal;
+  final int cpSteal;
+  final String? note;
+}
+
+/// A bonus/conditional attack rule that is not a primary attack action.
+///
+/// Examples: "If you roll 3 identical values, inflict Silence",
+/// "4 identical symbols: minion gains Riposte", "Large suite: steal 1 CP".
+///
+/// Rules are evaluated in declaration order. When a rule carries
+/// [exclusive] (default `true`), the first matching rule wins and the
+/// remaining rules are skipped — this models the `if / else if` cascades
+/// previously hard-coded per enemy (e.g. Rat de la Rue, Hemo-Siphon). Set
+/// [exclusive] to `false` for independent rules that should all fire.
+///
+/// `minRollCount` gates the rule on the number of dice rolled this attack
+/// (used for passives like Roc's "failed offensive roll" which needs
+/// `rollCount >= 3`).
+///
+/// `displayRows` is the authored (or Generate-produced) rendering shown in
+/// the combat UI alongside the attack actions.
+class ConditionalRule {
+  const ConditionalRule({
+    required this.condition,
+    required this.effect,
+    this.displayRows = const [],
+    this.exclusive = true,
+    this.minRollCount = 0,
+  });
+
+  final ConditionalCondition condition;
+  final ConditionalEffect effect;
+  final List<DisplayRow> displayRows;
+  final bool exclusive;
+  final int minRollCount;
+}
+
 class DisplayRow {
   const DisplayRow({this.align = 'left', this.items = const []});
 
@@ -229,20 +381,26 @@ class DisplayRow {
 }
 
 class MinionAttackPlan {
-  const MinionAttackPlan.symbols(this.goals, {this.displayRows = const []})
-    : style = MinionAttackStyle.symbols,
-      suiteEffects = const {};
+  const MinionAttackPlan.symbols(
+    this.goals, {
+    this.displayRows = const [],
+    this.conditionalRules = const [],
+  }) : style = MinionAttackStyle.symbols,
+       suiteEffects = const {};
 
   const MinionAttackPlan.suite({
     this.suiteEffects = const {},
     this.displayRows = const [],
+    this.conditionalRules = const [],
   }) : style = MinionAttackStyle.suite,
        goals = const [];
 
-  const MinionAttackPlan.none({this.displayRows = const []})
-    : style = MinionAttackStyle.none,
-      goals = const [],
-      suiteEffects = const {};
+  const MinionAttackPlan.none({
+    this.displayRows = const [],
+    this.conditionalRules = const [],
+  }) : style = MinionAttackStyle.none,
+       goals = const [],
+       suiteEffects = const {};
 
   final MinionAttackStyle style;
   final List<SymbolGoal> goals;
@@ -254,6 +412,12 @@ class MinionAttackPlan {
   /// Optional authored display rows. When present, combat UI uses these rows
   /// before falling back to the generated symbol/suite summary.
   final List<DisplayRow> displayRows;
+
+  /// Bonus/conditional rules attached to this attack plan, parsed from the
+  /// JSON `attackPlan.conditionalRules` array. The generic runtime applies
+  /// them after the primary attack resolution; the first matching exclusive
+  /// rule wins. Display-only `text` rules are surfaced but never auto-applied.
+  final List<ConditionalRule> conditionalRules;
 }
 
 /// A passive ability attached to an enemy profile.
