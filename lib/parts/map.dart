@@ -74,6 +74,9 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
       rewardChests: naraxusProfile.rewardChests,
       rewardRank: naraxusProfile.rewardRank,
       rewardRanks: naraxusProfile.rewardRanks,
+      passives: naraxusProfile.passives,
+      defenseDisplayRows: naraxusProfile.defenseDisplayRows,
+      passiveDisplayRows: naraxusProfile.passiveDisplayRows,
     );
     adventure
       ..health = 50
@@ -458,15 +461,17 @@ class _MapPageState extends State<MapPage> {
       return;
     }
     final secondaryEnemy = _attachedViseerFor(enemy);
-    final selectedProfile = await Navigator.of(context).push<EnemyProfile>(
-      MaterialPageRoute<EnemyProfile>(
-        builder: (_) => RecipeEnemySelectionPage(enemy: enemy),
-      ),
-    );
-    if (!mounted || selectedProfile == null) {
-      return;
+    if (AppSettings.instance.developerMode) {
+      final selectedProfile = await Navigator.of(context).push<EnemyProfile>(
+        MaterialPageRoute<EnemyProfile>(
+          builder: (_) => RecipeEnemySelectionPage(enemy: enemy),
+        ),
+      );
+      if (!mounted || selectedProfile == null) {
+        return;
+      }
+      enemy.applyProfile(selectedProfile);
     }
-    enemy.applyProfile(selectedProfile);
     if (secondaryEnemy != null) {
       final viseerProfile =
           _profileByKey('viseer') ?? _profilesForRank(EnemyRank.viseer).first;
@@ -592,9 +597,11 @@ class _MapPageState extends State<MapPage> {
       viewportSize.height / 2 + cameraOffset.dy,
     );
     _mapController.value = Matrix4.identity()
-      ..translate(
+      ..translateByDouble(
         target.dx - focus.dx * safeScale,
         target.dy - focus.dy * safeScale,
+        0,
+        1,
       )
       ..scaleByDouble(safeScale, safeScale, 1, 1);
   }
@@ -1266,7 +1273,7 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
         child: ListView.separated(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
           itemCount: _profiles.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
+          separatorBuilder: (_, _) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final profile = _profiles[index];
             final selected = profile.key == _selected.key;

@@ -22,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.56';
+const String appVersionLabel = 'Version 1.3.63';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -75,6 +75,7 @@ Future<void> _loadRequiredData() async {
     await Future.wait<void>([
       EnemyProfileRepository.load(),
       TokenCatalogRepository.load(),
+      AppSettings.instance.load(),
     ]).timeout(const Duration(seconds: 8));
   } catch (error, stackTrace) {
     debugPrint('Required local data initialization failed: $error');
@@ -98,8 +99,9 @@ enum HeroSegment {
   season2('Season 2'),
   avengers('Avengers'),
   xmen('X-Men'),
-  outcast('Outcast'),
-  other('Other');
+  outcast('Outcasts'),
+  santaKrampus('Santa & Krampus'),
+  other('Single');
 
   const HeroSegment(this.label);
 
@@ -113,6 +115,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff35c7a0),
     [HeroSegment.other],
+    5,
   ),
   artificer(
     'Artificer',
@@ -120,6 +123,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff37b8ff),
     [HeroSegment.season2],
+    6,
   ),
   barbare(
     'Barbarian',
@@ -127,6 +131,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffd94a24),
     [HeroSegment.season1],
+    1,
   ),
   blackPanther(
     'Black Panther',
@@ -134,6 +139,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff7a65ff),
     [HeroSegment.avengers],
+    2,
   ),
   blackWidow(
     'Black Widow',
@@ -141,6 +147,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffdb3d48),
     [HeroSegment.avengers],
+    4,
   ),
   captainMarvel(
     'Captain Marvel',
@@ -148,6 +155,15 @@ enum HeroType {
     Alignment.center,
     Color(0xffffc64d),
     [HeroSegment.avengers],
+    2,
+  ),
+  deadpool(
+    'Deadpool',
+    'assets/personnages/Deadpool.webp',
+    Alignment.center,
+    Color(0xffd9232e),
+    [HeroSegment.other],
+    3,
   ),
   cyclops(
     'Cyclops',
@@ -155,6 +171,7 @@ enum HeroType {
     Alignment.center,
     Color(0xfff0c044),
     [HeroSegment.xmen],
+    4,
   ),
   cursedPirate(
     'Cursed Pirate',
@@ -162,6 +179,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff20c7b8),
     [HeroSegment.season2],
+    4,
   ),
   doctorStrange(
     'Doctor Strange',
@@ -169,6 +187,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffe14646),
     [HeroSegment.avengers],
+    5,
   ),
   druid(
     'Druid',
@@ -176,6 +195,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff7ac66a),
     [HeroSegment.other],
+    4,
   ),
   duelist(
     'Duelist',
@@ -183,6 +203,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffd6a052),
     [HeroSegment.other],
+    3,
   ),
   elfeLunaire(
     'Moon Elf',
@@ -190,6 +211,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff64b7e8),
     [HeroSegment.season1],
+    2,
   ),
   forgemaster(
     'Forgemaster',
@@ -197,6 +219,7 @@ enum HeroType {
     Alignment.center,
     Color(0xfff09a43),
     [HeroSegment.other],
+    4,
   ),
   gambit(
     'Gambit',
@@ -204,6 +227,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffbb67ff),
     [HeroSegment.xmen],
+    6,
   ),
   gunslinger(
     'Gunslinger',
@@ -211,6 +235,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffc57a35),
     [HeroSegment.season2],
+    2,
   ),
   headlessHorseman(
     'Headless Horseman',
@@ -218,6 +243,7 @@ enum HeroType {
     Alignment.center,
     Color(0xfff06a2b),
     [HeroSegment.outcast],
+    4,
   ),
   huntress(
     'Huntress',
@@ -225,6 +251,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff4fa95b),
     [HeroSegment.season2],
+    5,
   ),
   iceman(
     'Iceman',
@@ -232,6 +259,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff8de9ff),
     [HeroSegment.xmen],
+    4,
   ),
   jeanGrey(
     'Jean Grey',
@@ -239,13 +267,15 @@ enum HeroType {
     Alignment.center,
     Color(0xffff8b45),
     [HeroSegment.xmen],
+    6,
   ),
   krampus(
     'Krampus',
     'assets/personnages/Krampus.png',
     Alignment.center,
     Color(0xffb44335),
-    [HeroSegment.other],
+    [HeroSegment.santaKrampus],
+    4,
   ),
   loki(
     'Loki',
@@ -253,6 +283,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff57b966),
     [HeroSegment.avengers],
+    4,
   ),
   monk(
     'Monk',
@@ -260,6 +291,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffd7a55a),
     [HeroSegment.season1],
+    4,
   ),
   mysticBrawler(
     'Mystic Brawler',
@@ -267,6 +299,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff7cc5ff),
     [HeroSegment.other],
+    3,
   ),
   necromancer(
     'Necromancer',
@@ -274,6 +307,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff75d16b),
     [HeroSegment.outcast],
+    6,
   ),
   ninja(
     'Ninja',
@@ -281,6 +315,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff2cc6a8),
     [HeroSegment.season1],
+    2,
   ),
   paladin(
     'Paladin',
@@ -288,6 +323,7 @@ enum HeroType {
     Alignment.center,
     Color(0xfff4c95a),
     [HeroSegment.season1],
+    5,
   ),
   paleLady(
     'Pale Lady',
@@ -295,6 +331,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffcfd6ff),
     [HeroSegment.outcast],
+    3,
   ),
   psylocke(
     'Psylocke',
@@ -302,6 +339,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffd15cff),
     [HeroSegment.xmen],
+    3,
   ),
   pyromancer(
     'Pyromancer',
@@ -309,6 +347,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffff6a21),
     [HeroSegment.season1],
+    3,
   ),
   raveness(
     'Raveness',
@@ -316,6 +355,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff7f5cff),
     [HeroSegment.outcast],
+    3,
   ),
   rogue(
     'Rogue',
@@ -323,6 +363,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff6dcc5d),
     [HeroSegment.xmen],
+    3,
   ),
   samurai(
     'Samurai',
@@ -330,13 +371,15 @@ enum HeroType {
     Alignment.center,
     Color(0xffa82828),
     [HeroSegment.season2],
+    3,
   ),
   santa(
     'Santa',
     'assets/personnages/Santa.png',
     Alignment.center,
     Color(0xffde2f3f),
-    [HeroSegment.other],
+    [HeroSegment.santaKrampus],
+    2,
   ),
   scarletWitch(
     'Scarlet Witch',
@@ -344,6 +387,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffd8233f),
     [HeroSegment.avengers],
+    4,
   ),
   seraph(
     'Seraph',
@@ -351,6 +395,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffffd35c),
     [HeroSegment.season2],
+    3,
   ),
   shadowThief(
     'Shadow Thief',
@@ -358,6 +403,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff8f4dff),
     [HeroSegment.season1],
+    5,
   ),
   spiderman(
     'Miles Morales Spider-Man',
@@ -365,6 +411,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffe02c35),
     [HeroSegment.avengers],
+    2,
   ),
   storm(
     'Storm',
@@ -372,6 +419,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffc8d9ff),
     [HeroSegment.xmen],
+    4,
   ),
   sunElf(
     'Sun Elf',
@@ -379,6 +427,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffffc857),
     [HeroSegment.other],
+    3,
   ),
   tacticien(
     'Tactician',
@@ -386,6 +435,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffd92f2f),
     [HeroSegment.season2],
+    5,
   ),
   thor(
     'Thor',
@@ -393,6 +443,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff5ca7ff),
     [HeroSegment.avengers],
+    3,
   ),
   treant(
     'Treant',
@@ -400,6 +451,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff70b85a),
     [HeroSegment.season1],
+    5,
   ),
   vampireLord(
     'Vampire Lord',
@@ -407,6 +459,7 @@ enum HeroType {
     Alignment.center,
     Color(0xff9f2035),
     [HeroSegment.season2],
+    4,
   ),
   wolverine(
     'Wolverine',
@@ -414,6 +467,7 @@ enum HeroType {
     Alignment.center,
     Color(0xffffc134),
     [HeroSegment.xmen],
+    2,
   );
 
   const HeroType(
@@ -422,7 +476,7 @@ enum HeroType {
     this.imageAlignment,
     this.color,
     this.segments, [
-    this.imageScale = 1,
+    this.complexity = 1,
   ]);
 
   final String label;
@@ -430,7 +484,10 @@ enum HeroType {
   final Alignment imageAlignment;
   final Color color;
   final List<HeroSegment> segments;
-  final double imageScale;
+  final int complexity;
+
+  String get complexityAsset => 'assets/complexity/complexity-$complexity.png';
+  double get imageScale => 1;
 }
 
 class MinionDiceDecision {
@@ -893,6 +950,88 @@ class ActiveAdventureStore {
   Future<void> clear() => _storage.clear(_activeAdventureKey);
 }
 
+class AppSettings extends ChangeNotifier {
+  AppSettings._() : _storage = createActiveAdventureStorage();
+
+  static final AppSettings instance = AppSettings._();
+  static const String _key = 'app_settings_v1';
+
+  final ActiveAdventureStorage _storage;
+  bool _developerMode = false;
+  Set<String> _ownedHeroNames = {};
+  bool _loaded = false;
+
+  bool get developerMode => _developerMode;
+
+  bool ownsHero(HeroType hero) =>
+      _ownedHeroNames.isEmpty || _ownedHeroNames.contains(hero.name);
+
+  Future<void> load() async {
+    if (_loaded) {
+      return;
+    }
+    _loaded = true;
+    try {
+      final raw = await _storage.read(_key);
+      if (raw == null || raw.isEmpty) {
+        _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
+        return;
+      }
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      _developerMode = json['developerMode'] as bool? ?? false;
+      final owned = json['ownedHeroes'] as List<dynamic>?;
+      _ownedHeroNames = owned == null
+          ? HeroType.values.map((hero) => hero.name).toSet()
+          : owned.map((value) => value.toString()).toSet();
+      if (_ownedHeroNames.isEmpty) {
+        _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
+      }
+    } catch (error) {
+      debugPrint('App settings load skipped: $error');
+      _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
+    }
+  }
+
+  Future<void> setDeveloperMode(bool value) async {
+    if (_developerMode == value) {
+      return;
+    }
+    _developerMode = value;
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> toggleHeroOwnership(HeroType hero) async {
+    if (_ownedHeroNames.isEmpty) {
+      _ownedHeroNames = HeroType.values.map((item) => item.name).toSet();
+    }
+    if (_ownedHeroNames.contains(hero.name)) {
+      _ownedHeroNames.remove(hero.name);
+    } else {
+      _ownedHeroNames.add(hero.name);
+    }
+    notifyListeners();
+    await _save(syncProfile: true);
+  }
+
+  Future<void> _save({bool syncProfile = false}) async {
+    final payload = {
+      'developerMode': _developerMode,
+      'ownedHeroes': _ownedHeroNames.toList()..sort(),
+    };
+    await _storage.write(_key, jsonEncode(payload));
+    if (syncProfile) {
+      unawaited(
+        SupabaseService.instance
+            .updateHeroCollection(_ownedHeroNames)
+            .catchError((error) {
+              debugPrint('Hero collection Supabase sync skipped: $error');
+            }),
+      );
+    }
+  }
+}
+
 String _survivalModeTitle(SurvivalMode mode) {
   return mode.label;
 }
@@ -1036,6 +1175,8 @@ class EnemyNode {
     EnemyRank? rewardRank,
     List<EnemyRank> rewardRanks = const [],
     List<MinionPassive> passives = const [],
+    List<DisplayRow> defenseDisplayRows = const [],
+    List<DisplayRow> passiveDisplayRows = const [],
     this.branch,
     this.step = 0,
   }) : health = maxHealth,
@@ -1047,7 +1188,9 @@ class EnemyNode {
                rewardRank ?? rank,
              )
            : List<EnemyRank>.from(rewardRanks),
-       passives = List<MinionPassive>.unmodifiable(passives) {
+       passives = List<MinionPassive>.unmodifiable(passives),
+       defenseDisplayRows = List<DisplayRow>.unmodifiable(defenseDisplayRows),
+       passiveDisplayRows = List<DisplayRow>.unmodifiable(passiveDisplayRows) {
     alterations.addAll(initialTokens);
   }
 
@@ -1066,6 +1209,8 @@ class EnemyNode {
   EnemyRank rewardRank;
   List<EnemyRank> rewardRanks;
   final List<MinionPassive> passives;
+  List<DisplayRow> defenseDisplayRows;
+  List<DisplayRow> passiveDisplayRows;
   final BranchSide? branch;
   final int step;
   int health;
@@ -1129,6 +1274,8 @@ class EnemyNode {
       defense = restoredProfile.defense;
       defenseDice = restoredProfile.defenseDice;
       attackPlan = restoredProfile.attackPlan;
+      defenseDisplayRows = restoredProfile.defenseDisplayRows;
+      passiveDisplayRows = restoredProfile.passiveDisplayRows;
       cardAsset = restoredProfile.cardAsset;
       profileKey = restoredProfile.key;
       rewardChests = restoredProfile.rewardChests;
@@ -1167,6 +1314,8 @@ class EnemyNode {
     defense = profile.defense;
     defenseDice = profile.defenseDice;
     attackPlan = profile.attackPlan;
+    defenseDisplayRows = profile.defenseDisplayRows;
+    passiveDisplayRows = profile.passiveDisplayRows;
     cardAsset = profile.cardAsset;
     profileKey = profile.key;
     rewardChests = profile.rewardChests;

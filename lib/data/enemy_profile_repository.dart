@@ -63,6 +63,8 @@ class EnemyProfileJson {
       defenseDice: _intValue(json['defenseDice'], fallback: 0),
       attackPlan: _attackPlanFromJson(json['attackPlan']),
       passives: _passivesFromJson(json),
+      defenseDisplayRows: _defenseDisplayRowsFromJson(json['defensePlan']),
+      passiveDisplayRows: _displayRowsFromJson(json['passiveDisplayRows']),
     );
   }
 
@@ -214,40 +216,60 @@ class EnemyProfileJson {
           continue;
         }
         final tokens = _stringList(raw['tokens']);
-        final damageFormula =
-            (raw['damageFormula'] as String?)?.trim().toLowerCase();
+        final damageFormula = (raw['damageFormula'] as String?)
+            ?.trim()
+            .toLowerCase();
         final label = (raw['label'] as String?)?.trim();
         // A "roll" damage formula with no face condition means the roll value
         // itself drives the damage — surfaced via rollText, not an outcome.
         // Token-only "any" effects become an `any` outcome for display.
         if (tokens.isNotEmpty && damageFormula != 'roll') {
-          outcomes.add(ExtraRollOutcome(
-            face: ExtraRollFace.any,
-            label: label,
-            tokens: tokens,
-          ));
+          outcomes.add(
+            ExtraRollOutcome(
+              face: ExtraRollFace.any,
+              label: label,
+              tokens: tokens,
+            ),
+          );
         }
       }
     }
 
     final finalText = (value['finalText'] as String?)?.trim();
-    final rollText = (value['rollText'] as String?)?.trim() ??
+    final rollText =
+        (value['rollText'] as String?)?.trim() ??
         (value['text'] as String?)?.trim() ??
         '';
     final mode = modeStr == 'simple'
         ? ExtraRollMode.simple
         : (modeStr == 'perFace'
-            ? ExtraRollMode.perFace
-            : (outcomes.isEmpty
-                ? ExtraRollMode.simple
-                : ExtraRollMode.perFace));
+              ? ExtraRollMode.perFace
+              : (outcomes.isEmpty
+                    ? ExtraRollMode.simple
+                    : ExtraRollMode.perFace));
     return MinionExtraRoll(
       dice: dice,
       mode: mode,
       rollText: rollText,
       outcomes: outcomes,
       finalText: (finalText != null && finalText.isNotEmpty) ? finalText : null,
+      displayRows: _displayRowsFromJson(value['displayRows']),
     );
+  }
+
+  static List<DisplayRow> _displayRowsFromJson(Object? value) {
+    if (value is! List) {
+      return const [];
+    }
+    final rows = <DisplayRow>[];
+    for (final raw in value) {
+      if (raw is! Map<String, dynamic>) continue;
+      final align = (raw['align'] as String?)?.trim().toLowerCase() ?? 'left';
+      final items = _stringList(raw['items']);
+      if (items.isEmpty) continue;
+      rows.add(DisplayRow(align: align, items: items));
+    }
+    return List<DisplayRow>.unmodifiable(rows);
   }
 
   /// Parses one outcome entry (unified `face`/`label`/`damage`/... or legacy
@@ -270,7 +292,10 @@ class EnemyProfileJson {
         final symbols = cond['symbols'];
         if (symbols is Map<String, dynamic>) {
           final w = _intValue(symbols['white'], fallback: 0);
-          final y = _intValue(symbols['orange'] ?? symbols['yellow'], fallback: 0);
+          final y = _intValue(
+            symbols['orange'] ?? symbols['yellow'],
+            fallback: 0,
+          );
           final r = _intValue(symbols['red'], fallback: 0);
           if (w > 0) {
             face = ExtraRollFace.white;
@@ -305,6 +330,7 @@ class EnemyProfileJson {
       return const MinionAttackPlan.none();
     }
     final style = value['style'] as String? ?? 'none';
+    final displayRows = _displayRowsFromJson(value['displayRows']);
     if (style == 'suite') {
       final actions = (value['actions'] as List<dynamic>? ?? const [])
           .whereType<Map<String, dynamic>>()
@@ -333,7 +359,10 @@ class EnemyProfileJson {
           label: (action['label'] as String?)?.trim(),
         );
       }
-      return MinionAttackPlan.suite(suiteEffects: suiteEffects);
+      return MinionAttackPlan.suite(
+        suiteEffects: suiteEffects,
+        displayRows: displayRows,
+      );
     }
     if (style == 'symbols') {
       final rawGoals = (value['goals'] as List<dynamic>? ?? const [])
@@ -361,8 +390,15 @@ class EnemyProfileJson {
           ),
         );
       }
-      return MinionAttackPlan.symbols(goals);
+      return MinionAttackPlan.symbols(goals, displayRows: displayRows);
     }
-    return const MinionAttackPlan.none();
+    return MinionAttackPlan.none(displayRows: displayRows);
+  }
+
+  static List<DisplayRow> _defenseDisplayRowsFromJson(Object? value) {
+    if (value is! Map<String, dynamic>) {
+      return const [];
+    }
+    return _displayRowsFromJson(value['displayRows']);
   }
 }

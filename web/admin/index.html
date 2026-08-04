@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D.T Solo Quest - Enemy Back Office</title>
+  <link rel="stylesheet" href="./admin.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <div class="brand-title">Enemy Admin</div>
+        <div class="brand-subtitle">docs/enemy_profiles.json</div>
+        <div id="adminVersion" class="admin-version">Admin version 1.3.63</div>
+      </div>
+      <div class="side-actions">
+        <button id="loadDefaultBtn" class="ghost-btn">Load app JSON</button>
+        <button id="openFileBtn" class="ghost-btn">Open local JSON</button>
+        <button id="saveFileBtn" class="primary-btn" disabled>Save local file</button>
+      </div>
+      <input id="enemySearch" class="search" type="search" placeholder="Search enemy" />
+      <div id="enemyLists" class="enemy-lists"></div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <h1 id="enemyTitle">Select an enemy</h1>
+          <p id="enemyMeta">Green, blue, violet and orange minions are loaded from the JSON source of truth.</p>
+        </div>
+        <div class="top-actions">
+          <button id="exportJsonBtn" class="primary-btn">Download enemy JSON</button>
+          <button id="exportTokenJsonBtn" class="primary-btn">Download token JSON</button>
+          <button id="exportDevBtn" class="ghost-btn">Download dev backlog</button>
+        </div>
+      </header>
+
+      <section id="emptyState" class="empty-state">
+        <h2>Pick a minion on the left.</h2>
+        <p>Edit readable text and structured effects in one place. Unknown mechanics can be logged into the dev backlog instead of forcing fragile JSON.</p>
+      </section>
+
+      <section id="editorState" class="editor-state hidden">
+        <section class="card-pane">
+          <div class="card-frame">
+            <img id="cardImage" alt="Enemy card" />
+          </div>
+          <div class="identity-grid">
+            <label>Name<input id="nameInput" /></label>
+            <label>Key<input id="keyInput" /></label>
+            <label>Rank<select id="rankInput"><option>green</option><option>blue</option><option>violet</option><option>orange</option><option>viseer</option><option>naraxus</option></select></label>
+            <label>HP<input id="hpInput" type="number" min="0" /></label>
+            <label>CP<input id="cpInput" type="number" min="0" /></label>
+            <label>Defense dice<input id="defenseDiceInput" type="number" min="0" max="5" /></label>
+            <label>Reward chests<input id="rewardChestsInput" type="number" min="0" /></label>
+            <label>Reward rank<input id="rewardRankInput" placeholder="green/blue/violet/orange" /></label>
+          </div>
+          <label class="wide-label">Card asset<input id="cardAssetInput" /></label>
+          <label class="wide-label">Initial tokens<input id="initialTokensInput" placeholder="Poison, Blind" /></label>
+        </section>
+
+        <section class="phone-pane">
+          <div class="phone-preview">
+            <div class="phone-header">
+              <span id="previewName">Enemy</span>
+              <button class="gear" title="settings">⚙</button>
+            </div>
+            <div class="preview-band attack-band">
+              <div class="band-title">⚔ ATTACK</div>
+              <div id="attackPreview" class="preview-list"></div>
+            </div>
+            <div class="preview-band defense-band">
+              <div class="band-title">🛡 DEFENSE</div>
+              <div id="defensePreview" class="preview-list"></div>
+            </div>
+          </div>
+          <div class="legend-box">
+            <strong>Supported now</strong>
+            <span>Symbols/suites/numbers, damage, undefendable, prevent, return damage, HP/CP steal, heal, draw/discard, tokens, formulas, notes, extra rolls.</span>
+            <strong>Use dev backlog for</strong>
+            <span>New passives, unusual timing, multi-enemy support effects, or rules that need runtime code.</span>
+          </div>
+        </section>
+
+        <section class="form-pane">
+          <div class="tabs">
+            <button class="tab active" data-tab="attacks">Attack</button>
+            <button class="tab" data-tab="defense">Defense</button>
+            <button class="tab" data-tab="text">Display text</button>
+            <button class="tab" data-tab="formulas">Formulas</button>
+            <button class="tab" data-tab="tokens">Tokens</button>
+            <button class="tab" data-tab="dev">Dev backlog</button>
+          </div>
+
+          <div id="tab-attacks" class="tab-panel active">
+            <div class="section-head">
+              <h2>Attack plan</h2>
+              <select id="attackStyleInput"><option value="symbols">symbols</option><option value="suite">suite</option><option value="none">none</option></select>
+            </div>
+            <label class="wide-label">Attack name<input id="attackNameInput" /></label>
+            <div id="attackActions" class="stack"></div>
+            <button id="addAttackActionBtn" class="ghost-btn full">Add attack action</button>
+          </div>
+
+          <div id="tab-defense" class="tab-panel">
+            <div class="section-head">
+              <h2>Defense plan</h2>
+              <button id="syncDefenseDiceBtn" class="ghost-btn">Sync dice</button>
+            </div>
+            <div id="defenseEffects" class="stack"></div>
+            <button id="addDefenseEffectBtn" class="ghost-btn full">Add defense effect</button>
+          </div>
+
+          <div id="tab-text" class="tab-panel">
+            <h2>Displayed text</h2>
+            <p class="hint">Display rows JSON drives visual rendering. The quick preview below removes JSON noise so you can read the result.</p>
+            <div class="syntax-help">
+              <strong>Display row syntax</strong>
+              <span>Use JSON rows like <code>{"align":"center","items":["{die:orange}","{damage:7}","{token:Chaos}"]}</code>.</span>
+              <span><code>align</code>: <code>left</code>, <code>center</code>, <code>right</code>.</span>
+              <span>Items: <code>{die:white}</code>, <code>{die:orange}</code>, <code>{die:red}</code>, <code>{damage:7}</code>, <code>{undef:7}</code>, <code>{prevent:2}</code>, <code>{heal:4}</code>, <code>{token:Bleed}</code>, or plain text.</span>
+            </div>
+            <label class="wide-label">Attack title display rows JSON<textarea id="attacksDisplayRowsInput" rows="7" placeholder='[{"align":"center","items":["Attack name"]}]'></textarea></label>
+            <div id="attacksDisplayRowsPreview" class="display-preview"></div>
+            <label class="wide-label">Defense title display rows JSON<textarea id="defenseDisplayRowsInput" rows="7"></textarea></label>
+            <div id="defenseDisplayRowsPreview" class="display-preview"></div>
+            <label class="wide-label">Passive display rows JSON<textarea id="passivesDisplayRowsInput" rows="7"></textarea></label>
+            <div id="passivesDisplayRowsPreview" class="display-preview"></div>
+            <details>
+              <summary>Legacy readable text</summary>
+              <label class="wide-label">Attack title<textarea id="attacksTextInput" rows="5"></textarea></label>
+              <label class="wide-label">Defense text<textarea id="defenseTextInput" rows="4"></textarea></label>
+              <label class="wide-label">Root passives<textarea id="passivesTextInput" rows="5"></textarea></label>
+            </details>
+          </div>
+
+          <div id="tab-formulas" class="tab-panel">
+            <h2>Formulas index</h2>
+            <p class="hint">All formulas found in attack and defense plans, grouped with the enemies using them.</p>
+            <div id="formulaList" class="formula-list"></div>
+          </div>
+
+          <div id="tab-tokens" class="tab-panel token-admin-panel">
+            <h2>Token catalog</h2>
+            <p class="hint">Edit assets/data/token_catalog.json. Tokens hidden from the editor remain in the file but are not shown in player token lists.</p>
+            <input id="tokenSearch" class="search" type="search" placeholder="Search token" />
+            <div id="tokenList" class="token-list"></div>
+          </div>
+
+          <div id="tab-dev" class="tab-panel">
+            <h2>Unknown mechanics / development queue</h2>
+            <p class="hint">Write what you cannot express yet. Export this file and paste it into chat when runtime code is needed.</p>
+            <label class="wide-label">Mechanic description<textarea id="devNoteInput" rows="7" placeholder="Example: During upkeep, roll 1 die; on red, support enemy gains King's Hand..."></textarea></label>
+            <button id="addDevNoteBtn" class="primary-btn full">Add to dev backlog</button>
+            <div id="devNotes" class="dev-notes"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <template id="actionTemplate">
+    <article class="action-card">
+      <div class="action-head">
+        <strong class="action-title">Action</strong>
+        <button class="danger small remove-action">Remove</button>
+      </div>
+      <div class="condition-grid"></div>
+      <div class="effect-grid"></div>
+      <details class="extra-roll"><summary>Extra roll</summary><div class="extra-roll-body"></div></details>
+      <label class="wide-label">Notes<textarea class="notes-field" rows="2"></textarea></label>
+    </article>
+  </template>
+
+  <script src="./admin.js"></script>
+</body>
+</html>

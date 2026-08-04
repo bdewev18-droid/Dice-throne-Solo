@@ -64,10 +64,6 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
     });
   }
 
-  Future<void> _refreshHistory() async {
-    await _loadHistory();
-  }
-
   Future<void> _handleAddRecord(GameRecord record) async {
     final saved = await HistoryRepository.instance.add(record);
     if (!mounted) {
@@ -91,11 +87,17 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
     setState(() => _auth = const AuthSession(status: AuthStatus.signingIn));
     try {
       final session = await SupabaseService.instance.signInWithGoogle();
+      if (!mounted) {
+        return;
+      }
       setState(() => _auth = session);
       if (session.isSignedIn) {
         await _loadHistory();
       }
     } catch (e) {
+      if (!mounted) {
+        return;
+      }
       setState(() => _auth = AuthSession.signedOut);
       _showAuthError(context, e);
     }
@@ -105,11 +107,17 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
     setState(() => _auth = const AuthSession(status: AuthStatus.signingIn));
     try {
       final session = await SupabaseService.instance.signInAnonymously();
+      if (!mounted) {
+        return;
+      }
       setState(() => _auth = session);
       if (session.isSignedIn) {
         await _loadHistory();
       }
     } catch (e) {
+      if (!mounted) {
+        return;
+      }
       setState(() => _auth = AuthSession.signedOut);
       _showAuthError(context, e);
     }
@@ -133,9 +141,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
       context: navContext,
       builder: (_) => AlertDialog(
         title: const Text('Connexion impossible'),
-        content: SingleChildScrollView(
-          child: Text('$error'),
-        ),
+        content: SingleChildScrollView(child: Text('$error')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(navContext).pop(),
@@ -733,7 +739,7 @@ class AccountChip extends StatelessWidget {
     if (auth.isSignedIn) {
       final label = (auth.email?.isNotEmpty ?? false)
           ? auth.email!
-          : (auth.isAnonymous ? 'Invité' : 'Connecté');
+          : (auth.isAnonymous ? 'Guest' : 'Signed in');
       return _pill(
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -773,7 +779,7 @@ class AccountChip extends StatelessWidget {
           const SizedBox(width: 6),
           _iconButton(
             icon: Icons.person,
-            label: 'Invité',
+            label: 'Guest',
             onTap: onSignInAnonymous,
           ),
         ],

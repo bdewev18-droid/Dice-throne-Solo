@@ -19,11 +19,11 @@
       "rewardRank": null,
       "attacks": [
         "Chapardage",
-        "Micro suite: vole 1 CP.",
-        "Petite suite: vole 1 CP et inflige ses CP en dégâts.",
-        "Grande suite: vole 2 CP et inflige ses CP en dégâts."
+        "Micro suite: steals 1 CP.",
+        "Small straight: steals 1 CP et deals ses CP en damage.",
+        "Large straight: steals 2 CP et deals ses CP en damage."
       ],
-      "defense": "Jet défensif 4 dés: sur 2 symboles orange, vole 1 CP; sur 2 symboles rouges, ignore tous les dégâts.",
+      "defense": "Defense roll 4 dice: sur 2 orange symbols, steals 1 CP; sur 2 red symbols, ignores all damage.",
       "defenseDice": 4,
       "defensePlan": {
         "dice": 4,
@@ -74,7 +74,7 @@
           }
         ],
         "notes": [
-          "Sur 4 symboles orange, Rat de la Rue vole toujours seulement 1 CP."
+          "Sur 4 orange symbols, Rat de la Rue steals toujours seulement 1 CP."
         ]
       },
       "attackPlan": {
@@ -166,9 +166,9 @@
       "rewardRank": null,
       "attacks": [
         "Agacement",
-        "Micro suite: inflige 2 dégâts imparables.",
-        "Petite suite: inflige 5 dégâts.",
-        "Grande suite: vole 1 CP et inflige 6 dégâts."
+        "Micro straight: deals 2 undefendable damage.",
+        "Small straight: deals 5 damage.",
+        "Large straight: steals 1 CP et deals 6 damage."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -283,10 +283,10 @@
       "rewardRank": null,
       "attacks": [
         "Coupe & Découpe",
-        "3 symboles blancs: inflige 5 dégâts.",
-        "4 symboles blancs: inflige 6 dégâts.",
-        "5 symboles blancs: inflige 7 dégâts.",
-        "Si vous obtenez 4 symboles identiques, gagne le token Riposte."
+        "3 white symbols: deals 5 damage.",
+        "4 white symbols: deals 6 damage.",
+        "5 white symbols: deals 7 damage.",
+        "If you roll 4 matching symbols, gain the Back Strike token."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -342,7 +342,7 @@
                 "red": 0
               }
             },
-            "label": "3 symboles blancs",
+            "label": "3 white symbols",
             "damage": 5,
             "undefendable": false,
             "stealHp": 0,
@@ -365,7 +365,7 @@
                 "red": 0
               }
             },
-            "label": "4 symboles blancs",
+            "label": "4 white symbols",
             "damage": 6,
             "undefendable": false,
             "stealHp": 0,
@@ -388,7 +388,7 @@
                 "red": 0
               }
             },
-            "label": "5 symboles blancs",
+            "label": "5 white symbols",
             "damage": 7,
             "undefendable": false,
             "stealHp": 0,
@@ -407,7 +407,7 @@
           {
             "condition": "text",
             "tokens": [
-              "Riposte"
+              "Back Strike"
             ],
             "effects": {
               "damage": 0,
@@ -419,11 +419,11 @@
               "discardCards": 0,
               "topDeckToDiscard": 0,
               "tokens": [
-                "Riposte"
+                "Back Strike"
               ],
               "formulas": []
             },
-            "text": "Si vous obtenez 4 symboles identiques, gagne le token Riposte."
+            "text": "If you roll 4 matching symbols, gain the Back Strike token."
           }
         ],
         "passives": [],
@@ -442,9 +442,9 @@
       "rewardRank": null,
       "attacks": [
         "Ensorcellule",
-        "Objectif: 1 symbole blanc, 2 symboles orange, 1 symbole rouge.",
-        "Inflige 4 dégâts imparables.",
-        "Votre adversaire défausse 1 carte au hasard."
+        "Objectif: 1 white symbol, 2 orange symbols, 1 red symbol.",
+        "Deals 4 undefendable damage.",
+        "Your opponent discards 1 card at random."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -552,11 +552,11 @@
       "rewardRank": null,
       "attacks": [
         "Volée de l'Ombre",
-        "2 symboles jaunes: inflige 5 dégâts.",
-        "3 symboles jaunes: inflige 6 dégâts.",
-        "4 symboles jaunes: inflige 7 dégâts.",
-        "5 symboles jaunes: inflige 8 dégâts.",
-        "Si vous obtenez 3 chiffres identiques, inflige Silence."
+        "2 orange symbols: deals 5 damage.",
+        "3 orange symbols: deals 6 damage.",
+        "4 orange symbols: deals 7 damage.",
+        "5 orange symbols: deals 8 damage.",
+        "If you roll 3 matching values, inflict Silence."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -621,7 +621,7 @@
                 "red": 0
               }
             },
-            "label": "2 symboles jaunes",
+            "label": "2 orange symbols",
             "damage": 5,
             "undefendable": false,
             "stealHp": 0,
@@ -644,7 +644,7 @@
                 "red": 0
               }
             },
-            "label": "3 symboles jaunes",
+            "label": "3 orange symbols",
             "damage": 6,
             "undefendable": false,
             "stealHp": 0,
@@ -667,7 +667,7 @@
                 "red": 0
               }
             },
-            "label": "4 symboles jaunes",
+            "label": "4 orange symbols",
             "damage": 7,
             "undefendable": false,
             "stealHp": 0,
@@ -690,7 +690,7 @@
                 "red": 0
               }
             },
-            "label": "5 symboles jaunes",
+            "label": "5 orange symbols",
             "damage": 8,
             "undefendable": false,
             "stealHp": 0,
@@ -725,7 +725,7 @@
               ],
               "formulas": []
             },
-            "text": "Si vous obtenez 3 chiffres identiques, inflige Silence."
+            "text": "If you roll 3 matching values, inflict Silence."
           }
         ],
         "passives": [],
@@ -746,10 +746,10 @@
       "rewardRank": null,
       "attacks": [
         "Griffure",
-        "3 symboles blancs: inflige 4 dégâts.",
-        "4 symboles blancs: inflige 5 dégâts.",
-        "5 symboles blancs: inflige 6 dégâts.",
-        "Si vous obtenez 3 chiffres identiques, inflige Hémorragie."
+        "3 white symbols: deals 4 damage.",
+        "4 white symbols: deals 5 damage.",
+        "5 white symbols: deals 6 damage.",
+        "If you roll 3 matching values, inflict Bleed."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -774,7 +774,7 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [
-              "Hémorragie"
+              "Bleed"
             ],
             "formulas": []
           }
@@ -811,7 +811,7 @@
                 "red": 0
               }
             },
-            "label": "3 symboles blancs",
+            "label": "3 white symbols",
             "damage": 4,
             "undefendable": false,
             "stealHp": 0,
@@ -834,7 +834,7 @@
                 "red": 0
               }
             },
-            "label": "4 symboles blancs",
+            "label": "4 white symbols",
             "damage": 5,
             "undefendable": false,
             "stealHp": 0,
@@ -857,7 +857,7 @@
                 "red": 0
               }
             },
-            "label": "5 symboles blancs",
+            "label": "5 white symbols",
             "damage": 6,
             "undefendable": false,
             "stealHp": 0,
@@ -876,7 +876,7 @@
           {
             "condition": "text",
             "tokens": [
-              "Hémorragie"
+              "Bleed"
             ],
             "effects": {
               "damage": 0,
@@ -888,11 +888,11 @@
               "discardCards": 0,
               "topDeckToDiscard": 0,
               "tokens": [
-                "Hémorragie"
+                "Bleed"
               ],
               "formulas": []
             },
-            "text": "Si vous obtenez 3 chiffres identiques, inflige Hémorragie."
+            "text": "If you roll 3 matching values, inflict Bleed."
           }
         ],
         "passives": [],
@@ -911,9 +911,9 @@
       "rewardRank": null,
       "attacks": [
         "En Garde",
-        "3 symboles blancs: inflige 5 dégâts.",
-        "4 symboles blancs: inflige 6 dégâts.",
-        "5 symboles blancs: inflige 7 dégâts."
+        "3 white symbols: deals 5 damage.",
+        "4 white symbols: deals 6 damage.",
+        "5 white symbols: deals 7 damage."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -1021,7 +1021,7 @@
                 "red": 0
               }
             },
-            "label": "3 symboles blancs",
+            "label": "3 white symbols",
             "damage": 5,
             "undefendable": false,
             "stealHp": 0,
@@ -1044,7 +1044,7 @@
                 "red": 0
               }
             },
-            "label": "4 symboles blancs",
+            "label": "4 white symbols",
             "damage": 6,
             "undefendable": false,
             "stealHp": 0,
@@ -1067,7 +1067,7 @@
                 "red": 0
               }
             },
-            "label": "5 symboles blancs",
+            "label": "5 white symbols",
             "damage": 7,
             "undefendable": false,
             "stealHp": 0,
@@ -1099,9 +1099,9 @@
       "rewardRank": null,
       "attacks": [
         "Fil de Lame",
-        "Micro suite: inflige 4 dégâts.",
-        "Petite suite: inflige 7 dégâts.",
-        "Grande suite: inflige Ronces puis 8 dégâts."
+        "Micro straight: deals 4 damage.",
+        "Small straight: deals 7 damage.",
+        "Large straight: deals Barbed Vine then 8 damage."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -1184,7 +1184,7 @@
               "suite": "large",
               "length": 5
             },
-            "label": "Grande suite: Ronces",
+            "label": "Grande suite: Barbed Vine",
             "damage": 8,
             "undefendable": false,
             "stealHp": 0,
@@ -1194,7 +1194,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Ronces"
+              "Barbed Vine"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -1218,10 +1218,10 @@
       "rewardRank": null,
       "attacks": [
         "Onisima",
-        "4 symboles jaunes, puis lancez 1 dé.",
-        "Sur symbole blanc: inflige 5 dégâts imparables.",
-        "Sur symbole jaune: inflige 6 dégâts imparables.",
-        "Sur symbole rouge: vole 4 points de Santé."
+        "4 orange symbols, then roll 1 die.",
+        "Sur white symbol: deals 5 undefendable damage.",
+        "On orange symbol: deals 6 undefendable damage.",
+        "Sur red symbol: steals 4 points de Santé."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -1286,7 +1286,7 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
+              "rollText": "If the attack succeeds, roll 1 {die}.",
               "outcomes": [
                 {
                   "face": "white",
@@ -1325,9 +1325,9 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Descente en Pique: 3 orange = 4 dégâts imparables.",
-        "4 orange = 5 dégâts imparables.",
-        "5 orange = 6 dégâts imparables."
+        "Descente en Pique: 3 orange = 4 undefendable damage.",
+        "4 orange = 5 undefendable damage.",
+        "5 orange = 6 undefendable damage."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -1467,8 +1467,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Rocalanche: 4 orange, puis lancez 2 dés et infligez autant de dégâts que la valeur totale du jet.",
-        "Passif: si le lancer offensif échoue, Roc inflige 1 dégât imparable."
+        "Rocalanche: 4 orange, then roll 2 dice et deal autant de damage que la valeur totale du jet.",
+        "Passive: si le rollsr offensif fails, Roc deals 1 undefendable damage."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -1537,7 +1537,7 @@
             "extraRoll": {
               "dice": 2,
               "mode": "simple",
-              "rollText": "Lancez 2 {die}, infligez autant de dégâts que la valeur totale du jet."
+              "rollText": "Roll 2 {die}, deal autant de damage que la valeur totale du jet."
             },
             "notes": []
           }
@@ -1581,8 +1581,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Baiser Venimeux: 3 blancs = 6 degats.",
-        "3 blancs + 1 rouge = 6 degats et Poison."
+        "Baiser Venimeux: 3 blancs = 6 damage.",
+        "3 blancs + 1 rouge = 6 damage et Poison."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -1697,7 +1697,7 @@
       "rewardRank": null,
       "attacks": [
         "Frappe Spirituelle: 3 orange.",
-        "Bear Form: À Terre + 6 dégâts. Elk Form: Ronces + 6 dégâts.",
+        "Bear Form: Knockdown + 6 damage. Elk Form: Barbed Vine + 6 damage.",
         "Passive: at the start of each Druid upkeep, roll 1 die. On 1-3: Bear Form. On 4-6: Elk Form."
       ],
       "defenseDice": 4,
@@ -1787,7 +1787,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "À Terre"
+              "Knockdown"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -1807,7 +1807,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Ronces"
+              "Barbed Vine"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -1817,7 +1817,7 @@
         "conditionalRules": [],
         "passives": [
           {
-            "text": "Passif: debut de tour, 1-3 Ours, 4-6 Elan.",
+            "text": "Passive: start of turn, 1-3 Ours, 4-6 Elan.",
             "tokens": [],
             "effects": {
               "damage": 0,
@@ -1920,7 +1920,7 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
+              "rollText": "If the attack succeeds, roll 1 {die}.",
               "outcomes": [
                 {
                   "face": "white",
@@ -1932,7 +1932,7 @@
                 },
                 {
                   "face": "red",
-                  "label": "termine ce combat et engage un minion violet aléatoire"
+                  "label": "termine ce combat et engage un minion violet random"
                 }
               ]
             },
@@ -1999,7 +1999,7 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Volonte du Maitre: 1 blanc + 2 jaunes + 1 rouge = 5 degats imparables."
+        "Flightonte du Maitre: 1 blanc + 2 jaunes + 1 rouge = 5 undefendable damage."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -2008,7 +2008,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 3 des: previent 1 par jaune"
+              "text": "Defense roll 3 dice: prevent 1 per orange"
             },
             "prevent": 1,
             "returnDamage": 0,
@@ -2065,7 +2065,7 @@
                 "red": 1
               }
             },
-            "label": "Volonte du Maitre",
+            "label": "Flightonte du Maitre",
             "damage": 5,
             "undefendable": true,
             "stealHp": 0,
@@ -2096,8 +2096,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Claquement de Crocs: 2 blancs + 1 rouge, puis lancez 1 dé.",
-        "Inflige autant de dégâts que la valeur du jet additionnel et inflige À Terre."
+        "Claquement de Crocs: 2 blancs + 1 rouge, then roll 1 die.",
+        "Deals autant de damage que la valeur du jet additionnel et deals Knockdown."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -2162,13 +2162,13 @@
             "extraRoll": {
               "dice": 1,
               "mode": "simple",
-              "rollText": "Lancez 1 {die}, infligez autant de dégâts que la valeur du jet.",
+              "rollText": "Roll 1 {die}, deal autant de damage que la valeur du jet.",
               "outcomes": [
                 {
                   "face": "any",
-                  "label": "inflige À Terre",
+                  "label": "deals Knockdown",
                   "tokens": [
-                    "À Terre"
+                    "Knockdown"
                   ]
                 }
               ]
@@ -2192,9 +2192,9 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Belier: 2 blancs + 1 orange = Enchevêtrement + 5 dégâts.",
-        "2 blancs + 2 orange = Enchevêtrement + 6 dégâts.",
-        "2 blancs + 2 orange + rouge = Enchevêtrement + 7 dégâts."
+        "Belier: 2 blancs + 1 orange = Entangle + 5 damage.",
+        "2 blancs + 2 orange = Entangle + 6 damage.",
+        "2 blancs + 2 orange + rouge = Entangle + 7 damage."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -2219,7 +2219,7 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [
-              "À Terre"
+              "Knockdown"
             ],
             "formulas": []
           },
@@ -2287,7 +2287,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Enchevêtrement"
+              "Entangle"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -2311,7 +2311,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Enchevêtrement"
+              "Entangle"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -2335,7 +2335,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Enchevêtrement"
+              "Entangle"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -2358,7 +2358,7 @@
       "rewardChests": 0,
       "rewardRank": "blue",
       "attacks": [
-        "Transe: 2 rouges = defausse 1 carte au hasard + 4 degats imparables."
+        "Transe: 2 rouges = discards 1 card at random + 4 undefendable damage."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -2439,8 +2439,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Fleau: micro suite = 4 degats.",
-        "Petite suite = 7 degats. Grande suite = 7 degats et A Terre."
+        "Fleau: micro suite = 4 damage.",
+        "Petite suite = 7 damage. Grande suite = 7 damage et Knockdown."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -2545,7 +2545,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "À Terre"
+              "Knockdown"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -2568,8 +2568,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Sorcellerie Ophique: 2 orange + 1 rouge, puis lancez 1 dé.",
-        "Blanc: gagne 2 Chaos. Orange: inflige Eboulissement. Rouge: rien. Puis inflige 6 dégâts + 1 par Chaos."
+        "Sorcellerie Ophique: 2 orange + 1 rouge, then roll 1 die.",
+        "White: gains 2 Chaos. Orange: deals Eboulissement. Red: rien. Then deals 6 damage + 1 par Chaos."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -2654,11 +2654,11 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
+              "rollText": "If the attack succeeds, roll 1 {die}.",
               "outcomes": [
                 {
                   "face": "white",
-                  "label": "gagne 2 Chaos",
+                  "label": "gains 2 Chaos",
                   "tokens": [
                     "Chaos",
                     "Chaos"
@@ -2666,13 +2666,13 @@
                 },
                 {
                   "face": "yellow",
-                  "label": "inflige Eboulissement",
+                  "label": "deals Eboulissement",
                   "tokens": [
                     "Eboulissement"
                   ]
                 }
               ],
-              "finalText": "Puis inflige 6 dégâts + 1 par Chaos."
+              "finalText": "Then deals 6 damage + 1 par Chaos."
             },
             "notes": []
           }
@@ -2693,9 +2693,9 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Scurry: 2 blancs + orange = 4 dégâts.",
-        "2 blancs + 2 orange = 5 dégâts et Parasite.",
-        "2 blancs + 2 orange + rouge = 6 dégâts et Poison."
+        "Scurry: 2 blancs + orange = 4 damage.",
+        "2 blancs + 2 orange = 5 damage et Parasite.",
+        "2 blancs + 2 orange + rouge = 6 damage et Poison."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -2859,7 +2859,7 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Gnaw: 2 blancs + 1 orange + 1 rouge = vole 2 points de santé."
+        "Gnaw: 2 blancs + 1 orange + 1 rouge = steals 2 points de santé."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -2943,7 +2943,7 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Sauvagerie de l Ame: 2 blancs + 2 orange + 1 rouge = 6 dégâts imparables."
+        "Sauvagerie de l Ame: 2 blancs + 2 orange + 1 rouge = 6 undefendable damage."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -3027,9 +3027,9 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Vraie Vision: 3 orange = 4 dégâts imparables.",
-        "4 orange = 5 dégâts imparables.",
-        "5 orange = 6 dégâts imparables.",
+        "Vraie Vision: 3 orange = 4 undefendable damage.",
+        "4 orange = 5 undefendable damage.",
+        "5 orange = 6 undefendable damage.",
         "If the attack succeeds and 3 values are identical, inflict Eboulissement."
       ],
       "defenseDice": 4,
@@ -3170,7 +3170,7 @@
               "tokens": [],
               "formulas": []
             },
-            "text": "Si 3 chiffres identiques, inflige Eboulissement."
+            "text": "Si 3 chiffres identiques, deals Eboulissement."
           }
         ],
         "passives": [],
@@ -3188,8 +3188,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Sorcellerie Chaotique: 2 orange + rouge, lancez 1 dé puis inflige 7 + nb Chaos.",
-        "Blanc: gagne 2 Chaos. Orange: inflige Sort 6."
+        "Sorcellerie Chaotique: 2 orange + rouge, roll 1 die then deals 7 + nb Chaos.",
+        "White: gains 2 Chaos. Orange: deals Sort 6."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -3258,11 +3258,11 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
+              "rollText": "If the attack succeeds, roll 1 {die}.",
               "outcomes": [
                 {
                   "face": "white",
-                  "label": "gagne 2 Chaos",
+                  "label": "gains 2 Chaos",
                   "tokens": [
                     "Chaos",
                     "Chaos"
@@ -3270,13 +3270,13 @@
                 },
                 {
                   "face": "yellow",
-                  "label": "inflige Sort 6",
+                  "label": "deals Sort 6",
                   "tokens": [
                     "Sort 6"
                   ]
                 }
               ],
-              "finalText": "Puis inflige 7 dégâts + nb Chaos."
+              "finalText": "Then deals 7 damage + nb Chaos."
             },
             "notes": []
           }
@@ -3297,9 +3297,9 @@
       "rewardChests": 2,
       "rewardRank": null,
       "attacks": [
-        "Hemo-Siphon: 3 orange = vole 3 points de santé.",
-        "4 orange = vole 4 points de santé.",
-        "5 orange = vole 5 points de santé.",
+        "Hemo-Siphon: 3 orange = steals 3 points de santé.",
+        "4 orange = steals 4 points de santé.",
+        "5 orange = steals 5 points de santé.",
         "Passive: at upkeep, gains 1 Chaos. If he has 3 Chaos during upkeep, spend them and steal 3 health."
       ],
       "defenseDice": 3,
@@ -3450,7 +3450,7 @@
         "conditionalRules": [],
         "passives": [
           {
-            "text": "Passif: debut de tour gagne Chaos; a 3 Chaos, les depense pour voler 3 PV.",
+            "text": "Passive: start of turn gains Chaos; a 3 Chaos, spends them pour stealsr 3 HP.",
             "tokens": [],
             "effects": {
               "damage": 0,
@@ -3490,8 +3490,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Magie Noire: blanc + 2 jaunes + rouge = Deperissement, Silence, Parasite et 3 degats imparables.",
-        "Passif upkeep: gagne Siphon Vital."
+        "Magie Noire: blanc + 2 jaunes + rouge = Wither, Silence, Parasite et 3 undefendable damage.",
+        "Passif upkeep: gains Siphon Vital."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -3500,7 +3500,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 4 des: vole 1 PV par jaune"
+              "text": "Defense roll 4 dice: steals 1 HP par jaune"
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -3516,7 +3516,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "inflige Hemorragie par rouge."
+              "text": "deals Bleed par rouge."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -3527,7 +3527,7 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [
-              "Hémorragie"
+              "Bleed"
             ],
             "formulas": []
           }
@@ -3575,7 +3575,7 @@
         "conditionalRules": [],
         "passives": [
           {
-            "text": "Passif upkeep: gagne Siphon Vital.",
+            "text": "Passif upkeep: gains Siphon Vital.",
             "tokens": [],
             "effects": {
               "damage": 0,
@@ -3605,8 +3605,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Ecrasement: 4 blancs + rouge = 6 degats et lance 1 de; ajoute sa valeur en degats.",
-        "Passif: si echec offensif, inflige 2 degats imparables."
+        "Ecrasement: 4 blancs + rouge = 6 damage et rolls 1 de; ajoute sa valeur en damage.",
+        "Passive: si offensive failure, deals 2 undefendable damage."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -3691,7 +3691,7 @@
             "extraRoll": {
               "dice": 1,
               "mode": "simple",
-              "rollText": "Lancez 1 {die}, infligez sa valeur en dégâts supplémentaires."
+              "rollText": "Roll 1 {die}, deal sa valeur en extra damage."
             },
             "notes": []
           }
@@ -3699,7 +3699,7 @@
         "conditionalRules": [],
         "passives": [
           {
-            "text": "Passif: si echec offensif, inflige 2 degats imparables.",
+            "text": "Passive: si offensive failure, deals 2 undefendable damage.",
             "tokens": [],
             "effects": {
               "damage": 2,
@@ -3729,8 +3729,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Deep Magic: blanc + 3 jaunes = 3 degats imparables et lance 1 de.",
-        "Blanc: +2 degats. Jaune: Deperissement. Rouge: Brulure."
+        "Deep Magic: blanc + 3 jaunes = 3 undefendable damage et rolls 1 die.",
+        "White: +2 damage. Orange: Wither. Red: Burn."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -3789,7 +3789,7 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
+              "rollText": "If the attack succeeds, roll 1 {die}.",
               "outcomes": [
                 {
                   "face": "white",
@@ -3798,14 +3798,14 @@
                 },
                 {
                   "face": "yellow",
-                  "label": "inflige Wither",
+                  "label": "deals Wither",
                   "tokens": [
                     "Wither"
                   ]
                 },
                 {
                   "face": "red",
-                  "label": "inflige Burn",
+                  "label": "deals Burn",
                   "tokens": [
                     "Burn"
                   ]
@@ -3879,7 +3879,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Brûlure"
+              "Burn"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -3902,7 +3902,7 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Bane: micro suite = Enchevetrement + 4 degats.",
+        "Bane: micro suite = Entangle + 4 damage.",
         "Petite suite = Silence + 6. Grande suite = Sort 6 + 8."
       ],
       "defenseDice": 3,
@@ -3912,7 +3912,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 3 des: previent 2 degats par jaune."
+              "text": "Defense roll 3 dice: prevent 2 damage per orange."
             },
             "prevent": 2,
             "returnDamage": 0,
@@ -3949,7 +3949,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Enchevêtrement"
+              "Entangle"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -4012,8 +4012,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Carve: blanc + 2 jaunes + rouge = 3 degats imparables et lance 1 de.",
-        "Sur jaune, inflige Commotion. Passif echec: soigne 2."
+        "Carve: blanc + 2 jaunes + rouge = 3 undefendable damage et rolls 1 die.",
+        "On orange, deals Concussion. Passif failure: heals 2."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -4077,11 +4077,11 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
+              "rollText": "If the attack succeeds, roll 1 {die}.",
               "outcomes": [
                 {
                   "face": "yellow",
-                  "label": "inflige Stun",
+                  "label": "deals Stun",
                   "tokens": [
                     "Stun"
                   ]
@@ -4116,7 +4116,7 @@
         "conditionalRules": [],
         "passives": [
           {
-            "text": "Passif echec: soigne 2.",
+            "text": "Passif failure: heals 2.",
             "tokens": [],
             "effects": {
               "damage": 0,
@@ -4146,7 +4146,7 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Envenimation: 3 blancs = 7 degats; 3 blancs + rouge = Poison et 7 degats."
+        "Envenimation: 3 blancs = 7 damage; 3 blancs + rouge = Poison et 7 damage."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -4238,8 +4238,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Ruelle Dangereuse: petite suite = moitie des PC en degats.",
-        "Grande suite = PC en degats. Debut de tour gagne 2 PC."
+        "Ruelle Dangereuse: petite suite = half dice PC en damage.",
+        "Grande suite = PC en damage. Debut de tour gains 2 PC."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -4360,8 +4360,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Feinte de l Ombre: 3/4/5 blancs = 5/6/7 degats.",
-        "Si 3 chiffres identiques, inflige Parasite."
+        "Feinte de l Ombre: 3/4/5 blancs = 5/6/7 damage.",
+        "Si 3 chiffres identiques, deals Parasite."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -4452,7 +4452,7 @@
               ],
               "formulas": []
             },
-            "text": "Si 3 chiffres identiques, inflige Parasite."
+            "text": "Si 3 chiffres identiques, deals Parasite."
           }
         ],
         "passives": [],
@@ -4471,7 +4471,7 @@
       "rewardRank": null,
       "attacks": [
         "Racine Fletrie: micro suite = {damage:5}.",
-        "Petite suite = {token:Parasite} + {damage:7}. Grande suite = {token:Dépérissement} + {damage:9}."
+        "Petite suite = {token:Parasite} + {damage:7}. Grande suite = {token:Wither} + {damage:9}."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -4580,8 +4580,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Hurlement Sonique: 2/3/4/5 rouges = 2/3/4/5 degats collateraux a tous les adversaires.",
-        "Si un seul adversaire, inflige Silence."
+        "Hurlement Sonique: 2/3/4/5 rouges = 2/3/4/5 damage collateraux to all opponents.",
+        "Si a single opponent, deals Silence."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -4681,7 +4681,7 @@
               ],
               "formulas": []
             },
-            "text": "Si un seul adversaire, inflige Silence."
+            "text": "Si a single opponent, deals Silence."
           }
         ],
         "passives": [],
@@ -4701,8 +4701,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Charge: 2 blancs + 1/2 jaunes = 4/5 degats; avec rouge = 6 degats.",
-        "Le joueur actif defausse un token positif au hasard."
+        "Charge: 2 blancs + 1/2 jaunes = 4/5 damage; avec rouge = 6 damage.",
+        "Le active player discards un token positif at random."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -4727,7 +4727,7 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [
-              "À Terre"
+              "Knockdown"
             ],
             "formulas": []
           }
@@ -4812,8 +4812,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Decoupage: petite suite = soigne 2 et 6 degats.",
-        "Grande suite = soigne 2 et 9 degats. Echec: gagne 3 Degats Bonus."
+        "Decoupage: petite suite = heals 2 et 6 damage.",
+        "Grande suite = heals 2 et 9 damage. Echec: gains 3 Degats Bonus."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -4822,7 +4822,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 4 des: blanc inflige 1"
+              "text": "Defense roll 4 dice: blanc deals 1"
             },
             "prevent": 0,
             "returnDamage": 1,
@@ -4937,8 +4937,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Dechiquetage: 3/4/5 blancs = 6/7/8 degats.",
-        "Si 3 chiffres identiques, inflige Hemorragie."
+        "Dechiquetage: 3/4/5 blancs = 6/7/8 damage.",
+        "Si 3 chiffres identiques, deals Bleed."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -4947,7 +4947,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 1 de: blanc inflige Hemorragie"
+              "text": "Defense roll 1 de: blanc deals Bleed"
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -4958,14 +4958,14 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [
-              "Hémorragie"
+              "Bleed"
             ],
             "formulas": []
           },
           {
             "condition": {
               "type": "text",
-              "text": "rouge inflige 2 Hemorragie."
+              "text": "rouge deals 2 Bleed."
             },
             "prevent": 0,
             "returnDamage": 2,
@@ -4976,7 +4976,7 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [
-              "Hémorragie"
+              "Bleed"
             ],
             "formulas": []
           }
@@ -5032,7 +5032,7 @@
           {
             "condition": "text",
             "tokens": [
-              "Hémorragie"
+              "Bleed"
             ],
             "effects": {
               "damage": 0,
@@ -5044,11 +5044,11 @@
               "discardCards": 0,
               "topDeckToDiscard": 0,
               "tokens": [
-                "Hémorragie"
+                "Bleed"
               ],
               "formulas": []
             },
-            "text": "Si 3 chiffres identiques, inflige Hemorragie."
+            "text": "Si 3 chiffres identiques, deals Bleed."
           }
         ],
         "passives": [],
@@ -5068,7 +5068,7 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Frappe en Pique: 2/3/4/5 jaunes = 3/4/5/6 degats imparables."
+        "Frappe en Pique: 2/3/4/5 jaunes = 3/4/5/6 undefendable damage."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -5180,8 +5180,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Velocite Magique: 3 blancs + 2 jaunes = Eboulissement et 6 degats.",
-        "Debut de tour: retire toutes les alterations positives du joueur actif."
+        "Velocite Magique: 3 blancs + 2 jaunes = Eboulissement et 6 damage.",
+        "Start of turn: remove all positive status effects from the active player."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -5190,7 +5190,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 1 de: soigne selon la valeur du de et le nombre de minions en jeu."
+              "text": "Defense roll 1 die: heals based on the die value and the number of minions in play."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -5277,8 +5277,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Recreation: blanc + 2 jaunes + rouge = 4 degats imparables et lance 1 de.",
-        "Blanc: vole 2 CP. Jaune: defausse 1 carte. Rouge: les deux."
+        "Recreation: blanc + 2 jaunes + rouge = 4 undefendable damage et rolls 1 die.",
+        "White: steals 2 CP. Orange: discards 1 card. Red: les deux."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -5337,7 +5337,7 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
+              "rollText": "If the attack succeeds, roll 1 {die}.",
               "outcomes": [
                 {
                   "face": "white",
@@ -5345,11 +5345,11 @@
                 },
                 {
                   "face": "yellow",
-                  "label": "héros défausse 1 carte"
+                  "label": "hero discards 1 card"
                 },
                 {
                   "face": "red",
-                  "label": "héros défausse 1 carte",
+                  "label": "hero discards 1 card",
                   "stealCp": 2
                 }
               ]
@@ -5444,8 +5444,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Lame de l Esprit: 3/4/5 blancs = 5/6/7 degats.",
-        "Si 3 chiffres identiques, tous les adversaires engages perdent 1 CP."
+        "Spirit Blade: 3/4/5 white dice = 5/6/7 damage.",
+        "If 3 matching values are rolled, all engaged opponents lose 1 CP."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -5454,7 +5454,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 3 des: inflige 1 par blanc + 1 par rouge."
+              "text": "Defense roll 3 dice: deals 1 par blanc + 1 par rouge."
             },
             "prevent": 0,
             "returnDamage": 1,
@@ -5531,7 +5531,7 @@
               "tokens": [],
               "formulas": []
             },
-            "text": "Si 3 chiffres identiques, tous les adversaires engages perdent 1 CP."
+            "text": "If 3 matching values are rolled, all engaged opponents lose 1 CP."
           }
         ],
         "passives": [],
@@ -5551,8 +5551,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Sanguinolame: 2 blancs + 1/2/3 jaunes = 4/5/6 degats.",
-        "Debut de tour gagne Chaos; avec 3 Chaos, les depense pour se soigner du montant des degats."
+        "Sanguinolame: 2 blancs + 1/2/3 jaunes = 4/5/6 damage.",
+        "Debut de tour gains Chaos; avec 3 Chaos, spends them pour se healsr du montant dice damage."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -5561,7 +5561,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 4 des: vole 1 PV par jaune."
+              "text": "Defense roll 4 dice: steals 1 HP par jaune."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -5655,9 +5655,9 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Attraction: 4 jaunes, lance 1 de.",
-        "Blanc: 4 degats imparables. Jaune: vole 3 PV. Rouge: vole 4 PV.",
-        "Echec offensif: inflige Silence et Sort 6."
+        "Attraction: 4 jaunes, rolls 1 die.",
+        "White: 4 undefendable damage. Orange: steals 3 HP. Red: steals 4 HP.",
+        "Offensive failure: deals Silence et Sort 6."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -5666,7 +5666,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 3 des: vole 1 PV par jaune."
+              "text": "Defense roll 3 dice: steals 1 HP par jaune."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -5716,7 +5716,7 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "rollText": "Si l'attaque réussit, lancez 1 {die}.",
+              "rollText": "If the attack succeeds, roll 1 {die}.",
               "outcomes": [
                 {
                   "face": "white",
@@ -5808,7 +5808,7 @@
             "condition": {
               "type": "text"
             },
-            "label": "Echec offensif",
+            "label": "Offensive failure",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -5841,8 +5841,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Souffle Acide: 2 rouges = Poison, Brulure et 3 degats imparables.",
-        "Passif: si moins de 5 PV au debut du tour, fuit."
+        "Acid Breath: 2 red dice = Poison, Burn, and 3 undefendable damage.",
+        "Passive: si moins de 5 HP au debut du tour, flees."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -5851,7 +5851,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 1 de: blanc perd 1 PV"
+              "text": "Defense roll 1 de: blanc perd 1 HP"
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -5867,7 +5867,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "jaune ou rouge soigne 1."
+              "text": "jaune ou rouge heals 1."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -5914,7 +5914,7 @@
             "topDeckToDiscard": 0,
             "tokens": [
               "Poison",
-              "Brûlure"
+              "Burn"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -5924,7 +5924,7 @@
         "conditionalRules": [],
         "passives": [
           {
-            "text": "Passif: si moins de 5 PV au debut du tour, fuit.",
+            "text": "Passive: si moins de 5 HP au debut du tour, flees.",
             "tokens": [],
             "effects": {
               "damage": 0,
@@ -5954,8 +5954,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Brasier: 2 rouges = 7 degats et lance 1 de.",
-        "Blanc: Brulure. Jaune: Brulure a 2 adversaires. Rouge: Brulure a tous."
+        "Blaze: 2 red dice = 7 damage and roll 1 die.",
+        "White: Burn. Orange: Burn to 2 opponents. Red: Burn to all opponents."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -5964,7 +5964,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Defense unique: si attaquee, lance 1 de"
+              "text": "Defense unique: si attaquee, rolls 1 de"
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -6049,7 +6049,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Brûlure"
+              "Burn"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -6074,7 +6074,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Brûlure"
+              "Burn"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -6099,7 +6099,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Brûlure"
+              "Burn"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -6124,8 +6124,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Malice: micro suite = 5 degats.",
-        "Petite suite = Enchevetrement + 7. Grande suite = Enchevetrement + vole 2 CP + 8."
+        "Malice: micro suite = 5 damage.",
+        "Petite suite = Entangle + 7. Grande suite = Entangle + steals 2 CP + 8."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -6190,7 +6190,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Enchevêtrement"
+              "Entangle"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -6211,7 +6211,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Enchevêtrement"
+              "Entangle"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -6225,7 +6225,7 @@
     },
     {
       "key": "violet-violet-004",
-      "name": "Elfe Sombresource",
+      "name": "Elfe Sylvesource",
       "rank": "violet",
       "maxHealth": 15,
       "cp": 2,
@@ -6234,8 +6234,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Ardillon Mystique: micro suite = 6 degats.",
-        "Petite suite = Ronces + 8. Grande suite = Deperissement + 10."
+        "Ardillon Mystique: micro suite = 6 damage.",
+        "Petite suite = Barbed Vine + 8. Grande suite = Wither + 10."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -6263,7 +6263,7 @@
       "attackPlan": {
         "style": "suite",
         "goals": [],
-        "name": "Elfe Sombresource",
+        "name": "Elfe Sylvesource",
         "actions": [
           {
             "condition": {
@@ -6300,7 +6300,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Ronces"
+              "Barbed Vine"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -6342,8 +6342,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Heavy Metal: micro suite = 6 degats.",
-        "Petite suite = Ronces + 7. Grande suite = Ronces + Hemorragie + 9."
+        "Heavy Metal: micro suite = 6 damage.",
+        "Petite suite = Barbed Vine + 7. Grande suite = Barbed Vine + Bleed + 9."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -6352,7 +6352,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 3 des: previent 2 degats par jaune."
+              "text": "Defense roll 3 dice: prevent 2 damage per orange."
             },
             "prevent": 2,
             "returnDamage": 0,
@@ -6408,7 +6408,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Ronces"
+              "Barbed Vine"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -6429,8 +6429,8 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Ronces",
-              "Hémorragie"
+              "Barbed Vine",
+              "Bleed"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -6453,8 +6453,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Corpse Wave: 3 jaunes, lance 2 des et inflige la valeur totale.",
-        "Si total inferieur a 6, inflige Parasite. Echec offensif: Poison."
+        "Corpse Wave: 3 jaunes, rolls 2 dice et deals la valeur totale.",
+        "Si total lower a 6, deals Parasite. Offensive failure: Poison."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -6463,7 +6463,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 5 des: previent 1 degat par jaune."
+              "text": "Defense roll 5 dice: previent 1 damage par jaune."
             },
             "prevent": 1,
             "returnDamage": 0,
@@ -6517,7 +6517,7 @@
             "condition": {
               "type": "text"
             },
-            "label": "Echec offensif",
+            "label": "Offensive failure",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -6554,7 +6554,7 @@
               ],
               "formulas": []
             },
-            "text": "Si total inferieur a 6, inflige Parasite."
+            "text": "Si total lower a 6, deals Parasite."
           }
         ],
         "passives": [],
@@ -6572,8 +6572,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Ritual: 1/2/3 blancs + 2 jaunes = 3/4/5 degats imparables et gagne Chaos.",
-        "Avec 3 Chaos fin de tour: se retire et engage un niveau 3 avec Premiere Frappe."
+        "Ritual: 1/2/3 blancs + 2 jaunes = 3/4/5 undefendable damage et gains Chaos.",
+        "Avec 3 Chaos fin de tour: se removes et engage un niveau 3 avec Premiere Frappe."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -6684,8 +6684,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Baiser de la Mort: blanc + jaune + rouge, lance 2 des.",
-        "Blanc gagne 2 Chaos; jaune Silence; rouge Sort 6; puis 7 + 1 par Chaos."
+        "Baiser de la Mort: blanc + jaune + rouge, rolls 2 dice.",
+        "Blanc gains 2 Chaos; jaune Silence; rouge Sort 6; then 7 + 1 par Chaos."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -6694,7 +6694,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 5 des: gagne 1 Chaos par jaune puis inflige 1 degat par Chaos."
+              "text": "Defense roll 5 dice: gains 1 Chaos par jaune then deals 1 damage par Chaos."
             },
             "prevent": 0,
             "returnDamage": 1,
@@ -6785,7 +6785,7 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Morsure Venimeuse: 3 blancs = 7 degats.",
+        "Morsure Venimeuse: 3 blancs = 7 damage.",
         "3 blancs + rouge = Poison + 8. 3 blancs + 2 rouges = Poison + 9."
       ],
       "defenseDice": 4,
@@ -6795,7 +6795,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 4 des: inflige Poison par rouge."
+              "text": "Defense roll 4 dice: deals Poison par rouge."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -6922,8 +6922,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Castagne: 3 jaunes, lance 2 des et inflige la valeur totale.",
-        "Si total inferieur a 7, inflige Commotion. Echec offensif: Commotion."
+        "Castagne: 3 jaunes, rolls 2 dice et deals la valeur totale.",
+        "Si total lower a 7, deals Concussion. Offensive failure: Concussion."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -6932,7 +6932,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 5 des: previent 1 par jaune + 1 par rouge."
+              "text": "Defense roll 5 dice: previent 1 par jaune + 1 par rouge."
             },
             "prevent": 1,
             "returnDamage": 0,
@@ -6986,7 +6986,7 @@
             "condition": {
               "type": "text"
             },
-            "label": "Echec offensif",
+            "label": "Offensive failure",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -7017,7 +7017,7 @@
               "tokens": [],
               "formulas": []
             },
-            "text": "Si total inferieur a 7, inflige Commotion."
+            "text": "Si total lower a 7, deals Concussion."
           }
         ],
         "passives": [],
@@ -7035,8 +7035,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Plurimorsure: 2 rouges = 6 degats + 3 par tete.",
-        "Fin de lancer offensif: lance 1 de; sur rouge gagne 1 tete."
+        "Plurimorsure: 2 rouges = 6 damage + 3 par tete.",
+        "Fin de rollsr offensif: rolls 1 de; sur rouge gains 1 tete."
       ],
       "defenseDice": 0,
       "defensePlan": {
@@ -7045,7 +7045,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Defense unique: si les PV tombent a 0 et qu il reste des tetes, retire 1 tete et remet les PV."
+              "text": "Defense unique: si les HP tombent a 0 et qu il reste dice tetes, removes 1 tete et remet les HP."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -7104,7 +7104,7 @@
                 "red": 1
               }
             },
-            "label": "Fin de lancer offensif",
+            "label": "Fin de rollsr offensif",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -7135,8 +7135,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "La Rixe ou la Fuite: 5 jaunes, lance 1 de.",
-        "1-3: 4 degats imparables. 4-6: fuit. Echec offensif: les heros perdent 1 or."
+        "La Rixe ou la Fuite: 5 jaunes, rolls 1 die.",
+        "1-3: 4 undefendable damage. 4-6: flees. Offensive failure: the heroes lose 1 or."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -7145,7 +7145,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 1 de: 1-5 vole 1 CP et inflige 1"
+              "text": "Defense roll 1 de: 1-5 steals 1 CP et deals 1"
             },
             "prevent": 0,
             "returnDamage": 1,
@@ -7161,7 +7161,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "rouge fuit."
+              "text": "rouge flees."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -7251,7 +7251,7 @@
             "condition": {
               "type": "text"
             },
-            "label": "Echec offensif",
+            "label": "Offensive failure",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -7282,8 +7282,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Malice: 4 jaunes, lance 1 de.",
-        "Blanc: 6 imparables. Jaune: vole 4 PV. Rouge: vole 5 PV. Echec: Sort 6 + vole 1 PV."
+        "Malice: 4 jaunes, rolls 1 die.",
+        "White: 6 imparables. Orange: steals 4 HP. Red: steals 5 HP. Echec: Sort 6 + steals 1 HP."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -7292,7 +7292,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 3 des: vole 1 PV par jaune."
+              "text": "Defense roll 3 dice: steals 1 HP par jaune."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -7446,8 +7446,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Triple Attaque: 3 rouges = 3 degats imparables et lance 1 de.",
-        "1-2 Brulure, 3-4 A Terre, 5-6 deux Hemorragie."
+        "Triple Attaque: 3 rouges = 3 undefendable damage et rolls 1 die.",
+        "1-2 Burn, 3-4 Knockdown, 5-6 two Bleed."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -7456,7 +7456,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 1 de: blanc 1 degat"
+              "text": "Defense roll 1 de: blanc 1 damage"
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -7472,7 +7472,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "jaune 3 degats"
+              "text": "jaune 3 damage"
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -7553,9 +7553,9 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "Hémorragie",
-              "À Terre",
-              "Brûlure"
+              "Bleed",
+              "Knockdown",
+              "Burn"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -7578,7 +7578,7 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Terre Feu Tempetes: 2 blancs + 2 rouges = Poison, defausse 1 carte aleatoire et 4 degats imparables.",
+        "Terre Feu Tempetes: 2 blancs + 2 rouges = Poison, discards 1 card random et 4 undefendable damage.",
         "Echec: Parasite + Sort 6."
       ],
       "defenseDice": 5,
@@ -7588,7 +7588,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 5 des: soigne 2 par jaune"
+              "text": "Defense roll 5 dice: heals 2 par jaune"
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -7700,8 +7700,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Combat Fervent: 2 blancs + 3 jaunes = 7 degats et lance 3 des.",
-        "Ajoute 1 par blanc + 2 par jaune; soigne 2 par rouge. Echec: 2 imparables et soigne 1."
+        "Combat Fervent: 2 blancs + 3 jaunes = 7 damage et rolls 3 dice.",
+        "Ajoute 1 par blanc + 2 par jaune; heals 2 par rouge. Echec: 2 imparables et heals 1."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -7710,7 +7710,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 4 des: blanc inflige 1"
+              "text": "Defense roll 4 dice: blanc deals 1"
             },
             "prevent": 0,
             "returnDamage": 1,
@@ -7835,8 +7835,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Lame Corrompue: 3/4/5 blancs = 6/7/8 degats.",
-        "Si 3 chiffres identiques, gagne Riposte."
+        "Lame Corrompue: 3/4/5 blancs = 6/7/8 damage.",
+        "Si 3 chiffres identiques, gains Back Strike."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -7911,7 +7911,7 @@
           {
             "condition": "text",
             "tokens": [
-              "Riposte"
+              "Back Strike"
             ],
             "effects": {
               "damage": 0,
@@ -7923,11 +7923,11 @@
               "discardCards": 0,
               "topDeckToDiscard": 0,
               "tokens": [
-                "Riposte"
+                "Back Strike"
               ],
               "formulas": []
             },
-            "text": "Si 3 chiffres identiques, gagne Riposte."
+            "text": "Si 3 chiffres identiques, gains Back Strike."
           }
         ],
         "passives": [],
@@ -7947,8 +7947,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Seduction: 2 blancs + 1/2/3 jaunes = 4/5/6 degats.",
-        "Avec 2 Chaos, les depense pour se soigner du montant des degats. Debut de tour gagne Chaos."
+        "Seduction: 2 blancs + 1/2/3 jaunes = 4/5/6 damage.",
+        "Avec 2 Chaos, spends them pour se healsr du montant dice damage. Debut de tour gains Chaos."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -7957,7 +7957,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 4 des: vole 1 PV par jaune"
+              "text": "Defense roll 4 dice: steals 1 HP par jaune"
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -8086,8 +8086,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Tir Diabolique: 2/3/4/5 jaunes = 6/7/8/9 degats.",
-        "Si 3 chiffres identiques, inflige Ronces a tous les adversaires."
+        "Tir Diabolique: 2/3/4/5 jaunes = 6/7/8/9 damage.",
+        "Si 3 chiffres identiques, deals Barbed Vine to all opponents."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -8096,7 +8096,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 4 des: inflige 1 par blanc + 1 par jaune"
+              "text": "Defense roll 4 dice: deals 1 par blanc + 1 par jaune"
             },
             "prevent": 0,
             "returnDamage": 1,
@@ -8187,7 +8187,7 @@
           {
             "condition": "text",
             "tokens": [
-              "Ronces"
+              "Barbed Vine"
             ],
             "effects": {
               "damage": 0,
@@ -8199,11 +8199,11 @@
               "discardCards": 0,
               "topDeckToDiscard": 0,
               "tokens": [
-                "Ronces"
+                "Barbed Vine"
               ],
               "formulas": []
             },
-            "text": "Si 3 chiffres identiques, inflige Ronces a tous les adversaires."
+            "text": "Si 3 chiffres identiques, deals Barbed Vine to all opponents."
           }
         ],
         "passives": [],
@@ -8223,8 +8223,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Evisceration: 3/4/5 blancs = 6/7/8 degats.",
-        "Si 3 chiffres identiques, inflige Hemorragie + Silence."
+        "Evisceration: 3/4/5 blancs = 6/7/8 damage.",
+        "Si 3 chiffres identiques, deals Bleed + Silence."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -8233,7 +8233,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 1 de: blanc ou jaune inflige Hemorragie"
+              "text": "Defense roll 1 de: blanc ou jaune deals Bleed"
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -8244,14 +8244,14 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [
-              "Hémorragie"
+              "Bleed"
             ],
             "formulas": []
           },
           {
             "condition": {
               "type": "text",
-              "text": "rouge inflige 2 Hemorragie."
+              "text": "rouge deals 2 Bleed."
             },
             "prevent": 0,
             "returnDamage": 2,
@@ -8262,7 +8262,7 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [
-              "Hémorragie"
+              "Bleed"
             ],
             "formulas": []
           }
@@ -8319,7 +8319,7 @@
             "condition": "text",
             "tokens": [
               "Silence",
-              "Hémorragie"
+              "Bleed"
             ],
             "effects": {
               "damage": 0,
@@ -8332,11 +8332,11 @@
               "topDeckToDiscard": 0,
               "tokens": [
                 "Silence",
-                "Hémorragie"
+                "Bleed"
               ],
               "formulas": []
             },
-            "text": "Si 3 chiffres identiques, inflige Hemorragie + Silence."
+            "text": "Si 3 chiffres identiques, deals Bleed + Silence."
           }
         ],
         "passives": [],
@@ -8354,8 +8354,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Assaut Impie: petite suite = soigne 1 et 8 degats.",
-        "Grande suite = soigne 2 et 10 degats. Echec: gagne 3 Degats Bonus."
+        "Assaut Impie: petite suite = heals 1 et 8 damage.",
+        "Grande suite = heals 2 et 10 damage. Echec: gains 3 Degats Bonus."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -8364,7 +8364,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif 4 des: blanc inflige 1"
+              "text": "Defense roll 4 dice: blanc deals 1"
             },
             "prevent": 0,
             "returnDamage": 1,
@@ -8480,10 +8480,10 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Frappe Fourbe: petite suite = degats egaux a la moitie des PC du minion, arrondie au superieur.",
-        "Frappe Fourbe: grande suite = degats egaux aux PC du minion.",
-        "Passif: au debut de son tour, gagne 2 PC.",
-        "Passif: si le lancer offensif echoue, gagne 3 Degats Bonus et Ombre."
+        "Frappe Fourbe: petite suite = damage equal a la half dice PC du minion, rounded up.",
+        "Frappe Fourbe: grande suite = damage equal aux PC du minion.",
+        "Passive: au debut de son tour, gains 2 PC.",
+        "Passive: if the offensive roll fails, gains 3 Bonus Damage and Shadows."
       ],
       "defenseDice": 5,
       "defensePlan": {
@@ -8508,7 +8508,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "sinon vole 2 PC."
+              "text": "sinon steals 2 PC."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -8577,7 +8577,7 @@
         "conditionalRules": [],
         "passives": [
           {
-            "text": "Passif: au debut de son tour, gagne 2 PC.",
+            "text": "Passive: au debut de son tour, gains 2 PC.",
             "tokens": [],
             "effects": {
               "damage": 0,
@@ -8593,9 +8593,9 @@
             }
           },
           {
-            "text": "Passif: si le lancer offensif echoue, gagne 3 Degats Bonus et Ombre.",
+            "text": "Passive: if the offensive roll fails, gains 3 Bonus Damage and Shadows.",
             "tokens": [
-              "Ombre",
+              "Shadows",
               "Dégâts Bonus"
             ],
             "effects": {
@@ -8608,7 +8608,7 @@
               "discardCards": 0,
               "topDeckToDiscard": 0,
               "tokens": [
-                "Ombre",
+                "Shadows",
                 "Dégâts Bonus"
               ],
               "formulas": []
@@ -8631,11 +8631,11 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Chant Mortuaire: 2 rouges = 3 degats collateraux.",
-        "Chant Mortuaire: 3 rouges = 4 degats collateraux.",
-        "Chant Mortuaire: 4 rouges = 5 degats collateraux.",
-        "Chant Mortuaire: 5 rouges = 6 degats collateraux.",
-        "Si un seul adversaire est engage, inflige aussi Deperissement et Silence."
+        "Chant Mortuaire: 2 rouges = 3 damage collateraux.",
+        "Chant Mortuaire: 3 rouges = 4 damage collateraux.",
+        "Chant Mortuaire: 4 rouges = 5 damage collateraux.",
+        "Chant Mortuaire: 5 rouges = 6 damage collateraux.",
+        "Si a single opponent est engage, deals aussi Wither et Silence."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -8804,7 +8804,7 @@
               ],
               "formulas": []
             },
-            "text": "Si un seul adversaire est engage, inflige aussi Deperissement et Silence."
+            "text": "Si a single opponent est engage, deals aussi Wither et Silence."
           }
         ],
         "passives": [],
@@ -8824,9 +8824,9 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Frappe Titanique: micro suite = 2 degats collateraux a tous les adversaires engages.",
-        "Frappe Titanique: petite suite = A Terre et 4 degats collateraux.",
-        "Frappe Titanique: grande suite = Commotion et 7 degats collateraux."
+        "Frappe Titanique: micro suite = 2 damage collateraux to all opponents engages.",
+        "Frappe Titanique: petite suite = Knockdown et 4 damage collateraux.",
+        "Frappe Titanique: grande suite = Concussion et 7 damage collateraux."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -8835,7 +8835,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Jet defensif unique 1 de: previent un nombre de degats egal a la valeur du de."
+              "text": "Unique defense roll 1 die: prevents damage equal to the die value."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -8892,7 +8892,7 @@
             "discardCards": 0,
             "topDeckToDiscard": 0,
             "tokens": [
-              "À Terre"
+              "Knockdown"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -8937,10 +8937,10 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Silhouette: 3 jaunes = 3 degats imparables.",
-        "Silhouette: 4 jaunes = 5 degats imparables.",
-        "Si Umbra possede Ombre, toutes ses attaques infligent 4 degats supplementaires.",
-        "Passif: si le lancer offensif echoue, gagne Ombre."
+        "Silhouette: 3 jaunes = 3 undefendable damage.",
+        "Silhouette: 4 jaunes = 5 undefendable damage.",
+        "If Umbra has Shadows, all its attacks deal 4 extra damage.",
+        "Passive: if the offensive roll fails, gains Shadows."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -9037,7 +9037,7 @@
           {
             "condition": "text",
             "tokens": [
-              "Ombre"
+              "Shadows"
             ],
             "effects": {
               "damage": 4,
@@ -9049,18 +9049,18 @@
               "discardCards": 0,
               "topDeckToDiscard": 0,
               "tokens": [
-                "Ombre"
+                "Shadows"
               ],
               "formulas": []
             },
-            "text": "Si Umbra possede Ombre, toutes ses attaques infligent 4 degats supplementaires."
+            "text": "If Umbra has Shadows, all its attacks deal 4 extra damage."
           }
         ],
         "passives": [
           {
-            "text": "Passif: si le lancer offensif echoue, gagne Ombre.",
+            "text": "Passive: if the offensive roll fails, gains Shadows.",
             "tokens": [
-              "Ombre"
+              "Shadows"
             ],
             "effects": {
               "damage": 0,
@@ -9072,7 +9072,7 @@
               "discardCards": 0,
               "topDeckToDiscard": 0,
               "tokens": [
-                "Ombre"
+                "Shadows"
               ],
               "formulas": []
             }
@@ -9094,9 +9094,9 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Nuee: inflige autant de degats que la moitie de ses points de vie, arrondie au superieur.",
-        "Si les degats sont inferieurs ou egaux a 5, cette attaque devient imparable.",
-        "Passif: si le lancer offensif echoue, soigne 3 PV et retire toutes les alterations positives du joueur actif."
+        "Nuee: deals autant de damage que la half de ses health, rounded up.",
+        "Si les damage sont lowers ou equal a 5, cette attaque becomes imparable.",
+        "Passive: if the offensive roll fails, heal 3 HP and remove all positive status effects from the active player."
       ],
       "defenseDice": 0,
       "defensePlan": {
@@ -9105,7 +9105,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Defense unique: les degats subis lors de l attaque d un adversaire sont reduits a un maximum de 5."
+              "text": "Unique defense: damage taken from an opponent attack is reduced to a maximum of 5."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -9167,12 +9167,12 @@
               "tokens": [],
               "formulas": []
             },
-            "text": "Si les degats sont inferieurs ou egaux a 5, cette attaque devient imparable."
+            "text": "Si les damage sont lowers ou equal a 5, cette attaque becomes imparable."
           }
         ],
         "passives": [
           {
-            "text": "Passif: si le lancer offensif echoue, soigne 3 PV et retire toutes les alterations positives du joueur actif.",
+            "text": "Passive: if the offensive roll fails, heal 3 HP and remove all positive status effects from the active player.",
             "tokens": [],
             "effects": {
               "damage": 0,
@@ -9204,8 +9204,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Frappe Venimeuse: inflige Poison, Enchevetrement et 2 Hemorragie.",
-        "Passif: a la fin de son tour, l adversaire subit 1 degat par alteration negative qui l affecte."
+        "Venomous Strike: inflicts Poison, Entanglement, and 2 Bleed.",
+        "Passive: at the end of its turn, the opponent takes 1 damage per negative status effect affecting it."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -9230,7 +9230,7 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [
-              "Hémorragie"
+              "Bleed"
             ],
             "formulas": []
           }
@@ -9263,8 +9263,8 @@
             "topDeckToDiscard": 0,
             "tokens": [
               "Poison",
-              "Hémorragie",
-              "Enchevêtrement"
+              "Bleed",
+              "Entangle"
             ],
             "formulas": [],
             "extraRoll": null,
@@ -9274,7 +9274,7 @@
         "conditionalRules": [],
         "passives": [
           {
-            "text": "Passif: a la fin de son tour, l adversaire subit 1 degat par alteration negative qui l affecte.",
+            "text": "Passive: at the end of its turn, the opponent takes 1 damage per negative status effect affecting it.",
             "tokens": [],
             "effects": {
               "damage": 0,
@@ -9307,9 +9307,9 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Colere Dechainee: lance 2 des, plus 1 de par Chaos, jusqu a 5 des maximum.",
-        "Inflige autant de degats que la valeur totale du jet.",
-        "Passif: si le lancer offensif echoue, gagne Chaos."
+        "Colere Dechainee: rolls 2 dice, plus 1 de par Chaos, jusqu a 5 dice maximum.",
+        "Deals autant de damage que la valeur totale du jet.",
+        "Passive: si le rollsr offensif fails, gains Chaos."
       ],
       "defenseDice": 0,
       "defensePlan": {
@@ -9318,7 +9318,7 @@
           {
             "condition": {
               "type": "text",
-              "text": "Defense unique: si le Berserker subit des degats pendant un lancer offensif adverse, il gagne Chaos."
+              "text": "Defense unique: si le Berserker subit dice damage pendant un rollsr offensif adverse, il gains Chaos."
             },
             "prevent": 0,
             "returnDamage": 0,
@@ -9384,7 +9384,7 @@
         "conditionalRules": [],
         "passives": [
           {
-            "text": "Passif: si le lancer offensif echoue, gagne Chaos.",
+            "text": "Passive: si le rollsr offensif fails, gains Chaos.",
             "tokens": [],
             "effects": {
               "damage": 0,
@@ -9416,8 +9416,8 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Toxic Touch: inflige Poison, puis inflige un Poison supplementaire.",
-        "Passif: quand un adversaire engage devrait recevoir Poison, inflige aussi 2 degats imparables."
+        "Toxic Touch: deals Poison, then deals un Poison additional.",
+        "Passive: quand un engaged opponent devrait recevoir Poison, deals aussi 2 undefendable damage."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -9484,7 +9484,7 @@
         "conditionalRules": [],
         "passives": [
           {
-            "text": "Passif: quand un adversaire engage devrait recevoir Poison, inflige aussi 2 degats imparables.",
+            "text": "Passive: quand un engaged opponent devrait recevoir Poison, deals aussi 2 undefendable damage.",
             "tokens": [
               "Poison"
             ],
@@ -9626,9 +9626,9 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Profane Command: 1 blanc + 2 jaunes = 7 degats.",
-        "Profane Command: 1 blanc + 2 jaunes + 1 rouge = Domination et 9 degats.",
-        "Profane Command: 1 blanc + 3 jaunes + 1 rouge = Domination et 13 degats."
+        "Profane Command: 1 blanc + 2 jaunes = 7 damage.",
+        "Profane Command: 1 blanc + 2 jaunes + 1 rouge = Domination et 9 damage.",
+        "Profane Command: 1 blanc + 3 jaunes + 1 rouge = Domination et 13 damage."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -9783,9 +9783,9 @@
       "rewardChests": 0,
       "rewardRank": null,
       "attacks": [
-        "Ancient Curse: inflige 5 degats imparables et lance 1 de.",
-        "Sur blanc: inflige Silence. Sur jaune: inflige Sort 6. Sur rouge: inflige Sort 6 et Silence.",
-        "Passif: au debut de son tour, gagne Siphon Vital; si deja a la limite, soigne 3 PV."
+        "Ancient Curse: deals 5 undefendable damage et rolls 1 die.",
+        "On white: deals Silence. On orange: deals Sort 6. On red: deals Sort 6 et Silence.",
+        "Passive: au debut de son tour, gains Siphon Vital; si deja a la limite, heals 3 HP."
       ],
       "defenseDice": 3,
       "defensePlan": {
@@ -9853,7 +9853,7 @@
                 "red": 0
               }
             },
-            "label": "Sur blanc",
+            "label": "On white",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -9878,7 +9878,7 @@
                 "red": 0
               }
             },
-            "label": "Sur jaune",
+            "label": "On orange",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -9901,7 +9901,7 @@
                 "red": 1
               }
             },
-            "label": "Sur rouge",
+            "label": "On red",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -9921,7 +9921,7 @@
         "conditionalRules": [],
         "passives": [
           {
-            "text": "Passif: au debut de son tour, gagne Siphon Vital; si deja a la limite, soigne 3 PV.",
+            "text": "Passive: au debut de son tour, gains Siphon Vital; si deja a la limite, heals 3 HP.",
             "tokens": [],
             "effects": {
               "damage": 0,
@@ -10395,7 +10395,7 @@
         "White: no effect.",
         "Orange: the orange boss gains 1 CP and removes 1 random negative token if possible.",
         "Red: the orange boss gains Main du roi.",
-        "Viseer is immune to status effects, CP loss, and everything else besides damage."
+        "Viseer is immune to status effects, CP loss, and everything else besidice damage."
       ],
       "defenseDice": 4,
       "defensePlan": {

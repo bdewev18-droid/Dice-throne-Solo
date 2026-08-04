@@ -56,7 +56,9 @@ class AuthSession {
   bool get isSignedIn => status == AuthStatus.signedIn && userId != null;
 
   static const AuthSession unknown = AuthSession(status: AuthStatus.unknown);
-  static const AuthSession signedOut = AuthSession(status: AuthStatus.signedOut);
+  static const AuthSession signedOut = AuthSession(
+    status: AuthStatus.signedOut,
+  );
 }
 
 /// Snapshot de session diffusé par [SupabaseService.sessionStream].
@@ -92,6 +94,7 @@ class SupabaseService {
   bool _initializing = false;
   final Completer<void> _initCompleter = Completer<void>();
 
+  // ignore: unused_field
   StreamSubscription<AuthState>? _authSub;
   // ignore: close_sinks
   final StreamController<AuthSessionEvent> _sessionController =
@@ -99,8 +102,7 @@ class SupabaseService {
 
   /// Flux de session à consommer par l'UI. Émet l'état courant à chaque
   /// changement d'auth Supabase (connexion, déconnexion, refresh, restore).
-  Stream<AuthSessionEvent> get sessionStream =>
-      _sessionController.stream;
+  Stream<AuthSessionEvent> get sessionStream => _sessionController.stream;
 
   /// Initialise le client Supabase. À appeler dans main() avant runApp.
   /// Idempotent et safe en cas d'appels concurrents (Completer).
@@ -115,7 +117,7 @@ class SupabaseService {
     try {
       await Supabase.initialize(
         url: SupabaseConfig.url,
-        anonKey: SupabaseConfig.anonKey,
+        publishableKey: SupabaseConfig.anonKey,
         // PKCE est activé par défaut dans supabase_flutter >= 2.5. L'échange
         // du code OAuth au chargement de la page est géré automatiquement,
         // à condition que initialize() s'exécute avant runApp (voir main()).
@@ -148,7 +150,8 @@ class SupabaseService {
       _sessionController.add(
         AuthSessionEvent(
           session: _sessionFromSupabase(session, event),
-          transition: event == AuthChangeEvent.signedIn ||
+          transition:
+              event == AuthChangeEvent.signedIn ||
               event == AuthChangeEvent.signedOut ||
               event == AuthChangeEvent.tokenRefreshed,
         ),
@@ -182,7 +185,7 @@ class SupabaseService {
       return AuthSession.signedOut;
     }
     final user = _client.auth.currentUser;
-    final isAnon = session.user?.isAnonymous ?? false;
+    final isAnon = session.user.isAnonymous;
     return AuthSession(
       status: AuthStatus.signedIn,
       userId: user?.id,
@@ -221,9 +224,7 @@ class SupabaseService {
     // interactif. Restaure une session existante sans interaction si
     // possible, ce qui rend la reconnexion quasi-instantanée.
     GoogleSignInAccount? account = await _trySilent();
-    if (account == null) {
-      account = await _googleSignIn.signIn();
-    }
+    account ??= await _googleSignIn.signIn();
     if (account == null) {
       // signIn() retourne null silencieusement quand Google refuse
       // d'émettre un token pour cette app : cause typique = SHA-1 du
@@ -368,8 +369,11 @@ class SupabaseService {
     }
     final payload = Map<String, dynamic>.from(record);
     payload['user_id'] = uid;
-    final response =
-        await _client.from(_table).insert(payload).select('id').maybeSingle();
+    final response = await _client
+        .from(_table)
+        .insert(payload)
+        .select('id')
+        .maybeSingle();
     if (response == null) {
       return null;
     }
@@ -401,6 +405,17 @@ class SupabaseService {
     }
     await _client.from(_table).delete().eq('id', id).eq('user_id', uid);
     return true;
+  }
+
+  Future<void> updateHeroCollection(Set<String> heroNames) async {
+    if (!_initialized || _client.auth.currentUser == null) {
+      return;
+    }
+    final existing = Map<String, dynamic>.from(
+      _client.auth.currentUser?.userMetadata ?? const {},
+    );
+    existing['owned_heroes'] = heroNames.toList()..sort();
+    await _client.auth.updateUser(UserAttributes(data: existing));
   }
 
   String? _currentUserId() {

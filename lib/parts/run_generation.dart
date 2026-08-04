@@ -273,6 +273,8 @@ EnemyNode _enemy(
     rewardRank: selectedProfile.rewardRank,
     rewardRanks: selectedProfile.rewardRanks,
     passives: selectedProfile.passives,
+    defenseDisplayRows: selectedProfile.defenseDisplayRows,
+    passiveDisplayRows: selectedProfile.passiveDisplayRows,
   );
 }
 

@@ -10,21 +10,30 @@ class HeroChoicePage extends StatefulWidget {
 }
 
 class _HeroChoicePageState extends State<HeroChoicePage> {
-  HeroType _selectedHero = HeroType.barbare;
+  HeroType? _selectedHero;
   final Set<HeroSegment> _selectedSegments = {};
+  final Set<int> _selectedComplexities = {1, 2, 3, 4, 5, 6};
   final TextEditingController _searchController = TextEditingController();
-  Timer? _holdTimer;
-  HeroType? _holdingHero;
-  double _holdProgress = 0;
-  bool _holdingRandomHero = false;
   bool _randomHeroLocked = false;
-  static const Duration _holdToValidateDuration = Duration(seconds: 3);
+  bool _myHeroesOnly = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AppSettings.instance.addListener(_handleAppSettingsChanged);
+  }
 
   @override
   void dispose() {
-    _holdTimer?.cancel();
+    AppSettings.instance.removeListener(_handleAppSettingsChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _handleAppSettingsChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -38,31 +47,101 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
                   _selectedSegments.isEmpty ||
                   hero.segments.any(_selectedSegments.contains),
             )
+            .where((hero) => _selectedComplexities.contains(hero.complexity))
+            .where(
+              (hero) => !_myHeroesOnly || AppSettings.instance.ownsHero(hero),
+            )
             .toList()
           ..sort((a, b) => a.label.compareTo(b.label));
-    if (!heroes.contains(_selectedHero) && heroes.isNotEmpty) {
-      _selectedHero = heroes.first;
+    if (_selectedHero != null && !heroes.contains(_selectedHero)) {
+      _selectedHero = null;
       _randomHeroLocked = false;
     }
+    final randomHeroes = heroes
+        .where((hero) => AppSettings.instance.ownsHero(hero))
+        .toList();
+    final selectedHero = _selectedHero;
+    final selectedOwned =
+        selectedHero != null && AppSettings.instance.ownsHero(selectedHero);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Choose your hero')),
+      bottomNavigationBar: selectedOwned
+          ? SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.86),
+                  border: const Border(top: BorderSide(color: Colors.white24)),
+                ),
+                child: SizedBox(
+                  height: 50,
+                  child: FilledButton(
+                    onPressed: () => widget.onNext(selectedHero),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: selectedHero.color,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Launch campaign',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 92),
           children: [
-            TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
-                labelText: 'Search hero',
-              ),
-              onChanged: (_) => setState(() {}),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.search),
+                      labelText: 'Search hero',
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ComplexityFilterBar(
+                    selectedLevels: _selectedComplexities,
+                    onToggle: (level) => setState(() {
+                      if (_selectedComplexities.contains(level)) {
+                        if (_selectedComplexities.length > 1) {
+                          _selectedComplexities.remove(level);
+                        }
+                      } else {
+                        _selectedComplexities.add(level);
+                      }
+                      _randomHeroLocked = false;
+                    }),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             HeroSegmentFilters(
               selectedSegments: _selectedSegments,
+              myHeroesOnly: _myHeroesOnly,
+              onMyHeroesChanged: (value) => setState(() {
+                _myHeroesOnly = value;
+                _randomHeroLocked = false;
+              }),
               onChanged: (segment, selected) {
                 setState(() {
                   if (segment == null) {
@@ -74,6 +153,7 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
                   } else {
                     _selectedSegments.remove(segment);
                   }
+                  _randomHeroLocked = false;
                 });
               },
             ),
@@ -102,36 +182,34 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return RandomHeroCard(
-                      heroes: heroes,
+                      heroes: randomHeroes,
                       selectedHero: _randomHeroLocked ? _selectedHero : null,
-                      holdProgress: _holdingRandomHero ? _holdProgress : 0,
-                      onTap: () => _selectRandomHero(heroes),
-                      onHoldStart: () => _startRandomHeroHold(heroes),
-                      onHoldEnd: _cancelHeroHold,
+                      onTap: () => _selectRandomHero(randomHeroes),
+                      onStart: randomHeroes.isEmpty
+                          ? null
+                          : selectedHero == null
+                          ? null
+                          : () => widget.onNext(selectedHero),
                     );
                   }
                   final hero = heroes[index - 1];
+                  final owned = AppSettings.instance.ownsHero(hero);
                   return HeroCard(
                     hero: hero,
                     selected: _selectedHero == hero,
-                    holdProgress: _holdingHero == hero ? _holdProgress : 0,
+                    owned: owned,
                     onTap: () => setState(() {
                       _selectedHero = hero;
                       _randomHeroLocked = false;
                     }),
-                    onHoldStart: () => _startHeroHold(hero),
-                    onHoldEnd: _cancelHeroHold,
+                    onDoubleTap: owned ? () => widget.onNext(hero) : null,
+                    onStart: owned ? () => widget.onNext(hero) : null,
+                    onToggleOwned: () {
+                      unawaited(AppSettings.instance.toggleHeroOwnership(hero));
+                    },
                   );
                 },
               ),
-            const SizedBox(height: 18),
-            ImageActionButton(
-              label: 'Next',
-              icon: Icons.arrow_forward,
-              onPressed: heroes.isEmpty
-                  ? null
-                  : () => widget.onNext(_selectedHero),
-            ),
           ],
         ),
       ),
@@ -148,81 +226,26 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
     });
   }
 
-  void _startRandomHeroHold(List<HeroType> heroes) {
-    if (heroes.isEmpty) {
-      return;
-    }
-    final hero = _randomHeroLocked && heroes.contains(_selectedHero)
-        ? _selectedHero
-        : _pickRandomHero(heroes);
-    _randomHeroLocked = true;
-    _startHeroHold(hero, random: true);
-  }
-
   HeroType _pickRandomHero(List<HeroType> heroes) {
     final pool = heroes.length == 1
         ? heroes
         : heroes.where((hero) => hero != _selectedHero).toList();
     return pool[Random().nextInt(pool.length)];
   }
-
-  void _startHeroHold(HeroType hero, {bool random = false}) {
-    _holdTimer?.cancel();
-    setState(() {
-      _selectedHero = hero;
-      _holdingHero = hero;
-      _holdingRandomHero = random;
-      _randomHeroLocked = random;
-      _holdProgress = 0;
-    });
-
-    final startedAt = DateTime.now();
-    _holdTimer = Timer.periodic(const Duration(milliseconds: 35), (timer) {
-      final elapsed = DateTime.now().difference(startedAt);
-      final progress =
-          elapsed.inMilliseconds / _holdToValidateDuration.inMilliseconds;
-      if (progress >= 1) {
-        timer.cancel();
-        if (!mounted || _holdingHero != hero) {
-          return;
-        }
-        setState(() {
-          _holdProgress = 1;
-          _holdingHero = null;
-          _holdingRandomHero = false;
-        });
-        widget.onNext(hero);
-        return;
-      }
-      if (mounted) {
-        setState(() => _holdProgress = progress.clamp(0, 1));
-      }
-    });
-  }
-
-  void _cancelHeroHold() {
-    if (_holdProgress >= 1) {
-      return;
-    }
-    _holdTimer?.cancel();
-    if (mounted) {
-      setState(() {
-        _holdingHero = null;
-        _holdingRandomHero = false;
-        _holdProgress = 0;
-      });
-    }
-  }
 }
 
 class HeroSegmentFilters extends StatelessWidget {
   const HeroSegmentFilters({
     required this.selectedSegments,
+    required this.myHeroesOnly,
+    required this.onMyHeroesChanged,
     required this.onChanged,
     super.key,
   });
 
   final Set<HeroSegment> selectedSegments;
+  final bool myHeroesOnly;
+  final ValueChanged<bool> onMyHeroesChanged;
   final void Function(HeroSegment? segment, bool selected) onChanged;
 
   @override
@@ -232,11 +255,31 @@ class HeroSegmentFilters extends StatelessWidget {
       runSpacing: 8,
       children: [
         FilterChip(
+          label: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('My heroes'),
+              SizedBox(width: 5),
+              Icon(Icons.bookmark, size: 16),
+            ],
+          ),
+          selected: myHeroesOnly,
+          onSelected: onMyHeroesChanged,
+        ),
+        FilterChip(
           label: const Text('All'),
           selected: selectedSegments.isEmpty,
           onSelected: (_) => onChanged(null, true),
         ),
-        ...HeroSegment.values.map(
+        ...const [
+          HeroSegment.season1,
+          HeroSegment.season2,
+          HeroSegment.avengers,
+          HeroSegment.xmen,
+          HeroSegment.outcast,
+          HeroSegment.other,
+          HeroSegment.santaKrampus,
+        ].map(
           (segment) => FilterChip(
             label: Text(segment.label),
             selected: selectedSegments.contains(segment),
@@ -248,23 +291,127 @@ class HeroSegmentFilters extends StatelessWidget {
   }
 }
 
+class _ComplexityFilterBar extends StatelessWidget {
+  const _ComplexityFilterBar({
+    required this.selectedLevels,
+    required this.onToggle,
+  });
+
+  final Set<int> selectedLevels;
+  final ValueChanged<int> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.white24),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.black.withValues(alpha: 0.2),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          for (var level = 1; level <= 6; level++)
+            _ComplexityFilterDie(
+              level: level,
+              selected: selectedLevels.contains(level),
+              onTap: () => onToggle(level),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ComplexityFilterDie extends StatelessWidget {
+  const _ComplexityFilterDie({
+    required this.level,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final int level;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(
+        width: 32,
+        height: 44,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              width: 22,
+              height: 4,
+              decoration: BoxDecoration(
+                color: selected ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Opacity(
+              opacity: selected ? 1 : 0.38,
+              child: _ComplexityDieCrop(level: level, size: 30),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ComplexityDieCrop extends StatelessWidget {
+  const _ComplexityDieCrop({required this.level, required this.size});
+
+  final int level;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final clampedLevel = level.clamp(1, 6).toInt();
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(5),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Image.asset(
+          'assets/complexity/$clampedLevel-niv.webp',
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: Colors.white12,
+            alignment: Alignment.center,
+            child: Text(
+              clampedLevel.toString(),
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class RandomHeroCard extends StatefulWidget {
   const RandomHeroCard({
     required this.heroes,
     required this.selectedHero,
-    required this.holdProgress,
     required this.onTap,
-    required this.onHoldStart,
-    required this.onHoldEnd,
+    required this.onStart,
     super.key,
   });
 
   final List<HeroType> heroes;
   final HeroType? selectedHero;
-  final double holdProgress;
   final VoidCallback onTap;
-  final VoidCallback onHoldStart;
-  final VoidCallback onHoldEnd;
+  final VoidCallback? onStart;
 
   @override
   State<RandomHeroCard> createState() => _RandomHeroCardState();
@@ -292,17 +439,19 @@ class _RandomHeroCardState extends State<RandomHeroCard>
   @override
   Widget build(BuildContext context) {
     final selectedHero = widget.selectedHero;
+    final hasPool = widget.heroes.isNotEmpty;
     return InkWell(
-      onTap: widget.onTap,
-      onTapDown: (_) => widget.onHoldStart(),
-      onTapUp: (_) => widget.onHoldEnd(),
-      onTapCancel: widget.onHoldEnd,
+      onTap: hasPool ? widget.onTap : null,
+      onDoubleTap: widget.onStart,
       borderRadius: BorderRadius.circular(8),
       child: Container(
         height: 280,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white30),
+          border: Border.all(
+            color: selectedHero == null ? Colors.white30 : selectedHero.color,
+            width: selectedHero == null ? 1 : 4,
+          ),
           color: const Color(0xff121212),
         ),
         child: ClipRRect(
@@ -310,17 +459,25 @@ class _RandomHeroCardState extends State<RandomHeroCard>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (selectedHero == null)
+              if (!hasPool)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Text(
+                      'Add heroes to your collection first',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                )
+              else if (selectedHero == null)
                 AnimatedBuilder(
                   animation: _controller,
                   builder: (context, child) {
-                    final heroes = widget.heroes.isEmpty
-                        ? HeroType.values
-                        : widget.heroes;
                     final heroIndex =
-                        (_controller.value * heroes.length).floor() %
-                        heroes.length;
-                    final hero = heroes[heroIndex];
+                        (_controller.value * widget.heroes.length).floor() %
+                        widget.heroes.length;
+                    final hero = widget.heroes[heroIndex];
                     return _RandomHeroFullArt(hero: hero);
                   },
                 )
@@ -335,24 +492,6 @@ class _RandomHeroCardState extends State<RandomHeroCard>
                   ),
                 ),
               ),
-              if (widget.holdProgress > 0)
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(7),
-                      border: Border.all(color: Colors.white, width: 3),
-                    ),
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: LinearProgressIndicator(
-                        minHeight: 8,
-                        value: widget.holdProgress,
-                        backgroundColor: Colors.black54,
-                        color: selectedHero?.color ?? heroAccent,
-                      ),
-                    ),
-                  ),
-                ),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
@@ -375,6 +514,7 @@ class _RandomHeroCardState extends State<RandomHeroCard>
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 21,
+                          color: Colors.white,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -408,31 +548,51 @@ class _RandomHeroFullArt extends StatelessWidget {
   }
 }
 
+class _HeroComplexityBadge extends StatelessWidget {
+  const _HeroComplexityBadge({required this.hero});
+
+  final HeroType hero;
+
+  @override
+  Widget build(BuildContext context) {
+    final image = Image.asset(
+      hero.complexityAsset,
+      height: 24,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => Text(
+        'Complexity ${hero.complexity}',
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+      ),
+    );
+    return Semantics(label: 'Complexity ${hero.complexity}', child: image);
+  }
+}
+
 class HeroCard extends StatelessWidget {
   const HeroCard({
     required this.hero,
     required this.selected,
-    required this.holdProgress,
+    required this.owned,
     required this.onTap,
-    required this.onHoldStart,
-    required this.onHoldEnd,
+    required this.onDoubleTap,
+    required this.onStart,
+    required this.onToggleOwned,
     super.key,
   });
 
   final HeroType hero;
   final bool selected;
-  final double holdProgress;
+  final bool owned;
   final VoidCallback onTap;
-  final VoidCallback onHoldStart;
-  final VoidCallback onHoldEnd;
+  final VoidCallback? onDoubleTap;
+  final VoidCallback? onStart;
+  final VoidCallback onToggleOwned;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      onTapDown: (_) => onHoldStart(),
-      onTapUp: (_) => onHoldEnd(),
-      onTapCancel: onHoldEnd,
+      onDoubleTap: onDoubleTap,
       borderRadius: BorderRadius.circular(8),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
@@ -449,12 +609,38 @@ class HeroCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Transform.scale(
-                scale: hero.imageScale,
-                child: Image.asset(
-                  hero.asset,
-                  fit: BoxFit.cover,
-                  alignment: hero.imageAlignment,
+              ColorFiltered(
+                colorFilter: owned
+                    ? const ColorFilter.mode(Colors.transparent, BlendMode.dst)
+                    : const ColorFilter.matrix(<double>[
+                        0.2126,
+                        0.7152,
+                        0.0722,
+                        0,
+                        0,
+                        0.2126,
+                        0.7152,
+                        0.0722,
+                        0,
+                        0,
+                        0.2126,
+                        0.7152,
+                        0.0722,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                      ]),
+                child: Transform.scale(
+                  scale: hero.imageScale,
+                  child: Image.asset(
+                    hero.asset,
+                    fit: BoxFit.cover,
+                    alignment: hero.imageAlignment,
+                  ),
                 ),
               ),
               const DecoratedBox(
@@ -466,59 +652,45 @@ class HeroCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if (holdProgress > 0)
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        width: 3,
-                      ),
-                    ),
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: LinearProgressIndicator(
-                        minHeight: 8,
-                        value: holdProgress,
-                        backgroundColor: Colors.black54,
-                        color: hero.color,
-                      ),
-                    ),
-                  ),
-                ),
-              if (holdProgress > 0)
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.68),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: hero.color),
-                    ),
-                    child: const Text(
-                      'Hold to confirm',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                      ),
+              Positioned(
+                top: 8,
+                left: 8,
+                right: 58,
+                child: Center(child: _HeroComplexityBadge(hero: hero)),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton.filledTonal(
+                  tooltip: owned ? 'In my collection' : 'Not in my collection',
+                  onPressed: onToggleOwned,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: 0.58),
+                    foregroundColor: owned ? Colors.white : Colors.white54,
+                    side: BorderSide(
+                      color: owned ? Colors.white : Colors.white24,
                     ),
                   ),
+                  icon: Icon(owned ? Icons.bookmark : Icons.bookmark_border),
                 ),
+              ),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Text(
-                    hero.label,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        hero.label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 21,
+                          color: selected ? hero.color : Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -636,7 +808,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
       appBar: AppBar(title: const Text('Survival setup')),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 92),
           children: [
             InfoCard(
               child: Row(

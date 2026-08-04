@@ -135,11 +135,11 @@ class _FightPageState extends State<FightPage> {
   late CombatPhase _phase;
   bool _upkeepApplied = false;
   bool _heroUpkeepApplied = false;
-  List<String> _upkeepNotes = [];
   bool _specialAttackReady = false;
   bool _specialAttackMode = false;
-  bool _aiMode = true;
+  final bool _aiMode = true;
   bool _showManualExtraDicePhase = false;
+  bool _developerMode = AppSettings.instance.developerMode;
   bool _gameOverDialogShown = false;
   int _battleAttackValue = 0;
   int _battleDefenseValue = 0;
@@ -218,6 +218,7 @@ class _FightPageState extends State<FightPage> {
   @override
   void initState() {
     super.initState();
+    AppSettings.instance.addListener(_handleAppSettingsChanged);
     for (var i = 0; i < 6; i++) {
       _dice.add(GameDie(id: i));
     }
@@ -233,8 +234,16 @@ class _FightPageState extends State<FightPage> {
 
   @override
   void dispose() {
+    AppSettings.instance.removeListener(_handleAppSettingsChanged);
     _combatScrollController.dispose();
     super.dispose();
+  }
+
+  void _handleAppSettingsChanged() {
+    if (!mounted) {
+      return;
+    }
+    setState(() => _developerMode = AppSettings.instance.developerMode);
   }
 
   @override
@@ -312,6 +321,7 @@ class _FightPageState extends State<FightPage> {
                         enemy: enemy,
                         phase: _phase,
                         aiMode: _aiMode,
+                        developerMode: _developerMode,
                         onDetails: _openAdventureDetails,
                         onAbandon: _openPauseDialog,
                         onExport: _openCombatExport,
@@ -320,15 +330,6 @@ class _FightPageState extends State<FightPage> {
                         onUndo: _undoStep,
                         attackKey: _attackRulesKey,
                         defenseKey: _defenseRulesKey,
-                        onAiModeChanged: (value) {
-                          setState(() {
-                            _aiMode = value;
-                            _configureDiceForPhase(
-                              autoRollAttack:
-                                  _aiMode && _phase == CombatPhase.minionAttack,
-                            );
-                          });
-                        },
                       ),
                       if (_aiMode) ...[
                         const SizedBox(height: 12),
@@ -2463,6 +2464,8 @@ class _FightPageState extends State<FightPage> {
       rewardRank: profile.rewardRank ?? profile.rank,
       rewardRanks: profile.rewardRanks,
       passives: profile.passives,
+      defenseDisplayRows: profile.defenseDisplayRows,
+      passiveDisplayRows: profile.passiveDisplayRows,
       branch: previous.branch,
       step: previous.step,
     )..current = true;
@@ -2570,7 +2573,6 @@ class _FightPageState extends State<FightPage> {
       }
       _lastBattleOutcomeMessage = _isViseerNode(enemy) ? passiveLog : '';
       widget.onChanged();
-      _upkeepNotes = outcome.notes;
     });
     if (enemy.health <= 0) {
       if (!_isNaraxus) {
@@ -3430,7 +3432,7 @@ class EnemyRulesPanel extends StatefulWidget {
     required this.enemy,
     required this.phase,
     required this.aiMode,
-    required this.onAiModeChanged,
+    required this.developerMode,
     required this.onDetails,
     required this.onAbandon,
     required this.onExport,
@@ -3445,7 +3447,7 @@ class EnemyRulesPanel extends StatefulWidget {
   final EnemyNode enemy;
   final CombatPhase phase;
   final bool aiMode;
-  final ValueChanged<bool> onAiModeChanged;
+  final bool developerMode;
   final VoidCallback onDetails;
   final VoidCallback onAbandon;
   final VoidCallback onExport;
@@ -3463,6 +3465,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
   bool _showAttack = false;
   bool _showDefense = false;
   bool _showPassive = false;
+
   /// Preview override for the Druid forms. null = use the real active form.
   /// Tapping a form chip flips this so the attack/defense text shows the other
   /// form for inspection, without changing the actual active form.
@@ -3472,8 +3475,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
 
   bool get _isDruid => enemy.profileKey == 'vert-vert-014';
   bool get _druidRealBearForm => _isDruidBearForm(enemy);
-  bool get _druidPreviewBearForm =>
-      _druidFormPreview ?? _druidRealBearForm;
+  bool get _druidPreviewBearForm => _druidFormPreview ?? _druidRealBearForm;
 
   @override
   void initState() {
@@ -3579,10 +3581,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                 ),
               ],
             )
-          : MinionDefenseSummary(
-              enemy: enemy,
-              previewBearForm: null,
-            ),
+          : MinionDefenseSummary(enemy: enemy, previewBearForm: null),
     );
 
     return Column(
@@ -3646,8 +3645,14 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                     onPressed: () => _openSettings(context),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.black.withValues(alpha: 0.22),
-                      foregroundColor: Colors.white,
-                      side: BorderSide(color: panelBorderGrey),
+                      foregroundColor: widget.developerMode
+                          ? Colors.orangeAccent
+                          : Colors.white,
+                      side: BorderSide(
+                        color: widget.developerMode
+                            ? Colors.orangeAccent
+                            : panelBorderGrey,
+                      ),
                     ),
                     icon: const Icon(Icons.settings),
                   ),
@@ -3662,7 +3667,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
           asset: 'assets/defense_background_feline_shadow.png',
           child: defenseContent,
         ),
-        if (_displayedPassives.isNotEmpty)
+        if (_hasPassiveContent)
           _RulesBackgroundBand(
             asset: 'assets/passive_background_umbra.png',
             child: _CollapsibleRulesLine(
@@ -3680,13 +3685,21 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (final passive in _displayedPassives)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: _PassiveNote(
-                        child: _PassiveLine(passive: passive),
+                  if (enemy.passiveDisplayRows.isNotEmpty)
+                    ...enemy.passiveDisplayRows.map(
+                      (row) => _ExtraRollDisplayRow(
+                        row: row,
+                        color: enemy.rank.color,
                       ),
-                    ),
+                    )
+                  else
+                    for (final passive in _displayedPassives)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: _PassiveNote(
+                          child: _PassiveLine(passive: passive),
+                        ),
+                      ),
                 ],
               ),
             ),
@@ -3694,6 +3707,9 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
       ],
     );
   }
+
+  bool get _hasPassiveContent =>
+      enemy.passiveDisplayRows.isNotEmpty || _displayedPassives.isNotEmpty;
 
   /// Passives rendered by the generic zone. Profiles that already have a
   /// dedicated hard-coded passive view inside [MinionAttackSummary] are
@@ -3774,7 +3790,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                     widget.onAbandon();
                   },
                 ),
-                if (enemy.profileKey != 'naraxus') ...[
+                if (widget.developerMode && enemy.profileKey != 'naraxus') ...[
                   const SizedBox(height: 12),
                   const Text(
                     'Restart recipe combat',
@@ -3829,23 +3845,37 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                   ),
                 ],
                 const SizedBox(height: 14),
-                Row(
-                  children: [
-                    const SizedBox(
-                      width: 112,
-                      child: Text(
-                        'Control',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+                GestureDetector(
+                  onLongPress: () async {
+                    await AppSettings.instance.setDeveloperMode(
+                      !AppSettings.instance.developerMode,
+                    );
+                    if (context.mounted) {
+                      setSheetState(() {});
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: widget.developerMode
+                            ? Colors.orangeAccent
+                            : Colors.white24,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$appVersionLabel${widget.developerMode ? ' - Developer mode' : ''}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: widget.developerMode
+                            ? Colors.orangeAccent
+                            : Colors.white70,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                    Expanded(
-                      child: _AiModeSwitch(
-                        enabled: widget.aiMode,
-                        color: Colors.white,
-                        onChanged: widget.onAiModeChanged,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -3995,35 +4025,6 @@ class _SettingsActionTile extends StatelessWidget {
       leading: Icon(icon, color: color),
       title: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
       onTap: onTap,
-    );
-  }
-}
-
-class _AiModeSwitch extends StatelessWidget {
-  const _AiModeSwitch({
-    required this.enabled,
-    required this.color,
-    required this.onChanged,
-  });
-
-  final bool enabled;
-  final Color color;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SegmentedButton<bool>(
-      showSelectedIcon: false,
-      style: ButtonStyle(
-        visualDensity: VisualDensity.compact,
-        side: WidgetStatePropertyAll(BorderSide(color: color)),
-      ),
-      segments: const [
-        ButtonSegment(value: true, label: Text('AI')),
-        ButtonSegment(value: false, label: Text('Manual')),
-      ],
-      selected: {enabled},
-      onSelectionChanged: (values) => onChanged(values.first),
     );
   }
 }
@@ -4238,17 +4239,23 @@ class MinionAttackSummary extends StatelessWidget {
   });
 
   final EnemyNode enemy;
+
   /// When non-null, forces the Druid attack display to this form regardless of
   /// the active alterations. Only meaningful for the Druid (vert-vert-014).
   final bool? previewBearForm;
 
   bool get _druidBear =>
-      previewBearForm ?? (enemy.profileKey == 'vert-vert-014'
-          ? _isDruidBearForm(enemy)
-          : false);
+      previewBearForm ??
+      (enemy.profileKey == 'vert-vert-014' ? _isDruidBearForm(enemy) : false);
 
   @override
   Widget build(BuildContext context) {
+    if (enemy.attackPlan.displayRows.isNotEmpty) {
+      return _DisplayRowsColumn(
+        rows: enemy.attackPlan.displayRows,
+        color: enemy.rank.color,
+      );
+    }
     if (enemy.profileKey == 'viseer') {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4777,72 +4784,56 @@ class MinionAttackSummary extends StatelessWidget {
     final hints = <Widget>[];
     final text = enemy.attacks.join(' ').toLowerCase();
     if (text.contains('riposte')) {
-      hints.add(_hintTokenLine(
-        'If 4 identical symbols:',
-        'Back Strike',
-        enemy.rank.color,
-      ));
+      hints.add(
+        _hintTokenLine(
+          'If 4 identical symbols:',
+          'Back Strike',
+          enemy.rank.color,
+        ),
+      );
     }
     if (text.contains('silence')) {
-      hints.add(_hintTokenLine(
-        'If 3 identical values:',
-        'Silence',
-        enemy.rank.color,
-      ));
+      hints.add(
+        _hintTokenLine('If 3 identical values:', 'Silence', enemy.rank.color),
+      );
     }
     if (text.contains('hémorragie')) {
-      hints.add(_hintTokenLine(
-        'If 3 identical values:',
-        'Bleed',
-        enemy.rank.color,
-      ));
+      hints.add(
+        _hintTokenLine('If 3 identical values:', 'Bleed', enemy.rank.color),
+      );
     }
     if (text.contains('ronces') && enemy.profileKey != 'elfe-du-chaos') {
-      hints.add(_hintTokenLine(
-        'If large suite:',
-        'Barbed Vine',
-        enemy.rank.color,
-      ));
+      hints.add(
+        _hintTokenLine('If large suite:', 'Barbed Vine', enemy.rank.color),
+      );
     }
     if (text.contains('poison')) {
-      hints.add(_hintTokenLine(
-        'If condition met:',
-        'Poison',
-        enemy.rank.color,
-      ));
+      hints.add(
+        _hintTokenLine('If condition met:', 'Poison', enemy.rank.color),
+      );
     }
     if (text.contains('parasite')) {
-      hints.add(_hintTokenLine(
-        'If condition met:',
-        'Parasite',
-        enemy.rank.color,
-      ));
+      hints.add(
+        _hintTokenLine('If condition met:', 'Parasite', enemy.rank.color),
+      );
     }
     if ((text.contains('a terre') || text.contains('à terre')) &&
         enemy.profileKey != 'vert-vert-020') {
-      hints.add(_hintTokenLine(
-        'If condition met:',
-        'Knockdown',
-        enemy.rank.color,
-      ));
+      hints.add(
+        _hintTokenLine('If condition met:', 'Knockdown', enemy.rank.color),
+      );
     }
     if ((text.contains('enchevetrement') || text.contains('enchevêtrement')) &&
         enemy.profileKey != 'vert-vert-018') {
-      hints.add(_hintTokenLine(
-        'If condition met:',
-        'Entangle',
-        enemy.rank.color,
-      ));
+      hints.add(
+        _hintTokenLine('If condition met:', 'Entangle', enemy.rank.color),
+      );
     }
     return hints;
   }
 }
 
-Widget _hintTokenLine(
-  String prefix,
-  String tokenLabel,
-  Color color,
-) {
+Widget _hintTokenLine(String prefix, String tokenLabel, Color color) {
   return Padding(
     padding: const EdgeInsets.only(top: 4),
     child: Align(
@@ -4851,7 +4842,10 @@ Widget _hintTokenLine(
         spacing: 6,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text(prefix, style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc))),
+          Text(
+            prefix,
+            style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
+          ),
           TokenBadge(label: tokenLabel, color: color),
         ],
       ),
@@ -5187,19 +5181,23 @@ class MinionDefenseSummary extends StatelessWidget {
   });
 
   final EnemyNode enemy;
+
   /// When non-null, forces the Druid defense display to this form regardless of
   /// the active alterations. Only meaningful for the Druid (vert-vert-014).
   final bool? previewBearForm;
 
   @override
   Widget build(BuildContext context) {
+    if (enemy.defenseDisplayRows.isNotEmpty) {
+      return _DisplayRowsColumn(
+        rows: enemy.defenseDisplayRows,
+        color: enemy.rank.color,
+      );
+    }
     if (enemy.profileKey == 'naraxus') {
       return const _NaxarusDefenseGrid();
     }
-    final lines = _defenseEffectLines(
-      enemy,
-      previewBearForm: previewBearForm,
-    );
+    final lines = _defenseEffectLines(enemy, previewBearForm: previewBearForm);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: lines.isEmpty
@@ -5272,10 +5270,7 @@ class _NaxarusDefenseCell extends StatelessWidget {
   }
 }
 
-List<Widget> _defenseEffectLines(
-  EnemyNode enemy, {
-  bool? previewBearForm,
-}) {
+List<Widget> _defenseEffectLines(EnemyNode enemy, {bool? previewBearForm}) {
   final text = enemy.defense.toLowerCase();
   final lines = <Widget>[];
 
@@ -5389,8 +5384,7 @@ List<Widget> _defenseEffectLines(
       ]);
       return lines;
     case 'vert-vert-014':
-      final druidBear =
-          previewBearForm ?? _isDruidBearForm(enemy);
+      final druidBear = previewBearForm ?? _isDruidBearForm(enemy);
       if (druidBear) {
         symbol(const SymbolGoal(yellow: 1), const [
           DamageBadge(value: 1, imparable: true),
@@ -7926,37 +7920,46 @@ class _ExtraRollAttackSummary extends StatelessWidget {
     // L1: success dice + direct result.
     final result = <Widget>[];
     if (directDamage != null) {
-      result.add(DamageBadge(
-        value: directDamage!.value,
-        imparable: directUndefendable,
-      ));
+      result.add(
+        DamageBadge(value: directDamage!.value, imparable: directUndefendable),
+      );
     }
     children.add(_AttackResultLine(goal: goal, result: result));
 
-    // L2: roll instruction with the die image inlined where `{die}` appears.
-    if (extraRoll.rollText.isNotEmpty) {
-      children.add(Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: _RollTextWithDie(text: extraRoll.rollText),
-      ));
-    }
+    if (extraRoll.displayRows.isNotEmpty) {
+      for (final row in extraRoll.displayRows) {
+        children.add(_ExtraRollDisplayRow(row: row, color: color));
+      }
+    } else {
+      // L2: roll instruction with the die image inlined where `{die}` appears.
+      if (extraRoll.rollText.isNotEmpty) {
+        children.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: _RollTextWithDie(text: extraRoll.rollText),
+          ),
+        );
+      }
 
-    // L3-5: one line per outcome.
-    for (final outcome in extraRoll.outcomes) {
-      children.add(_buildOutcomeLine(outcome));
-    }
+      // L3-5: one line per outcome.
+      for (final outcome in extraRoll.outcomes) {
+        children.add(_buildOutcomeLine(outcome));
+      }
 
-    // L6: final effect note.
-    final finalText = extraRoll.finalText;
-    if (finalText != null && finalText.isNotEmpty) {
-      children.add(const SizedBox(height: 6));
-      children.add(_PassiveNote(
-        child: InlineTokenText(
-          finalText,
-          color: color,
-          style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
-        ),
-      ));
+      // L6: final effect note.
+      final finalText = extraRoll.finalText;
+      if (finalText != null && finalText.isNotEmpty) {
+        children.add(const SizedBox(height: 6));
+        children.add(
+          _PassiveNote(
+            child: InlineTokenText(
+              finalText,
+              color: color,
+              style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
+            ),
+          ),
+        );
+      }
     }
 
     // Appended passive note (kept from the legacy branch, e.g. Roc).
@@ -7977,17 +7980,18 @@ class _ExtraRollAttackSummary extends StatelessWidget {
     // Label text (may contain token names → InlineTokenText).
     final label = outcome.label;
     if (label != null && label.isNotEmpty) {
-      badges.add(InlineTokenText(
-        label,
-        color: color,
-        style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
-      ));
+      badges.add(
+        InlineTokenText(
+          label,
+          color: color,
+          style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
+        ),
+      );
     }
     if (outcome.damage > 0) {
-      badges.add(DamageBadge(
-        value: outcome.damage,
-        imparable: outcome.undefendable,
-      ));
+      badges.add(
+        DamageBadge(value: outcome.damage, imparable: outcome.undefendable),
+      );
     }
     if (outcome.stealHp > 0) {
       badges.add(LifeStealBadge(value: outcome.stealHp, color: color));
@@ -8202,6 +8206,57 @@ class _SuiteEffectLine extends StatelessWidget {
   }
 }
 
+class _DisplayRowsColumn extends StatelessWidget {
+  const _DisplayRowsColumn({required this.rows, required this.color});
+
+  final List<DisplayRow> rows;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final row in rows) _ExtraRollDisplayRow(row: row, color: color),
+      ],
+    );
+  }
+}
+
+class _ExtraRollDisplayRow extends StatelessWidget {
+  const _ExtraRollDisplayRow({required this.row, required this.color});
+
+  final DisplayRow row;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final alignment = switch (row.align) {
+      'center' || 'centre' => WrapAlignment.center,
+      'right' => WrapAlignment.end,
+      _ => WrapAlignment.start,
+    };
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Wrap(
+        spacing: 5,
+        runSpacing: 4,
+        alignment: alignment,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: row.items
+            .map(
+              (item) => InlineTokenText(
+                item,
+                color: color,
+                style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
+              ),
+            )
+            .toList(growable: false),
+      ),
+    );
+  }
+}
+
 class _AttackResultLine extends StatelessWidget {
   const _AttackResultLine({required this.goal, required this.result});
 
@@ -8265,6 +8320,12 @@ class InlineTokenText extends StatelessWidget {
   }
 }
 
+/// Regex for visual effect shortcodes inside authored text.
+final RegExp _visualShortcodeRegex = RegExp(
+  r'\{(damage|dmg|undef|imparable|prevent|block|heal):([^}]+)\}',
+  caseSensitive: false,
+);
+
 /// Regex for the explicit `{token:Name}` shortcode. The capture group holds
 /// the raw token name as authored in JSON (it may include spaces, accents or
 /// digits, e.g. "Sort 6", "Première Frappe").
@@ -8283,12 +8344,9 @@ List<StatusTokenRule> get _inlineTokenRules =>
 
 /// Builds the inline span list for [text]. Returns a single [TextSpan] when
 /// no token is found, otherwise alternates [TextSpan] and [WidgetSpan].
-List<InlineSpan> _buildSpans(
-  String text,
-  Color color,
-  TextStyle? style,
-) {
-  final effective = style ?? const TextStyle(fontSize: 12, color: Color(0xffcbd8cc));
+List<InlineSpan> _buildSpans(String text, Color color, TextStyle? style) {
+  final effective =
+      style ?? const TextStyle(fontSize: 12, color: Color(0xffcbd8cc));
   if (text.isEmpty) {
     return <InlineSpan>[TextSpan(text: text, style: effective)];
   }
@@ -8298,8 +8356,68 @@ List<InlineSpan> _buildSpans(
   // that is NOT already covered by a shortcode.
   final matches = <_TokenMatch>[];
 
+  bool overlaps(int start, int end) {
+    for (final m in matches) {
+      if (start < m.end && end > m.start) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void scanVisualShortcodes() {
+    for (final match in _visualShortcodeRegex.allMatches(text)) {
+      final tag = match.group(1)!.toLowerCase();
+      final rawValue = match.group(2)!.trim();
+      if (tag == 'die' || tag == 'dice') {
+        final normalized = rawValue.toLowerCase();
+        final Widget widget = switch (normalized) {
+          'any' || 'd6' => const _CubeIcon(size: 24),
+          'white' || 'blanc' => Transform.scale(
+            scale: 0.72,
+            child: DieSymbolMark(symbol: DieSymbol.white),
+          ),
+          'orange' || 'yellow' || 'jaune' => Transform.scale(
+            scale: 0.72,
+            child: DieSymbolMark(symbol: DieSymbol.yellow),
+          ),
+          'red' || 'rouge' => Transform.scale(
+            scale: 0.72,
+            child: DieSymbolMark(symbol: DieSymbol.red),
+          ),
+          _ => Text(rawValue),
+        };
+        matches.add(_TokenMatch(match.start, match.end, null, null, widget));
+        continue;
+      }
+      final amount = int.tryParse(rawValue);
+      if (amount == null) {
+        matches.add(_TokenMatch(match.start, match.end, null, rawValue));
+        continue;
+      }
+      matches.add(
+        _TokenMatch(
+          match.start,
+          match.end,
+          null,
+          null,
+          _InlineChatBadge(
+            label: amount.toString(),
+            color: switch (tag) {
+              'undef' || 'imparable' => Colors.redAccent,
+              'prevent' || 'block' => Colors.blueAccent,
+              'heal' => Colors.greenAccent,
+              _ => Colors.white,
+            },
+          ),
+        ),
+      );
+    }
+  }
+
   void scanShortcodes() {
     for (final match in _tokenShortcodeRegex.allMatches(text)) {
+      if (overlaps(match.start, match.end)) continue;
       final raw = match.group(1)!.trim();
       final rule = TokenCatalogRepository.byLabel(raw);
       if (rule == null || rule.imageAsset == null || !rule.editorVisible) {
@@ -8310,15 +8428,6 @@ List<InlineSpan> _buildSpans(
       }
       matches.add(_TokenMatch(match.start, match.end, rule, rule.label));
     }
-  }
-
-  bool overlaps(int start, int end) {
-    for (final m in matches) {
-      if (start < m.end && end > m.start) {
-        return true;
-      }
-    }
-    return false;
   }
 
   void scanBareLabels() {
@@ -8343,10 +8452,9 @@ List<InlineSpan> _buildSpans(
           // Word-boundary: previous char must not be a letter/digit and the
           // next char must not be a letter (digit is allowed so "Sort 6" can
           // be followed by punctuation, but "Sort" alone stops at "Sortie").
-          final prevOk = idx == 0 ||
-              !_isWordChar(lower.codeUnitAt(idx - 1));
-          final nextOk = end == text.length ||
-              !_isLetterChar(lower.codeUnitAt(end));
+          final prevOk = idx == 0 || !_isWordChar(lower.codeUnitAt(idx - 1));
+          final nextOk =
+              end == text.length || !_isLetterChar(lower.codeUnitAt(end));
           if (prevOk && nextOk && !overlaps(idx, end)) {
             matches.add(_TokenMatch(idx, end, rule, rule.label));
           }
@@ -8356,6 +8464,7 @@ List<InlineSpan> _buildSpans(
     }
   }
 
+  scanVisualShortcodes();
   scanShortcodes();
   scanBareLabels();
   matches.sort((a, b) => a.start.compareTo(b.start));
@@ -8368,9 +8477,15 @@ List<InlineSpan> _buildSpans(
   var cursor = 0;
   for (final m in matches) {
     if (m.start > cursor) {
-      spans.add(TextSpan(text: text.substring(cursor, m.start), style: effective));
+      spans.add(
+        TextSpan(text: text.substring(cursor, m.start), style: effective),
+      );
     }
-    if (m.rule != null) {
+    if (m.widget != null) {
+      spans.add(
+        WidgetSpan(alignment: PlaceholderAlignment.middle, child: m.widget!),
+      );
+    } else if (m.rule != null) {
       spans.add(
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
@@ -8409,12 +8524,19 @@ bool _isDigitChar(int codeUnit) {
 }
 
 class _TokenMatch {
-  const _TokenMatch(this.start, this.end, this.rule, this.fallback);
+  const _TokenMatch(
+    this.start,
+    this.end,
+    this.rule,
+    this.fallback, [
+    this.widget,
+  ]);
 
   final int start;
   final int end;
   final StatusTokenRule? rule;
   final String? fallback;
+  final Widget? widget;
 }
 
 class _PassiveNote extends StatelessWidget {
@@ -8471,7 +8593,9 @@ class _PassiveLine extends StatelessWidget {
         );
       }
       if (effect.stealHp > 0) {
-        badges.add(LifeStealBadge(value: effect.stealHp, color: Colors.redAccent));
+        badges.add(
+          LifeStealBadge(value: effect.stealHp, color: Colors.redAccent),
+        );
       }
       if (effect.heal > 0) {
         badges.add(

@@ -44,6 +44,8 @@ class EnemyProfile {
     this.rewardRank,
     this.rewardRanks = const [],
     this.passives = const [],
+    this.defenseDisplayRows = const [],
+    this.passiveDisplayRows = const [],
   });
 
   final String key;
@@ -67,12 +69,23 @@ class EnemyProfile {
   /// the source of truth; the UI renders these when no dedicated hard-coded
   /// view exists for the profile.
   final List<MinionPassive> passives;
+
+  /// Optional authored defense display rows parsed from defensePlan.displayRows.
+  final List<DisplayRow> defenseDisplayRows;
+
+  /// Optional authored passive display rows parsed from root passiveDisplayRows.
+  final List<DisplayRow> passiveDisplayRows;
 }
 
 enum MinionAttackStyle { symbols, suite, none }
 
 class SymbolGoal {
-  const SymbolGoal({this.white = 0, this.yellow = 0, this.red = 0, this.effect});
+  const SymbolGoal({
+    this.white = 0,
+    this.yellow = 0,
+    this.red = 0,
+    this.effect,
+  });
 
   final int white;
   final int yellow;
@@ -181,6 +194,7 @@ class MinionExtraRoll {
     required this.rollText,
     this.outcomes = const [],
     this.finalText,
+    this.displayRows = const [],
   });
 
   /// Number of additional dice to roll.
@@ -201,18 +215,31 @@ class MinionExtraRoll {
   /// Optional line-6 final effect text computed after the roll (e.g.
   /// "Puis inflige 7 dégâts + nb Chaos."). Rendered via [InlineTokenText].
   final String? finalText;
+
+  /// Optional authored rows for fine display control. When present, these rows
+  /// replace the default roll/outcome/final text block for this extra roll.
+  final List<DisplayRow> displayRows;
+}
+
+class DisplayRow {
+  const DisplayRow({this.align = 'left', this.items = const []});
+
+  final String align;
+  final List<String> items;
 }
 
 class MinionAttackPlan {
-  const MinionAttackPlan.symbols(this.goals)
+  const MinionAttackPlan.symbols(this.goals, {this.displayRows = const []})
     : style = MinionAttackStyle.symbols,
       suiteEffects = const {};
 
-  const MinionAttackPlan.suite({this.suiteEffects = const {}})
-    : style = MinionAttackStyle.suite,
-      goals = const [];
+  const MinionAttackPlan.suite({
+    this.suiteEffects = const {},
+    this.displayRows = const [],
+  }) : style = MinionAttackStyle.suite,
+       goals = const [];
 
-  const MinionAttackPlan.none()
+  const MinionAttackPlan.none({this.displayRows = const []})
     : style = MinionAttackStyle.none,
       goals = const [],
       suiteEffects = const {};
@@ -223,6 +250,10 @@ class MinionAttackPlan {
   /// Effects per suite length (3/4/5) for suite-style plans, parsed from the
   /// JSON `attackPlan.actions` array. Empty for symbols/none plans.
   final Map<int, SymbolGoalEffect> suiteEffects;
+
+  /// Optional authored display rows. When present, combat UI uses these rows
+  /// before falling back to the generated symbol/suite summary.
+  final List<DisplayRow> displayRows;
 }
 
 /// A passive ability attached to an enemy profile.
@@ -234,11 +265,7 @@ class MinionAttackPlan {
 /// fields used by the attack/defense plans so the engine can apply it
 /// deterministically without parsing the text.
 class MinionPassive {
-  const MinionPassive({
-    required this.text,
-    this.timing,
-    this.effect,
-  });
+  const MinionPassive({required this.text, this.timing, this.effect});
 
   factory MinionPassive.fromJson(Map<String, dynamic> json) {
     final text = (json['text'] as String?)?.trim() ?? '';

@@ -46,9 +46,19 @@ http
     if (urlPath.startsWith(`${basePath}/`)) {
       urlPath = urlPath.slice(basePath.length);
     }
-    let filePath = path.join(root, urlPath);
+    const relativePath = urlPath.replace(/^\/+/, '');
+    let filePath = path.join(root, relativePath);
     if (urlPath.endsWith('/')) {
-      filePath = path.join(root, 'index.html');
+      const directoryIndex = path.join(root, relativePath, 'index.html');
+      filePath = fs.existsSync(directoryIndex)
+        ? directoryIndex
+        : path.join(root, 'index.html');
+    }
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+      const normalizedPath = urlPath.endsWith('/') ? urlPath : `${urlPath}/`;
+      response.writeHead(302, { Location: `${basePath}${normalizedPath}` });
+      response.end();
+      return;
     }
     if (!filePath.startsWith(root)) {
       response.writeHead(403);
