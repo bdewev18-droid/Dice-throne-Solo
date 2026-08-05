@@ -4392,7 +4392,7 @@ class MinionAttackSummary extends StatelessWidget {
       previewBearForm ??
       (enemy.profileKey == 'vert-vert-014' ? _isDruidBearForm(enemy) : false);
 
-  @override
+ @override
   Widget build(BuildContext context) {
     // 1. On prépare une liste qui va contenir TOUTES les lignes à afficher
     final List<String> allRowsToDisplay = [];
@@ -4405,21 +4405,18 @@ class MinionAttackSummary extends StatelessWidget {
     // 3. On ajoute les lignes des règles conditionnelles
     if (enemy.attackPlan.conditionalRules.isNotEmpty) {
       for (final rule in enemy.attackPlan.conditionalRules) {
-        // Ajoute les displayRows de chaque règle conditionnelle
-        // (Si rule.displayRows est une liste, utilise .addAll() au lieu de .add())
-        allRowsToDisplay.addAll(rule.displayRows); 
+        allRowsToDisplay.addAll(rule.displayRows);
       }
     }
 
-    // 4. On envoie TOUT au composant magique qui parse les dés
+    // 4. Si on a trouvé des lignes génériques à afficher, on les affiche et on s'arrête là.
+    // C'est le nouveau comportement standard (issu du JSON et du Back Office).
     if (allRowsToDisplay.isNotEmpty) {
       return _DisplayRowsColumn(
         rows: allRowsToDisplay,
         color: enemy.rank.color,
       );
     }
-
-    return const SizedBox.shrink(); 
     if (enemy.profileKey == 'viseer') {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
