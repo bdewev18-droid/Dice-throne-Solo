@@ -4394,8 +4394,8 @@ class MinionAttackSummary extends StatelessWidget {
 
  @override
   Widget build(BuildContext context) {
-    // 1. On prépare une liste qui va contenir TOUTES les lignes à afficher
-    final List<String> allRowsToDisplay = [];
+    // 1. CORRECTION ICI : On utilise DisplayRow au lieu de String
+    final List<DisplayRow> allRowsToDisplay = [];
 
     // 2. On ajoute les lignes d'attaque classiques
     if (enemy.attackPlan.displayRows.isNotEmpty) {
@@ -4410,7 +4410,6 @@ class MinionAttackSummary extends StatelessWidget {
     }
 
     // 4. Si on a trouvé des lignes génériques à afficher, on les affiche et on s'arrête là.
-    // C'est le nouveau comportement standard (issu du JSON et du Back Office).
     if (allRowsToDisplay.isNotEmpty) {
       return _DisplayRowsColumn(
         rows: allRowsToDisplay,
