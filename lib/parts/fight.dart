@@ -4394,12 +4394,32 @@ class MinionAttackSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 1. On prépare une liste qui va contenir TOUTES les lignes à afficher
+    final List<String> allRowsToDisplay = [];
+
+    // 2. On ajoute les lignes d'attaque classiques
     if (enemy.attackPlan.displayRows.isNotEmpty) {
+      allRowsToDisplay.addAll(enemy.attackPlan.displayRows);
+    }
+
+    // 3. On ajoute les lignes des règles conditionnelles
+    if (enemy.attackPlan.conditionalRules.isNotEmpty) {
+      for (final rule in enemy.attackPlan.conditionalRules) {
+        // Ajoute les displayRows de chaque règle conditionnelle
+        // (Si rule.displayRows est une liste, utilise .addAll() au lieu de .add())
+        allRowsToDisplay.addAll(rule.displayRows); 
+      }
+    }
+
+    // 4. On envoie TOUT au composant magique qui parse les dés
+    if (allRowsToDisplay.isNotEmpty) {
       return _DisplayRowsColumn(
-        rows: enemy.attackPlan.displayRows,
+        rows: allRowsToDisplay,
         color: enemy.rank.color,
       );
     }
+
+    return const SizedBox.shrink(); 
     if (enemy.profileKey == 'viseer') {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
