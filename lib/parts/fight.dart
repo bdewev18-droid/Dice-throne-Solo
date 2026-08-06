@@ -4392,27 +4392,11 @@ class MinionAttackSummary extends StatelessWidget {
       previewBearForm ??
       (enemy.profileKey == 'vert-vert-014' ? _isDruidBearForm(enemy) : false);
 
- @override
+  @override
   Widget build(BuildContext context) {
-    // 1. CORRECTION ICI : On utilise DisplayRow au lieu de String
-    final List<DisplayRow> allRowsToDisplay = [];
-
-    // 2. On ajoute les lignes d'attaque classiques
     if (enemy.attackPlan.displayRows.isNotEmpty) {
-      allRowsToDisplay.addAll(enemy.attackPlan.displayRows);
-    }
-
-    // 3. On ajoute les lignes des règles conditionnelles
-    if (enemy.attackPlan.conditionalRules.isNotEmpty) {
-      for (final rule in enemy.attackPlan.conditionalRules) {
-        allRowsToDisplay.addAll(rule.displayRows);
-      }
-    }
-
-    // 4. Si on a trouvé des lignes génériques à afficher, on les affiche et on s'arrête là.
-    if (allRowsToDisplay.isNotEmpty) {
       return _DisplayRowsColumn(
-        rows: allRowsToDisplay,
+        rows: enemy.attackPlan.displayRows,
         color: enemy.rank.color,
       );
     }
