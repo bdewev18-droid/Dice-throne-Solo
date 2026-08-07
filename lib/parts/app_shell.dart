@@ -197,62 +197,74 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
         );
       },
       home: Builder(
-        builder: (context) {
-          if (!_storageReady) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-          return HomePage(
-            activeAdventure: _activeAdventure,
-            auth: _auth,
-            onHistory: () => _openHistory(context),
-            onSurvival: () => _openHeroChoice(context),
-            onResume: () {
-              final adventure = _activeAdventure;
-              if (adventure != null) {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => MapPage(
-                      adventure: adventure,
-                      historyRecords: _history,
-                      onRecordScore: _recordAdventure,
-                      onChanged: () {
-                        _activeAdventure = adventure;
-                        _saveActiveAdventure();
-                      },
-                      onPauseExit: () {
-                        _activeAdventure = adventure;
-                        _saveActiveAdventure();
-                        appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
-                      },
-                      onAbandon: () => _abandonAdventure(adventure),
-                      onOpenHistory: () => _openHistory(
-                        appNavigatorKey.currentContext ?? context,
-                        initialDifficulty: adventure.config.mode.difficulty,
-                      ),
-                      onChangeHero: () => _openHeroChoice(context),
-                      onReplay: () {
-                        final next = AdventureState(hero: adventure.hero, config: adventure.config);
-                        _activeAdventure = next;
-                        _saveActiveAdventure();
-                        _replaceWithMap(context, next, adventure.hero, adventure.config);
-                      },
-                    ),
-                  ),
-                );
-              }
-            },
-            onStopCampaign: _stopActiveCampaign,
-            onNaraxus: () => _openNaraxusHeroChoice(context),
-            onSignInGoogle: _signInWithGoogle,
-            onSignInAnonymous: _signInAnonymously,
-            onSignOut: _signOut,
-          );
-        },
+        builder: (context) => _buildHomePage(context),
       ),
     );
   }
+
+  Widget _buildHomePage(BuildContext context) {
+    if (!_storageReady) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return HomePage(
+      activeAdventure: _activeAdventure,
+      auth: _auth,
+      onHistory: () => _openHistory(context),
+      onSurvival: () => _openHeroChoice(context),
+      onResume: () {
+        final adventure = _activeAdventure;
+        if (adventure != null) {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => MapPage(
+                adventure: adventure,
+                historyRecords: _history,
+                onRecordScore: _recordAdventure,
+                onChanged: () {
+                  _activeAdventure = adventure;
+                  _saveActiveAdventure();
+                },
+                onPauseExit: () {
+                  _activeAdventure = adventure;
+                  _saveActiveAdventure();
+                  _returnToHome();
+                },
+                onAbandon: () => _abandonAdventure(adventure),
+                onOpenHistory: () => _openHistory(
+                  appNavigatorKey.currentContext ?? context,
+                  initialDifficulty: adventure.config.mode.difficulty,
+                ),
+                onChangeHero: () => _openHeroChoice(context),
+                onReplay: () {
+                  final next = AdventureState(hero: adventure.hero, config: adventure.config);
+                  _activeAdventure = next;
+                  _saveActiveAdventure();
+                  _replaceWithMap(context, next, adventure.hero, adventure.config);
+                },
+              ),
+            ),
+          );
+        }
+      },
+      onStopCampaign: _stopActiveCampaign,
+      onNaraxus: () => _openNaraxusHeroChoice(context),
+      onSignInGoogle: _signInWithGoogle,
+      onSignInAnonymous: _signInAnonymously,
+      onSignOut: _signOut,
+    );
+  }
+
+  void _returnToHome() {
+    appNavigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute<void>(
+        builder: (context) => _buildHomePage(context),
+      ),
+      (route) => false,
+    );
+  }
+
 
   Future<void> _loadActiveAdventure() async {
     final raw = await _store.read();
@@ -379,7 +391,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
           onPauseExit: () {
             _activeAdventure = adventure;
             _saveActiveAdventure();
-            appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
+            _returnToHome();
           },
           onAbandon: () => _abandonAdventure(adventure),
           onOpenHistory: () => _openHistory(
@@ -434,7 +446,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
         _activeAdventure = null;
       }
     });
-    appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
+    _returnToHome();
   }
 
   Future<void> _stopActiveCampaign() async {
