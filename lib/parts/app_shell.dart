@@ -65,6 +65,9 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   }
 
   Future<void> _handleAddRecord(GameRecord record) async {
+    if (record.hero == HeroType.benjamin) {
+      return; // Do not save history for test accounts
+    }
     final saved = await HistoryRepository.instance.add(record);
     if (!mounted) {
       return;
@@ -208,11 +211,35 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
             onResume: () {
               final adventure = _activeAdventure;
               if (adventure != null) {
-                _replaceWithMap(
-                  context,
-                  adventure,
-                  adventure.hero,
-                  adventure.config,
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => MapPage(
+                      adventure: adventure,
+                      historyRecords: _history,
+                      onRecordScore: _recordAdventure,
+                      onChanged: () {
+                        _activeAdventure = adventure;
+                        _saveActiveAdventure();
+                      },
+                      onPauseExit: () {
+                        _activeAdventure = adventure;
+                        _saveActiveAdventure();
+                        appNavigatorKey.currentState?.popUntil((route) => route.isFirst);
+                      },
+                      onAbandon: () => _abandonAdventure(adventure),
+                      onOpenHistory: () => _openHistory(
+                        appNavigatorKey.currentContext ?? context,
+                        initialDifficulty: adventure.config.mode.difficulty,
+                      ),
+                      onChangeHero: () => _openHeroChoice(context),
+                      onReplay: () {
+                        final next = AdventureState(hero: adventure.hero, config: adventure.config);
+                        _activeAdventure = next;
+                        _saveActiveAdventure();
+                        _replaceWithMap(context, next, adventure.hero, adventure.config);
+                      },
+                    ),
+                  ),
                 );
               }
             },

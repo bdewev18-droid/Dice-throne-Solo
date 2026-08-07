@@ -22,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.70';
+const String appVersionLabel = 'Version 1.3.71';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -116,6 +116,14 @@ enum HeroType {
     Color(0xff35c7a0),
     [HeroSegment.other],
     5,
+  ),
+  benjamin(
+    'Benjamin',
+    'assets/personnages/benji.webp',
+    Alignment(0.0, -0.6),
+    Colors.grey,
+    HeroSegment.values,
+    6,
   ),
   artificer(
     'Artificer',

@@ -51,8 +51,12 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
             .where(
               (hero) => !_myHeroesOnly || AppSettings.instance.ownsHero(hero),
             )
+            .where((hero) => hero != HeroType.benjamin)
             .toList()
           ..sort((a, b) => a.label.compareTo(b.label));
+    if (AppSettings.instance.developerMode) {
+      heroes.insert(0, HeroType.benjamin);
+    }
     if (_selectedHero != null && !heroes.contains(_selectedHero)) {
       _selectedHero = null;
       _randomHeroLocked = false;

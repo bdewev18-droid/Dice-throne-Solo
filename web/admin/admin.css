@@ -25,7 +25,7 @@ textarea{resize:vertical}
 .topbar h1{margin:0;font-size:28px}.topbar p{margin:4px 0 0;color:#b8c0b1}
 .top-actions{display:flex;gap:8px}
 .empty-state{display:grid;place-content:center;min-height:70vh;text-align:center;color:#c8d2c3}
-.editor-state{display:grid;grid-template-columns:40% minmax(260px,28%) 1fr;gap:14px;align-items:start}
+.editor-state{display:grid;grid-template-columns:1fr minmax(260px,312px) 50%;gap:14px;align-items:start}
 .hidden{display:none}
 .card-pane,.phone-pane,.form-pane{min-width:0}
 .card-frame{background:#111;border:1px solid #3d4a3e;border-radius:10px;overflow:hidden;min-height:260px;display:grid;place-items:center}
@@ -132,13 +132,13 @@ label input,label select,label textarea{margin-top:4px}
 
 /* Grid adjustments based on collapsed states */
 /* When both visible */
-.editor-state.layout-full { grid-template-columns: minmax(200px, 25%) minmax(390px, auto) 1fr; }
+.editor-state.layout-full { grid-template-columns: 1fr minmax(260px, 312px) 50%; }
 /* Card hidden, Phone visible */
-.editor-state.layout-no-card { grid-template-columns: 48px minmax(390px, auto) 1fr; }
+.editor-state.layout-no-card { grid-template-columns: 48px minmax(260px, 312px) 50%; }
 /* Card visible, Phone hidden */
-.editor-state.layout-no-phone { grid-template-columns: minmax(200px, 30%) 48px 1fr; }
+.editor-state.layout-no-phone { grid-template-columns: 1fr 48px 50%; }
 /* Both hidden */
-.editor-state.layout-minimal { grid-template-columns: 48px 48px 1fr; }
+.editor-state.layout-minimal { grid-template-columns: 48px 48px 50%; }
 
 /* Highlighting textarea trick */
 .highlight-container { position: relative; margin-top: 4px; border: 1px solid #3d4a3e; border-radius: 8px; background: #111611; }

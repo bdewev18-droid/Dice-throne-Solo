@@ -3916,15 +3916,16 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                     widget.onDetails();
                   },
                 ),
-                _SettingsActionTile(
-                  icon: Icons.ios_share,
-                  label: 'Export log',
-                  color: Colors.white,
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    widget.onExport();
-                  },
-                ),
+                if (widget.developerMode)
+                  _SettingsActionTile(
+                    icon: Icons.ios_share,
+                    label: 'Export log',
+                    color: Colors.white,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      widget.onExport();
+                    },
+                  ),
                 _SettingsActionTile(
                   icon: Icons.power_settings_new,
                   label: 'Quit / abandon run',
@@ -3989,37 +3990,57 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                   ),
                 ],
                 const SizedBox(height: 14),
-                GestureDetector(
-                  onLongPress: () async {
-                    await AppSettings.instance.setDeveloperMode(
-                      !AppSettings.instance.developerMode,
-                    );
-                    if (context.mounted) {
-                      setSheetState(() {});
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: widget.developerMode
-                            ? Colors.orangeAccent
-                            : Colors.white24,
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onLongPress: () async {
+                          await AppSettings.instance.setDeveloperMode(
+                            !AppSettings.instance.developerMode,
+                          );
+                          if (context.mounted) {
+                            setSheetState(() {});
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: widget.developerMode
+                                  ? Colors.orangeAccent
+                                  : Colors.white24,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '$appVersionLabel${widget.developerMode ? ' - Developer mode' : ''}',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: widget.developerMode
+                                  ? Colors.orangeAccent
+                                  : Colors.white70,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      '$appVersionLabel${widget.developerMode ? ' - Developer mode' : ''}',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: widget.developerMode
-                            ? Colors.orangeAccent
-                            : Colors.white70,
-                        fontWeight: FontWeight.w900,
+                    if (widget.developerMode) ...[
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                        ),
+                        icon: const Icon(Icons.power_settings_new),
+                        onPressed: () async {
+                          await AppSettings.instance.setDeveloperMode(false);
+                          Navigator.of(context).pop();
+                          widget.onAbandon();
+                        },
                       ),
-                    ),
-                  ),
+                    ],
+                  ],
                 ),
               ],
             ),

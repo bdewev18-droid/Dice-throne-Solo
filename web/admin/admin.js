@@ -124,14 +124,6 @@ async function loadTokenCatalog() {
   }
 }
 
-function tokenNames() {
-  return tokenCatalog
-    .flatMap((token) => [token.label, token.frLabel, ...(token.aliases || [])])
-    .filter(Boolean)
-    .filter((value, index, array) => array.indexOf(value) === index)
-    .sort((a, b) => a.localeCompare(b));
-}
-
 function ensureTokenDatalist() {
   let list = document.getElementById('tokenOptions');
   if (!list) {
@@ -139,7 +131,11 @@ function ensureTokenDatalist() {
     list.id = 'tokenOptions';
     document.body.appendChild(list);
   }
-  list.innerHTML = tokenNames().map((name) => `<option value="${escapeAttr(name)}"></option>`).join('');
+  const options = tokenCatalog.map(t => {
+      const fr = (t.frLabel && t.frLabel !== t.label) ? ` (${t.frLabel})` : '';
+      return `<option value="${escapeAttr(t.label)}">${escapeAttr(t.label)}${fr}</option>`;
+    }).sort();
+    list.innerHTML = options.join('');
   tokenDatalistReady = true;
   document.querySelectorAll('input.token-input').forEach((input) => input.setAttribute('list', 'tokenOptions'));
 }
@@ -1218,7 +1214,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 function setupUIEnhancements() {
-  $('enemyAssetPreview')?.addEventListener('click', (e) => {
+  $('cardImage')?.addEventListener('click', (e) => {
     if (!e.target.src) return;
     $('imageModalImg').src = e.target.src;
     $('imageModal').style.display = 'grid';

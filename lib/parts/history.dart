@@ -61,92 +61,98 @@ class _HistoryPageState extends State<HistoryPage> {
         ],
       ),
       body: SafeArea(
-        child: DefaultTabController(
-          length: RunDifficulty.values.length,
-          initialIndex: RunDifficulty.values.indexOf(_difficulty),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TabBar(
-                  isScrollable: true,
-                  onTap: (index) {
-                    setState(() {
-                      _difficulty = RunDifficulty.values[index];
-                      _selectedForDelete.clear();
-                    });
-                  },
-                  tabs: RunDifficulty.values
-                      .map((difficulty) => Tab(text: difficulty.label))
-                      .toList(),
-                ),
-                const SizedBox(height: 12),
-                if (_showRouteFilter) ...[
-                  SegmentedButton<RandomFilter>(
-                    segments: RandomFilter.values
-                        .map(
-                          (filter) => ButtonSegment(
-                            value: filter,
-                            label: Text(filter.label),
-                          ),
-                        )
-                        .toList(),
-                    selected: {_randomFilter},
-                    onSelectionChanged: (selection) {
-                      setState(() => _randomFilter = selection.first);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                DropdownButtonFormField<HistorySort>(
-                  initialValue: _sort,
-                  decoration: const InputDecoration(
-                    labelText: 'Sort by',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: HistorySort.values
-                      .map(
-                        (sort) => DropdownMenuItem(
-                          value: sort,
-                          child: Text(sort.label),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text('Difficulty', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70)),
+                        const SizedBox(height: 4),
+                        DropdownButtonFormField<RunDifficulty>(
+                          value: _difficulty,
+                          decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
+                          items: RunDifficulty.values.map((d) => DropdownMenuItem(value: d, child: Text(d.label, style: const TextStyle(fontSize: 12)))).toList(),
+                          onChanged: (val) {
+                            if (val != null) setState(() { _difficulty = val; _selectedForDelete.clear(); });
+                          },
                         ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _sort = value);
-                    }
-                  },
-                ),
-                if (_sort == HistorySort.best)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: Text(
-                      'Best score uses points first, then remaining HP when available.',
-                      style: TextStyle(color: Color(0xffbbcbbb), fontSize: 12),
+                      ],
                     ),
                   ),
-                const SizedBox(height: 16),
-                const _HistoryHeaderRow(),
-                const Divider(),
-                Expanded(
-                  child: records.isEmpty
-                      ? const Center(child: Text('No game for this filter.'))
-                      : flatMode
-                      ? _buildFlatList(records)
-                      : _buildGroupedList(grouped),
-                ),
-                if (_deleteMode)
-                  FilledButton.icon(
-                    onPressed: _selectedForDelete.isEmpty
-                        ? null
-                        : _confirmDeleteSelected,
-                    icon: const Icon(Icons.delete),
-                    label: Text('Delete ${_selectedForDelete.length} run(s)'),
+                  const SizedBox(width: 8),
+                  if (_showRouteFilter) ...[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text('Route', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70)),
+                          const SizedBox(height: 4),
+                          DropdownButtonFormField<RandomFilter>(
+                            value: _randomFilter,
+                            decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
+                            items: RandomFilter.values.map((d) => DropdownMenuItem(value: d, child: Text(d.label, style: const TextStyle(fontSize: 12)))).toList(),
+                            onChanged: (val) {
+                              if (val != null) setState(() => _randomFilter = val);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text('Sort by', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70)),
+                        const SizedBox(height: 4),
+                        DropdownButtonFormField<HistorySort>(
+                          value: _sort,
+                          decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
+                          items: HistorySort.values.map((d) => DropdownMenuItem(value: d, child: Text(d.label, style: const TextStyle(fontSize: 12)))).toList(),
+                          onChanged: (val) {
+                            if (val != null) setState(() => _sort = val);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-              ],
-            ),
+                ],
+              ),
+              if (_sort == HistorySort.best)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Best score uses points first, then remaining HP when available.',
+                    style: TextStyle(color: Color(0xffbbcbbb), fontSize: 12),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              const _HistoryHeaderRow(),
+              const Divider(),
+              Expanded(
+                child: records.isEmpty
+                    ? const Center(child: Text('No game for this filter.'))
+                    : flatMode
+                    ? _buildFlatList(records)
+                    : _buildGroupedList(grouped),
+              ),
+              if (_deleteMode)
+                FilledButton.icon(
+                  onPressed: _selectedForDelete.isEmpty
+                      ? null
+                      : _confirmDeleteSelected,
+                  icon: const Icon(Icons.delete),
+                  label: Text('Delete ${_selectedForDelete.length} run(s)'),
+                ),
+            ],
           ),
         ),
       ),
@@ -544,15 +550,30 @@ class _ManualRunDialogState extends State<ManualRunDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Add a run'),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text('Add a run'),
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<HeroType>(
               initialValue: _hero,
-              decoration: const InputDecoration(labelText: 'Hero'),
+              decoration: const InputDecoration(
+                labelText: 'Hero',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.black12,
+              ),
               items: HeroType.values
+                  .where((h) => h != HeroType.benjamin)
                   .map(
                     (hero) =>
                         DropdownMenuItem(value: hero, child: Text(hero.label)),
@@ -564,10 +585,15 @@ class _ManualRunDialogState extends State<ManualRunDialog> {
                 }
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             DropdownButtonFormField<SurvivalMode>(
               initialValue: _mode,
-              decoration: const InputDecoration(labelText: 'Scenario'),
+              decoration: const InputDecoration(
+                labelText: 'Scenario',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.black12,
+              ),
               items: SurvivalMode.values
                   .map(
                     (mode) => DropdownMenuItem(
@@ -593,6 +619,9 @@ class _ManualRunDialogState extends State<ManualRunDialog> {
               decoration: const InputDecoration(
                 labelText: 'Enemies defeated',
                 helperText: 'Used to suggest a score for fixed routes',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.black12,
               ),
               onChanged: (_) => setState(_refreshSuggestedScore),
             ),
@@ -604,13 +633,16 @@ class _ManualRunDialogState extends State<ManualRunDialog> {
                   style: TextStyle(color: Colors.orangeAccent, fontSize: 12),
                 ),
               ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             TextField(
               controller: _scoreController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: 'Score',
                 suffixText: 'pts',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.black12,
               ),
             ),
             if (_hasScoreCap)
@@ -624,32 +656,34 @@ class _ManualRunDialogState extends State<ManualRunDialog> {
                   ),
                 ),
               ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             TextField(
               controller: _healthController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: 'Remaining HP',
                 hintText: 'Not recorded',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.black12,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             TextField(
               controller: _durationController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: 'Time played',
                 helperText: 'Minutes, optional',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.black12,
               ),
             ),
           ],
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
         FilledButton(
           onPressed: () {
             var score = int.tryParse(_scoreController.text.trim());

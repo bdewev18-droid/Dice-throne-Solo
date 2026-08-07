@@ -632,12 +632,6 @@ void showTokenDetails(BuildContext context, StatusTokenRule rule) {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    if (rule.frLabel.isNotEmpty && rule.frLabel != rule.label)
-                      Text(
-                        rule.frLabel,
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-                    const SizedBox(height: 4),
                     Text(
                       'Stack limit: ${rule.maxStack}',
                       style: const TextStyle(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold),
