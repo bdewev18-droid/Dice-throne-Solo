@@ -168,17 +168,7 @@
               "cpSteal": 2,
               "note": "Large suite: Rat steals 2 CP, then deals damage equal to its CP."
             },
-            "displayRows": [
-              {
-                "align": "left",
-                "items": [
-                  "If suite ≥ 5",
-                  "=",
-                  "Steal 2 CP",
-                  "dmg = CP + 2"
-                ]
-              }
-            ],
+            "displayRows": [],
             "exclusive": true,
             "minRollCount": 0
           },
@@ -199,17 +189,7 @@
               "cpSteal": 1,
               "note": "Small suite: Rat steals 1 CP, then deals damage equal to its CP."
             },
-            "displayRows": [
-              {
-                "align": "left",
-                "items": [
-                  "If suite ≥ 4",
-                  "=",
-                  "Steal 1 CP",
-                  "dmg = CP + 1"
-                ]
-              }
-            ],
+            "displayRows": [],
             "exclusive": true,
             "minRollCount": 0
           },
@@ -230,16 +210,7 @@
               "cpSteal": 1,
               "note": "Micro suite: Rat steals 1 CP."
             },
-            "displayRows": [
-              {
-                "align": "left",
-                "items": [
-                  "If suite ≥ 3",
-                  "=",
-                  "Steal 1 CP"
-                ]
-              }
-            ],
+            "displayRows": [],
             "exclusive": true,
             "minRollCount": 0
           }
@@ -280,11 +251,9 @@
                 "white": 0,
                 "orange": 2,
                 "red": 0
-              },
-              "repeat": false
+              }
             },
-            "prevent": 3,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
@@ -292,10 +261,14 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": []
+            "formulas": [],
+            "notes": [],
+            "prevent": 3,
+            "returnDamage": 0
           }
         ],
-        "notes": []
+        "notes": [],
+        "displayRows": []
       },
       "attackPlan": {
         "style": "suite",
@@ -316,11 +289,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -336,11 +309,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -356,38 +329,43 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           }
         ],
         "conditionalRules": [
           {
             "condition": {
               "type": "suite",
+              "negate": false,
+              "and": [],
               "minLength": 5
             },
             "effect": {
+              "heroTokens": [],
+              "minionTokens": [],
+              "damage": null,
+              "damageFormula": null,
+              "undefendable": false,
+              "lifeSteal": 0,
               "cpSteal": 1,
               "note": "Large suite: steal 1 CP."
             },
-            "displayRows": [
-              {
-                "align": "left",
-                "items": [
-                  "If suite ≥ 5",
-                  "=",
-                  "Steal 1 CP"
-                ]
-              }
-            ]
+            "displayRows": [],
+            "exclusive": true,
+            "minRollCount": 0
           }
         ],
         "passives": [],
-        "notes": []
-      }
+        "notes": [],
+        "displayRows": []
+      },
+      "defense": "",
+      "passives": [],
+      "passiveDisplayRows": []
     },
     {
       "key": "ronin-vagabond",
@@ -593,11 +571,9 @@
                 "white": 0,
                 "orange": 1,
                 "red": 0
-              },
-              "repeat": false
+              }
             },
-            "prevent": 0,
-            "returnDamage": 1,
+            "label": "",
             "undefendable": true,
             "stealHp": 0,
             "stealCp": 0,
@@ -605,7 +581,10 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": []
+            "formulas": [],
+            "notes": [],
+            "prevent": 0,
+            "returnDamage": 1
           },
           {
             "condition": {
@@ -614,11 +593,9 @@
                 "white": 0,
                 "orange": 0,
                 "red": 1
-              },
-              "repeat": false
+              }
             },
-            "prevent": 0,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
@@ -628,10 +605,14 @@
             "tokens": [
               "Poison"
             ],
-            "formulas": []
+            "formulas": [],
+            "notes": [],
+            "prevent": 0,
+            "returnDamage": 0
           }
         ],
-        "notes": []
+        "notes": [],
+        "displayRows": []
       },
       "attackPlan": {
         "style": "symbols",
@@ -651,8 +632,7 @@
                 "white": 1,
                 "orange": 2,
                 "red": 1
-              },
-              "repeat": false
+              }
             },
             "label": "Ensorcellule",
             "damage": 4,
@@ -662,44 +642,47 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 1,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
             "notes": [
               "Hero discards 1 random card."
-            ]
+            ],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           }
         ],
         "conditionalRules": [
           {
             "condition": {
               "type": "symbols",
+              "negate": false,
+              "and": [],
               "white": 1,
               "orange": 2,
               "red": 1
             },
             "effect": {
+              "heroTokens": [],
+              "minionTokens": [],
+              "damage": null,
+              "damageFormula": null,
+              "undefendable": false,
+              "lifeSteal": 0,
+              "cpSteal": 0,
               "note": "Validated attack: hero discards 1 random card."
             },
-            "displayRows": [
-              {
-                "align": "left",
-                "items": [
-                  "{die:white}",
-                  "{die:orange}",
-                  "{die:orange}",
-                  "{die:red}",
-                  "=",
-                  "hero discards 1 card"
-                ]
-              }
-            ]
+            "displayRows": [],
+            "exclusive": true,
+            "minRollCount": 0
           }
         ],
         "passives": [],
-        "notes": []
-      }
+        "notes": [],
+        "displayRows": []
+      },
+      "defense": "",
+      "passives": [],
+      "passiveDisplayRows": []
     },
     {
       "key": "archer-de-lombre",
@@ -730,11 +713,9 @@
                 "white": 0,
                 "orange": 1,
                 "red": 0
-              },
-              "repeat": false
+              }
             },
-            "prevent": 3,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
@@ -742,10 +723,14 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": []
+            "formulas": [],
+            "notes": [],
+            "prevent": 3,
+            "returnDamage": 0
           }
         ],
-        "notes": []
+        "notes": [],
+        "displayRows": []
       },
       "attackPlan": {
         "style": "symbols",
@@ -790,11 +775,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -813,11 +798,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -836,11 +821,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -859,38 +844,45 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           }
         ],
         "conditionalRules": [
           {
             "condition": {
               "type": "sameValue",
+              "negate": false,
+              "and": [],
               "count": 3
             },
             "effect": {
               "heroTokens": [
                 "Silence"
-              ]
+              ],
+              "minionTokens": [],
+              "damage": null,
+              "damageFormula": null,
+              "undefendable": false,
+              "lifeSteal": 0,
+              "cpSteal": 0,
+              "note": ""
             },
-            "displayRows": [
-              {
-                "align": "left",
-                "items": [
-                  "If you roll 3 matching values, inflict {token:Silence}."
-                ]
-              }
-            ],
-            "exclusive": true
+            "displayRows": [],
+            "exclusive": true,
+            "minRollCount": 0
           }
         ],
         "passives": [],
-        "notes": []
-      }
+        "notes": [],
+        "displayRows": []
+      },
+      "defense": "",
+      "passives": [],
+      "passiveDisplayRows": []
     },
     {
       "key": "ombre-feline",
@@ -922,11 +914,9 @@
                 "white": 1,
                 "orange": 0,
                 "red": 0
-              },
-              "repeat": false
+              }
             },
-            "prevent": 0,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
@@ -936,10 +926,14 @@
             "tokens": [
               "Bleed"
             ],
-            "formulas": []
+            "formulas": [],
+            "notes": [],
+            "prevent": 0,
+            "returnDamage": 0
           }
         ],
-        "notes": []
+        "notes": [],
+        "displayRows": []
       },
       "attackPlan": {
         "style": "symbols",
@@ -979,11 +973,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -1002,11 +996,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -1025,23 +1019,32 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           }
         ],
         "conditionalRules": [
           {
             "condition": {
               "type": "sameValue",
+              "negate": false,
+              "and": [],
               "count": 3
             },
             "effect": {
               "heroTokens": [
                 "Bleed"
-              ]
+              ],
+              "minionTokens": [],
+              "damage": null,
+              "damageFormula": null,
+              "undefendable": false,
+              "lifeSteal": 0,
+              "cpSteal": 0,
+              "note": ""
             },
             "displayRows": [
               {
@@ -1051,12 +1054,17 @@
                 ]
               }
             ],
-            "exclusive": true
+            "exclusive": true,
+            "minRollCount": 0
           }
         ],
         "passives": [],
-        "notes": []
-      }
+        "notes": [],
+        "displayRows": []
+      },
+      "defense": "",
+      "passives": [],
+      "passiveDisplayRows": []
     },
     {
       "key": "epeiste-egare",
@@ -1088,8 +1096,7 @@
               },
               "repeat": true
             },
-            "prevent": 0,
-            "returnDamage": 1,
+            "label": "",
             "undefendable": true,
             "stealHp": 0,
             "stealCp": 0,
@@ -1099,7 +1106,10 @@
             "tokens": [],
             "formulas": [
               "returnDamage is applied per white symbol"
-            ]
+            ],
+            "notes": [],
+            "prevent": 0,
+            "returnDamage": 1
           },
           {
             "condition": {
@@ -1111,8 +1121,7 @@
               },
               "repeat": true
             },
-            "prevent": 0,
-            "returnDamage": 1,
+            "label": "",
             "undefendable": true,
             "stealHp": 0,
             "stealCp": 0,
@@ -1122,7 +1131,10 @@
             "tokens": [],
             "formulas": [
               "returnDamage is applied per red symbol"
-            ]
+            ],
+            "notes": [],
+            "prevent": 0,
+            "returnDamage": 1
           },
           {
             "condition": {
@@ -1134,8 +1146,7 @@
               },
               "repeat": true
             },
-            "prevent": 1,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
@@ -1145,10 +1156,14 @@
             "tokens": [],
             "formulas": [
               "prevent is applied per matching symbol"
-            ]
+            ],
+            "notes": [],
+            "prevent": 1,
+            "returnDamage": 0
           }
         ],
-        "notes": []
+        "notes": [],
+        "displayRows": []
       },
       "attackPlan": {
         "style": "symbols",
@@ -1188,11 +1203,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -1211,11 +1226,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -1234,17 +1249,21 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           }
         ],
         "conditionalRules": [],
         "passives": [],
-        "notes": []
-      }
+        "notes": [],
+        "displayRows": []
+      },
+      "defense": "",
+      "passives": [],
+      "passiveDisplayRows": []
     },
     {
       "key": "elfe-du-chaos",
@@ -1273,11 +1292,9 @@
                 "white": 0,
                 "orange": 2,
                 "red": 0
-              },
-              "repeat": false
+              }
             },
-            "prevent": 0,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
@@ -1287,10 +1304,14 @@
             "tokens": [],
             "formulas": [
               "prevent = ceil(incomingDamage / 2)"
-            ]
+            ],
+            "notes": [],
+            "prevent": 0,
+            "returnDamage": 0
           }
         ],
-        "notes": []
+        "notes": [],
+        "displayRows": []
       },
       "attackPlan": {
         "style": "suite",
@@ -1311,11 +1332,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -1331,11 +1352,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -1351,42 +1372,47 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [
               "Barbed Vine"
             ],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           }
         ],
         "conditionalRules": [
           {
             "condition": {
               "type": "suite",
+              "negate": false,
+              "and": [],
               "minLength": 5
             },
             "effect": {
               "heroTokens": [
                 "Ronces"
               ],
+              "minionTokens": [],
+              "damage": null,
+              "damageFormula": null,
+              "undefendable": false,
+              "lifeSteal": 0,
+              "cpSteal": 0,
               "note": "Large suite: hero receives Ronces."
             },
-            "displayRows": [
-              {
-                "align": "left",
-                "items": [
-                  "If suite ≥ 5",
-                  "=",
-                  "{token:Ronces}"
-                ]
-              }
-            ]
+            "displayRows": [],
+            "exclusive": true,
+            "minRollCount": 0
           }
         ],
         "passives": [],
-        "notes": []
-      }
+        "notes": [],
+        "displayRows": []
+      },
+      "defense": "",
+      "passives": [],
+      "passiveDisplayRows": []
     },
     {
       "key": "oni-delirant",
@@ -1419,8 +1445,7 @@
               },
               "repeat": true
             },
-            "prevent": 0,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": false,
             "stealHp": 1,
             "stealCp": 0,
@@ -1430,10 +1455,14 @@
             "tokens": [],
             "formulas": [
               "stealHp is applied per matching symbol"
-            ]
+            ],
+            "notes": [],
+            "prevent": 0,
+            "returnDamage": 0
           }
         ],
-        "notes": []
+        "notes": [],
+        "displayRows": []
       },
       "attackPlan": {
         "style": "symbols",
@@ -1455,6 +1484,7 @@
                 "red": 0
               }
             },
+            "label": "",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -1462,62 +1492,52 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
+            "notes": [],
+            "topDeckToDiscard": 0,
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
               "rollText": "If the attack succeeds, roll 1 {die}.",
+              "displayRows": [],
               "outcomes": [
                 {
                   "face": "white",
+                  "label": "",
                   "damage": 5,
-                  "undefendable": true
+                  "undefendable": true,
+                  "stealCp": 0,
+                  "tokens": []
                 },
                 {
-                  "face": "yellow",
+                  "face": "white",
+                  "label": "",
                   "damage": 6,
-                  "undefendable": true
+                  "undefendable": true,
+                  "stealCp": 0,
+                  "tokens": []
                 },
                 {
                   "face": "red",
-                  "stealHp": 4
+                  "label": "",
+                  "damage": 0,
+                  "undefendable": false,
+                  "stealCp": 0,
+                  "tokens": []
                 }
               ]
-            },
-            "notes": []
+            }
           }
         ],
-        "conditionalRules": [
-          {
-            "condition": {
-              "type": "symbols",
-              "orange": 4
-            },
-            "effect": {
-              "damage": 0,
-              "lifeSteal": 0,
-              "note": "Suppresses normal attack (triggers special dice phase)."
-            },
-            "displayRows": [
-              {
-                "align": "left",
-                "items": [
-                  "{die:orange}",
-                  "{die:orange}",
-                  "{die:orange}",
-                  "{die:orange}",
-                  "=",
-                  "Special attack"
-                ]
-              }
-            ]
-          }
-        ],
+        "conditionalRules": [],
         "passives": [],
-        "notes": []
-      }
+        "notes": [],
+        "displayRows": []
+      },
+      "defense": "",
+      "passives": [],
+      "passiveDisplayRows": []
     },
     {
       "key": "vert-vert-011",
