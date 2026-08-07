@@ -637,6 +637,11 @@ void showTokenDetails(BuildContext context, StatusTokenRule rule) {
                         rule.frLabel,
                         style: const TextStyle(color: Colors.white70),
                       ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Stack limit: ${rule.maxStack}',
+                      style: const TextStyle(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
                   ],
                 ),
               ),
@@ -685,10 +690,28 @@ class TokenPickerCard extends StatelessWidget {
             child: GestureDetector(
               onTap: onImageTap,
               child: Stack(
-                alignment: Alignment.topRight,
                 children: [
                   Center(child: StatusTokenImage(rule: rule, size: 64)),
-                  _TokenSupportDot(rule: rule),
+                  Positioned(top: 0, right: 0, child: _TokenSupportDot(rule: rule)),
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '${rule.maxStack}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -152,8 +152,8 @@ label input,label select,label textarea{margin-top:4px}
 
 
 .hidden { display: none !important; }
-.highlight-backdrop { color: #fff; }
-.highlight-textarea { color: transparent !important; caret-color: #fff; }
+.highlight-backdrop { display: none; }
+.highlight-textarea { color: #fff !important; }
 .rule-backdrop { min-height: 150px !important; margin-bottom: 25px; }
 .rule-display-rows { min-height: 150px !important; margin-bottom: 25px; }
 
