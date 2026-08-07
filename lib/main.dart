@@ -22,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.72';
+const String appVersionLabel = 'Version 1.3.73';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -43,12 +43,24 @@ Future<void> main() async {
 class _AppBootstrap extends StatefulWidget {
   const _AppBootstrap();
 
+  static void restartApp(BuildContext context) {
+    context.findAncestorStateOfType<_AppBootstrapState>()?.restartApp();
+  }
+
   @override
   State<_AppBootstrap> createState() => _AppBootstrapState();
 }
 
 class _AppBootstrapState extends State<_AppBootstrap> {
-  late final Future<void> _requiredData = _loadRequiredData();
+  late Future<void> _requiredData = _loadRequiredData();
+  Key _appKey = UniqueKey();
+
+  void restartApp() {
+    setState(() {
+      _appKey = UniqueKey();
+      _requiredData = _loadRequiredData();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +68,7 @@ class _AppBootstrapState extends State<_AppBootstrap> {
       future: _requiredData,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
-          return const DiceThroneSurvieApp();
+          return DiceThroneSurvieApp(key: _appKey);
         }
         return const MaterialApp(
           debugShowCheckedModeBanner: false,

@@ -257,12 +257,10 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   }
 
   void _returnToHome() {
-    appNavigatorKey.currentState?.pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (context) => _buildHomePage(context),
-      ),
-      (route) => false,
-    );
+    final context = appNavigatorKey.currentContext;
+    if (context != null) {
+      _AppBootstrap.restartApp(context);
+    }
   }
 
 
