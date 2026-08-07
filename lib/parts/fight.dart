@@ -4394,13 +4394,21 @@ class MinionAttackSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (enemy.attackPlan.displayRows.isNotEmpty) {
-      return _DisplayRowsColumn(
-        rows: enemy.attackPlan.displayRows,
-        color: enemy.rank.color,
-      );
+    final ruleRows = <DisplayRow>[];
+    for (final rule in enemy.attackPlan.conditionalRules) {
+      if (rule.displayRows.isNotEmpty) {
+        ruleRows.addAll(rule.displayRows);
+      }
     }
-    if (enemy.profileKey == 'viseer') {
+
+    final Widget mainBody = Builder(builder: (context) {
+      if (enemy.attackPlan.displayRows.isNotEmpty) {
+        return _DisplayRowsColumn(
+          rows: enemy.attackPlan.displayRows,
+          color: enemy.rank.color,
+        );
+      }
+      if (enemy.profileKey == 'viseer') {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -4922,6 +4930,23 @@ class MinionAttackSummary extends StatelessWidget {
           style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
         );
     }
+    });
+
+    if (ruleRows.isEmpty) {
+      return mainBody;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        mainBody,
+        const SizedBox(height: 8),
+        _DisplayRowsColumn(
+          rows: ruleRows,
+          color: enemy.rank.color,
+        ),
+      ],
+    );
   }
 
   List<Widget> _shortTokenHints(EnemyNode enemy) {
@@ -6626,18 +6651,22 @@ class _CompactRoundIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: SizedBox(
-        width: 34,
-        height: 34,
-        child: IconButton(
-          onPressed: onPressed,
-          padding: EdgeInsets.zero,
-          style: IconButton.styleFrom(
-            shape: const CircleBorder(),
-            foregroundColor: Colors.white,
-            side: BorderSide(color: color, width: 1.4),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: BorderSide(color: color, width: 1.4),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 18, color: Colors.white),
           ),
-          icon: Icon(icon, size: 18, color: Colors.white),
         ),
       ),
     );
@@ -8466,7 +8495,7 @@ class InlineTokenText extends StatelessWidget {
 
 /// Regex for visual effect shortcodes inside authored text.
 final RegExp _visualShortcodeRegex = RegExp(
-  r'\{(damage|dmg|undef|imparable|prevent|block|heal):([^}]+)\}',
+  r'\{(damage|dmg|undef|imparable|prevent|block|heal|die|dice):([^}]+)\}',
   caseSensitive: false,
 );
 

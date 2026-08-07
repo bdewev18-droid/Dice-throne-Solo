@@ -1,3 +1,57 @@
+
+const SUPABASE_URL = 'https://rqxfjffwzdfefinfcxjo.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_3EuoFYUzqUvNX7IPrhZKpQ_mkW-Gl97';
+let supabaseClient = null;
+
+async function initAuth() {
+  if (!window.supabase) {
+    $('mainAppShell').style.display = 'grid';
+    $('authOverlay').style.display = 'none';
+    return;
+  }
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  checkSession(session);
+  
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    checkSession(session);
+  });
+  
+  $('googleLoginBtn').onclick = async () => {
+    $('authError').textContent = '';
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + window.location.pathname
+      }
+    });
+    if (error) $('authError').textContent = error.message;
+  };
+  
+  $('logoutBtn').onclick = async () => {
+    await supabaseClient.auth.signOut();
+  };
+}
+
+function checkSession(session) {
+  if (!session) {
+    $('mainAppShell').style.display = 'none';
+    $('authOverlay').style.display = 'grid';
+  } else {
+    const email = session.user?.email;
+    if (email !== 'bdewev18@gmail.com') {
+      $('authError').textContent = 'Unauthorized email: ' + email;
+      $('mainAppShell').style.display = 'none';
+      $('authOverlay').style.display = 'grid';
+    } else {
+      $('mainAppShell').style.display = 'grid';
+      $('authOverlay').style.display = 'none';
+      if ($('userEmailDisplay')) $('userEmailDisplay').textContent = email;
+    }
+  }
+}
+
 const rankOrder = ['green', 'blue', 'violet', 'orange', 'viseer', 'naraxus'];
 const rankLabels = {
   green: 'Green',
@@ -194,6 +248,24 @@ async function openLocalJson() {
 }
 
 async function saveLocalFile() {
+  if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
+    collectCurrent();
+    try {
+      const response = await fetch('/api/save-enemy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sourceData)
+      });
+      if (!response.ok) throw new Error('Save failed');
+      setDirty('enemy', false);
+      $('saveFileBtn').disabled = true;
+      flash('Saved locally via API!');
+      return;
+    } catch (e) {
+      console.error('Direct save failed, falling back', e);
+    }
+  }
+
   if (!fileHandle || !sourceData) return;
   collectCurrent();
   const writable = await fileHandle.createWritable();
@@ -454,6 +526,8 @@ function defaultConditionalRule() {
   };
 }
 function renderConditionalRules() {
+  if(window.bindHighlights) setTimeout(window.bindHighlights, 50);
+
   const root = $('conditionalRules');
   if (!root) return;
   root.innerHTML = '';
@@ -489,11 +563,30 @@ function conditionalRuleCard(data, index) {
       input('CP steal', 'eff-cpsteal', effect.cpSteal ?? 0, 'number') +
       textarea('Note', 'eff-note', effect.note || '', 2) +
       '</div>',
-    '<div class="display-row-head"><label class="wide-label">Display rows JSON<textarea class="cond-displayrows" rows="7" placeholder=\'[{"align":"left","items":["If 3 identical values","=","{token:Silence}"]}]\'>' + escapeText(JSON.stringify(data.displayRows || [], null, 2)) + '</textarea></label></div>',
+    '<div class="display-row-head" style="margin-top: 10px;"><label class="wide-label">Display rows JSON' +
+      '<div class="highlight-container"><div class="highlight-backdrop rule-backdrop"></div>' +
+      '<textarea class="cond-displayrows rule-display-rows highlight-textarea" rows="5" placeholder=\'[{"align":"left","items":["If 3 identical values","=","{token:Silence}"]}]\'>' + escapeText(JSON.stringify(data.displayRows || [], null, 2)) + '</textarea></div></label>' +
+      '<button class="ghost-btn generate-btn rule-generate-btn" type="button">Generate text</button></div>',
     '<label class="checkline"><input class="cond-exclusive" type="checkbox" ' + (data.exclusive !== false ? 'checked' : '') + ' />Exclusive (first match wins, else-if cascade)</label>',
     input('Min roll count', 'cond-minroll', data.minRollCount ?? 0, 'number'),
   ].join('');
-  node.querySelector('.remove-conditional').onclick = () => { node.remove(); collectCurrent(); setDirty('enemy'); renderPreview(); renderDisplayRowsPreviews(); };
+  node.querySelector('.rule-generate-btn').onclick = () => {
+      // Basic translation logic from conditional rule to rows
+      // We don't have full buildActionRows in admin.js easily for rules, but we can do a basic one
+      const rows = [];
+      const items = [];
+      if (condition.type === 'sameValue') items.push('If ' + condition.count + ' identical values');
+      if (condition.type === 'sameSymbol') items.push('If ' + condition.count + ' identical symbols');
+      if (effect.heroTokens) effect.heroTokens.forEach(t => { items.push('Gain {token:' + t + '}'); });
+      if (effect.minionTokens) effect.minionTokens.forEach(t => { items.push('Apply {token:' + t + '}'); });
+      if (items.length > 0) rows.push({ align: 'left', items });
+      
+      data.displayRows = rows;
+      setDirty('enemy');
+      renderConditionalRules();
+      renderPreview();
+    };
+    node.querySelector('.remove-conditional').onclick = () => { node.remove(); collectCurrent(); setDirty('enemy'); renderPreview(); renderDisplayRowsPreviews(); };
   attachTokenList(node);
   node.addEventListener('input', () => { collectCurrent(); setDirty('enemy'); renderPreview(); renderDisplayRowsPreviews(); });
   node.addEventListener('change', () => { collectCurrent(); setDirty('enemy'); renderPreview(); renderDisplayRowsPreviews(); });
@@ -823,8 +916,7 @@ function conditionalEffectDisplayItems(effect = {}) {
 function generateAttackRows() {
   collectCurrent();
   const actionRows = (selectedProfile?.attackPlan?.actions || []).flatMap(actionToDisplayRows);
-  const ruleRows = (selectedProfile?.attackPlan?.conditionalRules || []).flatMap(conditionalRuleToDisplayRows);
-  writeGeneratedRows('attacksDisplayRowsInput', [...actionRows, ...ruleRows], 'Attack');
+  writeGeneratedRows('attacksDisplayRowsInput', actionRows, 'Attack');
 }
 function generateDefenseRows() {
   collectCurrent();
@@ -912,6 +1004,8 @@ function displayRowsHtml(rows = []) {
   return rows.map((row) => '<div class="display-row ' + (row.align || 'left') + '">' + (row.items || []).map(displayItemHtml).join('') + '</div>').join('');
 }
 function renderDisplayRowsPreviews() {
+  if(window.bindHighlights) window.bindHighlights();
+
   const pairs = [
     ['attacksDisplayRowsInput', 'attacksDisplayRowsPreview'],
     ['defenseDisplayRowsInput', 'defenseDisplayRowsPreview'],
@@ -1037,7 +1131,7 @@ function renderTokenAdmin() {
   root.innerHTML = rows.map(({ token, index }) => {
     const refs = tokenRefs(token.label);
     return '<article class="token-admin-card" data-token-index="' + index + '">' +
-      '<div class="token-admin-head"><img src="' + assetUrl(token.imageAsset) + '" alt="' + escapeAttr(token.label) + '" /><div><strong>' + escapeText(token.label || 'Token') + '</strong><div class="hint">' + escapeText(token.kind || '') + '</div></div></div>' +
+      '<div class="token-admin-head"><img src="' + assetUrl(token.imageAsset) + '" alt="' + escapeAttr(token.label) + '" /><div><strong>' + escapeText(token.label || 'Token') + '</strong><div class="hint">' + escapeText(token.kind || '') + '<div class="token-highlight" style="font-size:12px; margin-top:4px;">{token:' + escapeText(token.label) + '}</div>' + '</div></div></div>' +
       '<div class="token-admin-grid">' +
       '<label>UK title<input class="tok-label" value="' + escapeAttr(token.label || '') + '" /></label>' +
       '<label>FR title<input class="tok-fr" value="' + escapeAttr(token.frLabel || '') + '" /></label>' +
@@ -1087,6 +1181,9 @@ function bindBasics() {
   });
 }
 document.addEventListener('DOMContentLoaded', () => {
+  initAuth();
+  setupUIEnhancements();
+
   loadTokenCatalog();
   $('loadDefaultBtn').onclick = loadDefault;
   $('openFileBtn').onclick = openLocalJson;
@@ -1118,3 +1215,101 @@ document.addEventListener('DOMContentLoaded', () => {
   updateDownloadButtons();
   loadDefault();
 });
+
+
+function setupUIEnhancements() {
+  $('enemyAssetPreview')?.addEventListener('click', (e) => {
+    if (!e.target.src) return;
+    $('imageModalImg').src = e.target.src;
+    $('imageModal').style.display = 'grid';
+  });
+  $('imageModal')?.addEventListener('click', () => {
+    $('imageModal').style.display = 'none';
+  });
+
+  // Collapsible Panes
+  $('toggleSidebarBtn')?.addEventListener('click', () => {
+    $('mainAppShell').classList.add('sidebar-collapsed');
+    $('collapsedSidebarStrip').classList.remove('hidden');
+  });
+  $('expandSidebarBtn')?.addEventListener('click', () => {
+    $('mainAppShell').classList.remove('sidebar-collapsed');
+    $('collapsedSidebarStrip').classList.add('hidden');
+  });
+  
+  $('toggleCardPaneBtn')?.addEventListener('click', () => {
+    $('cardPane').classList.add('hidden');
+    $('collapsedCardStrip').classList.remove('hidden');
+    updateLayoutClass();
+  });
+  $('expandCardPaneBtn')?.addEventListener('click', () => {
+    $('cardPane').classList.remove('hidden');
+    $('collapsedCardStrip').classList.add('hidden');
+    updateLayoutClass();
+  });
+  
+  $('togglePhonePaneBtn')?.addEventListener('click', () => {
+    $('phonePane').classList.add('hidden');
+    $('collapsedPhoneStrip').classList.remove('hidden');
+    updateLayoutClass();
+  });
+  $('expandPhonePaneBtn')?.addEventListener('click', () => {
+    $('phonePane').classList.remove('hidden');
+    $('collapsedPhoneStrip').classList.add('hidden');
+    updateLayoutClass();
+  });
+  
+  function updateLayoutClass() {
+    const cardHidden = $('cardPane').classList.contains('hidden');
+    const phoneHidden = $('phonePane').classList.contains('hidden');
+    const es = $('editorState');
+    es.className = 'editor-state'; // Reset
+    if (cardHidden && phoneHidden) es.classList.add('layout-minimal');
+    else if (cardHidden) es.classList.add('layout-no-card');
+    else if (phoneHidden) es.classList.add('layout-no-phone');
+    else es.classList.add('layout-full');
+  }
+  updateLayoutClass();
+
+  // Highlighting synchronization
+  function bindHighlight(textareaId, backdropId) {
+    const textarea = $(textareaId);
+    const backdrop = $(backdropId);
+    if (!textarea || !backdrop) return;
+    
+    function applyHighlights() {
+      let text = textarea.value;
+      // Encode html
+      text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      // Highlight token tags
+      text = text.replace(/(\{token:[^}]+\})/g, '<span class="token-highlight">$1</span>');
+      // Ensure trailing newlines render correctly in div
+      if (text.endsWith('\n')) text += ' ';
+      backdrop.innerHTML = text;
+    }
+    textarea.addEventListener('input', applyHighlights);
+    textarea.addEventListener('scroll', () => {
+      backdrop.scrollTop = textarea.scrollTop;
+      backdrop.scrollLeft = textarea.scrollLeft;
+    });
+    // Trigger initially
+    textarea.dataset.highlightBound = "true";
+  }
+  
+  // Need to bind on render, so we patch render function
+  window.bindHighlights = () => {
+    bindHighlight('attacksDisplayRowsInput', 'attackRowsBackdrop');
+    bindHighlight('defenseDisplayRowsInput', 'defenseRowsBackdrop');
+    bindHighlight('passivesDisplayRowsInput', 'passiveRowsBackdrop');
+    document.querySelectorAll('.rule-display-rows').forEach(ta => {
+      if (!ta.dataset.highlightBound) {
+        const bd = ta.previousElementSibling;
+        if(bd) {
+           bd.id = 'bd_' + Math.random();
+           ta.id = 'ta_' + Math.random();
+           bindHighlight(ta.id, bd.id);
+        }
+      }
+    });
+  };
+}

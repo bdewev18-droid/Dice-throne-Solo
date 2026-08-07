@@ -38,6 +38,39 @@ function sendFile(response, filePath) {
 http
   .createServer((request, response) => {
     let urlPath = decodeURI(request.url.split('?')[0]);
+    if (request.method === 'POST' && urlPath === '/api/save-enemy') {
+      let body = '';
+      request.on('data', chunk => { body += chunk.toString(); });
+      request.on('end', () => {
+        try {
+          const json = JSON.parse(body);
+          const enemyProfilesPath = path.resolve(__dirname, '..', 'docs', 'enemy_profiles.json');
+          fs.writeFileSync(enemyProfilesPath, JSON.stringify(json, null, 2) + '\n');
+          
+          response.writeHead(200, {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          });
+          response.end(JSON.stringify({ success: true }));
+        } catch (e) {
+          response.writeHead(500, { 'Content-Type': 'application/json' });
+          response.end(JSON.stringify({ error: e.message }));
+        }
+      });
+      return;
+    }
+    
+    // Handle CORS preflight just in case
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      response.end();
+      return;
+    }
+
     if (urlPath === '/' || urlPath === basePath) {
       response.writeHead(302, { Location: `${basePath}/` });
       response.end();

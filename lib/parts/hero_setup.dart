@@ -342,14 +342,14 @@ class _ComplexityFilterDie extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: SizedBox(
-        width: 32,
-        height: 44,
+        width: 24,
+        height: 38,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 120),
-              width: 22,
+              width: 18,
               height: 4,
               decoration: BoxDecoration(
                 color: selected ? Colors.white : Colors.transparent,
@@ -359,7 +359,7 @@ class _ComplexityFilterDie extends StatelessWidget {
             const SizedBox(height: 4),
             Opacity(
               opacity: selected ? 1 : 0.38,
-              child: _ComplexityDieCrop(level: level, size: 30),
+              child: _ComplexityDieCrop(level: level, size: 24),
             ),
           ],
         ),
@@ -1005,14 +1005,26 @@ class RoundIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      style: IconButton.styleFrom(
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
         shape: const CircleBorder(),
-        side: BorderSide(color: onPressed == null ? Colors.white12 : color),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: onPressed == null ? Colors.white12 : color, width: 1.5),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 20, color: onPressed == null ? Colors.white30 : Colors.white),
+          ),
+        ),
       ),
-      icon: Icon(icon),
     );
   }
 }

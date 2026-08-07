@@ -5,14 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>D.T Solo Quest - Enemy Back Office</title>
   <link rel="stylesheet" href="./admin.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
+  <div id="authOverlay" class="auth-overlay">
+    <div class="auth-card">
+      <h2>Restricted Access</h2>
+      <p>Log in with your Google account to access the Back Office.</p>
+      <button id="googleLoginBtn" class="primary-btn">Sign in with Google</button>
+      <div id="authError" class="auth-error"></div>
+    </div>
+  </div>
+
+  <div class="app-shell" style="display: none;" id="mainAppShell">
+    <aside class="sidebar" id="sidebarPane">
       <div class="brand-block">
-        <div class="brand-title">Enemy Admin</div>
+        <div class="brand-title">Enemy Admin <button id="toggleSidebarBtn" class="collapse-btn toggle-sidebar" title="Collapse">◀</button></div>
         <div class="brand-subtitle">docs/enemy_profiles.json</div>
-        <div id="adminVersion" class="admin-version">Admin version 1.4.0</div>
+        <div id="adminVersion" class="admin-version">Admin version 1.5.1</div>
       </div>
       <div class="side-actions">
         <button id="loadDefaultBtn" class="ghost-btn">Load app JSON</button>
@@ -22,6 +32,11 @@
       <input id="enemySearch" class="search" type="search" placeholder="Search enemy" />
       <div id="enemyLists" class="enemy-lists"></div>
     </aside>
+    
+    <div class="collapsed-sidebar-strip hidden" id="collapsedSidebarStrip">
+      <button id="expandSidebarBtn" class="collapse-btn" title="Expand Enemy Admin">▶</button>
+      <div class="strip-text">Enemy Admin</div>
+    </div>
 
     <main class="workspace">
       <header class="topbar">
@@ -30,9 +45,11 @@
           <p id="enemyMeta">Green, blue, violet and orange minions are loaded from the JSON source of truth.</p>
         </div>
         <div class="top-actions">
-          <button id="exportJsonBtn" class="primary-btn">Download enemy JSON</button>
-          <button id="exportTokenJsonBtn" class="primary-btn">Download token JSON</button>
-          <button id="exportDevBtn" class="ghost-btn">Download dev backlog</button>
+          <span id="userEmailDisplay" class="user-email"></span>
+          <button id="logoutBtn" class="ghost-btn">Logout</button>
+          <button id="exportJsonBtn" class="primary-btn">Download JSON</button>
+          <button id="exportTokenJsonBtn" class="primary-btn">Download Tokens</button>
+          <button id="exportDevBtn" class="ghost-btn">Download dev</button>
         </div>
       </header>
 
@@ -42,48 +59,69 @@
       </section>
 
       <section id="editorState" class="editor-state hidden">
-        <section class="card-pane">
-          <div class="card-frame">
-            <img id="cardImage" alt="Enemy card" />
+        <section class="card-pane" id="cardPane">
+          <div class="pane-header">
+            <span>Minion Info</span>
+            <button id="toggleCardPaneBtn" class="collapse-btn" title="Collapse">◀</button>
           </div>
-          <div class="identity-grid">
-            <label>Name<input id="nameInput" /></label>
-            <label>Key<input id="keyInput" /></label>
-            <label>Rank<select id="rankInput"><option>green</option><option>blue</option><option>violet</option><option>orange</option><option>viseer</option><option>naraxus</option></select></label>
-            <label>HP<input id="hpInput" type="number" min="0" /></label>
-            <label>CP<input id="cpInput" type="number" min="0" /></label>
-            <label>Defense dice<input id="defenseDiceInput" type="number" min="0" max="5" /></label>
-            <label>Reward chests<input id="rewardChestsInput" type="number" min="0" /></label>
-            <label>Reward rank<input id="rewardRankInput" placeholder="green/blue/violet/orange" /></label>
-          </div>
-          <label class="wide-label">Card asset<input id="cardAssetInput" /></label>
-          <label class="wide-label">Initial tokens<input id="initialTokensInput" placeholder="Poison, Blind" /></label>
-        </section>
-
-        <section class="phone-pane">
-          <div class="phone-preview">
-            <div class="phone-header">
-              <span id="previewName">Enemy</span>
-              <button class="gear" title="settings">⚙</button>
+          <div class="pane-content">
+            <div class="card-frame">
+              <img id="cardImage" alt="Enemy card" />
             </div>
-            <div class="preview-band attack-band">
-              <div class="band-title">⚔ ATTACK</div>
-              <div id="attackPreview" class="preview-list"></div>
+            <div class="identity-grid">
+              <label>Name<input id="nameInput" /></label>
+              <label>Key<input id="keyInput" /></label>
+              <label>Rank<select id="rankInput"><option>green</option><option>blue</option><option>violet</option><option>orange</option><option>viseer</option><option>naraxus</option></select></label>
+              <label>HP<input id="hpInput" type="number" min="0" /></label>
+              <label>CP<input id="cpInput" type="number" min="0" /></label>
+              <label>Defense dice<input id="defenseDiceInput" type="number" min="0" max="5" /></label>
+              <label>Reward chests<input id="rewardChestsInput" type="number" min="0" /></label>
+              <label>Reward rank<input id="rewardRankInput" placeholder="green/blue/violet/orange" /></label>
             </div>
-            <div class="preview-band defense-band">
-              <div class="band-title">🛡 DEFENSE</div>
-              <div id="defensePreview" class="preview-list"></div>
-            </div>
-          </div>
-          <div class="legend-box">
-            <strong>Supported now</strong>
-            <span>Symbols/suites/numbers, damage, undefendable, prevent, return damage, HP/CP steal, heal, draw/discard, tokens, formulas, notes, extra rolls.</span>
-            <strong>Use dev backlog for</strong>
-            <span>New passives, unusual timing, multi-enemy support effects, or rules that need runtime code.</span>
+            <label class="wide-label">Card asset<input id="cardAssetInput" /></label>
+            <label class="wide-label">Initial tokens<input id="initialTokensInput" placeholder="Poison, Blind" /></label>
           </div>
         </section>
+        
+        <div class="collapsed-vertical-strip hidden" id="collapsedCardStrip">
+          <button id="expandCardPaneBtn" class="collapse-btn">▶</button>
+          <div class="strip-text">Minion Info</div>
+        </div>
 
-        <section class="form-pane">
+        <section class="phone-pane" id="phonePane">
+          <div class="pane-header" style="justify-content: flex-end; padding: 4px;">
+            <button id="togglePhonePaneBtn" class="collapse-btn" title="Collapse Preview">◀</button>
+          </div>
+          <div class="pane-content">
+            <div class="phone-preview">
+              <div class="phone-header">
+                <span id="previewName">Enemy</span>
+                <button class="gear" title="settings">⚙</button>
+              </div>
+              <div class="preview-band attack-band">
+                <div class="band-title">⚔ ATTACK</div>
+                <div id="attackPreview" class="preview-list"></div>
+              </div>
+              <div class="preview-band defense-band">
+                <div class="band-title">🛡 DEFENSE</div>
+                <div id="defensePreview" class="preview-list"></div>
+              </div>
+            </div>
+            <div class="legend-box">
+              <strong>Supported now</strong>
+              <span>Symbols/suites/numbers, damage, undefendable, prevent, return damage, HP/CP steal, heal, draw/discard, tokens, formulas, notes, extra rolls.</span>
+              <strong>Use dev backlog for</strong>
+              <span>New passives, unusual timing, multi-enemy support effects, or rules that need runtime code.</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="collapsed-vertical-strip hidden" id="collapsedPhoneStrip">
+          <button id="expandPhonePaneBtn" class="collapse-btn">▶</button>
+          <div class="strip-text">Preview</div>
+        </div>
+
+        <section class="form-pane" id="formPane">
           <div class="tabs">
             <button class="tab active" data-tab="attacks">Attack</button>
             <button class="tab" data-tab="defense">Defense</button>
@@ -128,12 +166,41 @@
               <span><code>align</code>: <code>left</code>, <code>center</code>, <code>right</code>.</span>
               <span>Items: <code>{die:white}</code>, <code>{die:orange}</code>, <code>{die:red}</code>, <code>{damage:7}</code>, <code>{undef:7}</code>, <code>{prevent:2}</code>, <code>{heal:4}</code>, <code>{token:Bleed}</code>, or plain text.</span>
             </div>
-            <div class="display-row-head"><label class="wide-label">Attack title display rows JSON<textarea id="attacksDisplayRowsInput" rows="7" placeholder='[{"align":"center","items":["Attack name"]}]'></textarea></label><button id="generateAttackRowsBtn" class="ghost-btn generate-btn" type="button">Generate from attack plan</button></div>
+            
+            <!-- Highlighting container approach for text areas -->
+            <div class="display-row-head">
+              <label class="wide-label">Attack title display rows JSON
+                <div class="highlight-container">
+                  <div class="highlight-backdrop" id="attackRowsBackdrop"></div>
+                  <textarea id="attacksDisplayRowsInput" class="highlight-textarea" rows="12" placeholder='[{"align":"center","items":["Attack name"]}]'></textarea>
+                </div>
+              </label>
+              <button id="generateAttackRowsBtn" class="ghost-btn generate-btn" type="button">Generate from attack plan</button>
+            </div>
             <div id="attacksDisplayRowsPreview" class="display-preview"></div>
-            <div class="display-row-head"><label class="wide-label">Defense title display rows JSON<textarea id="defenseDisplayRowsInput" rows="7"></textarea></label><button id="generateDefenseRowsBtn" class="ghost-btn generate-btn" type="button">Generate from defense plan</button></div>
+            
+            <div class="display-row-head">
+              <label class="wide-label">Defense title display rows JSON
+                <div class="highlight-container">
+                  <div class="highlight-backdrop" id="defenseRowsBackdrop"></div>
+                  <textarea id="defenseDisplayRowsInput" class="highlight-textarea" rows="12"></textarea>
+                </div>
+              </label>
+              <button id="generateDefenseRowsBtn" class="ghost-btn generate-btn" type="button">Generate from defense plan</button>
+            </div>
             <div id="defenseDisplayRowsPreview" class="display-preview"></div>
-            <div class="display-row-head"><label class="wide-label">Passive display rows JSON<textarea id="passivesDisplayRowsInput" rows="7"></textarea></label><button id="generatePassiveRowsBtn" class="ghost-btn generate-btn" type="button">Generate from passive text</button></div>
+            
+            <div class="display-row-head">
+              <label class="wide-label">Passive display rows JSON
+                <div class="highlight-container">
+                  <div class="highlight-backdrop" id="passiveRowsBackdrop"></div>
+                  <textarea id="passivesDisplayRowsInput" class="highlight-textarea" rows="12"></textarea>
+                </div>
+              </label>
+              <button id="generatePassiveRowsBtn" class="ghost-btn generate-btn" type="button">Generate from passive text</button>
+            </div>
             <div id="passivesDisplayRowsPreview" class="display-preview"></div>
+            
             <details>
               <summary>Legacy readable text</summary>
               <label class="wide-label">Attack title<textarea id="attacksTextInput" rows="5"></textarea></label>
@@ -179,7 +246,31 @@
       <label class="wide-label">Notes<textarea class="notes-field" rows="2"></textarea></label>
     </article>
   </template>
+  
+  <template id="conditionalRuleTemplate">
+    <article class="conditional-card">
+      <div class="action-head">
+        <strong class="action-title">Conditional Rule</strong>
+        <button class="danger small remove-rule">Remove</button>
+      </div>
+      <div class="condition-grid"></div>
+      <div class="effect-grid"></div>
+      <div class="display-row-head" style="margin-top: 10px;">
+        <label class="wide-label">Display Rows JSON
+          <div class="highlight-container">
+            <div class="highlight-backdrop rule-backdrop"></div>
+            <textarea class="rule-display-rows highlight-textarea" rows="4"></textarea>
+          </div>
+        </label>
+        <button class="ghost-btn generate-btn rule-generate-btn" type="button">Generate text</button>
+      </div>
+    </article>
+  </template>
 
   <script src="./admin.js"></script>
+
+  <div id="imageModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:2000; place-items:center; cursor:zoom-out;">
+    <img id="imageModalImg" src="" style="max-width:95vw; max-height:95vh; object-fit:contain;">
+  </div>
 </body>
 </html>

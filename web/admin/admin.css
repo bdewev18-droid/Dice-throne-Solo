@@ -105,3 +105,58 @@ label input,label select,label textarea{margin-top:4px}
 .display-row-head .wide-label{margin-top:0}
 .generate-btn{white-space:normal;max-width:170px;align-self:end;margin-bottom:2px}
 @media(max-width:760px){.display-row-head{grid-template-columns:1fr}.generate-btn{max-width:none;width:100%}}
+/* 1.5.0 Additions: Auth, Collapsing, Highlighting */
+.auth-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: grid; place-items: center; z-index: 1000; }
+.auth-card { background: #111611; padding: 24px; border-radius: 12px; border: 1px solid #3d4a3e; text-align: center; max-width: 400px; }
+.auth-error { color: #ff4b4b; margin-top: 10px; font-size: 14px; }
+.user-email { color: #a8b2a2; font-size: 12px; margin-right: 12px; display: inline-flex; align-items: center; }
+
+.app-shell.sidebar-collapsed { grid-template-columns: 48px 1fr; }
+.sidebar-collapsed .sidebar { display: none; }
+.collapsed-sidebar-strip { display: flex; flex-direction: column; align-items: center; background: #0d110d; border-right: 1px solid #3d4a3e; padding: 14px 4px; height: 100vh; position: sticky; top: 0; gap: 20px; }
+.collapsed-sidebar-strip:not(.hidden) { display: flex; }
+.strip-text { writing-mode: vertical-rl; transform: rotate(180deg); color: #a8b2a2; font-weight: 800; font-size: 14px; letter-spacing: 2px; }
+
+.editor-state { transition: all 0.3s; }
+.pane-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #171d17; border-bottom: 1px solid #3d4a3e; font-weight: 900; color: #d9f778; }
+.card-pane, .phone-pane { border: 1px solid #3d4a3e; border-radius: 10px; overflow: hidden; background: #0a0c0a; }
+.pane-content { padding: 10px; }
+.collapse-btn { background: #273127; color: #fff; border: none; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; display: grid; place-items: center; font-size: 10px; }
+.collapse-btn:hover { background: #3d4a3e; }
+.toggle-sidebar { display: inline-flex; margin-left: auto; }
+.brand-title { display: flex; align-items: center; width: 100%; }
+
+.collapsed-vertical-strip { background: #0a0c0a; border: 1px solid #3d4a3e; border-radius: 10px; display: flex; flex-direction: column; align-items: center; padding: 10px 4px; gap: 20px; min-height: 200px; cursor: pointer; }
+.collapsed-vertical-strip:hover { background: #111611; }
+.collapsed-vertical-strip:not(.hidden) { display: flex; }
+
+/* Grid adjustments based on collapsed states */
+/* When both visible */
+.editor-state.layout-full { grid-template-columns: minmax(200px, 25%) minmax(390px, auto) 1fr; }
+/* Card hidden, Phone visible */
+.editor-state.layout-no-card { grid-template-columns: 48px minmax(390px, auto) 1fr; }
+/* Card visible, Phone hidden */
+.editor-state.layout-no-phone { grid-template-columns: minmax(200px, 30%) 48px 1fr; }
+/* Both hidden */
+.editor-state.layout-minimal { grid-template-columns: 48px 48px 1fr; }
+
+/* Highlighting textarea trick */
+.highlight-container { position: relative; margin-top: 4px; border: 1px solid #3d4a3e; border-radius: 8px; background: #111611; }
+.highlight-backdrop { position: absolute; inset: 0; padding: 9px; pointer-events: none; white-space: pre-wrap; word-wrap: break-word; color: transparent; font: inherit; overflow: hidden; }
+.highlight-textarea { margin: 0; border: none; background: transparent; color: #fff; position: relative; z-index: 2; height: 100%; min-height: 120px; }
+.highlight-textarea:focus { outline: none; box-shadow: 0 0 0 2px #5b2cc8; border-radius: 8px; }
+.token-highlight { color: #ffb340; font-weight: bold; }
+.conditional-card { border: 1px solid #303b30; border-radius: 8px; padding: 10px; background: #0c0f0c; }
+.rule-backdrop { min-height: 80px; }
+.rule-display-rows { min-height: 80px; }
+
+
+.hidden { display: none !important; }
+.highlight-backdrop { color: #fff; }
+.highlight-textarea { color: transparent !important; caret-color: #fff; }
+.rule-backdrop { min-height: 150px !important; margin-bottom: 25px; }
+.rule-display-rows { min-height: 150px !important; margin-bottom: 25px; }
+
+
+.card-frame img { cursor: zoom-in; transition: transform 0.2s; }
+.card-frame img:hover { transform: scale(1.02); }

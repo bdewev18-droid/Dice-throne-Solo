@@ -35,11 +35,9 @@
                 "white": 0,
                 "orange": 2,
                 "red": 0
-              },
-              "repeat": false
+              }
             },
-            "prevent": 0,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": false,
             "stealHp": 0,
             "stealCp": 1,
@@ -47,7 +45,10 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": []
+            "formulas": [],
+            "notes": [],
+            "prevent": 0,
+            "returnDamage": 0
           },
           {
             "condition": {
@@ -56,11 +57,9 @@
                 "white": 0,
                 "orange": 0,
                 "red": 2
-              },
-              "repeat": false
+              }
             },
-            "prevent": 0,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
@@ -70,12 +69,16 @@
             "tokens": [],
             "formulas": [
               "ignoreAllIncomingDamage = true"
-            ]
+            ],
+            "notes": [],
+            "prevent": 0,
+            "returnDamage": 0
           }
         ],
         "notes": [
           "Sur 4 orange symbols, Rat de la Rue steals toujours seulement 1 CP."
-        ]
+        ],
+        "displayRows": []
       },
       "attackPlan": {
         "style": "suite",
@@ -96,11 +99,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -116,13 +119,13 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [
               "damage = minionCpAfterSteal"
             ],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -138,25 +141,31 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [
               "damage = minionCpAfterSteal"
             ],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           }
         ],
         "conditionalRules": [
           {
             "condition": {
               "type": "suite",
+              "negate": false,
+              "and": [],
               "minLength": 5
             },
             "effect": {
-              "cpSteal": 2,
+              "heroTokens": [],
+              "minionTokens": [],
+              "damage": null,
               "damageFormula": "cp+cpSteal",
               "undefendable": false,
+              "lifeSteal": 0,
+              "cpSteal": 2,
               "note": "Large suite: Rat steals 2 CP, then deals damage equal to its CP."
             },
             "displayRows": [
@@ -169,17 +178,25 @@
                   "dmg = CP + 2"
                 ]
               }
-            ]
+            ],
+            "exclusive": true,
+            "minRollCount": 0
           },
           {
             "condition": {
               "type": "suite",
+              "negate": false,
+              "and": [],
               "minLength": 4
             },
             "effect": {
-              "cpSteal": 1,
+              "heroTokens": [],
+              "minionTokens": [],
+              "damage": null,
               "damageFormula": "cp+cpSteal",
               "undefendable": false,
+              "lifeSteal": 0,
+              "cpSteal": 1,
               "note": "Small suite: Rat steals 1 CP, then deals damage equal to its CP."
             },
             "displayRows": [
@@ -192,17 +209,25 @@
                   "dmg = CP + 1"
                 ]
               }
-            ]
+            ],
+            "exclusive": true,
+            "minRollCount": 0
           },
           {
             "condition": {
               "type": "suite",
+              "negate": false,
+              "and": [],
               "minLength": 3
             },
             "effect": {
-              "cpSteal": 1,
+              "heroTokens": [],
+              "minionTokens": [],
               "damage": 0,
+              "damageFormula": null,
               "undefendable": false,
+              "lifeSteal": 0,
+              "cpSteal": 1,
               "note": "Micro suite: Rat steals 1 CP."
             },
             "displayRows": [
@@ -214,12 +239,17 @@
                   "Steal 1 CP"
                 ]
               }
-            ]
+            ],
+            "exclusive": true,
+            "minRollCount": 0
           }
         ],
         "passives": [],
-        "notes": []
-      }
+        "notes": [],
+        "displayRows": []
+      },
+      "passives": [],
+      "passiveDisplayRows": []
     },
     {
       "key": "fee",
@@ -386,8 +416,7 @@
             "condition": {
               "type": "any"
             },
-            "prevent": 0,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": true,
             "stealHp": 0,
             "stealCp": 0,
@@ -397,10 +426,14 @@
             "tokens": [],
             "formulas": [
               "returnDamage = ceil(defenseDieValue / 2)"
-            ]
+            ],
+            "notes": [],
+            "prevent": 0,
+            "returnDamage": 0
           }
         ],
-        "notes": []
+        "notes": [],
+        "displayRows": []
       },
       "attackPlan": {
         "style": "symbols",
@@ -440,11 +473,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -463,11 +496,11 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
             "condition": {
@@ -486,38 +519,52 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           }
         ],
         "conditionalRules": [
           {
             "condition": {
               "type": "sameSymbol",
+              "negate": false,
+              "and": [],
               "count": 4
             },
             "effect": {
               "heroTokens": [
                 "Back Strike"
-              ]
+              ],
+              "minionTokens": [],
+              "damage": null,
+              "damageFormula": null,
+              "undefendable": false,
+              "lifeSteal": 0,
+              "cpSteal": 0,
+              "note": ""
             },
             "displayRows": [
               {
                 "align": "left",
                 "items": [
-                  "If you roll 4 matching symbols, gain the Back Strike token."
+                  "If you roll 4 matching symbols, gain the {token:Back Strike} token."
                 ]
               }
             ],
-            "exclusive": true
+            "exclusive": true,
+            "minRollCount": 0
           }
         ],
         "passives": [],
-        "notes": []
-      }
+        "notes": [],
+        "displayRows": []
+      },
+      "defense": "",
+      "passives": [],
+      "passiveDisplayRows": []
     },
     {
       "key": "enchanteur-gobelin",
@@ -834,7 +881,7 @@
               {
                 "align": "left",
                 "items": [
-                  "If you roll 3 matching values, inflict Silence."
+                  "If you roll 3 matching values, inflict {token:Silence}."
                 ]
               }
             ],
@@ -1000,7 +1047,7 @@
               {
                 "align": "left",
                 "items": [
-                  "If you roll 3 matching values, inflict Bleed."
+                  "If you roll 3 matching values, inflict {token:Bleed}."
                 ]
               }
             ],
@@ -3740,7 +3787,7 @@
                   "{die:red}",
                   "=",
                   "Roll 1 {die:any}",
-                  "→ 7 + Chaos dmg"
+                  "→ 7 + {token:Chaos} dmg"
                 ]
               }
             ]
@@ -4988,7 +5035,7 @@
               {
                 "align": "left",
                 "items": [
-                  "Si 3 chiffres identiques, deals Parasite."
+                  "Si 3 chiffres identiques, deals {token:Parasite}."
                 ]
               }
             ],
@@ -5217,7 +5264,7 @@
               {
                 "align": "left",
                 "items": [
-                  "Si a single opponent, deals Silence."
+                  "Si a single opponent, deals {token:Silence}."
                 ]
               }
             ],
@@ -5584,7 +5631,7 @@
               {
                 "align": "left",
                 "items": [
-                  "Si 3 chiffres identiques, deals Bleed."
+                  "Si 3 chiffres identiques, deals {token:Bleed}."
                 ]
               }
             ],
@@ -7089,7 +7136,7 @@
               {
                 "align": "left",
                 "items": [
-                  "Si total lower a 6, deals Parasite."
+                  "Si total lower a 6, deals {token:Parasite}."
                 ]
               }
             ],
@@ -7553,7 +7600,7 @@
               {
                 "align": "left",
                 "items": [
-                  "Si total lower a 7, deals Concussion."
+                  "Si total lower a 7, deals {token:Concussion}."
                 ]
               }
             ],
@@ -8463,7 +8510,7 @@
               {
                 "align": "left",
                 "items": [
-                  "Si 3 chiffres identiques, gains Back Strike."
+                  "Si 3 chiffres identiques, gains {token:Back Strike}."
                 ]
               }
             ],
@@ -8739,7 +8786,7 @@
               {
                 "align": "left",
                 "items": [
-                  "Si 3 chiffres identiques, deals Barbed Vine to all opponents."
+                  "Si 3 chiffres identiques, deals {token:Barbed Vine} to all opponents."
                 ]
               }
             ],
@@ -8871,7 +8918,7 @@
               {
                 "align": "left",
                 "items": [
-                  "Si 3 chiffres identiques, deals Bleed + Silence."
+                  "Si 3 chiffres identiques, deals {token:Bleed} + {token:Silence}."
                 ]
               }
             ],
@@ -9339,7 +9386,7 @@
               {
                 "align": "left",
                 "items": [
-                  "Si a single opponent est engage, deals aussi Wither et Silence."
+                  "Si a single opponent est engage, deals aussi {token:Wither} et {token:Silence}."
                 ]
               }
             ],
@@ -9589,7 +9636,7 @@
               {
                 "align": "left",
                 "items": [
-                  "If Umbra has Shadows, all its attacks deal 4 extra damage."
+                  "If Umbra has {token:Shadows}, all its attacks deal 4 extra damage."
                 ]
               }
             ],
