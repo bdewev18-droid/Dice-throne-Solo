@@ -6662,7 +6662,7 @@ class _CompactRoundIconButton extends StatelessWidget {
             height: 34,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: BorderSide(color: color, width: 1.4),
+              border: Border.all(color: color, width: 1.4),
             ),
             alignment: Alignment.center,
             child: Icon(icon, size: 18, color: Colors.white),
