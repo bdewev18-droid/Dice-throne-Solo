@@ -172,6 +172,7 @@ class EnemyProfileJson {
           minionTokens: const [],
           label: (action['label'] as String?)?.trim(),
           extraRoll: _extraRollFromJson(action['extraRoll']),
+          align: action['align'] as String? ?? 'left',
         );
       }
     }
@@ -247,9 +248,11 @@ class EnemyProfileJson {
               : (outcomes.isEmpty
                     ? ExtraRollMode.simple
                     : ExtraRollMode.perFace));
+    final align = (value['align'] as String?)?.trim() ?? 'left';
     return MinionExtraRoll(
       dice: dice,
       mode: mode,
+      align: align,
       rollText: rollText,
       outcomes: outcomes,
       finalText: (finalText != null && finalText.isNotEmpty) ? finalText : null,
@@ -322,6 +325,7 @@ class EnemyProfileJson {
       stealHp: _intValue(raw['stealHp'], fallback: 0),
       stealCp: _intValue(raw['stealCp'], fallback: 0),
       tokens: _stringList(raw['tokens']),
+      align: raw['align'] as String?,
     );
   }
 

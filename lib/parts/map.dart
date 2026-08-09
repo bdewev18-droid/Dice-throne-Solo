@@ -1257,10 +1257,22 @@ class RecipeEnemySelectionPage extends StatefulWidget {
 }
 
 class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
+  static final Map<EnemyRank, int> _lastSelectedIndices = {};
+
   late final List<EnemyProfile> _profiles = _recipeProfilesFor(
     widget.rank ?? widget.enemy.rank,
   );
-  late EnemyProfile _selected = _profiles[Random().nextInt(_profiles.length)];
+  late EnemyProfile _selected = _computeInitialSelection();
+
+  EnemyProfile _computeInitialSelection() {
+    final rank = widget.rank ?? widget.enemy.rank;
+    final lastIndex = _lastSelectedIndices[rank];
+    if (lastIndex == null) {
+      return _profiles.first;
+    } else {
+      return _profiles[(lastIndex + 1) % _profiles.length];
+    }
+  }
 
   Future<void> _pickProfile() async {
     final selected = await showModalBottomSheet<EnemyProfile>(
@@ -1356,7 +1368,14 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
               ImageActionButton(
                 label: 'Next',
                 icon: Icons.arrow_forward,
-                onPressed: () => Navigator.of(context).pop(_selected),
+                onPressed: () {
+                  final rank = widget.rank ?? widget.enemy.rank;
+                  final index = _profiles.indexWhere((p) => p.key == _selected.key);
+                  if (index >= 0) {
+                    _lastSelectedIndices[rank] = index;
+                  }
+                  Navigator.of(context).pop(_selected);
+                },
               ),
             ],
           ),

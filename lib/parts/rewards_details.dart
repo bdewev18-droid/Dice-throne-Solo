@@ -605,50 +605,107 @@ bool _isVisibleStatusTokenLabel(String value) {
   return rule?.editorVisible ?? true;
 }
 
-void showTokenDetails(BuildContext context, StatusTokenRule rule) {
+void showTokenDetails(
+  BuildContext context,
+  StatusTokenRule rule, {
+  int Function()? getCount,
+  VoidCallback? onMinus,
+  VoidCallback? onPlus,
+}) {
   showModalBottomSheet<void>(
     context: context,
     backgroundColor: const Color(0xff111111),
     showDragHandle: true,
-    builder: (context) => Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setSheetState) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              StatusTokenImage(rule: rule, size: 54),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  StatusTokenImage(rule: rule, size: 54),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          rule.label,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Text(
+                          'Stack limit: ${rule.maxStack}',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _TokenSupportDot(rule: rule),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                rule.description.isEmpty
+                    ? 'No description yet.'
+                    : rule.description,
+                style: const TextStyle(height: 1.35),
+              ),
+              if (getCount != null) ...[
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      rule.label,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
+                    RoundIconButton(
+                      icon: Icons.remove,
+                      tooltip: 'Remove',
+                      onPressed:
+                          (getCount() > 0 && onMinus != null)
+                              ? () {
+                                onMinus();
+                                setSheetState(() {});
+                              }
+                              : null,
+                    ),
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        getCount().toString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
-                    Text(
-                      'Stack limit: ${rule.maxStack}',
-                      style: const TextStyle(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold),
+                    RoundIconButton(
+                      icon: Icons.add,
+                      tooltip: 'Add',
+                      onPressed:
+                          (getCount() < rule.maxStack && onPlus != null)
+                              ? () {
+                                onPlus();
+                                setSheetState(() {});
+                              }
+                              : null,
                     ),
                   ],
                 ),
-              ),
-              _TokenSupportDot(rule: rule),
+              ],
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            rule.description.isEmpty ? 'No description yet.' : rule.description,
-            style: const TextStyle(height: 1.35),
-          ),
-        ],
-      ),
+        );
+      },
     ),
   );
 }

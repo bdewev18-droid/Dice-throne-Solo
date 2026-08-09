@@ -22,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.74';
+const String appVersionLabel = 'Version 1.3.85';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -133,7 +133,7 @@ enum HeroType {
     'Benjamin',
     'assets/personnages/benji.webp',
     Alignment(0.0, -0.6),
-    Colors.grey,
+    Colors.blue,
     HeroSegment.values,
     6,
   ),
@@ -799,7 +799,8 @@ String _tokenShortLabel(String label) {
     'burn' || 'brulure' => 'BRN',
     'chaos' => 'CH',
     'concussion' || 'commotion' => 'COM',
-    'blindinglight' || 'eboulissement' => 'EBO',
+    'blindinglight' || 'lumiereaveuglante' => 'LUA',
+    'blind' || 'eblouissement' => 'EBL',
     'entangle' || 'enchevetrement' => 'ROOT',
     'evasive' || 'evitement' => 'EVA',
     'bleed' || 'hemorragie' => 'HEM',
@@ -925,9 +926,9 @@ enum SurvivalMode {
 }
 
 enum RunDifficulty {
-  medium('Medium'),
-  hard('Difficult'),
-  free('Free'),
+  medium('Rush - Medium'),
+  hard('Rush - Difficult'),
+  free('Rush - Free'),
   naraxus('Naxarus');
 
   const RunDifficulty(this.label);

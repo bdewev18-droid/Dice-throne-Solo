@@ -3075,6 +3075,7 @@ class CompactItemStrip extends StatefulWidget {
     this.compactDuplicates = true,
     this.leading,
     this.trailing,
+    this.onTokensChanged,
     super.key,
   });
 
@@ -3087,6 +3088,7 @@ class CompactItemStrip extends StatefulWidget {
   final bool compactDuplicates;
   final Widget? leading;
   final Widget? trailing;
+  final VoidCallback? onTokensChanged;
 
   @override
   State<CompactItemStrip> createState() => _CompactItemStripState();
@@ -3175,7 +3177,19 @@ class _CompactItemStripState extends State<CompactItemStrip> {
                                             ),
                                           );
                                       if (rule != null) {
-                                        showTokenDetails(context, rule);
+                                        showTokenDetails(
+                                          context,
+                                          rule,
+                                          getCount: widget.onTokensChanged != null ? () => widget.items.where((t) => t == rule.label).length : null,
+                                          onMinus: widget.onTokensChanged != null ? () {
+                                            widget.items.remove(rule.label);
+                                            widget.onTokensChanged!();
+                                          } : null,
+                                          onPlus: widget.onTokensChanged != null ? () {
+                                            widget.items.add(rule.label);
+                                            widget.onTokensChanged!();
+                                          } : null,
+                                        );
                                       } else {
                                         ScaffoldMessenger.of(
                                           context,
@@ -3652,9 +3666,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
       label: 'Attack',
       icon: Icons.gps_fixed,
       color: enemy.rank.color,
-      trailing: _isDruid
-          ? const SizedBox.shrink()
-          : AttackObjectiveInline(enemy: enemy),
+      trailing: AttackObjectiveInline(enemy: enemy),
       expanded: widget.aiMode ? _showAttack : true,
       onTap: () => setState(() {
         if (!widget.aiMode) {
@@ -3692,9 +3704,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
       label: 'Defense',
       icon: Icons.shield,
       color: enemy.rank.color,
-      trailing: _isDruid
-          ? const SizedBox.shrink()
-          : DefenseDiceInline(count: enemy.defenseDice),
+      trailing: DefenseDiceInline(count: enemy.defenseDice),
       expanded: widget.aiMode ? _showDefense : true,
       onTap: () => setState(() {
         if (!widget.aiMode) {
@@ -3759,14 +3769,28 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                   Expanded(
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
-                      child: Text(
-                        enemy.label,
-                        maxLines: 1,
-                        style: TextStyle(
-                          color: enemy.rank.color,
-                          fontSize: 21,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (widget.developerMode)
+                            Text(
+                              enemy.profileKey ?? 'Unknown',
+                              style: TextStyle(
+                                color: enemy.rank.color.withValues(alpha: 0.7),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          Text(
+                            enemy.label,
+                            maxLines: 1,
+                            style: TextStyle(
+                              color: enemy.rank.color,
+                              fontSize: 21,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -4413,6 +4437,59 @@ class MinionAttackSummary extends StatelessWidget {
       previewBearForm ??
       (enemy.profileKey == 'vert-vert-014' ? _isDruidBearForm(enemy) : false);
 
+  List<Widget> _buildSuiteResult(int length, EnemyNode enemy) {
+    final effect = enemy.attackPlan.suiteEffects[length];
+    final color = enemy.rank.color;
+    
+    if (effect != null) {
+      final badges = <Widget>[];
+      for (final token in effect.minionTokens) {
+        badges.add(TokenBadge(label: token, color: color));
+      }
+      for (final token in effect.heroTokens) {
+        badges.add(TokenBadge(label: token, color: Colors.deepOrangeAccent)); // Usually debuffs have a different color or just use enemy color, let's stick to enemy color for now. Wait, I'll just use color.
+      }
+      if (effect.stealCp > 0) {
+        badges.add(CpStealBadge(value: effect.stealCp, color: color));
+      }
+      if (effect.stealHp > 0) {
+        badges.add(LifeStealBadge(value: effect.stealHp, color: color));
+      }
+      if (effect.heal > 0) {
+        badges.add(_HealBadge(value: effect.heal));
+      }
+      if (effect.damage > 0) {
+        badges.add(DamageBadge(value: effect.damage, imparable: effect.undefendable));
+      }
+      if (effect.label != null && effect.label!.isNotEmpty) {
+        badges.add(const SizedBox(width: 4));
+        badges.add(InlineTokenText(effect.label!, color: color, style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc))));
+      }
+      return badges;
+    }
+    
+    // Legacy fallback
+    final badges = <Widget>[];
+    final Widget? legacyLeading = switch (enemy.profileKey) {
+      'bleu-bleu-008' when length == 3 => TokenBadge(label: 'Entangle', color: color),
+      'bleu-bleu-008' when length == 4 => TokenBadge(label: 'Silence', color: color),
+      'fee' when length == 5 => CpStealBadge(value: 1, color: color),
+      'elfe-du-chaos' when length == 5 => TokenBadge(label: 'Barbed Vine', color: color),
+      'vert-vert-020' when length == 5 => TokenBadge(label: 'Knockdown', color: color),
+      _ => null,
+    };
+    final legacyDamage = _suiteDamage(enemy, length);
+    
+    if (legacyLeading != null) {
+      badges.add(legacyLeading);
+      badges.add(const SizedBox(width: 5));
+    }
+    if (legacyDamage != null) {
+      badges.add(DamageBadge(value: legacyDamage.value, imparable: legacyDamage.imparable));
+    }
+    return badges;
+  }
+
   @override
   Widget build(BuildContext context) {
     final ruleRows = <DisplayRow>[];
@@ -4519,6 +4596,7 @@ class MinionAttackSummary extends StatelessWidget {
           goal: goal,
           extraRoll: extraRoll,
           color: enemy.rank.color,
+          actionAlign: goal.effect?.align ?? 'left',
         );
       }
       return const SizedBox.shrink();
@@ -4598,6 +4676,7 @@ class MinionAttackSummary extends StatelessWidget {
           goal: goal,
           extraRoll: extraRoll,
           color: enemy.rank.color,
+          actionAlign: goal.effect?.align ?? 'left',
         );
       }
       return const SizedBox.shrink();
@@ -4638,6 +4717,7 @@ class MinionAttackSummary extends StatelessWidget {
           goal: goal,
           extraRoll: extraRoll,
           color: enemy.rank.color,
+          actionAlign: goal.effect?.align ?? 'left',
           passiveNote: _PassiveNote(
             child: Row(
               children: [
@@ -4717,6 +4797,7 @@ class MinionAttackSummary extends StatelessWidget {
           goal: goal,
           extraRoll: extraRoll,
           color: enemy.rank.color,
+          actionAlign: goal.effect?.align ?? 'left',
           directDamage: const _AttackDamage(5, imparable: true),
           directUndefendable: true,
         );
@@ -4732,6 +4813,7 @@ class MinionAttackSummary extends StatelessWidget {
           goal: goal,
           extraRoll: extraRoll,
           color: enemy.rank.color,
+          actionAlign: goal.effect?.align ?? 'left',
         );
       }
       return const SizedBox.shrink();
@@ -4745,6 +4827,7 @@ class MinionAttackSummary extends StatelessWidget {
           goal: goal,
           extraRoll: extraRoll,
           color: enemy.rank.color,
+          actionAlign: goal.effect?.align ?? 'left',
         );
       }
       return const SizedBox.shrink();
@@ -4758,6 +4841,7 @@ class MinionAttackSummary extends StatelessWidget {
           goal: goal,
           extraRoll: extraRoll,
           color: enemy.rank.color,
+          actionAlign: goal.effect?.align ?? 'left',
         );
       }
       return const SizedBox.shrink();
@@ -4774,6 +4858,7 @@ class MinionAttackSummary extends StatelessWidget {
           goal: goal,
           extraRoll: extraRoll,
           color: enemy.rank.color,
+          actionAlign: goal.effect?.align ?? 'left',
           directDamage: _extraRollDirectDamageFor(enemy),
           directUndefendable:
               _extraRollDirectDamageFor(enemy)?.imparable ?? false,
@@ -4875,22 +4960,20 @@ class MinionAttackSummary extends StatelessWidget {
     switch (enemy.attackPlan.style) {
       case MinionAttackStyle.symbols:
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ...enemy.attackPlan.goals.map((goal) {
+              final effect = goal.effect;
+              final align = effect?.align ?? 'left';
               final damage = _damageForSymbolGoal(enemy, goal);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    Expanded(child: SymbolGoalView(goal: goal)),
-                    if (damage != null)
-                      DamageBadge(
-                        value: damage.value,
-                        imparable: damage.imparable,
-                      ),
-                  ],
-                ),
+              final result = <Widget>[];
+              if (damage != null) {
+                result.add(DamageBadge(value: damage.value, imparable: damage.imparable));
+              }
+              return _AttackResultLine(
+                goal: goal,
+                result: result,
+                align: align,
               );
             }),
             ..._shortTokenHints(enemy),
@@ -4903,43 +4986,17 @@ class MinionAttackSummary extends StatelessWidget {
             _SuiteLine(
               label: 'Micro',
               length: 3,
-              damage: _suiteDamage(enemy, 3),
-              leadingResult: switch (enemy.profileKey) {
-                'bleu-bleu-008' => TokenBadge(
-                  label: 'Entangle',
-                  color: enemy.rank.color,
-                ),
-                _ => null,
-              },
+              result: _buildSuiteResult(3, enemy),
             ),
             _SuiteLine(
               label: 'Small',
               length: 4,
-              damage: _suiteDamage(enemy, 4),
-              leadingResult: switch (enemy.profileKey) {
-                'bleu-bleu-008' => TokenBadge(
-                  label: 'Silence',
-                  color: enemy.rank.color,
-                ),
-                _ => null,
-              },
+              result: _buildSuiteResult(4, enemy),
             ),
             _SuiteLine(
               label: 'Large',
               length: 5,
-              damage: _suiteDamage(enemy, 5),
-              leadingResult: switch (enemy.profileKey) {
-                'fee' => CpStealBadge(value: 1, color: enemy.rank.color),
-                'elfe-du-chaos' => TokenBadge(
-                  label: 'Barbed Vine',
-                  color: enemy.rank.color,
-                ),
-                'vert-vert-020' => TokenBadge(
-                  label: 'Knockdown',
-                  color: enemy.rank.color,
-                ),
-                _ => null,
-              },
+              result: _buildSuiteResult(5, enemy),
             ),
             ..._shortTokenHints(enemy),
           ],
@@ -8086,6 +8143,7 @@ class _ExtraRollAttackSummary extends StatelessWidget {
     required this.goal,
     required this.extraRoll,
     required this.color,
+    this.actionAlign = 'left',
     this.directDamage,
     this.directUndefendable = false,
     this.passiveNote,
@@ -8095,6 +8153,7 @@ class _ExtraRollAttackSummary extends StatelessWidget {
   final SymbolGoal goal;
   final MinionExtraRoll extraRoll;
   final Color color;
+  final String actionAlign;
 
   /// Direct damage dealt by the triggering attack itself (before the extra
   /// roll), shown on L1. Null when the attack's only effect is the roll.
@@ -8118,7 +8177,7 @@ class _ExtraRollAttackSummary extends StatelessWidget {
         DamageBadge(value: directDamage!.value, imparable: directUndefendable),
       );
     }
-    children.add(_AttackResultLine(goal: goal, result: result));
+    children.add(_AttackResultLine(goal: goal, result: result, align: actionAlign));
 
     if (extraRoll.displayRows.isNotEmpty) {
       for (final row in extraRoll.displayRows) {
@@ -8130,7 +8189,7 @@ class _ExtraRollAttackSummary extends StatelessWidget {
         children.add(
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
-            child: _RollTextWithDie(text: extraRoll.rollText),
+            child: _RollTextWithDie(text: extraRoll.rollText, align: extraRoll.align),
           ),
         );
       }
@@ -8163,7 +8222,7 @@ class _ExtraRollAttackSummary extends StatelessWidget {
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: children,
     );
   }
@@ -8197,23 +8256,15 @@ class _ExtraRollAttackSummary extends StatelessWidget {
       badges.add(TokenBadge(label: token, color: color));
     }
 
-    // Left marker: die face symbol, or a cube icon for `any`.
+    final align = outcome.align ?? extraRoll.align;
     if (outcome.face == ExtraRollFace.any) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 5),
-        child: Row(
-          children: [
-            const _CubeIcon(size: 24),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Wrap(
-                spacing: 5,
-                alignment: WrapAlignment.end,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: badges,
-              ),
-            ),
-          ],
+        child: Wrap(
+          spacing: 5,
+          alignment: align == 'center' ? WrapAlignment.center : WrapAlignment.end,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: badges,
         ),
       );
     }
@@ -8223,18 +8274,38 @@ class _ExtraRollAttackSummary extends StatelessWidget {
       ExtraRollFace.red => DieSymbol.red,
       ExtraRollFace.any => DieSymbol.white,
     };
-    return _ResultLine(symbol: symbol, children: badges);
+    return _ResultLine(symbol: symbol, children: badges, align: align);
   }
 }
 
 class _ResultLine extends StatelessWidget {
-  const _ResultLine({required this.symbol, required this.children});
+  const _ResultLine({required this.symbol, required this.children, this.align = 'left'});
 
   final DieSymbol symbol;
   final List<Widget> children;
+  final String align;
 
   @override
   Widget build(BuildContext context) {
+    if (align == 'center') {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 5),
+        child: Wrap(
+          spacing: 8,
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            DieSymbolMark(symbol: symbol),
+            Wrap(
+              spacing: 5,
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: children,
+            ),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
       child: Row(
@@ -8262,9 +8333,10 @@ class _ResultLine extends StatelessWidget {
 /// no `{die}` marker (legacy), a trailing cube icon is appended so the line
 /// still shows the roll icon.
 class _RollTextWithDie extends StatelessWidget {
-  const _RollTextWithDie({required this.text});
+  const _RollTextWithDie({required this.text, this.align = 'left'});
 
   final String text;
+  final String align;
 
   static final RegExp _dieMarker = RegExp(r'\{die\}', caseSensitive: false);
 
@@ -8294,6 +8366,7 @@ class _RollTextWithDie extends StatelessWidget {
             iconSpan,
           ],
         ),
+        textAlign: align == 'center' ? TextAlign.center : TextAlign.left,
       );
     }
 
@@ -8309,7 +8382,10 @@ class _RollTextWithDie extends StatelessWidget {
     if (last < text.length) {
       spans.add(TextSpan(text: text.substring(last)));
     }
-    return Text.rich(TextSpan(style: style, children: spans));
+    return Text.rich(
+      TextSpan(style: style, children: spans),
+      textAlign: align == 'center' ? TextAlign.center : TextAlign.left,
+    );
   }
 }
 
@@ -8317,14 +8393,12 @@ class _SuiteLine extends StatelessWidget {
   const _SuiteLine({
     required this.label,
     required this.length,
-    required this.damage,
-    this.leadingResult,
+    required this.result,
   });
 
   final String label;
   final int length;
-  final _AttackDamage? damage;
-  final Widget? leadingResult;
+  final List<Widget> result;
 
   @override
   Widget build(BuildContext context) {
@@ -8340,12 +8414,7 @@ class _SuiteLine extends StatelessWidget {
             ),
           ),
           Expanded(child: SuiteGoalView(length: length)),
-          if (leadingResult != null) ...[
-            leadingResult!,
-            const SizedBox(width: 5),
-          ],
-          if (damage != null)
-            DamageBadge(value: damage!.value, imparable: damage!.imparable),
+          ...result,
         ],
       ),
     );
@@ -8452,13 +8521,34 @@ class _ExtraRollDisplayRow extends StatelessWidget {
 }
 
 class _AttackResultLine extends StatelessWidget {
-  const _AttackResultLine({required this.goal, required this.result});
+  const _AttackResultLine({required this.goal, required this.result, this.align = 'left'});
 
   final SymbolGoal goal;
   final List<Widget> result;
+  final String align;
 
   @override
   Widget build(BuildContext context) {
+    if (align == 'center') {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            SymbolGoalView(goal: goal),
+            if (result.isNotEmpty)
+              Wrap(
+                spacing: 5,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: result,
+              ),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -9874,6 +9964,7 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
             onEnemyCp: () => _openEditor('enemyCp', widget.enemy.combatPoints),
             onEditHeroTokens: _editHeroTokens,
             onEditEnemyTokens: _editEnemyTokens,
+            onTokensChanged: _onTokensChanged,
           ),
           if (_editing.contains('heroHp') || _editing.contains('enemyHp')) ...[
             const SizedBox(height: 6),
@@ -10102,6 +10193,11 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       setState(() {});
     }
   }
+
+  void _onTokensChanged() {
+    widget.onChanged();
+    setState(() {});
+  }
 }
 
 class CombatVersusStatusPanel extends StatelessWidget {
@@ -10114,6 +10210,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
     required this.onEnemyCp,
     required this.onEditHeroTokens,
     required this.onEditEnemyTokens,
+    required this.onTokensChanged,
     super.key,
   });
 
@@ -10125,6 +10222,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
   final VoidCallback onEnemyCp;
   final VoidCallback onEditHeroTokens;
   final VoidCallback onEditEnemyTokens;
+  final VoidCallback onTokensChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -10155,6 +10253,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
                   onHp: onEnemyHp,
                   onCp: onEnemyCp,
                   onEditTokens: onEditEnemyTokens,
+                  onTokensChanged: onTokensChanged,
                 ),
               ),
               Container(
@@ -10175,6 +10274,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
                   onHp: onHeroHp,
                   onCp: onHeroCp,
                   onEditTokens: onEditHeroTokens,
+                  onTokensChanged: onTokensChanged,
                   imageOnRight: true,
                 ),
               ),
@@ -10222,6 +10322,7 @@ class _CombatantVersusHalf extends StatelessWidget {
     required this.onHp,
     required this.onCp,
     required this.onEditTokens,
+    this.onTokensChanged,
     this.portraitScale = 1,
     this.imageOnRight = false,
     this.infiniteCp = false,
@@ -10239,6 +10340,7 @@ class _CombatantVersusHalf extends StatelessWidget {
   final VoidCallback onHp;
   final VoidCallback onCp;
   final VoidCallback onEditTokens;
+  final VoidCallback? onTokensChanged;
   final bool imageOnRight;
   final bool infiniteCp;
 
@@ -10292,6 +10394,7 @@ class _CombatantVersusHalf extends StatelessWidget {
               accent: accent,
               background: Colors.black.withValues(alpha: 0.22),
               border: panelBorderGrey,
+              onTokensChanged: onTokensChanged,
               trailing: IconButton(
                 tooltip: 'Edit tokens',
                 visualDensity: VisualDensity.compact,

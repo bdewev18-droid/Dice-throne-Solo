@@ -3,7 +3,7 @@ const http = require('http');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..', 'build', 'web');
-const port = Number(process.env.PORT || 8082);
+const port = Number(process.env.PORT || 8083);
 const basePath = '/Dice-throne-Solo';
 const types = {
   '.css': 'text/css',
@@ -80,6 +80,21 @@ http
       urlPath = urlPath.slice(basePath.length);
     }
     const relativePath = urlPath.replace(/^\/+/, '');
+    if (relativePath === 'assets/docs/enemy_profiles.json') {
+      const livePath = path.resolve(__dirname, '..', 'docs', 'enemy_profiles.json');
+      if (fs.existsSync(livePath)) {
+        sendFile(response, livePath);
+        return;
+      }
+    }
+    if (relativePath === 'assets/data/token_catalog.json') {
+      const livePath = path.resolve(__dirname, '..', 'assets', 'data', 'token_catalog.json');
+      if (fs.existsSync(livePath)) {
+        sendFile(response, livePath);
+        return;
+      }
+    }
+
     let filePath = path.join(root, relativePath);
     if (urlPath.endsWith('/')) {
       const directoryIndex = path.join(root, relativePath, 'index.html');

@@ -73,7 +73,47 @@ class _HistoryPageState extends State<HistoryPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text('Difficulty', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70)),
+                        Row(
+                          children: [
+                            const Text('Mode', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70)),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () {
+                                if (_difficulty == RunDifficulty.naraxus) {
+                                  setState(() {
+                                    _difficulty = RunDifficulty.medium;
+                                    _selectedForDelete.clear();
+                                  });
+                                }
+                              },
+                              child: Icon(
+                                Icons.shield,
+                                size: 20,
+                                color: _difficulty != RunDifficulty.naraxus
+                                    ? Colors.purpleAccent
+                                    : Colors.white70,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () {
+                                if (_difficulty != RunDifficulty.naraxus) {
+                                  setState(() {
+                                    _difficulty = RunDifficulty.naraxus;
+                                    _selectedForDelete.clear();
+                                  });
+                                }
+                              },
+                              child: Icon(
+                                Icons.local_fire_department,
+                                size: 20,
+                                color: _difficulty == RunDifficulty.naraxus
+                                    ? Colors.purpleAccent
+                                    : Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 4),
                         DropdownButtonFormField<RunDifficulty>(
                           value: _difficulty,
@@ -135,6 +175,8 @@ class _HistoryPageState extends State<HistoryPage> {
                   ),
                 ),
               const SizedBox(height: 16),
+              if (records.isNotEmpty) _buildPodium(flatMode ? records : grouped.entries.toList(), flatMode),
+              if (records.isNotEmpty) const SizedBox(height: 16),
               const _HistoryHeaderRow(),
               const Divider(),
               Expanded(
@@ -208,6 +250,46 @@ class _HistoryPageState extends State<HistoryPage> {
         return avgB.compareTo(avgA);
       });
     return Map.fromEntries(entries);
+  }
+
+  Widget _buildPodium(dynamic items, bool flatMode) {
+    final entries = <_PodiumEntry>[];
+    if (flatMode) {
+      final list = items as List<GameRecord>;
+      for (var i = 0; i < 3 && i < list.length; i++) {
+        final r = list[i];
+        String p = '';
+        String s = '';
+        if (_sort == HistorySort.time) {
+          p = _formatDuration(r.duration);
+          s = '${r.score} pts';
+        } else if (_sort == HistorySort.date) {
+          p = '${r.score} pts';
+          s = '${r.date.day.toString().padLeft(2, '0')}/${r.date.month.toString().padLeft(2, '0')}/${r.date.year}';
+        } else {
+          p = '${r.score} pts';
+        }
+        entries.add(_PodiumEntry(r.hero, p, s));
+      }
+    } else {
+      var list = items as List<MapEntry<HeroType, List<GameRecord>>>;
+      // Always sort the podium by average score for heroes
+      list = list.toList()..sort((a, b) => _averageScore(b.value).compareTo(_averageScore(a.value)));
+      
+      for (var i = 0; i < 3 && i < list.length; i++) {
+        final r = list[i];
+        String p = '${_averageScore(r.value).toStringAsFixed(1)} avg';
+        String s = '${r.value.length} partie(s)';
+        
+        // Also show the best score in the secondary if sort is 'best', just for info
+        if (_sort == HistorySort.best) {
+          s += ' - Max: ${r.value.first.score}';
+        }
+        
+        entries.add(_PodiumEntry(r.key, p, s));
+      }
+    }
+    return _PodiumWidget(entries: entries);
   }
 
   Widget _buildGroupedList(Map<HeroType, List<GameRecord>> grouped) {
@@ -708,6 +790,93 @@ class _ManualRunDialogState extends State<ManualRunDialog> {
             );
           },
           child: const Text('Add'),
+        ),
+      ],
+    );
+  }
+}
+
+class _PodiumEntry {
+  _PodiumEntry(this.hero, this.primary, this.secondary);
+  final HeroType hero;
+  final String primary;
+  final String secondary;
+}
+
+class _PodiumWidget extends StatelessWidget {
+  const _PodiumWidget({required this.entries});
+  final List<_PodiumEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (entries.length > 1) _buildPodiumItem(entries[1], 2, 80, const Color(0xffC0C0C0)),
+          if (entries.length > 1) const SizedBox(width: 16),
+          _buildPodiumItem(entries[0], 1, 110, const Color(0xffFFD700)),
+          if (entries.length > 2) const SizedBox(width: 16),
+          if (entries.length > 2) _buildPodiumItem(entries[2], 3, 60, const Color(0xffCD7F32)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPodiumItem(_PodiumEntry entry, int rank, double height, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(entry.primary, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        if (entry.secondary.isNotEmpty)
+          Text(entry.secondary, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.5),
+                blurRadius: 8,
+              )
+            ],
+          ),
+          child: CircleAvatar(
+            radius: rank == 1 ? 38 : 30,
+            backgroundColor: Colors.black,
+            backgroundImage: AssetImage(entry.hero.asset),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: rank == 1 ? 80 : 64,
+          height: height,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.8),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            ],
+          ),
+          child: Center(
+            child: Text(
+              '#$rank',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                shadows: [Shadow(color: Colors.black45, blurRadius: 4, offset: Offset(1, 1))],
+              ),
+            ),
+          ),
         ),
       ],
     );

@@ -126,6 +126,7 @@ class SymbolGoalEffect {
     this.minionTokens = const [],
     this.label,
     this.extraRoll,
+    this.align = 'left',
   });
 
   final int damage;
@@ -142,6 +143,9 @@ class SymbolGoalEffect {
   /// Used only for the attack display (the runtime resolution stays keyed on
   /// `profileKey`); null when the action has no extra roll.
   final MinionExtraRoll? extraRoll;
+
+  /// The horizontal alignment of this action's main goal line ('left' or 'center').
+  final String align;
 }
 
 /// Face of a die referenced by an [ExtraRollOutcome].
@@ -170,6 +174,7 @@ class ExtraRollOutcome {
     this.stealHp = 0,
     this.stealCp = 0,
     this.tokens = const [],
+    this.align,
   });
 
   final ExtraRollFace face;
@@ -179,6 +184,7 @@ class ExtraRollOutcome {
   final int stealHp;
   final int stealCp;
   final List<String> tokens;
+  final String? align;
 }
 
 /// Additional dice roll triggered by a successful attack.
@@ -191,6 +197,7 @@ class MinionExtraRoll {
   const MinionExtraRoll({
     required this.dice,
     required this.mode,
+    this.align = 'left',
     required this.rollText,
     this.outcomes = const [],
     this.finalText,
@@ -203,6 +210,9 @@ class MinionExtraRoll {
   /// Whether the effect depends on the face (`perFace`) or just the roll
   /// value (`simple`).
   final ExtraRollMode mode;
+
+  /// The horizontal alignment of this extra roll section ('left' or 'center').
+  final String align;
 
   /// Line-2 text shown beside the roll icon (e.g.
   /// "Si l'attaque réussit, lancez 1 dé.").
