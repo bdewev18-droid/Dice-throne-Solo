@@ -171,6 +171,8 @@ class EnemyProfileJson {
           heroTokens: _stringList(action['tokens']),
           minionTokens: const [],
           label: (action['label'] as String?)?.trim(),
+          label2: (action['label2'] as String?)?.trim(),
+          label3: (action['label3'] as String?)?.trim(),
           extraRoll: _extraRollFromJson(action['extraRoll']),
           align: action['align'] as String? ?? 'left',
         );
@@ -362,6 +364,9 @@ class EnemyProfileJson {
           heroTokens: _stringList(action['tokens']),
           minionTokens: const [],
           label: (action['label'] as String?)?.trim(),
+          label2: (action['label2'] as String?)?.trim(),
+          label3: (action['label3'] as String?)?.trim(),
+          formulas: _stringList(action['formulas']),
         );
       }
       return MinionAttackPlan.suite(

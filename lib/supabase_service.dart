@@ -1,6 +1,6 @@
 import 'dart:async';
-
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -85,7 +85,9 @@ class AuthSessionEvent {
 /// est diffusée automatiquement.
 class SupabaseService {
   SupabaseService._();
-  static final SupabaseService instance = SupabaseService._();
+
+  @visibleForTesting
+  static SupabaseService instance = SupabaseService._();
 
   static const String _table = 'game_records';
 

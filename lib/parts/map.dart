@@ -527,15 +527,9 @@ class _MapPageState extends State<MapPage> {
                   navigator.pop();
                 }
                 if (rewardDue == true && mounted) {
-                  await navigator.push(
-                    MaterialPageRoute<void>(
-                      builder: (_) =>
-                          RewardPage(adventure: widget.adventure, enemy: enemy),
-                    ),
-                  );
-                  widget.onChanged();
-                  setState(() {});
-                }
+                    widget.onChanged();
+                    setState(() {});
+                  }
               },
             ),
           ),

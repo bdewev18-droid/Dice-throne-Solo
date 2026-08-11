@@ -22,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.85';
+const String appVersionLabel = 'Version 1.3.104';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -1481,9 +1481,14 @@ class AdventureState {
     log('Hero CP set to $combatPoints.');
   }
 
+  void applyHeroUpkeep() {
+    combatPoints = (combatPoints + 1).clamp(0, 99);
+    log('Hero upkeep: gained 1 CP (Total: $combatPoints)');
+  }
+
   void addAlteration(String value) {
-    alterations.add(value);
-    log('Hero status added: $value.');
+    alterations.insert(0, value);
+    log('Hero gained token: $value');
   }
 
   void setAlterations(List<String> values) {
@@ -1498,6 +1503,12 @@ class AdventureState {
       enemy.defeated = true;
       score += enemy.rank.points;
       log('${enemy.label} defeated: +${enemy.rank.points} points.');
+      
+      // Naraxus tie logic
+      if (health <= 0 && enemy.profileKey == 'naraxus') {
+        score += 50;
+        log('Tie against Naraxus: +50 points.');
+      }
     }
 
     if (health <= 0) {

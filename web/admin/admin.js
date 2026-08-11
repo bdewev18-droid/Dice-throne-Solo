@@ -518,6 +518,7 @@ function renderEditor() {
   renderTokenAdmin();
   updateTabDots();
   validateTokens();
+  updateRewardWarnings();
 }
 
 function collectCurrent() {
@@ -721,6 +722,15 @@ function actionCard(data, index, isDefense) {
   node.dataset.kind = isDefense ? 'defense' : 'attack';
   node.querySelector('.action-title').textContent = `${isDefense ? 'Defense effect' : 'Attack action'} ${index + 1}`;
   node.querySelector('.remove-action').onclick = () => { node.remove(); collectCurrent(); setDirty('enemy'); renderPreview(); renderFormulaList(); };
+  
+  if (selectedProfile?.name === 'Rat de la Rue') {
+    node.querySelector('.rat-labels').style.display = 'flex';
+  }
+  const label2Input = node.querySelector('.action-label2');
+  if(label2Input) label2Input.value = data.label2 || '';
+  const label3Input = node.querySelector('.action-label3');
+  if(label3Input) label3Input.value = data.label3 || '';
+
   const condition = data.condition || {};
   const type = condition.type || 'symbols';
   const symbols = condition.symbols || {};
@@ -832,6 +842,10 @@ function readCommon(card) {
 }
 function readActionCard(card) {
   const data = readCommon(card);
+  const label2 = card.querySelector('.action-label2')?.value?.trim();
+  if (label2) data.label2 = label2;
+  const label3 = card.querySelector('.action-label3')?.value?.trim();
+  if (label3) data.label3 = label3;
   data.topDeckToDiscard = intVal(card.querySelector('.effect-topdeck').value);
   data.extraRoll = readExtra(card);
   return data;
@@ -919,6 +933,8 @@ function actionToDisplayRows(action = {}) {
   const first = [...condition];
   if (action.label) first.push(action.label);
   if (effect.length) first.push('=', ...effect);
+  if (action.label2) first.push(action.label2);
+  if (action.label3) first.push(action.label3);
   if (first.length) rows.push({ align: 'left', items: first });
   if (action.extraRoll?.displayRows?.length) {
     rows.push(...action.extraRoll.displayRows);
@@ -1122,7 +1138,7 @@ function effectHtml(effect = {}) {
   if (effect.prevent) bits.push(`<span class="badge prevent">${effect.prevent}</span>`);
   if (effect.returnDamage) bits.push(`<span class="badge ${effect.undefendable ? 'undef' : 'damage'}">↩${effect.returnDamage}</span>`);
   if (effect.stealHp) bits.push(`<span class="badge heal">S${effect.stealHp}</span>`);
-  if (effect.stealCp) bits.push(`<span class="token-chip">Steal ${effect.stealCp} CP</span>`);
+  if (effect.stealCp && !effect.label2) bits.push(`<span class="token-chip">Steal ${effect.stealCp} CP</span>`);
   if (effect.heal) bits.push(`<span class="badge heal">+${effect.heal}</span>`);
   if (effect.drawCards) bits.push(`<span class="token-chip">Draw ${effect.drawCards}</span>`);
   if (effect.discardCards) bits.push(`<span class="token-chip">Discard ${effect.discardCards}</span>`);
@@ -1137,7 +1153,9 @@ function effectHtml(effect = {}) {
   return bits.join(' ') || '<span class="token-chip">No effect</span>';
 }
 function actionPreview(action) {
-  return `<div class="preview-row"><div>${conditionHtml(action.condition)}<strong>${action.label || ''}</strong></div><div>${effectHtml(action)}</div></div>`;
+  let label2Html = action.label2 ? `<div class="token-chip" style="margin-left: 4px;">${action.label2}</div>` : '';
+  let label3Html = action.label3 ? `<div class="token-chip" style="margin-left: 4px;">${action.label3}</div>` : '';
+  return `<div class="preview-row"><div>${conditionHtml(action.condition)}<strong>${action.label || ''}</strong></div><div>${effectHtml(action)}${label2Html}${label3Html}</div></div>`;
 }
 function defensePreview(effect) {
   return `<div class="preview-row"><div>${conditionHtml(effect.condition)}</div><div>${effectHtml(effect)}</div></div>`;
@@ -1218,14 +1236,14 @@ function renderPassiveRules() {
 }
 
 function validateTokens() {
-  const tokenCatalogTokens = Object.keys(tokenSourceData?.catalog || {});
+  const tokenLabels = (tokenCatalog || []).map(t => t.label);
   document.querySelectorAll('.token-input').forEach(input => {
     const vals = csv(input.value);
     if (vals.length === 0) {
       input.classList.remove('valid', 'invalid');
       return;
     }
-    const allValid = vals.every(v => tokenCatalogTokens.includes(v));
+    const allValid = vals.every(v => tokenLabels.includes(v));
     input.classList.toggle('valid', allValid);
     input.classList.toggle('invalid', !allValid);
   });
@@ -1330,10 +1348,24 @@ function collectTokensFromAdmin() {
     token.description = card.querySelector('.tok-desc').value.trim();
   });
 }
-// renderDevNotes removed
+function updateRewardWarnings() {
+  const chests = parseInt($('rewardChestsInput').value, 10);
+  const rank = $('rewardRankInput').value.trim();
+  if (!chests || chests === 0) {
+    $('rewardChestsInput').classList.add('invalid-warning');
+  } else {
+    $('rewardChestsInput').classList.remove('invalid-warning');
+  }
+  if (!rank) {
+    $('rewardRankInput').classList.add('invalid-warning');
+  } else {
+    $('rewardRankInput').classList.remove('invalid-warning');
+  }
+}
+
 function bindBasics() {
   ['nameInput','keyInput','rankInput','hpInput','cpInput','defenseDiceInput','rewardChestsInput','rewardRankInput','cardAssetInput','initialTokensInput','attackStyleInput','attackNameInput','attacksTextInput','defenseTextInput','passivesTextInput','attacksDisplayRowsInput','defenseDisplayRowsInput','passivesDisplayRowsInput'].forEach((id) => {
-    $(id).addEventListener('input', () => { collectCurrent(); setDirty('enemy'); renderLists(); renderPreview(); renderDisplayRowsPreviews(); renderMeta(); });
+    $(id).addEventListener('input', () => { collectCurrent(); setDirty('enemy'); renderLists(); renderPreview(); renderDisplayRowsPreviews(); renderMeta(); updateRewardWarnings(); });
   });
 }
 document.addEventListener('DOMContentLoaded', () => {

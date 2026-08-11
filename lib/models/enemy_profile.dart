@@ -125,8 +125,11 @@ class SymbolGoalEffect {
     this.heroTokens = const [],
     this.minionTokens = const [],
     this.label,
+    this.label2,
+    this.label3,
     this.extraRoll,
     this.align = 'left',
+    this.formulas = const [],
   });
 
   final int damage;
@@ -137,6 +140,9 @@ class SymbolGoalEffect {
   final List<String> heroTokens;
   final List<String> minionTokens;
   final String? label;
+  final String? label2;
+  final String? label3;
+  final List<String> formulas;
 
   /// Optional additional dice roll triggered when this goal's attack
   /// succeeds. Parsed from the JSON `attackPlan.actions[].extraRoll` block.

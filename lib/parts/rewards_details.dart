@@ -1,16 +1,17 @@
 part of '../main.dart';
 
-class RewardPage extends StatefulWidget {
-  const RewardPage({required this.adventure, required this.enemy, super.key});
+class RewardPanel extends StatefulWidget {
+  const RewardPanel({required this.adventure, required this.enemy, required this.onFinished, super.key});
 
   final AdventureState adventure;
   final EnemyNode enemy;
+  final VoidCallback onFinished;
 
   @override
-  State<RewardPage> createState() => _RewardPageState();
+  State<RewardPanel> createState() => _RewardPanelState();
 }
 
-class _RewardPageState extends State<RewardPage> {
+class _RewardPanelState extends State<RewardPanel> {
   final Random _random = Random();
   int? _d20;
   int _confirmed = 0;
@@ -23,10 +24,7 @@ class _RewardPageState extends State<RewardPage> {
     final outcome = d20 == null
         ? null
         : GameEngine.rewardForD20(d20, chest: currentRewardRank.rewardChestKey);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reward')),
-      body: SafeArea(
-        child: Padding(
+    return Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -94,14 +92,14 @@ class _RewardPageState extends State<RewardPage> {
                   ],
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 24),
               FilledButton.icon(
                 onPressed: d20 == null
                     ? null
                     : () {
                         widget.adventure.applyReward(d20, currentRewardRank);
                         if (_confirmed + 1 >= total) {
-                          Navigator.of(context).pop();
+                          widget.onFinished();
                         } else {
                           setState(() {
                             _confirmed++;
@@ -122,8 +120,6 @@ class _RewardPageState extends State<RewardPage> {
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 

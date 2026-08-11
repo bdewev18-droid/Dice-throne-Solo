@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>D.T Solo Quest - Enemy Back Office</title>
-  <link rel="stylesheet" href="./admin.css" />
+  <link rel="stylesheet" href="./admin.css?v=1.6.0" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -22,7 +22,7 @@
       <div class="brand-block">
         <div class="brand-title">Enemy Admin <button id="toggleSidebarBtn" class="collapse-btn toggle-sidebar" title="Collapse">◀</button></div>
         <div class="brand-subtitle">docs/enemy_profiles.json</div>
-        <div id="adminVersion" class="admin-version">Admin version 1.5.5</div>
+        <div id="adminVersion" class="admin-version">Admin version 1.6.0</div>
       </div>
       <div class="side-actions">
         <button id="loadDefaultBtn" class="ghost-btn">Load app JSON</button>
@@ -238,6 +238,10 @@
         <strong class="action-title">Action</strong>
         <button class="danger small remove-action">Remove</button>
       </div>
+      <div class="rat-labels" style="display: none; flex-direction: column; gap: 5px; margin-bottom: 10px;">
+        <label class="wide-label">Label 2 (Steal text)<input class="action-label2" /></label>
+        <label class="wide-label">Label 3 (Right aligned)<input class="action-label3" /></label>
+      </div>
       <div class="condition-grid"></div>
       <div class="effect-grid"></div>
       <details class="extra-roll"><summary>Extra roll</summary><div class="extra-roll-body"></div></details>
@@ -265,7 +269,7 @@
     </article>
   </template>
 
-  <script src="./admin.js"></script>
+  <script src="admin.js?v=1.6.0"></script>
 
   <div id="imageModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:2000; place-items:center; cursor:zoom-out;">
     <img id="imageModalImg" src="" style="max-width:95vw; max-height:95vh; object-fit:contain;">

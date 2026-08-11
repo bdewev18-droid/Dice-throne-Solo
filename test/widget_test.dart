@@ -14,13 +14,15 @@ void main() {
     await tester.pumpWidget(const DiceThroneSurvieApp());
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('Version 1.2.27'), findsOneWidget);
+    expect(find.text(appVersionLabel), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 3));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 500));
 
     await tester.tap(find.text('Minion rush'));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('Choose your hero'), findsOneWidget);
     expect(find.text('Barbarian'), findsOneWidget);

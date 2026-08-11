@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 
 import 'active_adventure_storage.dart';
 import 'main.dart' show GameRecord;
@@ -31,7 +31,9 @@ class _HistoryCache {
 /// chargé, pour affichage immédiat au démarrage et usage hors-ligne.
 class HistoryRepository {
   HistoryRepository._();
-  static final HistoryRepository instance = HistoryRepository._();
+
+  @visibleForTesting
+  static HistoryRepository instance = HistoryRepository._();
 
   final _HistoryCache _cache = _HistoryCache();
 

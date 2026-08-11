@@ -89,7 +89,7 @@
               "suite": "micro",
               "length": 3
             },
-            "label": "Micro suite",
+            "label": "",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -100,6 +100,7 @@
             "tokens": [],
             "formulas": [],
             "notes": [],
+            "label2": "Steal 1 CP",
             "topDeckToDiscard": 0,
             "extraRoll": null
           },
@@ -110,7 +111,7 @@
               "suite": "small",
               "length": 4
             },
-            "label": "Petite suite",
+            "label": "",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -119,10 +120,10 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": [
-              "damage = minionCpAfterSteal"
-            ],
+            "formulas": [],
             "notes": [],
+            "label2": "Steal 1 CP",
+            "label3": "& Nb CP = Damage",
             "topDeckToDiscard": 0,
             "extraRoll": null
           },
@@ -133,7 +134,7 @@
               "suite": "large",
               "length": 5
             },
-            "label": "Grande suite",
+            "label": "",
             "damage": 0,
             "undefendable": false,
             "stealHp": 0,
@@ -142,10 +143,10 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": [
-              "damage = minionCpAfterSteal"
-            ],
+            "formulas": [],
             "notes": [],
+            "label2": "Steal 2 CP",
+            "label3": "& Nb CP = Damage",
             "topDeckToDiscard": 0,
             "extraRoll": null
           }
@@ -217,40 +218,11 @@
         ],
         "passives": [],
         "notes": [],
-        "displayRows": [
-          {
-            "align": "left",
-            "items": [
-              "micro 3",
-              "Micro suite",
-              "=",
-              "Steal 1 CP"
-            ]
-          },
-          {
-            "align": "left",
-            "items": [
-              "small 4",
-              "Petite suite",
-              "=",
-              "Steal 1 CP",
-              "damage = minionCpAfterSteal"
-            ]
-          },
-          {
-            "align": "left",
-            "items": [
-              "large 5",
-              "Grande suite",
-              "=",
-              "Steal 3 CP",
-              "damage = minionCpAfterSteal"
-            ]
-          }
-        ]
+        "displayRows": []
       },
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validated": true
     },
     {
       "key": "fee",
@@ -260,10 +232,10 @@
       "cp": 2,
       "cardAsset": "assets/vert/enemy_green_fairy.png",
       "initialTokens": [
-        "Première Frappe"
+        "First Strike"
       ],
-      "rewardChests": 0,
-      "rewardRank": null,
+      "rewardChests": 1,
+      "rewardRank": "green",
       "attacks": [
         "Agacement",
         "Micro straight: deals 2 undefendable damage.",
@@ -313,7 +285,7 @@
               "suite": "micro",
               "length": 3
             },
-            "label": "Micro suite",
+            "label": "",
             "damage": 2,
             "undefendable": true,
             "stealHp": 0,
@@ -334,7 +306,7 @@
               "suite": "small",
               "length": 4
             },
-            "label": "Petite suite",
+            "label": "",
             "damage": 5,
             "undefendable": false,
             "stealHp": 0,
@@ -355,7 +327,7 @@
               "suite": "large",
               "length": 5
             },
-            "label": "Grande suite",
+            "label": "",
             "damage": 6,
             "undefendable": false,
             "stealHp": 0,
