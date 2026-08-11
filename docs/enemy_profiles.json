@@ -2196,7 +2196,7 @@
             },
             "effect": {
               "heroTokens": [
-                "À Terre"
+                "Knockdown"
               ],
               "minionTokens": [],
               "damage": null,
@@ -2228,7 +2228,7 @@
             },
             "effect": {
               "heroTokens": [
-                "Ronces"
+                "Barbed Vine"
               ],
               "minionTokens": [],
               "damage": null,
@@ -10760,29 +10760,30 @@
         "dice": 1,
         "effects": [
           {
+            "align": "left",
             "condition": {
               "type": "number",
-              "number": 1
+              "value": 0
             },
+            "label": "",
+            "undefendable": false,
+            "stealHp": 0,
+            "stealCp": 0,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "tokens": [],
+            "formulas": [],
+            "notes": [],
             "prevent": 1,
-            "returnDamage": 0,
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": []
+            "returnDamage": 0
           },
           {
+            "align": "left",
             "condition": {
-              "type": "range",
-              "min": 2,
-              "max": 5
+              "type": "range"
             },
-            "prevent": 3,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
@@ -10790,15 +10791,18 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": []
+            "formulas": [],
+            "notes": [],
+            "prevent": 3,
+            "returnDamage": 0
           },
           {
+            "align": "left",
             "condition": {
               "type": "number",
-              "number": 6
+              "value": 0
             },
-            "prevent": 5,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
@@ -10806,10 +10810,14 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": []
+            "formulas": [],
+            "notes": [],
+            "prevent": 5,
+            "returnDamage": 0
           }
         ],
-        "notes": []
+        "notes": [],
+        "displayRows": []
       },
       "attackPlan": {
         "style": "none",
@@ -10817,9 +10825,10 @@
         "name": "Naxarus",
         "actions": [
           {
+            "align": "left",
             "condition": {
               "type": "number",
-              "number": 1
+              "value": 0
             },
             "label": "Swoop",
             "damage": 3,
@@ -10829,16 +10838,17 @@
             "heal": 4,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
+            "align": "left",
             "condition": {
               "type": "number",
-              "number": 2
+              "value": 0
             },
             "label": "Ember Spark",
             "damage": 8,
@@ -10848,16 +10858,17 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
+            "align": "left",
             "condition": {
               "type": "number",
-              "number": 3
+              "value": 0
             },
             "label": "Gashing Bite",
             "damage": 0,
@@ -10867,21 +10878,27 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [
-              "damage = sumHighest(extraRollDice, 2)"
+              "damage = sumHighest(extraRollDice",
+              "2)"
             ],
+            "notes": [],
+            "topDeckToDiscard": 0,
             "extraRoll": {
               "dice": 4,
+              "mode": "perFace",
+              "align": "left",
+              "rollText": "",
+              "displayRows": [],
               "outcomes": []
-            },
-            "notes": []
+            }
           },
           {
+            "align": "left",
             "condition": {
               "type": "number",
-              "number": 4
+              "value": 0
             },
             "label": "Hoarding",
             "damage": 9,
@@ -10891,16 +10908,17 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
+            "align": "left",
             "condition": {
               "type": "number",
-              "number": 5
+              "value": 0
             },
             "label": "Thundering Roar",
             "damage": 8,
@@ -10910,16 +10928,17 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 1,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
+            "align": "left",
             "condition": {
               "type": "number",
-              "number": 6
+              "value": 0
             },
             "label": "Dragon's Might",
             "damage": 10,
@@ -10929,20 +10948,28 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
+            "notes": [],
+            "topDeckToDiscard": 0,
             "extraRoll": {
               "dice": 1,
+              "mode": "perFace",
+              "align": "left",
+              "rollText": "",
+              "displayRows": [],
               "outcomes": []
-            },
-            "notes": []
+            }
           }
         ],
         "conditionalRules": [],
         "passives": [],
-        "notes": []
-      }
+        "notes": [],
+        "displayRows": []
+      },
+      "defense": "",
+      "passives": [],
+      "passiveDisplayRows": []
     },
     {
       "key": "blue-generic",
