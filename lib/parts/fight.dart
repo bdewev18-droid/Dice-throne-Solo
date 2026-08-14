@@ -2489,41 +2489,71 @@ class _FightPageState extends State<FightPage> {
           : _battleDefenseValue;
       final netDamage = max(0, _battleAttackValue - effectiveDefense);
       if (_phase == CombatPhase.hero) {
+        final oldEnemyHealth = enemy.health;
         enemy.health = (enemy.health - netDamage).clamp(0, 99);
+        
+        final buffer = StringBuffer();
+        buffer.writeln('### Phase de Lancer (Héros)');
+        buffer.writeln('ATK: $_battleAttackValue [ATK]');
+        if (effectiveDefense > 0) {
+          buffer.writeln('DEF parrée: $effectiveDefense [DEF]');
+        }
+        buffer.writeln('Dégâts subis par l\'ennemi: $netDamage');
+        if (oldEnemyHealth != enemy.health) {
+          buffer.writeln('[HP] Ennemi HP: $oldEnemyHealth ➔ ${enemy.health}');
+        }
+
         if (_battleCpSteal > 0) {
           widget.adventure.setHeroPc(
             widget.adventure.combatPoints - _battleCpSteal,
+            source: 'Vol de CP',
           );
+          final oldEnemyCp = enemy.combatPoints;
           enemy.combatPoints = (enemy.combatPoints + _battleCpSteal).clamp(
             0,
             99,
           );
+          buffer.writeln('[CP] Ennemi CP: $oldEnemyCp ➔ ${enemy.combatPoints} (Volé au héros)');
         }
         if (_battleReturnDamage > 0) {
           widget.adventure.setHeroHealth(
             widget.adventure.health - _battleReturnDamage,
+            source: 'Dégâts retour',
           );
         }
         if (_battleLifeSteal > 0) {
           widget.adventure.setHeroHealth(
             widget.adventure.health - _battleLifeSteal,
+            source: 'Vol de vie',
           );
+          final oldEnemyHealthAfterDamage = enemy.health;
           enemy.health = (enemy.health + _battleLifeSteal).clamp(
             0,
             enemy.maxHealth,
           );
+          buffer.writeln('[HP] Ennemi HP: $oldEnemyHealthAfterDamage ➔ ${enemy.health} (Vol de vie)');
         }
         if (_battleEnemyHeal > 0) {
+          final oldEnemyHealthAfterDamage = enemy.health;
           enemy.health = (enemy.health + _battleEnemyHeal).clamp(
             0,
             enemy.maxHealth,
           );
+          buffer.writeln('[HP] Ennemi HP: $oldEnemyHealthAfterDamage ➔ ${enemy.health} (Soin)');
         }
+        
         enemy.alterations.addAll(_battleMinionTokens);
         widget.adventure.alterations.addAll(_battleHeroTokens);
-        widget.adventure.log(
-          'Hero battle applied: $netDamage damage to ${enemy.label}.',
-        );
+        
+        for (final token in _battleMinionTokens) {
+          buffer.writeln('[TOKEN:$token] infligé à l\'ennemi');
+        }
+        for (final token in _battleHeroTokens) {
+          buffer.writeln('[TOKEN:$token] reçu par le héros');
+        }
+
+        widget.adventure.log(buffer.toString().trim());
+
         if (_battleAttackValue == 0) {
           _lastBattleOutcomeMessage =
               '${widget.adventure.hero.label} attack failed.';
@@ -2553,36 +2583,60 @@ class _FightPageState extends State<FightPage> {
         nextPhase = CombatPhase.minionUpkeep;
       } else {
         final shouldSummonLevel3 = _discipleSummonLevel3;
-        widget.adventure.setHeroHealth(widget.adventure.health - netDamage);
+        
+        final buffer = StringBuffer();
+        buffer.writeln('### Phase de Lancer (Ennemi - ${enemy.label})');
+        buffer.writeln('ATK: $_battleAttackValue [ATK]');
+        if (effectiveDefense > 0) {
+          buffer.writeln('DEF parrée: $effectiveDefense [DEF]');
+        }
+        buffer.writeln('Dégâts subis par le héros: $netDamage');
+
+        widget.adventure.setHeroHealth(widget.adventure.health - netDamage, source: 'Dégâts de l\'ennemi');
         if (_battleLifeSteal > 0) {
           widget.adventure.setHeroHealth(
             widget.adventure.health - _battleLifeSteal,
+            source: 'Vol de vie',
           );
+          final oldEnemyHealth = enemy.health;
           enemy.health = (enemy.health + _battleLifeSteal).clamp(
             0,
             enemy.maxHealth,
           );
+          buffer.writeln('[HP] Ennemi HP: $oldEnemyHealth ➔ ${enemy.health} (Vol de vie)');
         }
         if (_battleEnemyHeal > 0) {
+          final oldEnemyHealth = enemy.health;
           enemy.health = (enemy.health + _battleEnemyHeal).clamp(
             0,
             enemy.maxHealth,
           );
+          buffer.writeln('[HP] Ennemi HP: $oldEnemyHealth ➔ ${enemy.health} (Soin)');
         }
         if (_battleCpSteal > 0) {
           widget.adventure.setHeroPc(
             widget.adventure.combatPoints - _battleCpSteal,
+            source: 'Vol de CP',
           );
+          final oldEnemyCp = enemy.combatPoints;
           enemy.combatPoints = (enemy.combatPoints + _battleCpSteal).clamp(
             0,
             99,
           );
+          buffer.writeln('[CP] Ennemi CP: $oldEnemyCp ➔ ${enemy.combatPoints} (Vol de CP)');
         }
         widget.adventure.alterations.addAll(_battleHeroTokens);
         enemy.alterations.addAll(_battleMinionTokens);
-        widget.adventure.log(
-          'Minion battle applied: $netDamage damage to hero.',
-        );
+        
+        for (final token in _battleMinionTokens) {
+          buffer.writeln('[TOKEN:$token] infligé à l\'ennemi');
+        }
+        for (final token in _battleHeroTokens) {
+          buffer.writeln('[TOKEN:$token] reçu par le héros');
+        }
+
+        widget.adventure.log(buffer.toString().trim());
+
         _lastBattleOutcomeMessage =
             '${enemy.label} dealt $_battleAttackValue damage. '
             '${_battleAttackUndefendable ? 'This attack is undefendable.' : '${widget.adventure.hero.label} prevented $_battleDefenseValue damage.'}\n'
@@ -5232,9 +5286,9 @@ class DefenseDiceInline extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (safeCount > 1)
+            if (safeCount > 0)
               Text(
-                '$safeCount',
+                '$safeCount x',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -5242,7 +5296,7 @@ class DefenseDiceInline extends StatelessWidget {
                   shadows: [Shadow(color: Colors.black, blurRadius: 3)],
                 ),
               ),
-            if (safeCount > 1) const SizedBox(width: 4),
+            if (safeCount > 0) const SizedBox(width: 4),
             if (safeCount > 0) const _CubeIcon(size: 30),
           ],
         ),

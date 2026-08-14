@@ -387,9 +387,76 @@ class DetailSection extends StatelessWidget {
           ...items.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
-              child: Text('- $item'),
+              child: title == 'Log' ? RichLogText(text: item) : Text('- $item'),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class RichLogText extends StatelessWidget {
+  const RichLogText({required this.text, super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    if (text.startsWith('###')) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 12, bottom: 4),
+        child: Text(
+          text.replaceAll('###', '').trim(),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blueAccent),
+        ),
+      );
+    }
+
+    final spans = <InlineSpan>[];
+    final regex = RegExp(r'\[(.*?)\]');
+    int lastMatchEnd = 0;
+
+    for (final match in regex.allMatches(text)) {
+      if (match.start > lastMatchEnd) {
+        spans.add(TextSpan(text: text.substring(lastMatchEnd, match.start)));
+      }
+
+      final tag = match.group(1)!;
+      Widget? iconWidget;
+
+      if (tag == 'HP') {
+        iconWidget = Image.asset('assets/illustration/soin.webp', width: 16, height: 16);
+      } else if (tag == 'ATK') {
+        iconWidget = Image.asset('assets/illustration/degat.webp', width: 16, height: 16);
+      } else if (tag == 'DEF') {
+        iconWidget = Image.asset('assets/illustration/bouclier.webp', width: 16, height: 16);
+      } else if (tag == 'CP') {
+        iconWidget = const Icon(Icons.star, color: Colors.blue, size: 16);
+      } else if (tag.startsWith('TOKEN:')) {
+        final tokenName = tag.substring(6).replaceAll(' ', '-');
+        iconWidget = Image.asset('assets/$tokenName.png', width: 16, height: 16, errorBuilder: (c, e, s) => const Icon(Icons.error, size: 16));
+      }
+
+      if (iconWidget != null) {
+        spans.add(WidgetSpan(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 2), child: iconWidget), alignment: PlaceholderAlignment.middle));
+      } else {
+        spans.add(TextSpan(text: match.group(0)));
+      }
+
+      lastMatchEnd = match.end;
+    }
+
+    if (lastMatchEnd < text.length) {
+      spans.add(TextSpan(text: text.substring(lastMatchEnd)));
+    }
+
+    return RichText(
+      text: TextSpan(
+        style: DefaultTextStyle.of(context).style.copyWith(fontSize: 14),
+        children: [
+          const TextSpan(text: '- '),
+          ...spans,
         ],
       ),
     );

@@ -18,6 +18,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   @override
   void initState() {
     super.initState();
+    AppSettings.instance.addListener(_handleSettingsChanged);
     _loadActiveAdventure();
     _initAuthAndHistory();
     // Écoute les changements de session Supabase : la session restaurée
@@ -40,8 +41,15 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
     });
   }
 
+  void _handleSettingsChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void dispose() {
+    AppSettings.instance.removeListener(_handleSettingsChanged);
     _authSub?.cancel();
     super.dispose();
   }
@@ -568,7 +576,8 @@ class _HomePageState extends State<HomePage> {
                               ImageActionButton(
                                 label: 'Minion rush',
                                 icon: Icons.shield,
-                                onPressed: widget.onSurvival,
+                                badgeLabel: 'Coming soon',
+                                onPressed: AppSettings.instance.developerMode ? widget.onSurvival : null,
                               )
                             else
                               ActiveCampaignHomeCard(
@@ -588,7 +597,15 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const VersionPill(label: appVersionLabel),
+                  VersionPill(
+                    label: '$appVersionLabel${AppSettings.instance.developerMode ? ' - Dev mode' : ''}',
+                    isDev: AppSettings.instance.developerMode,
+                    onTap: () async {
+                      await AppSettings.instance.setDeveloperMode(
+                        !AppSettings.instance.developerMode,
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -668,25 +685,38 @@ class ActiveCampaignHomeCard extends StatelessWidget {
 }
 
 class VersionPill extends StatelessWidget {
-  const VersionPill({required this.label, super.key});
+  const VersionPill({
+    required this.label,
+    this.isDev = false,
+    this.onTap,
+    super.key,
+  });
 
   final String label;
+  final bool isDev;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.58),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 0,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.58),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isDev ? Colors.orangeAccent : Colors.white24,
+            width: isDev ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isDev ? Colors.orangeAccent : Colors.white,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0,
+          ),
         ),
       ),
     );
@@ -698,48 +728,93 @@ class ImageActionButton extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.onPressed,
+    this.badgeLabel,
     super.key,
   });
 
   final String label;
   final IconData icon;
   final VoidCallback? onPressed;
+  final String? badgeLabel;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
-        child: Ink(
-          height: 84,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            image: const DecorationImage(
-              image: AssetImage('assets/button_background.png'),
-              fit: BoxFit.fill,
-            ),
-          ),
-          child: Opacity(
-            opacity: onPressed == null ? 0.48 : 1,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.white, size: 24),
-                const SizedBox(width: 10),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onPressed,
+              borderRadius: BorderRadius.circular(8),
+              child: Ink(
+                height: 84,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  image: const DecorationImage(
+                    image: AssetImage('assets/button_background.png'),
+                    fit: BoxFit.fill,
                   ),
                 ),
-              ],
+                child: Opacity(
+                  opacity: onPressed == null ? 0.42 : 1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, color: Colors.white, size: 24),
+                      const SizedBox(width: 10),
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+          if (badgeLabel != null && onPressed == null)
+            Transform.rotate(
+              angle: -0.08,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xffd6512a).withValues(alpha: 0.82),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.amberAccent, width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black87,
+                      blurRadius: 6,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  badgeLabel!.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.amberAccent,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black,
+                        blurRadius: 3,
+                        offset: Offset(1, 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

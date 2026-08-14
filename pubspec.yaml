@@ -82,6 +82,7 @@ flutter:
     - assets/fond-map.webp
     - assets/enemy_viseer.jpg
     - assets/viser.webp
+    - assets/minion.webp
     - assets/token/
     - assets/illustration/
     - assets/vert/

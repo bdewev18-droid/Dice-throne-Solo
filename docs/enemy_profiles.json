@@ -157,7 +157,8 @@
               "type": "suite",
               "negate": false,
               "and": [],
-              "minLength": 5
+              "minLength": 5,
+              "inner": null
             },
             "effect": {
               "heroTokens": [],
@@ -178,7 +179,8 @@
               "type": "suite",
               "negate": false,
               "and": [],
-              "minLength": 4
+              "minLength": 4,
+              "inner": null
             },
             "effect": {
               "heroTokens": [],
@@ -199,7 +201,8 @@
               "type": "suite",
               "negate": false,
               "and": [],
-              "minLength": 3
+              "minLength": 3,
+              "inner": null
             },
             "effect": {
               "heroTokens": [],
@@ -4198,8 +4201,8 @@
       "cp": 2,
       "cardAsset": "assets/bleu/bleu-005.png",
       "initialTokens": [],
-      "rewardChests": 0,
-      "rewardRank": null,
+      "rewardChests": 2,
+      "rewardRank": "green/blue",
       "attacks": [
         "Magie Noire: blanc + 2 jaunes + rouge = Wither, Silence, Parasite et 3 undefendable damage.",
         "Passif upkeep: gains Siphon Vital."
@@ -4280,6 +4283,7 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [
+              "Wither",
               "Silence",
               "Parasite"
             ],
@@ -4323,8 +4327,8 @@
       "cp": 3,
       "cardAsset": "assets/bleu/bleu-006.png",
       "initialTokens": [],
-      "rewardChests": 0,
-      "rewardRank": null,
+      "rewardChests": 1,
+      "rewardRank": "blue",
       "attacks": [
         "Ecrasement: 4 blancs + rouge = 6 damage et rolls 1 de; ajoute sa valeur en damage.",
         "Passive: si offensive failure, deals 2 undefendable damage."
@@ -4334,17 +4338,16 @@
         "dice": 1,
         "effects": [
           {
+            "align": "left",
             "condition": {
               "type": "symbols",
               "symbols": {
                 "white": 1,
                 "orange": 0,
                 "red": 0
-              },
-              "repeat": false
+              }
             },
-            "prevent": 0,
-            "returnDamage": 3,
+            "label": "",
             "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
@@ -4352,20 +4355,22 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": []
+            "formulas": [],
+            "notes": [],
+            "prevent": 0,
+            "returnDamage": 3
           },
           {
+            "align": "left",
             "condition": {
               "type": "symbols",
               "symbols": {
                 "white": 0,
                 "orange": 1,
                 "red": 0
-              },
-              "repeat": false
+              }
             },
-            "prevent": 0,
-            "returnDamage": 0,
+            "label": "",
             "undefendable": false,
             "stealHp": 0,
             "stealCp": 0,
@@ -4373,10 +4378,14 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": []
+            "formulas": [],
+            "notes": [],
+            "prevent": 0,
+            "returnDamage": 0
           }
         ],
-        "notes": []
+        "notes": [],
+        "displayRows": []
       },
       "attackPlan": {
         "style": "symbols",
@@ -4390,6 +4399,7 @@
         "name": "Cyclope Brutal",
         "actions": [
           {
+            "align": "left",
             "condition": {
               "type": "symbols",
               "symbols": {
@@ -4406,15 +4416,18 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
+            "notes": [],
+            "topDeckToDiscard": 0,
             "extraRoll": {
               "dice": 1,
               "mode": "simple",
-              "rollText": "Roll 1 {die}, deal sa valeur en extra damage."
-            },
-            "notes": []
+              "align": "left",
+              "rollText": "Roll 1 {die}, deal sa valeur en extra damage.",
+              "displayRows": [],
+              "outcomes": []
+            }
           }
         ],
         "conditionalRules": [],
@@ -4436,8 +4449,12 @@
             }
           }
         ],
-        "notes": []
-      }
+        "notes": [],
+        "displayRows": []
+      },
+      "defense": "",
+      "passives": [],
+      "passiveDisplayRows": []
     },
     {
       "key": "bleu-bleu-007",

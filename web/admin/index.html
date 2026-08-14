@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>D.T Solo Quest - Enemy Back Office</title>
-  <link rel="stylesheet" href="./admin.css?v=1.6.0" />
+  <link rel="stylesheet" href="./admin.css?v=1.7.5" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -22,7 +22,7 @@
       <div class="brand-block">
         <div class="brand-title">Enemy Admin <button id="toggleSidebarBtn" class="collapse-btn toggle-sidebar" title="Collapse">◀</button></div>
         <div class="brand-subtitle">docs/enemy_profiles.json</div>
-        <div id="adminVersion" class="admin-version">Admin version 1.6.0</div>
+        <div id="adminVersion" class="admin-version">Admin version 1.7.5</div>
       </div>
       <div class="side-actions">
         <button id="loadDefaultBtn" class="ghost-btn">Load app JSON</button>
@@ -131,6 +131,7 @@
             <button class="tab" data-tab="text">Display text <span id="textDot" class="status-dot"></span></button>
             <button class="tab" data-tab="formulas">Formulas</button>
             <button class="tab" data-tab="tokens">Tokens</button>
+            <button class="tab" data-tab="logs">Logs</button>
           </div>
 
           <div id="tab-attacks" class="tab-panel active">
@@ -214,6 +215,7 @@
               <button id="generatePassiveRowsBtn" class="ghost-btn generate-btn" type="button">Generate from passive text</button>
             </div>
             <div id="passivesDisplayRowsPreview" class="display-preview"></div>
+          </div>
             
           <div id="tab-formulas" class="tab-panel">
             <h2>Formulas index</h2>
@@ -226,6 +228,15 @@
             <p class="hint">Edit assets/data/token_catalog.json. Tokens hidden from the editor remain in the file but are not shown in player token lists.</p>
             <input id="tokenSearch" class="search" type="search" placeholder="Search token" />
             <div id="tokenList" class="token-list"></div>
+          </div>
+
+          <div id="tab-logs" class="tab-panel">
+            <div class="section-head">
+              <h2>Journal de bord</h2>
+              <button id="clearLogsBtn" class="danger small">Clear logs</button>
+            </div>
+            <p class="hint">Historique des modifications apportées (sauvegardé localement dans le navigateur).</p>
+            <div id="adminLogList" class="stack" style="gap: 8px;"></div>
           </div>
         </section>
       </section>
@@ -269,10 +280,23 @@
     </article>
   </template>
 
-  <script src="admin.js?v=1.6.0"></script>
+  <script src="admin.js?v=1.7.5"></script>
 
   <div id="imageModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:2000; place-items:center; cursor:zoom-out;">
     <img id="imageModalImg" src="" style="max-width:95vw; max-height:95vh; object-fit:contain;">
+  </div>
+
+  <div id="tokenModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:2000; justify-content: flex-end; align-items: center; padding-right: 40px;">
+    <div class="auth-card" style="max-width: 420px; width: 90vw; margin: 0; box-shadow: -5px 0 25px rgba(0,0,0,0.6);">
+      <h2 style="margin-top:0; font-size:18px;">Sélection des Tokens</h2>
+      <div id="tokenCheckboxes" style="display:flex; flex-direction:column; gap:4px; max-height: 60vh; overflow-y: auto; text-align: left; margin: 15px 0; padding: 10px; border: 1px solid #333; border-radius: 6px; background: #111;">
+        <!-- checkboxes generated via JS -->
+      </div>
+      <div style="display:flex; justify-content: flex-end; gap: 10px;">
+        <button id="cancelTokenModalBtn" class="ghost-btn">Annuler</button>
+        <button id="confirmTokenModalBtn" class="primary-btn">Valider</button>
+      </div>
+    </div>
   </div>
 </body>
 </html>

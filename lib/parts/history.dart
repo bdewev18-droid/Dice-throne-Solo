@@ -73,47 +73,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          children: [
-                            const Text('Mode', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70)),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () {
-                                if (_difficulty == RunDifficulty.naraxus) {
-                                  setState(() {
-                                    _difficulty = RunDifficulty.medium;
-                                    _selectedForDelete.clear();
-                                  });
-                                }
-                              },
-                              child: Icon(
-                                Icons.shield,
-                                size: 20,
-                                color: _difficulty != RunDifficulty.naraxus
-                                    ? Colors.purpleAccent
-                                    : Colors.white70,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () {
-                                if (_difficulty != RunDifficulty.naraxus) {
-                                  setState(() {
-                                    _difficulty = RunDifficulty.naraxus;
-                                    _selectedForDelete.clear();
-                                  });
-                                }
-                              },
-                              child: Icon(
-                                Icons.local_fire_department,
-                                size: 20,
-                                color: _difficulty == RunDifficulty.naraxus
-                                    ? Colors.purpleAccent
-                                    : Colors.white70,
-                              ),
-                            ),
-                          ],
-                        ),
+                        const Text('Mode', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70)),
                         const SizedBox(height: 4),
                         DropdownButtonFormField<RunDifficulty>(
                           value: _difficulty,
@@ -175,9 +135,10 @@ class _HistoryPageState extends State<HistoryPage> {
                   ),
                 ),
               const SizedBox(height: 16),
-              if (records.isNotEmpty) _buildPodium(flatMode ? records : grouped.entries.toList(), flatMode),
-              if (records.isNotEmpty) const SizedBox(height: 16),
-              const _HistoryHeaderRow(),
+              const SizedBox(height: 16),
+              _buildPodiumSection(flatMode ? records : grouped.entries.toList(), flatMode),
+              const SizedBox(height: 16),
+              _HistoryHeaderRow(difficulty: _difficulty, allRecords: widget.records),
               const Divider(),
               Expanded(
                 child: records.isEmpty
@@ -268,6 +229,7 @@ class _HistoryPageState extends State<HistoryPage> {
           s = '${r.date.day.toString().padLeft(2, '0')}/${r.date.month.toString().padLeft(2, '0')}/${r.date.year}';
         } else {
           p = '${r.score} pts';
+          s = '${r.date.day.toString().padLeft(2, '0')}/${r.date.month.toString().padLeft(2, '0')}/${r.date.year}';
         }
         entries.add(_PodiumEntry(r.hero, p, s));
       }
@@ -278,8 +240,9 @@ class _HistoryPageState extends State<HistoryPage> {
       
       for (var i = 0; i < 3 && i < list.length; i++) {
         final r = list[i];
-        String p = '${_averageScore(r.value).toStringAsFixed(1)} avg';
-        String s = '${r.value.length} partie(s)';
+        final avgStr = _formatNumber(_averageScore(r.value));
+        String p = '$avgStr avg';
+        String s = '${r.value.length} partie${r.value.length > 1 ? 's' : ''}';
         
         // Also show the best score in the secondary if sort is 'best', just for info
         if (_sort == HistorySort.best) {
@@ -290,6 +253,93 @@ class _HistoryPageState extends State<HistoryPage> {
       }
     }
     return _PodiumWidget(entries: entries);
+  }
+
+  Widget _buildPodiumSection(dynamic items, bool flatMode) {
+    final isNaraxus = _difficulty == RunDifficulty.naraxus;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: _buildPodium(items, flatMode),
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Tooltip(
+                message: 'Minion Rush',
+                child: GestureDetector(
+                  onTap: () {
+                    if (isNaraxus) {
+                      setState(() {
+                        _difficulty = RunDifficulty.medium;
+                        _selectedForDelete.clear();
+                      });
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: !isNaraxus
+                          ? Colors.purpleAccent.withValues(alpha: 0.22)
+                          : Colors.black45,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: !isNaraxus ? Colors.purpleAccent : Colors.white24,
+                        width: !isNaraxus ? 2 : 1,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.shield,
+                      size: 36,
+                      color: !isNaraxus ? Colors.purpleAccent : Colors.white38,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: 'Naxarus Battle',
+                child: GestureDetector(
+                  onTap: () {
+                    if (!isNaraxus) {
+                      setState(() {
+                        _difficulty = RunDifficulty.naraxus;
+                        _selectedForDelete.clear();
+                      });
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: isNaraxus
+                          ? Colors.purpleAccent.withValues(alpha: 0.22)
+                          : Colors.black45,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isNaraxus ? Colors.purpleAccent : Colors.white24,
+                        width: isNaraxus ? 2 : 1,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.local_fire_department,
+                      size: 36,
+                      color: isNaraxus ? Colors.purpleAccent : Colors.white38,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildGroupedList(Map<HeroType, List<GameRecord>> grouped) {
@@ -314,18 +364,25 @@ class _HistoryPageState extends State<HistoryPage> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Row(
                   children: [
-                    _deleteMode
-                        ? Checkbox(
-                            value: runs.every(_selectedForDelete.contains),
-                            onChanged: (value) => _toggleRuns(runs, value),
-                          )
-                        : HeroAvatar(hero: hero, size: 42),
-                    const SizedBox(width: 10),
                     Expanded(
                       flex: 4,
-                      child: Text(
-                        hero.label,
-                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      child: Row(
+                        children: [
+                          _deleteMode
+                              ? Checkbox(
+                                  value: runs.every(_selectedForDelete.contains),
+                                  onChanged: (value) => _toggleRuns(runs, value),
+                                )
+                              : HeroAvatar(hero: hero, size: 36),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              hero.label,
+                              style: const TextStyle(fontWeight: FontWeight.w900),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     Expanded(child: _HistoryMetricText(runs.length.toString())),
@@ -335,14 +392,18 @@ class _HistoryPageState extends State<HistoryPage> {
                       ),
                     ),
                     Expanded(
-                      child: _HistoryMetricText(_averageHealthLabel(runs)),
-                    ),
-                    Expanded(
-                      child: _HistoryMetricText(_averageDurationLabel(runs)),
+                      child: _HistoryMetricText(
+                        _roundedAverageLabel(_averageHp(runs)),
+                      ),
                     ),
                     Expanded(
                       child: _HistoryMetricText(
-                        _roundedAverageLabel(_averageScore(runs)),
+                        _roundedAverageLabel(_averageDurationSeconds(runs)),
+                      ),
+                    ),
+                    Expanded(
+                      child: _HistoryMetricText(
+                        _formatNumber(_averageScore(runs)),
                       ),
                     ),
                   ],
@@ -350,15 +411,22 @@ class _HistoryPageState extends State<HistoryPage> {
               ),
             ),
             if (expanded)
-              ...runs.map(
-                (run) => Padding(
-                  padding: const EdgeInsets.only(left: 52, bottom: 8),
-                  child: _RunDetailRow(
-                    record: run,
-                    deleteMode: _deleteMode,
-                    selected: _selectedForDelete.contains(run),
-                    onSelected: (value) => _toggleRun(run, value),
-                  ),
+              Padding(
+                padding: const EdgeInsets.only(left: 12, bottom: 8),
+                child: Column(
+                  children: runs
+                      .map(
+                        (r) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: _RunDetailRow(
+                            record: r,
+                            deleteMode: _deleteMode,
+                            selected: _selectedForDelete.contains(r),
+                            onSelected: (value) => _toggleRecord(r, value),
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
             const Divider(height: 1),
@@ -371,68 +439,21 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget _buildFlatList(List<GameRecord> records) {
     return ListView.separated(
       itemCount: records.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
+      separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, index) {
-        final record = records[index];
-        return _RunDetailRow(
-          record: record,
-          deleteMode: _deleteMode,
-          selected: _selectedForDelete.contains(record),
-          onSelected: (value) => _toggleRun(record, value),
-          showHero: true,
+        final r = records[index];
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: _RunDetailRow(
+            record: r,
+            deleteMode: _deleteMode,
+            selected: _selectedForDelete.contains(r),
+            onSelected: (value) => _toggleRecord(r, value),
+            showHero: true,
+          ),
         );
       },
     );
-  }
-
-  double _averageScore(List<GameRecord> runs) =>
-      runs.fold<int>(0, (total, run) => total + run.score) / runs.length;
-
-  double _averageEnemies(List<GameRecord> runs) =>
-      runs.fold<int>(0, (total, run) => total + run.enemiesDefeated) /
-      runs.length;
-
-  String _roundedAverageLabel(num value) {
-    final floorValue = value.floor();
-    final fraction = value - floorValue;
-    return (fraction < 0.6 ? floorValue : floorValue + 1).toString();
-  }
-
-  String _averageHealthLabel(List<GameRecord> runs) {
-    final values = runs
-        .map((run) => run.healthRemaining)
-        .whereType<int>()
-        .toList();
-    if (values.isEmpty) {
-      return 'n/a';
-    }
-    final average =
-        values.fold<int>(0, (total, value) => total + value) / values.length;
-    return _roundedAverageLabel(average);
-  }
-
-  String _averageDurationLabel(List<GameRecord> runs) {
-    final values = runs
-        .map((run) => run.duration)
-        .where((duration) => duration.inSeconds > 0)
-        .toList();
-    if (values.isEmpty) {
-      return 'n/a';
-    }
-    final seconds =
-        values.fold<int>(0, (total, duration) => total + duration.inSeconds) ~/
-        values.length;
-    return _formatDuration(Duration(seconds: seconds));
-  }
-
-  void _toggleRun(GameRecord run, bool? value) {
-    setState(() {
-      if (value ?? false) {
-        _selectedForDelete.add(run);
-      } else {
-        _selectedForDelete.remove(run);
-      }
-    });
   }
 
   void _toggleRuns(List<GameRecord> runs, bool? value) {
@@ -445,24 +466,31 @@ class _HistoryPageState extends State<HistoryPage> {
     });
   }
 
-  Future<void> _addManualRun() async {
-    final record = await showDialog<GameRecord>(
+  void _toggleRecord(GameRecord record, bool? value) {
+    setState(() {
+      if (value ?? false) {
+        _selectedForDelete.add(record);
+      } else {
+        _selectedForDelete.remove(record);
+      }
+    });
+  }
+
+  void _addManualRun() {
+    showDialog<void>(
       context: context,
-      builder: (context) => const ManualRunDialog(),
-    );
-    if (record == null) {
-      return;
-    }
-    widget.onAddRecord(record);
-    setState(() {});
+      builder: (_) => const ManualRunDialog(),
+    ).then((_) => setState(() {}));
   }
 
   Future<void> _confirmDeleteSelected() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete selected runs?'),
-        content: Text('${_selectedForDelete.length} run(s) will be deleted.'),
+        title: const Text('Delete runs'),
+        content: Text(
+          'Delete ${_selectedForDelete.length} selected run(s) from history?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -485,56 +513,539 @@ class _HistoryPageState extends State<HistoryPage> {
       });
     }
   }
+
+  double _averageScore(List<GameRecord> runs) =>
+      runs.fold<int>(0, (total, run) => total + run.score) / (runs.isEmpty ? 1 : runs.length);
+
+  double _averageEnemies(List<GameRecord> runs) =>
+      runs.fold<int>(0, (total, run) => total + run.enemiesDefeated) / (runs.isEmpty ? 1 : runs.length);
+
+  double _averageHp(List<GameRecord> runs) {
+    final values = runs
+        .map((run) => run.healthRemaining)
+        .whereType<int>()
+        .toList();
+    if (values.isEmpty) return 0;
+    return values.fold<int>(0, (total, val) => total + val) / values.length;
+  }
+
+  double _averageDurationSeconds(List<GameRecord> runs) {
+    final values = runs
+        .map((run) => run.duration)
+        .where((d) => d.inSeconds > 0)
+        .toList();
+    if (values.isEmpty) return 0;
+    return values.fold<int>(0, (total, d) => total + d.inSeconds) / values.length;
+  }
+
+  String _roundedAverageLabel(num value) {
+    return _formatNumber(value.toDouble());
+  }
+}
+
+String _formatNumber(double val) {
+  if (val.isNaN || val.isInfinite) return '0';
+  if (val == val.roundToDouble()) {
+    return val.toInt().toString();
+  }
+  return val.toStringAsFixed(1);
+}
+
+String _formatSmartDuration(Duration duration) {
+  if (duration == Duration.zero) return 'N/A';
+  final seconds = duration.inSeconds;
+  if (seconds < 60) return '${seconds}s';
+  final minutes = duration.inMinutes;
+  if (minutes < 60) {
+    final remSec = seconds % 60;
+    return remSec > 0 ? '${minutes}m ${remSec}s' : '${minutes}m';
+  }
+  final hours = duration.inHours;
+  final remMin = minutes % 60;
+  if (hours < 24) {
+    return remMin > 0 ? '${hours}h ${remMin}m' : '${hours}h';
+  }
+  final days = duration.inDays;
+  final remHours = hours % 24;
+  return remHours > 0 ? '${days}d ${remHours}h' : '${days}d';
+}
+
+class _StatLineData {
+  const _StatLineData({required this.label, required this.value});
+  final String label;
+  final String value;
 }
 
 class _HistoryHeaderRow extends StatelessWidget {
-  const _HistoryHeaderRow();
+  const _HistoryHeaderRow({
+    required this.difficulty,
+    required this.allRecords,
+    super.key,
+  });
+
+  final RunDifficulty difficulty;
+  final List<GameRecord> allRecords;
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4),
+    final minionRuns = allRecords
+        .where((r) => r.mode.difficulty != RunDifficulty.naraxus)
+        .toList();
+    final naxarusRuns = allRecords
+        .where((r) => r.mode.difficulty == RunDifficulty.naraxus)
+        .toList();
+
+    // 1. NB Runs
+    final minionRunsCount = minionRuns.length;
+    final naxarusRunsCount = naxarusRuns.length;
+    final totalRunsCount = allRecords.length;
+
+    // 2. Enemies
+    final minionEnemiesTotal = minionRuns.fold(
+      0,
+      (sum, r) => sum + r.enemiesDefeated,
+    );
+    final minionEnemiesAvg = minionRuns.isEmpty
+        ? 0.0
+        : minionEnemiesTotal / minionRuns.length;
+    final naxarusVictories = naxarusRuns
+        .where((r) => r.isVictory || r.score >= 100)
+        .length;
+    final naxarusVictoriesAvg = naxarusRuns.isEmpty
+        ? 0.0
+        : naxarusVictories / naxarusRuns.length;
+
+    // 3. HP
+    final minionHpRuns = minionRuns.where(
+      (r) => r.healthRemaining != null && r.healthRemaining! > 0,
+    );
+    final minionHpAvg = minionHpRuns.isEmpty
+        ? 0.0
+        : minionHpRuns.fold(0, (sum, r) => sum + r.healthRemaining!) /
+            minionHpRuns.length;
+    final naxarusHpRuns = naxarusRuns.where(
+      (r) => r.healthRemaining != null && r.healthRemaining! > 0,
+    );
+    final naxarusHpAvg = naxarusHpRuns.isEmpty
+        ? 0.0
+        : naxarusHpRuns.fold(0, (sum, r) => sum + r.healthRemaining!) /
+            naxarusHpRuns.length;
+
+    // 4. Time
+    final minionTimeTotal = minionRuns.fold(
+      Duration.zero,
+      (sum, r) => sum + r.duration,
+    );
+    final minionTimeAvg = minionRuns.isEmpty
+        ? Duration.zero
+        : Duration(seconds: minionTimeTotal.inSeconds ~/ minionRuns.length);
+    final naxarusTimeTotal = naxarusRuns.fold(
+      Duration.zero,
+      (sum, r) => sum + r.duration,
+    );
+    final naxarusTimeAvg = naxarusRuns.isEmpty
+        ? Duration.zero
+        : Duration(seconds: naxarusTimeTotal.inSeconds ~/ naxarusRuns.length);
+    final totalTime = minionTimeTotal + naxarusTimeTotal;
+
+    // 5. Score
+    final minionAvgScore = minionRuns.isEmpty
+        ? 0.0
+        : minionRuns.fold(0, (sum, r) => sum + r.score) / minionRuns.length;
+    final mediumRuns = minionRuns.where(
+      (r) => r.mode.difficulty == RunDifficulty.medium,
+    );
+    final hardRuns = minionRuns.where(
+      (r) => r.mode.difficulty == RunDifficulty.hard,
+    );
+    final freeRuns = minionRuns.where(
+      (r) => r.mode.difficulty == RunDifficulty.free,
+    );
+
+    final mediumMaxScore = mediumRuns.isEmpty
+        ? 0
+        : mediumRuns.map((r) => r.score).reduce((a, b) => a > b ? a : b);
+    final hardMaxScore = hardRuns.isEmpty
+        ? 0
+        : hardRuns.map((r) => r.score).reduce((a, b) => a > b ? a : b);
+    final freeMaxScore = freeRuns.isEmpty
+        ? 0
+        : freeRuns.map((r) => r.score).reduce((a, b) => a > b ? a : b);
+
+    final naxarusMaxScore = naxarusRuns.isEmpty
+        ? 0
+        : naxarusRuns.map((r) => r.score).reduce((a, b) => a > b ? a : b);
+    final naxarusAvgScore = naxarusRuns.isEmpty
+        ? 0.0
+        : naxarusRuns.fold(0, (sum, r) => sum + r.score) / naxarusRuns.length;
+
+    final minionVictories = minionRuns
+        .where((r) => r.isVictory || r.score >= r.mode.defaultTarget)
+        .length;
+    final minionSuccessRate = minionRuns.isEmpty
+        ? 0
+        : ((minionVictories / minionRuns.length) * 100).round();
+    final naxarusSuccessRate = naxarusRuns.isEmpty
+        ? 0
+        : ((naxarusVictories / naxarusRuns.length) * 100).round();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         children: [
-          Expanded(flex: 4, child: Text('Hero / run')),
-          Expanded(child: _HistoryHeaderIcon(Icons.flag, 'Runs')),
+          const Expanded(flex: 4, child: Text('Hero / run')),
+          // 1. NB
           Expanded(
-            child: _HistoryHeaderIcon(Icons.sports_martial_arts, 'Enemies'),
+            child: _HistoryHeaderItem(
+              child: const Text(
+                'NB',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xffffe22d),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                ),
+              ),
+              tooltip: 'Runs count',
+              onTap: () => _openMultiStatSheet(
+                context,
+                title: 'Runs Count',
+                iconWidget: const Text(
+                  'NB',
+                  style: TextStyle(
+                    color: Color(0xffffe22d),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 20,
+                  ),
+                ),
+                description: 'Total number of games played.',
+                lines: [
+                  _StatLineData(
+                    label: 'Minion Rush runs',
+                    value: '$minionRunsCount runs',
+                  ),
+                  _StatLineData(
+                    label: 'Naxarus runs',
+                    value: '$naxarusRunsCount runs',
+                  ),
+                ],
+                totalLine: _StatLineData(
+                  label: 'Total runs',
+                  value: '$totalRunsCount runs',
+                ),
+              ),
+            ),
           ),
-          Expanded(child: _HistoryHeaderIcon(Icons.favorite, 'HP')),
-          Expanded(child: _HistoryHeaderIcon(Icons.timer, 'Time')),
-          Expanded(child: _HistoryHeaderIcon(Icons.emoji_events, 'Points')),
+          // 2. Enemies
+          Expanded(
+            child: _HistoryHeaderItem(
+              child: Image.asset(
+                'assets/minion.webp',
+                width: 20,
+                height: 20,
+                fit: BoxFit.contain,
+              ),
+              tooltip: 'Enemies defeated',
+              onTap: () => _openMultiStatSheet(
+                context,
+                title: 'Enemies Defeated',
+                iconWidget: Image.asset(
+                  'assets/minion.webp',
+                  width: 24,
+                  height: 24,
+                  fit: BoxFit.contain,
+                ),
+                description:
+                    'Total number of enemies eliminated across games.',
+                lines: [
+                  _StatLineData(
+                    label: 'Minions eliminated',
+                    value: '$minionEnemiesTotal',
+                  ),
+                  _StatLineData(
+                    label: 'Naxarus Victories',
+                    value: '$naxarusVictories',
+                  ),
+                  _StatLineData(
+                    label: 'Minions eliminated avg',
+                    value: '${_formatNumber(minionEnemiesAvg)}/run',
+                  ),
+                  _StatLineData(
+                    label: 'Naxarus Victories avg',
+                    value: '${_formatNumber(naxarusVictoriesAvg)}/run',
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // 3. HP
+          Expanded(
+            child: _HistoryHeaderItem(
+              child: const Icon(Icons.favorite, size: 18, color: Color(0xffffe22d)),
+              tooltip: 'Remaining HP',
+              onTap: () => _openMultiStatSheet(
+                context,
+                title: 'Remaining HP',
+                iconWidget: const Icon(Icons.favorite, size: 22, color: Color(0xffffe22d)),
+                description:
+                    'Hero\'s remaining health points upon victory.',
+                lines: [
+                  _StatLineData(
+                    label: 'Minion Rush avg health',
+                    value: '${_formatNumber(minionHpAvg)} HP',
+                  ),
+                  _StatLineData(
+                    label: 'Naxarus avg health',
+                    value: '${_formatNumber(naxarusHpAvg)} HP',
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // 4. Time
+          Expanded(
+            child: _HistoryHeaderItem(
+              child: const Icon(Icons.timer, size: 18, color: Color(0xffffe22d)),
+              tooltip: 'Play time',
+              onTap: () => _openMultiStatSheet(
+                context,
+                title: 'Play Time',
+                iconWidget: const Icon(Icons.timer, size: 22, color: Color(0xffffe22d)),
+                description: 'Total time spent in combat.',
+                lines: [
+                  _StatLineData(
+                    label: 'Minion Rush play time',
+                    value: _formatSmartDuration(minionTimeTotal),
+                  ),
+                  _StatLineData(
+                    label: 'Minion Rush avg time',
+                    value: '${_formatSmartDuration(minionTimeAvg)}/run',
+                  ),
+                  _StatLineData(
+                    label: 'Naxarus play time',
+                    value: _formatSmartDuration(naxarusTimeTotal),
+                  ),
+                  _StatLineData(
+                    label: 'Naxarus avg time',
+                    value: '${_formatSmartDuration(naxarusTimeAvg)}/run',
+                  ),
+                ],
+                totalLine: _StatLineData(
+                  label: 'Total Solo Quest play time',
+                  value: _formatSmartDuration(totalTime),
+                ),
+              ),
+            ),
+          ),
+          // 5. Score
+          Expanded(
+            child: _HistoryHeaderItem(
+              child: const Icon(Icons.emoji_events, size: 18, color: Color(0xffffe22d)),
+              tooltip: 'Score & Success',
+              onTap: () => _openMultiStatSheet(
+                context,
+                title: 'Score & Success',
+                iconWidget: const Icon(Icons.emoji_events, size: 22, color: Color(0xffffe22d)),
+                description:
+                    'Score metrics and success rates per game mode.',
+                lines: [
+                  _StatLineData(
+                    label: 'Minion Rush avg score',
+                    value: _formatNumber(minionAvgScore),
+                  ),
+                  _StatLineData(
+                    label: 'Minion Rush Medium max score',
+                    value: '$mediumMaxScore',
+                  ),
+                  _StatLineData(
+                    label: 'Minion Rush Hard max score',
+                    value: '$hardMaxScore',
+                  ),
+                  _StatLineData(
+                    label: 'Minion Rush Free max score',
+                    value: '$freeMaxScore',
+                  ),
+                  _StatLineData(
+                    label: 'Naxarus max score',
+                    value: '$naxarusMaxScore',
+                  ),
+                  _StatLineData(
+                    label: 'Naxarus avg score',
+                    value: _formatNumber(naxarusAvgScore),
+                  ),
+                  _StatLineData(
+                    label: 'Minion Rush success rate',
+                    value: '$minionSuccessRate%',
+                  ),
+                  _StatLineData(
+                    label: 'Naxarus success rate',
+                    value: '$naxarusSuccessRate%',
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
+
+  void _openMultiStatSheet(
+    BuildContext context, {
+    required String title,
+    required Widget iconWidget,
+    required String description,
+    required List<_StatLineData> lines,
+    _StatLineData? totalLine,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xff1c1c24),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    iconWidget,
+                    const SizedBox(width: 12),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  description,
+                  style: const TextStyle(fontSize: 13, color: Colors.white70),
+                ),
+                const Divider(height: 20, color: Colors.white24),
+                for (final line in lines) ...[
+                  _StatLine(label: line.label, value: line.value),
+                  const SizedBox(height: 6),
+                ],
+                if (totalLine != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade900.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.amber.shade700,
+                        width: 1,
+                      ),
+                    ),
+                    child: _StatLine(
+                      label: totalLine.label,
+                      value: totalLine.value,
+                      isHighlight: true,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
-class _HistoryHeaderIcon extends StatelessWidget {
-  const _HistoryHeaderIcon(this.icon, this.tooltip);
+class _HistoryHeaderItem extends StatelessWidget {
+  const _HistoryHeaderItem({
+    required this.child,
+    required this.tooltip,
+    required this.onTap,
+  });
 
-  final IconData icon;
+  final Widget child;
   final String tooltip;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: Icon(icon, size: 18, color: Color(0xffffe22d)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Center(child: child),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatLine extends StatelessWidget {
+  const _StatLine({
+    required this.label,
+    required this.value,
+    this.isCurrent = false,
+    this.isHighlight = false,
+  });
+
+  final String label;
+  final String value;
+  final bool isCurrent;
+  final bool isHighlight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isHighlight ? 13 : 13,
+            fontWeight: isHighlight || isCurrent ? FontWeight.bold : FontWeight.normal,
+            color: isHighlight
+                ? Colors.amberAccent
+                : (isCurrent ? Colors.purpleAccent : Colors.white70),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isHighlight ? 13 : 13,
+            fontWeight: FontWeight.bold,
+            color: isHighlight ? Colors.amberAccent : Colors.white,
+          ),
+        ),
+      ],
     );
   }
 }
 
 class _HistoryMetricText extends StatelessWidget {
-  const _HistoryMetricText(this.value);
+  const _HistoryMetricText(this.value, {super.key});
 
   final String value;
 
   @override
   Widget build(BuildContext context) {
-    return Transform.translate(
-      offset: const Offset(-4, 0),
-      child: Text(value, textAlign: TextAlign.center),
+    return Text(
+      value,
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 13),
     );
   }
 }
@@ -546,6 +1057,7 @@ class _RunDetailRow extends StatelessWidget {
     required this.selected,
     required this.onSelected,
     this.showHero = false,
+    super.key,
   });
 
   final GameRecord record;
@@ -556,28 +1068,43 @@ class _RunDetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isNaraxus = record.mode.difficulty == RunDifficulty.naraxus;
+    final enemiesLabel = isNaraxus ? '-' : record.enemiesDefeated.toString();
+    final pointsLabel = isNaraxus
+        ? (record.isVictory || record.score >= 100 ? '1' : '0')
+        : record.score.toString();
+
     return Row(
       children: [
-        if (deleteMode)
-          Checkbox(value: selected, onChanged: onSelected)
-        else if (showHero)
-          HeroAvatar(hero: record.hero, size: 34),
-        if (showHero || deleteMode) const SizedBox(width: 8),
         Expanded(
           flex: 4,
-          child: Text(showHero ? record.hero.label : _formatDate(record.date)),
+          child: Row(
+            children: [
+              if (deleteMode)
+                Checkbox(value: selected, onChanged: onSelected)
+              else if (showHero)
+                HeroAvatar(hero: record.hero, size: 30),
+              if (showHero || deleteMode) const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  showHero ? record.hero.label : _formatDate(record.date),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
         const Expanded(child: _HistoryMetricText('1')),
-        Expanded(child: _HistoryMetricText(record.enemiesDefeated.toString())),
+        Expanded(child: _HistoryMetricText(enemiesLabel)),
         Expanded(
           child: _HistoryMetricText(
             record.healthRemaining == null
-                ? 'n/a'
+                ? 'N/A'
                 : record.healthRemaining.toString(),
           ),
         ),
         Expanded(child: _HistoryMetricText(_formatDuration(record.duration))),
-        Expanded(child: _HistoryMetricText(record.score.toString())),
+        Expanded(child: _HistoryMetricText(pointsLabel)),
       ],
     );
   }

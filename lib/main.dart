@@ -22,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.104';
+const String appVersionLabel = 'Version 1.3.119';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -629,6 +629,7 @@ class StatusTokenRule {
     required this.removable,
     required this.appSupported,
     required this.description,
+    this.appDetails = '',
     this.frLabel = '',
     this.imageAsset,
     this.aliases = const [],
@@ -644,6 +645,7 @@ class StatusTokenRule {
   final bool removable;
   final bool appSupported;
   final String description;
+  final String appDetails;
   final String? imageAsset;
   final List<String> aliases;
   final bool minionAllowed;
@@ -718,6 +720,7 @@ class TokenCatalogRepository {
       removable: json['removable'] as bool? ?? true,
       appSupported: json['appSupported'] as bool? ?? false,
       description: json['description'] as String? ?? '',
+      appDetails: json['appDetails'] as String? ?? '',
       imageAsset: image == null || image.isEmpty ? null : image,
       aliases: _stringList(json['aliases']),
       minionAllowed: json['minionAllowed'] as bool? ?? true,
@@ -1468,17 +1471,23 @@ class AdventureState {
     return state;
   }
 
-  void setHeroHealth(int value) {
+  void setHeroHealth(int value, {String? source}) {
+    final oldHealth = health;
     health = value.clamp(0, 99);
-    log('Hero HP set to $health.');
+    if (oldHealth != health && source != 'silent') {
+      log('[HP] Héros HP: $oldHealth ➔ $health${source != null ? ' ($source)' : ' (Ajustement Manuel)'}');
+    }
     if (health == 0) {
       _endAdventure(false);
     }
   }
 
-  void setHeroPc(int value) {
+  void setHeroPc(int value, {String? source}) {
+    final oldCp = combatPoints;
     combatPoints = value.clamp(0, 99);
-    log('Hero CP set to $combatPoints.');
+    if (oldCp != combatPoints && source != 'silent') {
+      log('[CP] Héros CP: $oldCp ➔ $combatPoints${source != null ? ' ($source)' : ' (Ajustement Manuel)'}');
+    }
   }
 
   void applyHeroUpkeep() {
