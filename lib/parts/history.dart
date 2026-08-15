@@ -398,7 +398,9 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                     Expanded(
                       child: _HistoryMetricText(
-                        _roundedAverageLabel(_averageDurationSeconds(runs)),
+                        _formatSmartDuration(
+                          Duration(seconds: _averageDurationSeconds(runs).round()),
+                        ),
                       ),
                     ),
                     Expanded(
@@ -1103,7 +1105,7 @@ class _RunDetailRow extends StatelessWidget {
                 : record.healthRemaining.toString(),
           ),
         ),
-        Expanded(child: _HistoryMetricText(_formatDuration(record.duration))),
+        Expanded(child: _HistoryMetricText(_formatSmartDuration(record.duration))),
         Expanded(child: _HistoryMetricText(pointsLabel)),
       ],
     );

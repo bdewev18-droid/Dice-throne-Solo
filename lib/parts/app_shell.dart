@@ -848,16 +848,13 @@ class AccountChip extends StatelessWidget {
         ),
       );
     }
-    if (auth.isSignedIn) {
-      final label = (auth.email?.isNotEmpty ?? false)
-          ? auth.email!
-          : (auth.isAnonymous ? 'Guest' : 'Signed in');
+    if (auth.isSignedIn && !auth.isAnonymous && (auth.email?.isNotEmpty ?? false)) {
       return _pill(
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              auth.isAnonymous ? Icons.person_outline : Icons.verified_user,
+            const Icon(
+              Icons.verified_user,
               size: 16,
               color: Colors.white,
             ),
@@ -865,7 +862,7 @@ class AccountChip extends StatelessWidget {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 140),
               child: Text(
-                label,
+                auth.email!,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white,
@@ -883,16 +880,17 @@ class AccountChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const Icon(Icons.person_outline, size: 16, color: Colors.white),
+          const SizedBox(width: 4),
+          const Text(
+            'Invité',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(width: 8),
           _iconButton(
             icon: Icons.login,
             label: 'Google',
             onTap: onSignInGoogle,
-          ),
-          const SizedBox(width: 6),
-          _iconButton(
-            icon: Icons.person,
-            label: 'Guest',
-            onTap: onSignInAnonymous,
           ),
         ],
       ),

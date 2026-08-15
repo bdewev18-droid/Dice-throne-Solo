@@ -284,20 +284,29 @@ String _formatDate(DateTime date) {
   return '$day/$month/${date.year}';
 }
 
-String _formatDateTime(DateTime date) {
+String _formatTimeOnly(DateTime date) {
   final hour = date.hour.toString().padLeft(2, '0');
   final minute = date.minute.toString().padLeft(2, '0');
-  return '${_formatDate(date)} $hour:$minute';
+  return '$hour:$minute';
+}
+
+String _formatDateTime(DateTime date) {
+  return '${_formatDate(date)} ${_formatTimeOnly(date)}';
 }
 
 String _formatDuration(Duration duration) {
-  if (duration.inMinutes <= 0) {
-    return 'Time n/a';
+  final seconds = duration.inSeconds.clamp(0, 864000);
+  if (seconds <= 0) {
+    return '0 min';
   }
-  final hours = duration.inHours;
-  final minutes = duration.inMinutes.remainder(60);
+  final hours = seconds ~/ 3600;
+  final minutes = (seconds % 3600) ~/ 60;
+  final secs = seconds % 60;
   if (hours == 0) {
-    return '${duration.inMinutes} min';
+    if (minutes == 0) {
+      return '${secs}s';
+    }
+    return '${minutes}m ${secs.toString().padLeft(2, '0')}s';
   }
-  return '${hours}h ${minutes.toString().padLeft(2, '0')}';
+  return '${hours}h ${minutes.toString().padLeft(2, '0')}m';
 }

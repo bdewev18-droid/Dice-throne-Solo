@@ -778,6 +778,19 @@ class _FightPageState extends State<FightPage> {
         autoRollAttack: _aiMode && phase == CombatPhase.minionAttack,
       );
     });
+    final headerText = switch (phase) {
+      CombatPhase.heroUpkeep =>
+        '### UPKEEP PHASE - ${widget.adventure.hero.label.toUpperCase()}',
+      CombatPhase.hero =>
+        '### ROLL PHASE - ${widget.adventure.hero.label.toUpperCase()}',
+      CombatPhase.minionUpkeep =>
+        '### UPKEEP PHASE - ${enemy.label.toUpperCase()}',
+      CombatPhase.minionAttack =>
+        '### ROLL PHASE - ${enemy.label.toUpperCase()}',
+      CombatPhase.intro =>
+        '### COMBAT START - ${enemy.label.toUpperCase()}',
+    };
+    widget.adventure.log(headerText);
     if (phase == CombatPhase.heroUpkeep) {
       _applyHeroUpkeep();
     }
@@ -2081,6 +2094,15 @@ class _FightPageState extends State<FightPage> {
   }
 
   void _resolveExtraDicePhase(List<GameDie> extraDice) {
+    final rolledValues = extraDice
+        .where((die) => die.value != null)
+        .map((die) => die.value!)
+        .toList();
+    if (rolledValues.isNotEmpty) {
+      widget.adventure.log(
+        '[EXTRA DICE] Extra roll result: [${rolledValues.join(', ')}] (${enemy.label})',
+      );
+    }
     if (_phase == CombatPhase.hero &&
         _isViseerNode(enemy) &&
         _viseerDefensePassivePending) {
@@ -2493,45 +2515,45 @@ class _FightPageState extends State<FightPage> {
         enemy.health = (enemy.health - netDamage).clamp(0, 99);
         
         final buffer = StringBuffer();
-        buffer.writeln('### Phase de Lancer (Héros)');
+        buffer.writeln('### Hero Roll Phase');
         buffer.writeln('ATK: $_battleAttackValue [ATK]');
         if (effectiveDefense > 0) {
-          buffer.writeln('DEF parrée: $effectiveDefense [DEF]');
+          buffer.writeln('DEF blocked: $effectiveDefense [DEF]');
         }
-        buffer.writeln('Dégâts subis par l\'ennemi: $netDamage');
+        buffer.writeln('Damage taken by enemy: $netDamage');
         if (oldEnemyHealth != enemy.health) {
-          buffer.writeln('[HP] Ennemi HP: $oldEnemyHealth ➔ ${enemy.health}');
+          buffer.writeln('[HP] Enemy HP: $oldEnemyHealth ➔ ${enemy.health}');
         }
 
         if (_battleCpSteal > 0) {
           widget.adventure.setHeroPc(
             widget.adventure.combatPoints - _battleCpSteal,
-            source: 'Vol de CP',
+            source: 'CP Steal',
           );
           final oldEnemyCp = enemy.combatPoints;
           enemy.combatPoints = (enemy.combatPoints + _battleCpSteal).clamp(
             0,
             99,
           );
-          buffer.writeln('[CP] Ennemi CP: $oldEnemyCp ➔ ${enemy.combatPoints} (Volé au héros)');
+          buffer.writeln('[CP] Enemy CP: $oldEnemyCp ➔ ${enemy.combatPoints} (Stolen from hero)');
         }
         if (_battleReturnDamage > 0) {
           widget.adventure.setHeroHealth(
             widget.adventure.health - _battleReturnDamage,
-            source: 'Dégâts retour',
+            source: 'Reflect damage',
           );
         }
         if (_battleLifeSteal > 0) {
           widget.adventure.setHeroHealth(
             widget.adventure.health - _battleLifeSteal,
-            source: 'Vol de vie',
+            source: 'Lifesteal',
           );
           final oldEnemyHealthAfterDamage = enemy.health;
           enemy.health = (enemy.health + _battleLifeSteal).clamp(
             0,
             enemy.maxHealth,
           );
-          buffer.writeln('[HP] Ennemi HP: $oldEnemyHealthAfterDamage ➔ ${enemy.health} (Vol de vie)');
+          buffer.writeln('[HP] Enemy HP: $oldEnemyHealthAfterDamage ➔ ${enemy.health} (Lifesteal)');
         }
         if (_battleEnemyHeal > 0) {
           final oldEnemyHealthAfterDamage = enemy.health;
@@ -2539,17 +2561,17 @@ class _FightPageState extends State<FightPage> {
             0,
             enemy.maxHealth,
           );
-          buffer.writeln('[HP] Ennemi HP: $oldEnemyHealthAfterDamage ➔ ${enemy.health} (Soin)');
+          buffer.writeln('[HP] Enemy HP: $oldEnemyHealthAfterDamage ➔ ${enemy.health} (Heal)');
         }
         
         enemy.alterations.addAll(_battleMinionTokens);
         widget.adventure.alterations.addAll(_battleHeroTokens);
         
         for (final token in _battleMinionTokens) {
-          buffer.writeln('[TOKEN:$token] infligé à l\'ennemi');
+          buffer.writeln('[TOKEN:$token] applied to enemy');
         }
         for (final token in _battleHeroTokens) {
-          buffer.writeln('[TOKEN:$token] reçu par le héros');
+          buffer.writeln('[TOKEN:$token] applied to hero');
         }
 
         widget.adventure.log(buffer.toString().trim());
@@ -2585,25 +2607,25 @@ class _FightPageState extends State<FightPage> {
         final shouldSummonLevel3 = _discipleSummonLevel3;
         
         final buffer = StringBuffer();
-        buffer.writeln('### Phase de Lancer (Ennemi - ${enemy.label})');
+        buffer.writeln('### Enemy Roll Phase (${enemy.label})');
         buffer.writeln('ATK: $_battleAttackValue [ATK]');
         if (effectiveDefense > 0) {
-          buffer.writeln('DEF parrée: $effectiveDefense [DEF]');
+          buffer.writeln('DEF blocked: $effectiveDefense [DEF]');
         }
-        buffer.writeln('Dégâts subis par le héros: $netDamage');
+        buffer.writeln('Damage taken by hero: $netDamage');
 
-        widget.adventure.setHeroHealth(widget.adventure.health - netDamage, source: 'Dégâts de l\'ennemi');
+        widget.adventure.setHeroHealth(widget.adventure.health - netDamage, source: 'Enemy damage');
         if (_battleLifeSteal > 0) {
           widget.adventure.setHeroHealth(
             widget.adventure.health - _battleLifeSteal,
-            source: 'Vol de vie',
+            source: 'Lifesteal',
           );
           final oldEnemyHealth = enemy.health;
           enemy.health = (enemy.health + _battleLifeSteal).clamp(
             0,
             enemy.maxHealth,
           );
-          buffer.writeln('[HP] Ennemi HP: $oldEnemyHealth ➔ ${enemy.health} (Vol de vie)');
+          buffer.writeln('[HP] Enemy HP: $oldEnemyHealth ➔ ${enemy.health} (Lifesteal)');
         }
         if (_battleEnemyHeal > 0) {
           final oldEnemyHealth = enemy.health;
@@ -2611,28 +2633,28 @@ class _FightPageState extends State<FightPage> {
             0,
             enemy.maxHealth,
           );
-          buffer.writeln('[HP] Ennemi HP: $oldEnemyHealth ➔ ${enemy.health} (Soin)');
+          buffer.writeln('[HP] Enemy HP: $oldEnemyHealth ➔ ${enemy.health} (Heal)');
         }
         if (_battleCpSteal > 0) {
           widget.adventure.setHeroPc(
             widget.adventure.combatPoints - _battleCpSteal,
-            source: 'Vol de CP',
+            source: 'CP Steal',
           );
           final oldEnemyCp = enemy.combatPoints;
           enemy.combatPoints = (enemy.combatPoints + _battleCpSteal).clamp(
             0,
             99,
           );
-          buffer.writeln('[CP] Ennemi CP: $oldEnemyCp ➔ ${enemy.combatPoints} (Vol de CP)');
+          buffer.writeln('[CP] Enemy CP: $oldEnemyCp ➔ ${enemy.combatPoints} (CP Steal)');
         }
         widget.adventure.alterations.addAll(_battleHeroTokens);
         enemy.alterations.addAll(_battleMinionTokens);
         
         for (final token in _battleMinionTokens) {
-          buffer.writeln('[TOKEN:$token] infligé à l\'ennemi');
+          buffer.writeln('[TOKEN:$token] applied to enemy');
         }
         for (final token in _battleHeroTokens) {
-          buffer.writeln('[TOKEN:$token] reçu par le héros');
+          buffer.writeln('[TOKEN:$token] applied to hero');
         }
 
         widget.adventure.log(buffer.toString().trim());
@@ -2740,9 +2762,11 @@ class _FightPageState extends State<FightPage> {
       for (final t in heroOutcome!.removedTokens) {
         widget.adventure.alterations.remove(t);
       }
-      widget.adventure.log(
-        '${widget.adventure.hero.label} upkeep: ${heroOutcome!.log}.',
-      );
+      if (heroOutcome != null && heroOutcome!.logParts.isNotEmpty) {
+        for (final part in heroOutcome!.logParts) {
+          widget.adventure.log('[TOKEN] ${widget.adventure.hero.label}: $part');
+        }
+      }
       widget.onChanged();
     });
     if (heroOutcome != null && heroOutcome!.notes.isNotEmpty) {
@@ -2795,15 +2819,13 @@ class _FightPageState extends State<FightPage> {
         enemy.alterations.remove(token);
       }
       _upkeepApplied = true;
-      final upkeepLog = _enemyHasInfiniteCp(enemy)
-          ? _naxarusUpkeepLog(outcome)
-          : outcome.log;
-      final combinedLog = [
-        if (passiveLog.isNotEmpty) passiveLog,
-        if (upkeepLog.isNotEmpty) upkeepLog,
-      ].join(', ');
-      if (combinedLog.isNotEmpty) {
-        widget.adventure.log('${enemy.label} upkeep: $combinedLog.');
+      if (passiveLog.isNotEmpty) {
+        widget.adventure.log('${enemy.label} passive: $passiveLog.');
+      }
+      if (outcome.logParts.isNotEmpty) {
+        for (final part in outcome.logParts) {
+          widget.adventure.log('[TOKEN] ${enemy.label}: $part');
+        }
       }
       _lastBattleOutcomeMessage = _isViseerNode(enemy) ? passiveLog : '';
       widget.onChanged();
@@ -5985,11 +6007,19 @@ class CombatAiChatDock extends StatelessWidget {
                 onChanged();
               },
               onEnemyHpSaved: (value) {
+                final oldHp = enemy.health;
                 enemy.health = value.clamp(0, 99);
+                if (oldHp != enemy.health) {
+                  adventure.log('[HP] ${enemy.label} HP: $oldHp ➔ ${enemy.health} (Manual Adjustment)');
+                }
                 onChanged();
               },
               onEnemyCpSaved: (value) {
+                final oldCp = enemy.combatPoints;
                 enemy.combatPoints = value.clamp(0, 99);
+                if (oldCp != enemy.combatPoints) {
+                  adventure.log('[CP] ${enemy.label} CP: $oldCp ➔ ${enemy.combatPoints} (Manual Adjustment)');
+                }
                 onChanged();
               },
             ),
@@ -10080,13 +10110,20 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       case 'enemyHp':
         final oldHealth = widget.enemy.health;
         widget.enemy.health = value.clamp(0, 99);
+        if (oldHealth != widget.enemy.health) {
+          widget.adventure.log('[HP] ${widget.enemy.label} HP: $oldHealth ➔ ${widget.enemy.health} (Manual Adjustment)');
+        }
         if (widget.phase == CombatPhase.hero &&
             widget.enemy.health < oldHealth &&
             widget.enemy.alterations.contains('Riposte')) {
           await _offerRiposte();
         }
       case 'enemyCp':
+        final oldCp = widget.enemy.combatPoints;
         widget.enemy.combatPoints = value.clamp(0, 99);
+        if (oldCp != widget.enemy.combatPoints) {
+          widget.adventure.log('[CP] ${widget.enemy.label} CP: $oldCp ➔ ${widget.enemy.combatPoints} (Manual Adjustment)');
+        }
     }
     setState(() => _editing.remove(key));
     widget.onChanged();
@@ -10133,7 +10170,16 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       ],
     );
     if (values != null) {
+      final oldTokens = List<String>.from(widget.adventure.alterations);
       widget.adventure.setAlterations(values);
+      final added = values.where((t) => !oldTokens.contains(t)).toList();
+      final removed = oldTokens.where((t) => !values.contains(t)).toList();
+      for (final t in added) {
+        widget.adventure.log('[TOKEN GAINED] Hero received token: $t');
+      }
+      for (final t in removed) {
+        widget.adventure.log('[TOKEN REMOVED] Hero lost token: $t');
+      }
       widget.onChanged();
       setState(() {});
     }
@@ -10151,9 +10197,18 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
       ],
     );
     if (values != null) {
+      final oldTokens = List<String>.from(widget.enemy.alterations);
       widget.enemy.alterations
         ..clear()
         ..addAll(values);
+      final added = values.where((t) => !oldTokens.contains(t)).toList();
+      final removed = oldTokens.where((t) => !values.contains(t)).toList();
+      for (final t in added) {
+        widget.adventure.log('[TOKEN GAINED] ${widget.enemy.label} received token: $t');
+      }
+      for (final t in removed) {
+        widget.adventure.log('[TOKEN REMOVED] ${widget.enemy.label} lost token: $t');
+      }
       widget.onChanged();
       setState(() {});
     }
@@ -11951,7 +12006,7 @@ class _CombatResolutionPanel extends StatelessWidget {
                     foregroundColor: Colors.white,
                     minimumSize: const Size.fromHeight(50),
                   ),
-                  child: const Text('Save & History'),
+                  child: const Text('History'),
                 ),
                 const SizedBox(height: 12),
                 FilledButton(
@@ -11963,18 +12018,31 @@ class _CombatResolutionPanel extends StatelessWidget {
                   ),
                   child: const Text('Homepage'),
                 ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: onReview,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff2d2342),
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    side: const BorderSide(color: Color(0xff8f43ff), width: 1.5),
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Back',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-        const SizedBox(height: 16),
-        OutlinedButton(
-          onPressed: onReview,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.white70,
-            minimumSize: const Size.fromHeight(40),
-          ),
-          child: const Text('Revenir en arrière (Review log)'),
-        ),
       ],
     );
   }

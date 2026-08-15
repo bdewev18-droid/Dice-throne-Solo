@@ -18,6 +18,7 @@ class UpkeepOutcome {
     required this.healthDelta,
     required this.removedTokens,
     required this.log,
+    this.logParts = const [],
     this.notes = const [],
   });
 
@@ -25,6 +26,7 @@ class UpkeepOutcome {
   final int healthDelta;
   final List<String> removedTokens;
   final String log;
+  final List<String> logParts;
   // Human-readable notes for tokens requiring player action (e.g. Powder Keg transfer).
   final List<String> notes;
 }
@@ -209,6 +211,7 @@ class GameEngine {
       healthDelta: ctx.healthDelta,
       removedTokens: ctx.removedTokens,
       log: ctx.logParts.join(', '),
+      logParts: List<String>.from(ctx.logParts),
       notes: ctx.notes,
     );
   }
@@ -231,6 +234,7 @@ class GameEngine {
       healthDelta: ctx.healthDelta,
       removedTokens: ctx.removedTokens,
       log: ctx.logParts.join(', '),
+      logParts: List<String>.from(ctx.logParts),
       notes: ctx.notes,
     );
   }

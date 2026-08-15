@@ -22,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.119';
+const String appVersionLabel = 'Version 1.3.127';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -1152,6 +1152,8 @@ class SurvivalConfig {
   final int targetScore;
   final Map<EnemyRank, int> freeCounts;
 
+  bool get isNaraxusMode => mode == SurvivalMode.naraxus;
+
   Map<String, dynamic> toJson() => {
     'mode': mode.name,
     'targetScore': targetScore,
@@ -1388,7 +1390,7 @@ class AdventureState {
   bool recorded = false;
 
   void log(String message) {
-    logs.insert(0, '${_formatDateTime(DateTime.now())} - $message');
+    logs.insert(0, '[${_formatTimeOnly(DateTime.now())}] $message');
   }
 
   List<EnemyNode> get defeatedEnemies =>
@@ -1475,7 +1477,7 @@ class AdventureState {
     final oldHealth = health;
     health = value.clamp(0, 99);
     if (oldHealth != health && source != 'silent') {
-      log('[HP] Héros HP: $oldHealth ➔ $health${source != null ? ' ($source)' : ' (Ajustement Manuel)'}');
+      log('[HP] Hero HP: $oldHealth ➔ $health${source != null ? ' ($source)' : ' (Manual Adjustment)'}');
     }
     if (health == 0) {
       _endAdventure(false);
@@ -1486,7 +1488,7 @@ class AdventureState {
     final oldCp = combatPoints;
     combatPoints = value.clamp(0, 99);
     if (oldCp != combatPoints && source != 'silent') {
-      log('[CP] Héros CP: $oldCp ➔ $combatPoints${source != null ? ' ($source)' : ' (Ajustement Manuel)'}');
+      log('[CP] Hero CP: $oldCp ➔ $combatPoints${source != null ? ' ($source)' : ' (Manual Adjustment)'}');
     }
   }
 

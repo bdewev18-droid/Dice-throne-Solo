@@ -198,6 +198,7 @@ class _MapPageState extends State<MapPage> {
                 children: [
                   MapHeader(
                     adventure: adventure,
+                    showRewards: false,
                     onDetails: () => _openDetails(context),
                     onChanged: () {
                       widget.onChanged();
@@ -723,24 +724,25 @@ class _MapHeaderState extends State<MapHeader> {
                 onPressed: widget.onDetails,
                 icon: const Icon(Icons.receipt_long, color: heroAccent),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: heroAccent.withValues(alpha: 0.13),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: heroAccent),
-                ),
-                child: Text(
-                  '${adventure.score}/${adventure.targetScore} pts',
-                  style: const TextStyle(
-                    color: heroAccent,
-                    fontWeight: FontWeight.w900,
+              if (!adventure.config.isNaraxusMode && adventure.targetScore > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: heroAccent.withValues(alpha: 0.13),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: heroAccent),
+                  ),
+                  child: Text(
+                    '${adventure.score}/${adventure.targetScore} pts',
+                    style: const TextStyle(
+                      color: heroAccent,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           if (widget.showVitals) ...[
@@ -1222,7 +1224,7 @@ class EndAdventureBanner extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              FilledButton(onPressed: onReplay, child: const Text('Rejouer')),
+              FilledButton(onPressed: onReplay, child: const Text('Replay')),
               OutlinedButton(
                 onPressed: onChangeHero,
                 child: const Text('Change hero'),

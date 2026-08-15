@@ -244,14 +244,17 @@ class AdventureDetailsPage extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           children: [
             Text(
-              '${adventure.hero.label} - ${adventure.score} points',
+              adventure.config.isNaraxusMode
+                  ? adventure.hero.label
+                  : '${adventure.hero.label} - ${adventure.score} points',
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 6),
-            Text('Time played: ${_formatDuration(adventure.elapsed)}'),
+            Text(
+              'Date: ${_formatDate(adventure.startedAt)} • Time played: ${_formatDuration(adventure.elapsed)}',
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
+            ),
             const SizedBox(height: 12),
-            DetailSection(title: 'Rewards', items: adventure.bonuses),
-            DetailSection(title: 'Status tokens', items: adventure.alterations),
             DetailSection(title: 'Log', items: adventure.logs),
           ],
         ),
@@ -404,17 +407,47 @@ class RichLogText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (text.startsWith('###')) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 12, bottom: 4),
+      final headerText = text.replaceAll('###', '').trim().toUpperCase();
+
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 14, bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xffe67e22),
+          borderRadius: BorderRadius.circular(8),
+          border: const Border(
+            left: BorderSide(color: Color(0xffffd54f), width: 5),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
         child: Text(
-          text.replaceAll('###', '').trim(),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blueAccent),
+          headerText,
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 15,
+            letterSpacing: 1.3,
+            color: Colors.white,
+            shadows: [
+              Shadow(color: Colors.black45, blurRadius: 3, offset: Offset(1, 1)),
+            ],
+          ),
         ),
       );
     }
 
     final spans = <InlineSpan>[];
-    final regex = RegExp(r'\[(.*?)\]');
+    final regex = RegExp(
+      r'\[(.*?)\]|\b(Hero|Héros|Benjamin|Paladin|Barbarian|Barbare|Pyromancer|Moon Elf|Shadow Thief|Monk|Naxarus|Naraxus|Viseer|Rocalanche|Mage Lezard|Homme Lezard|Mage de l Entropie|Blood Mage|Druid|Oni)\b|\b(D6\s*\d+|\broll:\s*\d+|\bdie:\s*\d+)\b',
+      caseSensitive: false,
+    );
+
     int lastMatchEnd = 0;
 
     for (final match in regex.allMatches(text)) {
@@ -422,26 +455,124 @@ class RichLogText extends StatelessWidget {
         spans.add(TextSpan(text: text.substring(lastMatchEnd, match.start)));
       }
 
-      final tag = match.group(1)!;
-      Widget? iconWidget;
+      final tag = match.group(1);
+      final entityName = match.group(2);
+      final dieRoll = match.group(3);
 
-      if (tag == 'HP') {
-        iconWidget = Image.asset('assets/illustration/soin.webp', width: 16, height: 16);
-      } else if (tag == 'ATK') {
-        iconWidget = Image.asset('assets/illustration/degat.webp', width: 16, height: 16);
-      } else if (tag == 'DEF') {
-        iconWidget = Image.asset('assets/illustration/bouclier.webp', width: 16, height: 16);
-      } else if (tag == 'CP') {
-        iconWidget = const Icon(Icons.star, color: Colors.blue, size: 16);
-      } else if (tag.startsWith('TOKEN:')) {
-        final tokenName = tag.substring(6).replaceAll(' ', '-');
-        iconWidget = Image.asset('assets/$tokenName.png', width: 16, height: 16, errorBuilder: (c, e, s) => const Icon(Icons.error, size: 16));
-      }
+      if (tag != null) {
+        if (RegExp(r'^\d{2}:\d{2}$').hasMatch(tag)) {
+          spans.add(TextSpan(
+            text: match.group(0),
+            style: const TextStyle(color: Colors.white60, fontWeight: FontWeight.normal),
+          ));
+          lastMatchEnd = match.end;
+          continue;
+        }
 
-      if (iconWidget != null) {
-        spans.add(WidgetSpan(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 2), child: iconWidget), alignment: PlaceholderAlignment.middle));
-      } else {
-        spans.add(TextSpan(text: match.group(0)));
+        Widget? iconWidget;
+        String? displayTagText;
+
+        if (tag == 'HP') {
+          iconWidget = Image.asset('assets/illustration/soin.webp', width: 16, height: 16);
+        } else if (tag == 'ATK') {
+          iconWidget = Image.asset('assets/illustration/degat.webp', width: 16, height: 16);
+        } else if (tag == 'DEF') {
+          iconWidget = Image.asset('assets/illustration/bouclier.webp', width: 16, height: 16);
+        } else if (tag == 'CP') {
+          iconWidget = const Icon(Icons.star, color: Colors.amber, size: 16);
+        } else if (tag == 'EXTRA DICE') {
+          iconWidget = const Icon(Icons.casino, color: Colors.amberAccent, size: 16);
+        } else if (tag == 'TOKEN GAINED') {
+          iconWidget = const Icon(Icons.add_circle, color: Colors.greenAccent, size: 16);
+        } else if (tag == 'TOKEN REMOVED') {
+          iconWidget = const Icon(Icons.remove_circle, color: Colors.redAccent, size: 16);
+        } else if (tag == 'TOKEN') {
+          iconWidget = const Icon(Icons.stars, color: Colors.purpleAccent, size: 16);
+        } else if (tag.startsWith('TOKEN:')) {
+          final tokenName = tag.substring(6).trim();
+          final rule = TokenCatalogRepository.byLabel(tokenName);
+          final asset = rule?.imageAsset;
+          if (asset != null && asset.isNotEmpty) {
+            iconWidget = Image.asset(
+              asset,
+              width: 18,
+              height: 18,
+              errorBuilder: (c, e, s) => const Icon(Icons.stars, size: 16, color: Colors.purpleAccent),
+            );
+          } else {
+            displayTagText = tokenName;
+            iconWidget = const Icon(Icons.stars, size: 16, color: Colors.purpleAccent);
+          }
+        }
+
+        if (iconWidget != null) {
+          spans.add(WidgetSpan(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: iconWidget,
+            ),
+            alignment: PlaceholderAlignment.middle,
+          ));
+          if (displayTagText != null) {
+            spans.add(TextSpan(
+              text: ' $displayTagText ',
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.purpleAccent),
+            ));
+          }
+        } else {
+          spans.add(TextSpan(
+            text: match.group(0),
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amberAccent),
+          ));
+        }
+      } else if (entityName != null) {
+        final lower = entityName.toLowerCase();
+        final isHero = lower == 'hero' ||
+            lower == 'héros' ||
+            lower == 'benjamin' ||
+            lower == 'paladin' ||
+            lower == 'barbarian' ||
+            lower == 'barbare' ||
+            lower == 'pyromancer' ||
+            lower == 'moon elf' ||
+            lower == 'shadow thief' ||
+            lower == 'monk';
+        final color = isHero ? const Color(0xffffe22d) : const Color(0xffff6b6b);
+        spans.add(TextSpan(
+          text: entityName,
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: color,
+          ),
+        ));
+      } else if (dieRoll != null) {
+        spans.add(WidgetSpan(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xff2c3e50),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xff8f43ff), width: 1),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.casino, size: 12, color: Colors.amberAccent),
+                const SizedBox(width: 3),
+                Text(
+                  dieRoll,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          alignment: PlaceholderAlignment.middle,
+        ));
       }
 
       lastMatchEnd = match.end;
