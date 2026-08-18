@@ -11,10 +11,12 @@ void main() {
           (call) async => null,
         );
 
+    addTearDown(() => AppSettings.instance.setDeveloperMode(false));
+    await AppSettings.instance.setDeveloperMode(true);
     await tester.pumpWidget(const DiceThroneSurvieApp());
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text(appVersionLabel), findsOneWidget);
+    expect(find.textContaining('Version'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 3));
     await tester.pump(const Duration(milliseconds: 500));

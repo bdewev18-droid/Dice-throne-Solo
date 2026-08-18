@@ -32,28 +32,67 @@ class UpkeepOutcome {
 }
 
 class _UpkeepContext {
-  _UpkeepContext({required this.tokens, required this.rollD6});
+  _UpkeepContext({
+    required this.tokens,
+    required this.rollD6,
+    this.isHero = false,
+    this.isNaxarus = false,
+    int initialCp = 0,
+  })  : initialCpValue = initialCp,
+        currentCp = initialCp {
+    if (isHero) {
+      logParts.add('+ 1 CP');
+    }
+  }
 
   final List<String> tokens;
   final int Function() rollD6;
+  final bool isHero;
+  final bool isNaxarus;
+  final int initialCpValue;
 
   int healthDelta = 0;
-  int cpDelta = 1;
+  int currentCp;
+  bool concussionActive = false;
   final List<String> removedTokens = [];
-  final List<String> logParts = ['+ 1 CP'];
+  final List<String> logParts = [];
   final List<String> notes = [];
 
-  int count(String label) => tokens.where((t) => t == label).length;
+  int count(String label) {
+    final lower = label.toLowerCase();
+    return tokens.where((t) {
+      final tl = t.toLowerCase();
+      return tl == lower ||
+          (lower == 'burn' && (tl == 'brûlure' || tl == 'brulure')) ||
+          (lower == 'knockdown' && (tl == 'à terre' || tl == 'a terre')) ||
+          (lower == 'concussion' && tl == 'commotion');
+    }).length;
+  }
 
   void remove(String label, {int times = 1}) {
     var n = times;
+    final lower = label.toLowerCase();
     for (final t in List<String>.from(tokens)) {
       if (n <= 0) break;
-      if (t == label) {
-        removedTokens.add(label);
+      final tl = t.toLowerCase();
+      if (tl == lower ||
+          (lower == 'burn' && (tl == 'brûlure' || tl == 'brulure')) ||
+          (lower == 'knockdown' && (tl == 'à terre' || tl == 'a terre')) ||
+          (lower == 'concussion' && tl == 'commotion') ||
+          (lower == 'first strike' && (tl == 'première frappe' || tl == 'premiere frappe' || tl == '1st frappe'))) {
+        removedTokens.add(t);
         n--;
       }
     }
+  }
+
+  int get cpDelta {
+    if (!isHero) {
+      return currentCp - initialCpValue;
+    }
+    final naturalGain = concussionActive ? 0 : 1;
+    final finalCp = currentCp + naturalGain;
+    return finalCp - initialCpValue;
   }
 }
 
@@ -77,6 +116,20 @@ class GameEngine {
       ctx.healthDelta -= 2;
       ctx.logParts.add('-2 HP from Burn');
     },
+    'Brûlure': (ctx) => _upkeepHandlers['Burn']?.call(ctx),
+    'Brulure': (ctx) => _upkeepHandlers['Burn']?.call(ctx),
+
+    // Knockdown / À terre — removes up to 2 CP before natural +1 CP gain, then removes token (Naxarus immune)
+    'Knockdown': (ctx) {
+      if (ctx.count('Knockdown') == 0) return;
+      if (ctx.isNaxarus) return;
+      final lost = ctx.currentCp >= 2 ? 2 : ctx.currentCp;
+      ctx.currentCp -= lost;
+      ctx.remove('Knockdown');
+      ctx.logParts.add('-$lost CP from Knockdown, token removed');
+    },
+    'À terre': (ctx) => _upkeepHandlers['Knockdown']?.call(ctx),
+    'A terre': (ctx) => _upkeepHandlers['Knockdown']?.call(ctx),
 
     // Bleed (Hémorragie) — roll d6 per stack: 1-4 → -1 HP, 5-6 → remove
     'Bleed': (ctx) {
@@ -187,19 +240,38 @@ class GameEngine {
       ctx.logParts.add('Delayed Poison: -${n * 3} HP, $n token${n > 1 ? 's' : ''} removed');
     },
 
-    // Hex — end-of-turn: remove token (die-face effect resolved at roll time)
-    'Hex': (ctx) {
-      if (ctx.count('Hex') == 0) return;
-      ctx.remove('Hex');
-      ctx.logParts.add('Hex removed at end of turn');
+    // Concussion / Commotion - Prevents +1 CP gain during upkeep & removes itself (non-persistent)
+    'Concussion': (ctx) {
+      if (ctx.count('Concussion') == 0) return;
+      ctx.concussionActive = true;
+      ctx.logParts.remove('+ 1 CP');
+      ctx.logParts.add('CP gain prevented by Concussion');
+      ctx.remove('Concussion');
     },
+    'Commotion': (ctx) => _upkeepHandlers['Concussion']?.call(ctx),
+
+    // First Strike / Première Frappe - minion starts combat & removes itself (non-persistent)
+    'First Strike': (ctx) {
+      ctx.logParts.add('Première Frappe');
+      ctx.remove('First Strike');
+    },
+    'Première Frappe': (ctx) => _upkeepHandlers['First Strike']?.call(ctx),
+    '1st frappe': (ctx) => _upkeepHandlers['First Strike']?.call(ctx),
   };
 
   static UpkeepOutcome minionUpkeep({
     required List<String> tokens,
     required int Function() rollD6,
+    int currentCp = 0,
+    bool isNaxarus = false,
   }) {
-    final ctx = _UpkeepContext(tokens: tokens, rollD6: rollD6);
+    final ctx = _UpkeepContext(
+      tokens: tokens,
+      rollD6: rollD6,
+      isHero: false,
+      isNaxarus: isNaxarus,
+      initialCp: currentCp,
+    );
     final seen = <String>{};
     for (final token in tokens) {
       if (seen.add(token)) {
@@ -219,9 +291,15 @@ class GameEngine {
   static UpkeepOutcome heroUpkeep({
     required List<String> tokens,
     required int Function() rollD6,
+    int currentCp = 0,
     bool isPirate = false,
   }) {
-    final ctx = _UpkeepContext(tokens: tokens, rollD6: rollD6);
+    final ctx = _UpkeepContext(
+      tokens: tokens,
+      rollD6: rollD6,
+      isHero: true,
+      initialCp: currentCp,
+    );
     final seen = <String>{};
     for (final token in tokens) {
       if (seen.add(token)) {

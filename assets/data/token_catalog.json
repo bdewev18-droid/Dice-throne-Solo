@@ -8,18 +8,21 @@
       "maxStack": 1,
       "persistent": false,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
+      "appAnimation": true,
       "imageAsset": "assets/token/concussion.png",
-      "description": "A player afflicted with this token must skip their Income Phase and then remove this token.",
+      "description": "A player afflicted with this token skips gaining CP during their Upkeep Phase and then removes this token.",
       "aliases": [
         "Commotion",
         "Concussion"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Géré automatiquement en phase Upkeep (annule le gain de +1 CP et retrait du token à la fin de l'upkeep, non persistant).",
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Blind",
-      "frLabel": "éblouissement",
+      "frLabel": "Blind",
       "kind": "negative",
       "maxStack": 1,
       "persistent": false,
@@ -31,7 +34,10 @@
         "Blind",
         "éblouissement"
       ],
-      "appDetails": "Jet de dé 1-2 annulant l'attaque lors de la roll phase."
+      "appDetails": "Jet de dé 1-2 annulant l'attaque lors de la roll phase.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Stun",
@@ -40,14 +46,17 @@
       "maxStack": 1,
       "persistent": false,
       "removable": true,
-      "appSupported": true,
+      "appSupported": false,
       "imageAsset": "assets/token/stun.png",
       "description": "A player afflicted with this token may take no actions of any kind (i.e. no cards may be played, no defense may be made, no status tokens or passive abilities may be used, etc). After the attack concludes, the player who inflicted Stun removes the token and then immediately targets the same opponent with an additional Offensive Roll Phase",
       "aliases": [
         "Stun",
         "étourdissement"
       ],
-      "appDetails": "Bloque toutes les actions du joueur et accorde une phase de roll supplémentaire à l'attaquant."
+      "appDetails": "Bloque toutes les actions du joueur et accorde une phase de roll supplémentaire à l'attaquant.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Entangle",
@@ -63,14 +72,17 @@
         "Enchevêtrement",
         "Entangle"
       ],
-      "appDetails": "Réduit de 1 le nombre de relances d'attaque."
+      "appDetails": "Réduit de 1 le nombre de relances d'attaque.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Targeted",
       "frLabel": "Pris pour cible",
       "kind": "negative",
       "maxStack": 1,
-      "persistent": false,
+      "persistent": true,
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Targeted.png",
@@ -79,7 +91,10 @@
         "Pris pour cible",
         "Targeted"
       ],
-      "appDetails": "Bonus +2 dégâts sur les attaques subies."
+      "appDetails": "+2 damage to incoming attacks.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Evasive",
@@ -88,21 +103,24 @@
       "maxStack": 3,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Evasive.png",
       "description": "When a player with this token has incoming damage (from any source), they may choose to spend it. If spent, roll 1 die. If the outcome is 1-2, no dmg is received (although other associated effects may still apply). Multiple tokens may be spent in an attempt to prevent the same source of damage.",
       "aliases": [
         "Evasive",
         "Evitement"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Burn",
       "frLabel": "Brûlure",
       "kind": "negative",
       "maxStack": 1,
-      "persistent": false,
+      "persistent": true,
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/burn.png",
@@ -111,7 +129,10 @@
         "Brûlure",
         "Burn"
       ],
-      "appDetails": "Géré automatiquement en phase Upkeep (-2 PV, persistant)."
+      "appDetails": "Géré automatiquement en phase Upkeep (-2 PV, persistant).",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Knockdown",
@@ -119,15 +140,20 @@
       "kind": "negative",
       "maxStack": 1,
       "persistent": false,
+      "persistence": "non_persistent",
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/A-terre.png",
-      "description": "To remove this token, a player afflicted with it must pay 2 CP before the start of their Offensive Roll Phase. If the player does not, they must skip their Offensive Roll Phase and then remove this token.",
+      "description": "A player afflicted with this token loses 2 CP during their Upkeep Phase (before gaining +1 CP). Then remove this token.",
       "aliases": [
         "A terre",
+        "À terre",
         "Knockdown"
       ],
-      "appDetails": "Coût 2 PC avant roll phase sinon saut du tour d'attaque."
+      "appDetails": "En phase Upkeep : déduit 2 PC (avant le gain de +1 PC). Non-persistant (retiré lors de l'Upkeep). Naxarus est immunisé.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Shadows",
@@ -143,7 +169,10 @@
         "Shadows",
         "ombre"
       ],
-      "appDetails": "Annulation complète des dégâts d'une attaque subie."
+      "appDetails": "Annulation complète des dégâts d'une attaque subie.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Sneak Attack",
@@ -159,7 +188,10 @@
         "Attaque furtive",
         "Sneak Attack"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Poison",
@@ -169,13 +201,16 @@
       "persistent": true,
       "removable": true,
       "appSupported": true,
+      "appAnimation": true,
       "imageAsset": "assets/token/poison.png",
       "description": "A player afflicted with this token is dealt 1 dmg per Poison token during the Upkeep Phase of their turn. Persistent.",
       "aliases": [
         "Poison",
         "poison"
       ],
-      "appDetails": "Géré automatiquement en phase Upkeep (-1 PV par cumul de Poison, persistant)."
+      "appDetails": "Géré automatiquement en phase Upkeep (-1 PV par cumul de Poison, persistant).",
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Cleanse",
@@ -191,7 +226,10 @@
         "Cleanse",
         "Purification"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Accuracy",
@@ -207,7 +245,10 @@
         "Accuracy",
         "Précision"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Blessing of Divinity",
@@ -223,14 +264,17 @@
         "Blessing of Divinity",
         "Bénédiction divine"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Crit",
       "frLabel": "Critique",
       "kind": "positive",
       "maxStack": 1,
-      "persistent": false,
+      "persistent": true,
       "removable": true,
       "appSupported": false,
       "imageAsset": "assets/token/crit.png",
@@ -239,14 +283,17 @@
         "Crit",
         "Critique"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Protect",
       "frLabel": "Protection",
       "kind": "positive",
       "maxStack": 1,
-      "persistent": false,
+      "persistent": true,
       "removable": true,
       "appSupported": false,
       "imageAsset": "assets/token/Protect.png",
@@ -255,7 +302,10 @@
         "Protect",
         "Protection"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Retribution",
@@ -271,24 +321,32 @@
         "Retribution",
         "Rétribution"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Delayed Poison",
       "frLabel": "Poison latent",
       "kind": "negative",
       "maxStack": 2,
-      "persistent": true,
+      "persistent": false,
+      "persistence": "non_persistent",
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Delayed-Poison.png",
-      "description": "A player inflicted with this token removes it at the conclusion of their turn and then receives 3 dmg.",
+      "description": "A player inflicted with this token removes it at the conclusion of their turn and then receives 3 dmg per token (max 2).",
       "aliases": [
         "Delayed Poison",
         "Poison latent",
-        "Poison retardé"
+        "Poison retardé",
+        "Poison différé"
       ],
-      "appDetails": "Géré automatiquement en fin de tour (-3 PV par cumul + retrait de tous les cumuls)."
+      "appDetails": "Géré automatiquement en fin de tour (-3 PV par cumul, max 2, après résolution du combat + retrait des cumuls).",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Ninjitsu",
@@ -303,7 +361,10 @@
       "aliases": [
         "Ninjitsu"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Smoke Bomb",
@@ -319,7 +380,10 @@
         "Smoke Bomb",
         "bombe fumigène"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Barbed Vine",
@@ -335,7 +399,10 @@
         "Barbed Vine",
         "Ronces"
       ],
-      "appDetails": "Pris en compte dans l'application."
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Wellspring",
@@ -351,7 +418,10 @@
         "Source",
         "Wellspring"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Reload",
@@ -367,7 +437,10 @@
         "Recharge",
         "Reload"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Back Strike",
@@ -383,7 +456,10 @@
         "Back Strike",
         "Riposte"
       ],
-      "appDetails": "Pris en compte dans l'application."
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Honor",
@@ -399,7 +475,10 @@
         "Honneur",
         "Honor"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Shame",
@@ -415,7 +494,10 @@
         "Honte",
         "Shame"
       ],
-      "appDetails": "Pris en compte dans l'application."
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Bleed",
@@ -431,7 +513,10 @@
         "Bleed",
         "Hémorragie"
       ],
-      "appDetails": "Géré automatiquement en phase Upkeep (jet D6 par cumul : 1-4 = -1 PV, 5-6 = token retiré)."
+      "appDetails": "Géré automatiquement en phase Upkeep (jet D6 par cumul : 1-4 = -1 PV, 5-6 = token retiré).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Constrict",
@@ -447,7 +532,10 @@
         "Compression",
         "Constrict"
       ],
-      "appDetails": "Pris en compte dans l'application."
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Cursed Doubloon",
@@ -463,7 +551,10 @@
         "Cursed Doubloon",
         "Doublon maudit"
       ],
-      "appDetails": "Géré automatiquement en phase Upkeep (-1 PV par cumul, ignoré pour le héros Pirate)."
+      "appDetails": "Géré automatiquement en phase Upkeep (-1 PV par cumul, ignoré pour le héros Pirate).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Powder Keg",
@@ -479,7 +570,10 @@
         "Baril de poudre",
         "Powder Keg"
       ],
-      "appDetails": "Géré automatiquement en phase Upkeep (jet D6 : 1-2 = explosion -3 PV + retrait, 3-5 = rien, 6 = notification transfert)."
+      "appDetails": "Géré automatiquement en phase Upkeep (jet D6 : 1-2 = explosion -3 PV + retrait, 3-5 = rien, 6 = notification transfert).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Parlay",
@@ -495,7 +589,10 @@
         "Parlay",
         "Pourparlers"
       ],
-      "appDetails": "Pris en compte dans l'application."
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Wither",
@@ -511,7 +608,10 @@
         "Dépérissement",
         "Wither"
       ],
-      "appDetails": "Pris en compte dans l'application."
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Nanite",
@@ -526,7 +626,10 @@
       "aliases": [
         "Nanite"
       ],
-      "appDetails": "Géré automatiquement en phase Upkeep (jet 1D6 par Nanite, retiré sur un 6)."
+      "appDetails": "Géré automatiquement en phase Upkeep (jet 1D6 par Nanite, retiré sur un 6).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Blinding Light",
@@ -542,7 +645,10 @@
         "Blinding Light",
         "Lumière aveuglante"
       ],
-      "appDetails": "Pris en compte dans l'application."
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Flight",
@@ -558,7 +664,10 @@
         "Flight",
         "Vol"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Holy Presence",
@@ -574,7 +683,10 @@
         "Holy Presence",
         "Présence Divine"
       ],
-      "appDetails": "Géré automatiquement en phase Upkeep (journal & notes : 1 dégât sortant par cumul à tous les adversaires)."
+      "appDetails": "Géré automatiquement en phase Upkeep (journal & notes : 1 dégât sortant par cumul à tous les adversaires).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Mesmerize",
@@ -590,7 +702,10 @@
         "Hypnose",
         "Mesmerize"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Cheer",
@@ -606,7 +721,10 @@
         "Cheer",
         "Joie"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Coal",
@@ -622,7 +740,10 @@
         "Charbon",
         "Coal"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Gift",
@@ -638,7 +759,10 @@
         "Cadeau",
         "Gift"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Grim Pursuit",
@@ -653,7 +777,10 @@
       "aliases": [
         "Grim Pursuit"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Decrep-ify",
@@ -668,7 +795,10 @@
       "aliases": [
         "Decrep-ify"
       ],
-      "appDetails": "Pris en compte dans l'application."
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Prey",
@@ -683,11 +813,14 @@
       "aliases": [
         "Prey"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Hex",
-      "frLabel": "",
+      "frLabel": "Maléfice",
       "kind": "unique",
       "maxStack": 1,
       "persistent": false,
@@ -696,9 +829,15 @@
       "imageAsset": "assets/token/hex.png",
       "description": "A player afflicted with this token must treat all of their die faces with a 6 as if those faces are completely blank instead. At the conclusion of their turn, remove this token. This token may not be transferred by any means (but can be removed).",
       "aliases": [
-        "Hex"
+        "Hex",
+        "Maléfice",
+        "Malefice",
+        "malefice"
       ],
-      "appDetails": "Géré en fin de tour (retrait automatique du token, résolution du dé lors de la roll phase)."
+      "appDetails": "Tous les 6 lors des jets d'attaque deviennent des dés blancs sans effet ni symbole.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Regenerate",
@@ -713,7 +852,10 @@
       "aliases": [
         "Regenerate"
       ],
-      "appDetails": "Géré automatiquement en phase Upkeep (2+ cumuls = +2 PV et retrait d'un cumul ; 1 cumul = +1 PV et retrait)."
+      "appDetails": "Géré automatiquement en phase Upkeep (2+ cumuls = +2 PV et retrait d'un cumul ; 1 cumul = +1 PV et retrait).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Wound",
@@ -728,7 +870,10 @@
       "aliases": [
         "Wound"
       ],
-      "appDetails": "Géré automatiquement en phase Upkeep (-1 PV par cumul, puis jet D6 >= 4 pour retirer la stack)."
+      "appDetails": "Géré automatiquement en phase Upkeep (-1 PV par cumul, puis jet D6 >= 4 pour retirer la stack).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Disarm",
@@ -743,7 +888,10 @@
       "aliases": [
         "Disarm"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Guard Break",
@@ -758,7 +906,10 @@
       "aliases": [
         "Guard Break"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Charged Gem",
@@ -773,7 +924,10 @@
       "aliases": [
         "Charged Gem"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Sun-Marked",
@@ -788,7 +942,10 @@
       "aliases": [
         "Sun-Marked"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Cosmic flare",
@@ -804,7 +961,10 @@
         "Cosmic flare",
         "Lueur cosmique"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Radiance",
@@ -820,7 +980,10 @@
         "Radiance",
         "éclat"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Agility",
@@ -836,7 +999,10 @@
         "Agility",
         "Agilité"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Time bomb",
@@ -852,7 +1018,10 @@
         "Bombe à retardement",
         "Time bomb"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Déjà vue",
@@ -868,7 +1037,10 @@
         "Déjà vue",
         "déjà vue"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Premonition",
@@ -884,7 +1056,10 @@
         "Premonition",
         "Prémonition"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Crimson bands",
@@ -900,7 +1075,10 @@
         "Bandes pourpres",
         "Crimson bands"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Probability Manipulation",
@@ -916,7 +1094,10 @@
         "Manipulation des probabilités",
         "Probability Manipulation"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Reality Warp",
@@ -932,7 +1113,10 @@
         "Distorsion du réel",
         "Reality Warp"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Conjure",
@@ -948,7 +1132,10 @@
         "Conjuration",
         "Conjure"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Crackle",
@@ -964,7 +1151,10 @@
         "Crackle",
         "Crépitement"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Bag of Tricks",
@@ -980,7 +1170,10 @@
         "Bag of Tricks",
         "Sac à Malice"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Webbed",
@@ -996,7 +1189,10 @@
         "Entoilé",
         "Webbed"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Electrokinesis",
@@ -1012,7 +1208,10 @@
         "Electrokinesis",
         "électrokinésie"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Battle plan",
@@ -1027,7 +1226,10 @@
       "aliases": [
         "Battle plan"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Support",
@@ -1042,7 +1244,10 @@
       "aliases": [
         "Support"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Focus Fire",
@@ -1057,7 +1262,10 @@
       "aliases": [
         "Focus Fire"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Dissolution",
@@ -1072,7 +1280,10 @@
       "aliases": [
         "Dissolution"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Disruption",
@@ -1087,7 +1298,10 @@
       "aliases": [
         "Disruption"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Dice cube",
@@ -1102,7 +1316,10 @@
       "aliases": [
         "Dice cube"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Force Field",
@@ -1117,7 +1334,10 @@
       "aliases": [
         "Force Field"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Acuity",
@@ -1132,7 +1352,10 @@
       "aliases": [
         "Acuity"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Flame blast",
@@ -1147,7 +1370,10 @@
       "aliases": [
         "Flame blast"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Phoenix burn",
@@ -1162,7 +1388,10 @@
       "aliases": [
         "Phoenix burn"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Paralyse",
@@ -1177,7 +1406,10 @@
       "aliases": [
         "Paralyse"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Infiltration",
@@ -1192,7 +1424,10 @@
       "aliases": [
         "Infiltration"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Influence",
@@ -1207,7 +1442,10 @@
       "aliases": [
         "Influence"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Ionic Energy",
@@ -1222,7 +1460,10 @@
       "aliases": [
         "Ionic Energy"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Skyward",
@@ -1237,7 +1478,10 @@
       "aliases": [
         "Skyward"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Tornado",
@@ -1252,7 +1496,10 @@
       "aliases": [
         "Tornado"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Wind shear",
@@ -1267,7 +1514,10 @@
       "aliases": [
         "Wind shear"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Rage",
@@ -1282,7 +1532,10 @@
       "aliases": [
         "Rage"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Chaos",
@@ -1297,7 +1550,10 @@
       "aliases": [
         "Chaos"
       ],
-      "appDetails": "Géré dans la logique IA / Boss (calcul des cumuls de Chaos pour déclencheurs et modificateurs)."
+      "appDetails": "Géré dans la logique IA / Boss (calcul des cumuls de Chaos pour déclencheurs et modificateurs).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Main du roi",
@@ -1313,16 +1569,19 @@
         "King's Hand",
         "Main du roi"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "First Strike",
       "frLabel": "Première Frappe",
       "kind": "unique",
       "maxStack": 1,
-      "persistent": true,
+      "persistent": false,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/1er-frappe.webp",
       "description": "This unit starts first.",
       "aliases": [
@@ -1331,7 +1590,8 @@
       ],
       "minionAllowed": true,
       "editorVisible": true,
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": true
     },
     {
       "label": "Salve",
@@ -1347,7 +1607,10 @@
         "Salve",
         "Salvo"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Silence",
@@ -1362,7 +1625,10 @@
       "aliases": [
         "Silence"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Hoarding",
@@ -1378,7 +1644,9 @@
         "Hoarding"
       ],
       "editorVisible": false,
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true
     },
     {
       "label": "Dégat Bonus 1",
@@ -1394,7 +1662,10 @@
         "Bonus Damage 1",
         "Dégat Bonus 1"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Dégat Bonus 2",
@@ -1410,7 +1681,10 @@
         "Bonus Damage 2",
         "Dégat Bonus 2"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Dégat Bonus 3",
@@ -1426,7 +1700,10 @@
         "Bonus Damage 3",
         "Dégat Bonus 3"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Dégat Bonus 4",
@@ -1442,7 +1719,10 @@
         "Bonus Damage 4",
         "Dégat Bonus 4"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Domination",
@@ -1457,7 +1737,10 @@
       "aliases": [
         "Domination"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Parasite",
@@ -1472,7 +1755,10 @@
       "aliases": [
         "Parasite"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Prime",
@@ -1488,7 +1774,10 @@
         "Bounty",
         "Prime"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Siphon vital",
@@ -1504,7 +1793,10 @@
         "Life Siphon",
         "Siphon vital"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Sort 6",
@@ -1520,7 +1812,10 @@
         "Sort 6",
         "Spellbound"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle)."
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
     },
     {
       "label": "Forme Ours",
@@ -1537,7 +1832,9 @@
         "Forme Ours"
       ],
       "editorVisible": false,
-      "appDetails": "Géré dans la gestion des postures du combat."
+      "appDetails": "Géré dans la gestion des postures du combat.",
+      "appAnimation": false,
+      "minionAllowed": true
     },
     {
       "label": "Forme Elan",
@@ -1554,7 +1851,9 @@
         "Forme Elan"
       ],
       "editorVisible": false,
-      "appDetails": "Géré dans la gestion des postures du combat."
+      "appDetails": "Géré dans la gestion des postures du combat.",
+      "appAnimation": false,
+      "minionAllowed": true
     }
   ],
   "heroTokens": {

@@ -1450,16 +1450,19 @@ function renderTokenAdmin() {
     });
   root.innerHTML = rows.map(({ token, index }) => {
     const refs = tokenRefs(token.label);
+    const persistence = token.persistence || (token.persistent === false ? 'non_persistent' : 'persistent');
     return '<article class="token-admin-card" data-token-index="' + index + '">' +
       '<div class="token-admin-head"><img src="' + assetUrl(token.imageAsset) + '" alt="' + escapeAttr(token.label) + '" /><div><strong>' + escapeText(token.label || 'Token') + '</strong><div class="hint">' + escapeText(token.kind || '') + '<div class="token-highlight" style="font-size:12px; margin-top:4px;">{token:' + escapeText(token.label) + '}</div>' + '</div></div></div>' +
       '<div class="token-admin-grid">' +
       '<label>UK title<input class="tok-label" value="' + escapeAttr(token.label || '') + '" /></label>' +
       '<label>FR title<input class="tok-fr" value="' + escapeAttr(token.frLabel || '') + '" /></label>' +
       '<label>Kind<select class="tok-kind"><option value="positive" ' + (token.kind === 'positive' ? 'selected' : '') + '>positive</option><option value="negative" ' + (token.kind === 'negative' ? 'selected' : '') + '>negative</option><option value="unique" ' + (token.kind === 'unique' ? 'selected' : '') + '>unique</option></select></label>' +
+      '<label>Persistence<select class="tok-persistence"><option value="persistent" ' + (persistence === 'persistent' ? 'selected' : '') + '>Persistent</option><option value="semi_persistent" ' + (persistence === 'semi_persistent' ? 'selected' : '') + '>Semi-persistent</option><option value="non_persistent" ' + (persistence === 'non_persistent' ? 'selected' : '') + '>Non-persistent</option></select></label>' +
       '<label>Max stack<input class="tok-max" type="number" value="' + escapeAttr(token.maxStack ?? 1) + '" /></label>' +
       '<label>Image asset<input class="tok-asset" value="' + escapeAttr(token.imageAsset || '') + '" /></label>' +
       '<label>Aliases<input class="tok-aliases" value="' + escapeAttr((token.aliases || []).join(', ')) + '" /></label>' +
       '<label class="checkline"><input class="tok-supported" type="checkbox" ' + (token.appSupported ? 'checked' : '') + ' />App enabled</label>' +
+      '<label class="checkline"><input class="tok-animation" type="checkbox" ' + (token.appAnimation ? 'checked' : '') + ' />App animation</label>' +
       '<label class="checkline"><input class="tok-removable" type="checkbox" ' + (token.removable !== false ? 'checked' : '') + ' />Removable</label>' +
       '<label class="checkline"><input class="tok-minion" type="checkbox" ' + (token.minionAllowed !== false ? 'checked' : '') + ' />Can affect enemies</label>' +
       '<label class="checkline"><input class="tok-visible" type="checkbox" ' + (token.editorVisible !== false ? 'checked' : '') + ' />Visible in token list</label>' +
@@ -1483,10 +1486,14 @@ function collectTokensFromAdmin() {
     token.label = card.querySelector('.tok-label').value.trim();
     token.frLabel = card.querySelector('.tok-fr').value.trim();
     token.kind = card.querySelector('.tok-kind').value;
+    const persVal = card.querySelector('.tok-persistence').value;
+    token.persistence = persVal;
+    token.persistent = persVal !== 'non_persistent';
     token.maxStack = intVal(card.querySelector('.tok-max').value, 1);
     token.imageAsset = card.querySelector('.tok-asset').value.trim() || null;
     token.aliases = csv(card.querySelector('.tok-aliases').value);
     token.appSupported = card.querySelector('.tok-supported').checked;
+    token.appAnimation = card.querySelector('.tok-animation').checked;
     token.removable = card.querySelector('.tok-removable').checked;
     token.minionAllowed = card.querySelector('.tok-minion').checked;
     token.editorVisible = card.querySelector('.tok-visible').checked;

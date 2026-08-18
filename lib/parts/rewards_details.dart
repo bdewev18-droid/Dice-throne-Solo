@@ -618,7 +618,8 @@ Future<List<String>?> showAlterationDialog(
   BuildContext context,
   List<String> current, {
   bool forMinion = false,
-  List<String> duelTokens = const [],
+  List<String>? duelTokens,
+  bool isMapPage = false,
 }) {
   final alterations = statusTokenRules
       .where((rule) => rule.editorVisible)
@@ -635,7 +636,13 @@ Future<List<String>?> showAlterationDialog(
     final label = rule?.label ?? value;
     counts[label] = (counts[label] ?? 0) + 1;
   }
-  var filter = 'duel';
+  final effectiveDuelTokens = isMapPage ? current : (duelTokens ?? current);
+  final duelKeys = {
+    ...effectiveDuelTokens
+        .where((token) => _isVisibleStatusTokenLabel(token))
+        .map(_normalizeTokenKey),
+  };
+  var filter = duelKeys.isEmpty ? 'negative' : 'duel';
   var query = '';
   return showDialog<List<String>>(
     context: context,
@@ -645,12 +652,6 @@ Future<List<String>?> showAlterationDialog(
         for (final entry in counts.entries) {
           selected.addAll(List.filled(entry.value, entry.key));
         }
-        final duelKeys = {
-          ...duelTokens.map(_normalizeTokenKey),
-          ...current
-              .where((token) => _isVisibleStatusTokenLabel(token))
-              .map(_normalizeTokenKey),
-        };
         List<StatusTokenRule> visibleRules;
         if (filter == 'positive') {
           visibleRules = alterations
@@ -659,6 +660,10 @@ Future<List<String>?> showAlterationDialog(
         } else if (filter == 'negative') {
           visibleRules = alterations
               .where((rule) => rule.kind == StatusTokenKind.negative)
+              .toList(growable: false);
+        } else if (filter == 'unique') {
+          visibleRules = alterations
+              .where((rule) => rule.kind == StatusTokenKind.unique)
               .toList(growable: false);
         } else {
           visibleRules = alterations
@@ -670,9 +675,6 @@ Future<List<String>?> showAlterationDialog(
                     ),
               )
               .toList(growable: false);
-          if (visibleRules.isEmpty) {
-            visibleRules = alterations.take(12).toList(growable: false);
-          }
         }
         final normalizedQuery = query.trim().toLowerCase();
         if (normalizedQuery.isNotEmpty) {
@@ -718,10 +720,28 @@ Future<List<String>?> showAlterationDialog(
                   ),
                   const SizedBox(height: 8),
                   SegmentedButton<String>(
+                    showSelectedIcon: false,
+                    style: const ButtonStyle(
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                     segments: const [
-                      ButtonSegment(value: 'duel', label: Text('Current duel')),
-                      ButtonSegment(value: 'positive', label: Text('Positive')),
-                      ButtonSegment(value: 'negative', label: Text('Negative')),
+                      ButtonSegment(
+                        value: 'duel',
+                        label: Text('Duel', style: TextStyle(fontSize: 11)),
+                      ),
+                      ButtonSegment(
+                        value: 'positive',
+                        label: Text('Positive', style: TextStyle(fontSize: 11)),
+                      ),
+                      ButtonSegment(
+                        value: 'negative',
+                        label: Text('Negative', style: TextStyle(fontSize: 11)),
+                      ),
+                      ButtonSegment(
+                        value: 'unique',
+                        label: Text('Unique', style: TextStyle(fontSize: 11)),
+                      ),
                     ],
                     selected: {filter},
                     onSelectionChanged: (selection) =>
@@ -969,30 +989,80 @@ class TokenPickerCard extends StatelessWidget {
             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              RoundIconButton(
-                icon: Icons.add,
-                tooltip: 'Add',
-                onPressed: onPlus,
-              ),
-              SizedBox(
-                width: 28,
-                child: Text(
-                  count.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _TokenCardRoundButton(
+                  icon: Icons.add,
+                  tooltip: 'Add',
+                  onPressed: onPlus,
                 ),
-              ),
-              RoundIconButton(
-                icon: Icons.remove,
-                tooltip: 'Remove',
-                onPressed: onMinus,
-              ),
-            ],
+                SizedBox(
+                  width: 24,
+                  child: Text(
+                    count.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                _TokenCardRoundButton(
+                  icon: Icons.remove,
+                  tooltip: 'Remove',
+                  onPressed: onMinus,
+                ),
+              ],
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TokenCardRoundButton extends StatelessWidget {
+  const _TokenCardRoundButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    const color = Color(0xff54e98a);
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: onPressed != null ? color : Colors.white24,
+                width: 1.5,
+              ),
+            ),
+            child: Icon(
+              icon,
+              size: 16,
+              color: onPressed != null ? color : Colors.white24,
+            ),
+          ),
+        ),
       ),
     );
   }

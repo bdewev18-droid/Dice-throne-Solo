@@ -22,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.127';
+const String appVersionLabel = 'Version 1.3.116';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -612,13 +612,30 @@ enum CombatPhase {
 
 CombatPhase _firstCombatPhaseFor(EnemyNode enemy) {
   if (enemy.profileKey == 'naraxus' ||
-      enemy.alterations.contains('Première Frappe')) {
+      enemy.alterations.any((a) {
+        final norm = _normalizeTokenKey(a);
+        return norm == 'firststrike' ||
+            norm == 'premierefrappe' ||
+            norm == '1stfrappe' ||
+            norm == '1erfrappe';
+      })) {
     return CombatPhase.minionUpkeep;
   }
   return CombatPhase.heroUpkeep;
 }
 
+CombatPhase firstCombatPhaseFor(EnemyNode enemy) => _firstCombatPhaseFor(enemy);
+
 enum StatusTokenKind { positive, negative, unique }
+
+enum TokenPersistence {
+  persistent('persistent'),
+  semiPersistent('semi_persistent'),
+  nonPersistent('non_persistent');
+
+  const TokenPersistence(this.code);
+  final String code;
+}
 
 class StatusTokenRule {
   const StatusTokenRule({
@@ -626,8 +643,10 @@ class StatusTokenRule {
     required this.kind,
     required this.maxStack,
     required this.persistent,
+    this.persistence = TokenPersistence.persistent,
     required this.removable,
     required this.appSupported,
+    this.appAnimation = false,
     required this.description,
     this.appDetails = '',
     this.frLabel = '',
@@ -642,8 +661,10 @@ class StatusTokenRule {
   final StatusTokenKind kind;
   final int maxStack;
   final bool persistent;
+  final TokenPersistence persistence;
   final bool removable;
   final bool appSupported;
+  final bool appAnimation;
   final String description;
   final String appDetails;
   final String? imageAsset;
@@ -717,8 +738,13 @@ class TokenCatalogRepository {
       kind: _kindFromName(json['kind'] as String?),
       maxStack: _intValue(json['maxStack'], fallback: 99),
       persistent: json['persistent'] as bool? ?? true,
+      persistence: _persistenceFromName(
+        json['persistence'] as String?,
+        fallbackPersistent: json['persistent'] as bool? ?? true,
+      ),
       removable: json['removable'] as bool? ?? true,
       appSupported: json['appSupported'] as bool? ?? false,
+      appAnimation: json['appAnimation'] as bool? ?? false,
       description: json['description'] as String? ?? '',
       appDetails: json['appDetails'] as String? ?? '',
       imageAsset: image == null || image.isEmpty ? null : image,
@@ -726,6 +752,25 @@ class TokenCatalogRepository {
       minionAllowed: json['minionAllowed'] as bool? ?? true,
       editorVisible: json['editorVisible'] as bool? ?? true,
     );
+  }
+
+  static TokenPersistence _persistenceFromName(
+    String? value, {
+    required bool fallbackPersistent,
+  }) {
+    final v = (value ?? '').toLowerCase().replaceAll('-', '_');
+    if (v == 'semi_persistent' || v == 'semipersistent') {
+      return TokenPersistence.semiPersistent;
+    }
+    if (v == 'non_persistent' || v == 'nonpersistent') {
+      return TokenPersistence.nonPersistent;
+    }
+    if (v == 'persistent') {
+      return TokenPersistence.persistent;
+    }
+    return fallbackPersistent
+        ? TokenPersistence.persistent
+        : TokenPersistence.nonPersistent;
   }
 
   static StatusTokenKind _kindFromName(String? value) {
@@ -816,6 +861,7 @@ String _tokenShortLabel(String label) {
     'salvo' || 'salve' => 'SAL',
     'silence' => 'SIL',
     'spellbound' || 'sort6' => 'SPL',
+    'hex' || 'malefice' => 'HEX',
     'hoarding' => 'HLD',
     _ =>
       source.length <= 4
@@ -1242,6 +1288,7 @@ class EnemyNode {
   int health;
   int combatPoints;
   final List<String> alterations = [];
+  final Set<String> maskedPopinTokens = <String>{};
   bool defeated = false;
   bool current = false;
 
@@ -1379,6 +1426,7 @@ class AdventureState {
   final List<EnemyNode> enemies;
   final List<String> logs = [];
   final List<String> alterations = [];
+  final Set<String> maskedPopinTokens = <String>{};
   final List<String> bonuses = [];
   final DateTime startedAt;
   int health = 30;
@@ -1506,6 +1554,8 @@ class AdventureState {
     alterations
       ..clear()
       ..addAll(values);
+    final currentKeys = values.map(_normalizeTokenKey).toSet();
+    maskedPopinTokens.removeWhere((key) => !currentKeys.contains(key));
     log('Hero status tokens updated.');
   }
 

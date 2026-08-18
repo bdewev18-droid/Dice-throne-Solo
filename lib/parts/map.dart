@@ -777,9 +777,7 @@ class _MapHeaderState extends State<MapHeader> {
                       final values = await showAlterationDialog(
                         context,
                         adventure.alterations,
-                        duelTokens: TokenCatalogRepository.heroTokens(
-                          adventure.hero,
-                        ),
+                        isMapPage: true,
                       );
                       if (values != null) {
                         adventure.setAlterations(values);
@@ -1400,9 +1398,15 @@ class EnemyIntroPage extends StatefulWidget {
 }
 
 class _EnemyIntroPageState extends State<EnemyIntroPage> {
-  late bool _keepFirstStrike = widget.enemy.alterations.contains(
-    'Première Frappe',
-  );
+  static bool _isFirstStrike(String token) {
+    final norm = _normalizeTokenKey(token);
+    return norm == 'firststrike' ||
+        norm == 'premierefrappe' ||
+        norm == '1stfrappe' ||
+        norm == '1erfrappe';
+  }
+
+  late bool _keepFirstStrike = widget.enemy.alterations.any(_isFirstStrike);
 
   @override
   Widget build(BuildContext context) {
@@ -1449,7 +1453,7 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                     ),
                   ),
                   if (widget.showNext &&
-                      enemy.alterations.contains('Première Frappe'))
+                      enemy.alterations.any(_isFirstStrike))
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: Padding(
@@ -1581,11 +1585,11 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
   void _continueToFight() {
     final enemy = widget.enemy;
     if (_keepFirstStrike) {
-      if (!enemy.alterations.contains('Première Frappe')) {
+      if (!enemy.alterations.any(_isFirstStrike)) {
         enemy.alterations.add('Première Frappe');
       }
     } else {
-      enemy.alterations.removeWhere((token) => token == 'Première Frappe');
+      enemy.alterations.removeWhere(_isFirstStrike);
     }
     widget.onNext();
   }
@@ -1939,9 +1943,7 @@ class HeroStatusBar extends StatelessWidget {
                   final values = await showAlterationDialog(
                     context,
                     adventure.alterations,
-                    duelTokens: TokenCatalogRepository.heroTokens(
-                      adventure.hero,
-                    ),
+                    isMapPage: true,
                   );
                   if (values != null) {
                     adventure.setAlterations(values);

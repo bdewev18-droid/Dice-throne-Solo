@@ -163,6 +163,9 @@ class _FightPageState extends State<FightPage> {
   bool _druidFormRolledThisUpkeep = false;
   bool _viseerDefensePassivePending = false;
   bool _viseerRewardGranted = false;
+  bool _minionEntangledThisAttack = false;
+  bool _minionHexedThisAttack = false;
+  bool _heroHexedThisAttack = false;
   late int _activeEnemyId;
   _FightStepSnapshot? _stepUndo;
 
@@ -397,6 +400,8 @@ class _FightPageState extends State<FightPage> {
                               _editMode = false;
                               _editingDieId = null;
                             }),
+                            hasBlindOnAttacker: _hasActiveBlindOnAttacker,
+                            onBlindPressed: _checkAndTriggerBlindPopin,
                           ),
                           if (_showDruidFormRollPanel) ...[
                             const SizedBox(height: 12),
@@ -409,6 +414,17 @@ class _FightPageState extends State<FightPage> {
                               onChanged: _resolveDruidFormRoll,
                             ),
                           ],
+                          if (_showBlindExtraDicePhase) ...[
+                            const SizedBox(height: 12),
+                            ManualExtraDicePhasePanel(
+                              key: _extraDicePhaseKey,
+                              title: 'Blind Roll (Éblouissement)',
+                              initialDiceCount: 1,
+                              accent: const Color(0xff8f43ff),
+                              autoRoll: false,
+                              onChanged: _resolveBlindRoll,
+                            ),
+                          ],
                           if (_showAiExtraDicePhase) ...[
                             const SizedBox(height: 12),
                             ManualExtraDicePhasePanel(
@@ -417,6 +433,9 @@ class _FightPageState extends State<FightPage> {
                               initialDiceCount: _extraDiceCount,
                               accent: enemy.rank.color,
                               autoRoll: false,
+                              isHexed:
+                                  _phase == CombatPhase.minionAttack &&
+                                  _minionHexedThisAttack,
                               onChanged: _resolveExtraDicePhase,
                             ),
                           ],
@@ -512,10 +531,39 @@ class _FightPageState extends State<FightPage> {
                     attackValue: _battleAttackValue,
                     defenseValue: _battleDefenseValue,
                     onAttackChanged: (delta) => setState(() {
-                      _battleAttackValue = (_battleAttackValue + delta).clamp(
-                        0,
-                        99,
-                      );
+                      final defenderHasTargeted = _phase == CombatPhase.hero
+                          ? enemy.alterations.any(
+                              (t) =>
+                                  _normalizeTokenKey(t) == 'targeted' ||
+                                  _normalizeTokenKey(t) == 'prispourcible',
+                            )
+                          : widget.adventure.alterations.any(
+                              (t) =>
+                                  _normalizeTokenKey(t) == 'targeted' ||
+                                  _normalizeTokenKey(t) == 'prispourcible',
+                            );
+                      if (defenderHasTargeted) {
+                        if (delta > 0) {
+                          if (_battleAttackValue == 0) {
+                            _battleAttackValue = 3;
+                          } else {
+                            _battleAttackValue =
+                                (_battleAttackValue + delta).clamp(0, 99);
+                          }
+                        } else if (delta < 0) {
+                          if (_battleAttackValue <= 3) {
+                            _battleAttackValue = 0;
+                          } else {
+                            _battleAttackValue =
+                                (_battleAttackValue + delta).clamp(0, 99);
+                          }
+                        }
+                      } else {
+                        _battleAttackValue = (_battleAttackValue + delta).clamp(
+                          0,
+                          99,
+                        );
+                      }
                     }),
                     onDefenseChanged: (delta) => setState(() {
                       _battleDefenseValue = (_battleDefenseValue + delta).clamp(
@@ -529,6 +577,17 @@ class _FightPageState extends State<FightPage> {
                       widget.onChanged();
                       setState(() {});
                     },
+                    onEditHeroTokens: _editHeroTokens,
+                    onEditEnemyTokens: _editEnemyTokens,
+                    showBlindButton: _hasActiveBlindOnAttacker,
+                    onBlindPressed: _checkAndTriggerBlindPopin,
+                    showEvasiveButton: _hasActiveEvasiveOnMinionDefender &&
+                        (_battleAttackValue -
+                                (_battleAttackUndefendable
+                                    ? 0
+                                    : _battleDefenseValue) >
+                            0),
+                    onEvasivePressed: _checkAndTriggerEvasivePopin,
                   ),
               ],
             ),
@@ -536,6 +595,92 @@ class _FightPageState extends State<FightPage> {
         ),
       ),
     );
+  }
+
+  List<String> _getCombatDuelTokens() {
+    final result = <String>{};
+    result.addAll(TokenCatalogRepository.heroTokens(widget.adventure.hero));
+    result.addAll(widget.adventure.alterations);
+    result.addAll(enemy.alterations);
+    if (_secondaryEnemy != null) {
+      result.addAll(_secondaryEnemy!.alterations);
+    }
+    final allTexts = [
+      ...enemy.attacks,
+      enemy.defense,
+      for (final p in enemy.passives) '${p.text} ${(p.effect?.heroTokens ?? const []).join(' ')}',
+      if (_secondaryEnemy != null) ...[
+        ..._secondaryEnemy!.attacks,
+        _secondaryEnemy!.defense,
+        for (final p in _secondaryEnemy!.passives) '${p.text} ${(p.effect?.heroTokens ?? const []).join(' ')}',
+      ],
+    ].join(' ').toLowerCase();
+    for (final rule in statusTokenRules) {
+      final l = rule.label.toLowerCase();
+      final fr = rule.frLabel.toLowerCase();
+      if (allTexts.contains(l) || (fr.isNotEmpty && allTexts.contains(fr))) {
+        result.add(rule.label);
+      }
+      for (final alias in rule.aliases) {
+        if (allTexts.contains(alias.toLowerCase())) {
+          result.add(rule.label);
+        }
+      }
+    }
+    return result.toList();
+  }
+
+  Future<void> _editHeroTokens() async {
+    final values = await showAlterationDialog(
+      context,
+      widget.adventure.alterations,
+      duelTokens: _getCombatDuelTokens(),
+    );
+    if (values != null) {
+      final oldTokens = List<String>.from(widget.adventure.alterations);
+      widget.adventure.setAlterations(values);
+      final added = values.where((t) => !oldTokens.contains(t)).toList();
+      final removed = oldTokens.where((t) => !values.contains(t)).toList();
+      for (final t in added) {
+        widget.adventure.log('[TOKEN GAINED] Hero received token: $t');
+      }
+      for (final t in removed) {
+        widget.adventure.log('[TOKEN REMOVED] Hero lost token: $t');
+      }
+      widget.onChanged();
+      setState(() {});
+    }
+  }
+
+  Future<void> _editEnemyTokens() async {
+    final values = await showAlterationDialog(
+      context,
+      enemy.alterations,
+      forMinion: true,
+      duelTokens: _getCombatDuelTokens(),
+    );
+    if (values != null) {
+      final oldTokens = List<String>.from(enemy.alterations);
+      enemy.alterations
+        ..clear()
+        ..addAll(values);
+      final added = values.where((t) => !oldTokens.contains(t)).toList();
+      final removed = oldTokens.where((t) => !values.contains(t)).toList();
+      for (final t in added) {
+        widget.adventure.log(
+          '[TOKEN GAINED] ${enemy.label} received token: $t',
+        );
+      }
+      for (final t in removed) {
+        widget.adventure.log(
+          '[TOKEN REMOVED] ${enemy.label} lost token: $t',
+        );
+      }
+      final currentKeys = values.map(_normalizeTokenKey).toSet();
+      enemy.maskedPopinTokens.removeWhere((key) => !currentKeys.contains(key));
+      widget.onChanged();
+      setState(() {});
+    }
   }
 
   void _rollDice() {
@@ -559,9 +704,17 @@ class _FightPageState extends State<FightPage> {
     }
     final rolledIds = <int>[];
     setState(() {
-      final rollable = _dice
+      final active = _activeDice;
+      for (final die in _dice) {
+        if (!active.contains(die)) {
+          die.value = null;
+          die.reserved = false;
+          die.settled = true;
+          die.isHexed = false;
+        }
+      }
+      final rollable = active
           .where((die) => !die.reserved)
-          .take(_diceToRoll)
           .toList();
       _diceAnimationPending =
           combatDiceAnimationSeconds > 0 && rollable.isNotEmpty;
@@ -569,6 +722,8 @@ class _FightPageState extends State<FightPage> {
         die.value = _random.nextInt(6) + 1;
         die.settled = !_diceAnimationPending;
         die.rollTick++;
+        die.isHexed =
+            _phase == CombatPhase.minionAttack && _minionHexedThisAttack;
         rolledIds.add(die.id);
       }
       if (_isNaraxus) {
@@ -639,6 +794,14 @@ class _FightPageState extends State<FightPage> {
             'After $_rollCount attack rolls, no valid attack combination: dice deselected.',
           );
         }
+      }
+    }
+    if (_phase == CombatPhase.hero && _hasActiveEvasiveOnMinionDefender) {
+      final effectiveDefense =
+          _battleAttackUndefendable ? 0 : _battleDefenseValue;
+      final netDamage = max(0, _battleAttackValue - effectiveDefense);
+      if (netDamage > 0) {
+        _checkAndTriggerEvasivePopin();
       }
     }
   }
@@ -736,6 +899,8 @@ class _FightPageState extends State<FightPage> {
         die.value = _random.nextInt(6) + 1;
         die.settled = true;
         die.rollTick++;
+        die.isHexed =
+            _phase == CombatPhase.minionAttack && _minionHexedThisAttack;
         _rerollOneMode = false;
         _refreshBattleResolutionFromDice();
         widget.adventure.log(
@@ -754,6 +919,8 @@ class _FightPageState extends State<FightPage> {
     setState(() {
       die.value = face;
       die.settled = true;
+      die.isHexed =
+          _phase == CombatPhase.minionAttack && _minionHexedThisAttack;
       _refreshBattleResolutionFromDice();
       widget.adventure.log('Die ${die.id + 1} changed to $face.');
       widget.onChanged();
@@ -767,6 +934,10 @@ class _FightPageState extends State<FightPage> {
       }
       _phase = phase;
       _upkeepApplied = false;
+      _blindPopinTriggered = false;
+      _blindRollResolved = false;
+      _evasivePopinTriggered = false;
+      _evasiveRollResolved = false;
       if (phase == CombatPhase.minionUpkeep &&
           enemy.profileKey == 'vert-vert-014') {
         _druidFormRolledThisUpkeep = false;
@@ -793,6 +964,12 @@ class _FightPageState extends State<FightPage> {
     widget.adventure.log(headerText);
     if (phase == CombatPhase.heroUpkeep) {
       _applyHeroUpkeep();
+    } else if (phase == CombatPhase.minionUpkeep) {
+      _applyUpkeep();
+    } else if (phase == CombatPhase.hero) {
+      _applyHeroRollStart();
+    } else if (phase == CombatPhase.minionAttack) {
+      _applyMinionRollStart();
     }
     if (phase == CombatPhase.heroUpkeep || phase == CombatPhase.minionUpkeep) {
       _scrollToTop();
@@ -800,6 +977,122 @@ class _FightPageState extends State<FightPage> {
       _scrollToRulesKey(_defenseRulesKey);
     } else if (phase == CombatPhase.minionAttack) {
       _scrollToRulesKey(_attackRulesKey);
+    }
+  }
+
+  Future<void> _applyHeroRollStart() async {
+    final enemyHasTargeted = enemy.alterations.any(
+      (t) =>
+          _normalizeTokenKey(t) == 'targeted' ||
+          _normalizeTokenKey(t) == 'prispourcible',
+    );
+    if (enemyHasTargeted) {
+      await _triggerTokenAnimationDialogs(
+        ['Targeted'],
+        targetName: enemy.label,
+        currentHp: enemy.health,
+        currentCp: enemy.combatPoints,
+        isRollPhase: true,
+        maskedTokens: enemy.maskedPopinTokens,
+      );
+      if (!mounted) return;
+    }
+
+    final hasEntangle = widget.adventure.alterations.any(
+      (t) =>
+          _normalizeTokenKey(t) == 'entangle' ||
+          _normalizeTokenKey(t) == 'enchevetrement',
+    );
+    final hasHex = widget.adventure.alterations.any(
+      (t) =>
+          _normalizeTokenKey(t) == 'hex' ||
+          _normalizeTokenKey(t) == 'malefice',
+    );
+    _heroHexedThisAttack = hasHex;
+    if (hasEntangle || hasHex) {
+      await _triggerTokenAnimationDialogs(
+        widget.adventure.alterations,
+        targetName: widget.adventure.hero.label,
+        currentHp: widget.adventure.health,
+        currentCp: widget.adventure.combatPoints,
+        isRollPhase: true,
+        maskedTokens: widget.adventure.maskedPopinTokens,
+      );
+      if (!mounted) return;
+      if (hasEntangle) {
+        setState(() {
+          widget.adventure.alterations.removeWhere(
+            (t) =>
+                _normalizeTokenKey(t) == 'entangle' ||
+                _normalizeTokenKey(t) == 'enchevetrement',
+          );
+          widget.adventure.log(
+            '[TOKEN] Hero Entangle: -1 roll attempt during this offensive roll phase.',
+          );
+          widget.onChanged();
+        });
+      }
+    }
+  }
+
+  Future<void> _applyMinionRollStart() async {
+    final heroHasTargeted = widget.adventure.alterations.any(
+      (t) =>
+          _normalizeTokenKey(t) == 'targeted' ||
+          _normalizeTokenKey(t) == 'prispourcible',
+    );
+    if (heroHasTargeted) {
+      await _triggerTokenAnimationDialogs(
+        ['Targeted'],
+        targetName: widget.adventure.hero.label,
+        currentHp: widget.adventure.health,
+        currentCp: widget.adventure.combatPoints,
+        isRollPhase: true,
+        maskedTokens: widget.adventure.maskedPopinTokens,
+      );
+      if (!mounted) return;
+    }
+
+    final hasEntangle = enemy.alterations.any(
+      (t) =>
+          _normalizeTokenKey(t) == 'entangle' ||
+          _normalizeTokenKey(t) == 'enchevetrement',
+    );
+    final hasHex = enemy.alterations.any(
+      (t) =>
+          _normalizeTokenKey(t) == 'hex' ||
+          _normalizeTokenKey(t) == 'malefice',
+    );
+    setState(() {
+      _minionEntangledThisAttack = hasEntangle && !_isNaraxus;
+      _minionHexedThisAttack = hasHex;
+      for (final die in _dice) {
+        die.isHexed = _minionHexedThisAttack;
+      }
+    });
+    if (hasEntangle || hasHex) {
+      await _triggerTokenAnimationDialogs(
+        enemy.alterations,
+        targetName: enemy.label,
+        currentHp: enemy.health,
+        currentCp: enemy.combatPoints,
+        isRollPhase: true,
+        maskedTokens: enemy.maskedPopinTokens,
+      );
+      if (!mounted) return;
+      if (hasEntangle) {
+        setState(() {
+          enemy.alterations.removeWhere(
+            (t) =>
+                _normalizeTokenKey(t) == 'entangle' ||
+                _normalizeTokenKey(t) == 'enchevetrement',
+          );
+          widget.adventure.log(
+            '[TOKEN] ${enemy.label} Entangle: -1 roll attempt (2 rolls max).',
+          );
+          widget.onChanged();
+        });
+      }
     }
   }
 
@@ -863,6 +1156,20 @@ class _FightPageState extends State<FightPage> {
       CombatPhase.minionAttack => CombatPhase.heroUpkeep,
     };
     if (_phase == CombatPhase.hero) {
+      if (widget.adventure.alterations.any(
+        (t) =>
+            _normalizeTokenKey(t) == 'hex' ||
+            _normalizeTokenKey(t) == 'malefice',
+      )) {
+        widget.adventure.alterations.removeWhere(
+          (t) =>
+              _normalizeTokenKey(t) == 'hex' ||
+              _normalizeTokenKey(t) == 'malefice',
+        );
+        widget.adventure.log('[TOKEN] Hero Hex removed at end of offensive turn.');
+        widget.onChanged();
+      }
+      _heroHexedThisAttack = false;
       _activeEnemyId = _firstEnemyTurnId();
     } else if (_phase == CombatPhase.minionUpkeep && _isViseerNode(enemy)) {
       final nextEnemy = _nextEnemyTurnIdAfter(enemy.id);
@@ -875,6 +1182,24 @@ class _FightPageState extends State<FightPage> {
       _setPhase(CombatPhase.heroUpkeep);
       return;
     } else if (_phase == CombatPhase.minionAttack) {
+      if (enemy.alterations.any(
+        (t) =>
+            _normalizeTokenKey(t) == 'hex' ||
+            _normalizeTokenKey(t) == 'malefice',
+      )) {
+        enemy.alterations.removeWhere(
+          (t) =>
+              _normalizeTokenKey(t) == 'hex' ||
+              _normalizeTokenKey(t) == 'malefice',
+        );
+        widget.adventure.log('[TOKEN] ${enemy.label} Hex removed at end of offensive turn.');
+        widget.onChanged();
+      }
+      _minionHexedThisAttack = false;
+      _minionEntangledThisAttack = false;
+      for (final die in _dice) {
+        die.isHexed = false;
+      }
       final nextEnemy = _nextEnemyTurnIdAfter(enemy.id);
       if (nextEnemy != null) {
         _activeEnemyId = nextEnemy;
@@ -1114,7 +1439,8 @@ class _FightPageState extends State<FightPage> {
       die
         ..value = null
         ..settled = true
-        ..reserved = false;
+        ..reserved = false
+        ..isHexed = false;
     }
   }
 
@@ -1127,6 +1453,8 @@ class _FightPageState extends State<FightPage> {
     }
     return _diceToRoll.clamp(0, 5);
   }
+
+  List<GameDie> get _activeDice => _dice.take(_visibleDiceCount).toList();
 
   bool get _showAiExtraDicePhase {
     if (_diceAnimationPending) {
@@ -1146,6 +1474,9 @@ class _FightPageState extends State<FightPage> {
     }
     if (_isNaraxus) {
       final value = _dice.first.value;
+      if (value == 6 && _minionHexedThisAttack) {
+        return false;
+      }
       return value == 3 || value == 6;
     }
     if (enemy.profileKey == 'vert-vert-012') {
@@ -1166,7 +1497,223 @@ class _FightPageState extends State<FightPage> {
     return _attackNeedsExtraDice(enemy) && _currentAttackGoalMet();
   }
 
-  bool get _showDruidFormRollPanel => _needsDruidFormRoll;
+  bool get _showDruidFormRollPanel => _needsDruidFormRoll;  bool _blindPopinTriggered = false;
+  bool _blindRollResolved = false;
+
+  bool get _hasActiveBlindOnAttacker {
+    if (_blindRollResolved) return false;
+    final isMinionAttacker = _phase == CombatPhase.minionAttack;
+    final targetList = isMinionAttacker
+        ? enemy.alterations
+        : widget.adventure.alterations;
+    return targetList.any((t) =>
+        t.toLowerCase() == 'blind' || t.toLowerCase() == 'éblouissement');
+  }
+
+  bool get _showBlindExtraDicePhase => false;
+
+  Future<void> _checkAndTriggerBlindPopin() async {
+    if (_blindPopinTriggered || !mounted) return;
+
+    final isMinion = _phase == CombatPhase.minionAttack;
+    final tokens = isMinion
+        ? enemy.alterations
+        : widget.adventure.alterations;
+
+    final hasBlind = tokens.any((t) =>
+        t.toLowerCase() == 'blind' || t.toLowerCase() == 'éblouissement');
+
+    if (!hasBlind) return;
+
+    final rule = TokenCatalogRepository.byLabel('Blind');
+    if (rule == null) return;
+
+    final targetName = isMinion ? enemy.label : widget.adventure.hero.label;
+
+    _blindPopinTriggered = true;
+    final blindRollResult = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: 1,
+      targetName: targetName,
+      currentHp: isMinion ? enemy.health : widget.adventure.health,
+      currentCp: isMinion ? enemy.combatPoints : widget.adventure.combatPoints,
+    );
+
+    if (mounted) {
+      if (blindRollResult == null) {
+        _blindPopinTriggered = false;
+        setState(() {});
+        return;
+      }
+
+      final roll = blindRollResult.count;
+      final targetList = isMinion
+          ? enemy.alterations
+          : widget.adventure.alterations;
+
+      targetList.removeWhere((t) =>
+          t.toLowerCase() == 'blind' || t.toLowerCase() == 'éblouissement');
+
+      _blindRollResolved = true;
+
+      setState(() {
+        if (roll <= 2) {
+          _battleAttackValue = 0;
+          _battleAttackUndefendable = false;
+          _battleDefenseValue = 0;
+          _extraDiceOutcomeMessage =
+              'Blind roll: $roll.\nAttack Fails! 0 damage dealt (no defense required).';
+          widget.adventure.log(
+            'Blind roll $roll: attack fails! 0 damage dealt.',
+          );
+        } else {
+          _refreshBattleResolutionFromDice();
+          _extraDiceOutcomeMessage =
+              'Blind roll: $roll.\nAttack Touches! Proceeding with defense.';
+          widget.adventure.log(
+            'Blind roll $roll: attack touches.',
+          );
+        }
+        widget.onChanged();
+      });
+    }
+  }
+
+  Future<void> _resolveBlindRoll(List<GameDie> dice) async {
+    final rolled = dice.where((die) => die.value != null).toList();
+    if (rolled.isEmpty) return;
+    _markExtraDiceSelection(dice, [rolled.first.id]);
+    final roll = rolled.first.value!;
+
+    final isMinionAttacker = _phase == CombatPhase.minionAttack;
+    final targetList = isMinionAttacker
+        ? enemy.alterations
+        : widget.adventure.alterations;
+
+    setState(() {
+      targetList.removeWhere((t) =>
+          t.toLowerCase() == 'blind' || t.toLowerCase() == 'éblouissement');
+      _blindRollResolved = true;
+
+      if (roll <= 2) {
+        _battleAttackValue = 0;
+        _battleAttackUndefendable = false;
+        _battleDefenseValue = 0;
+        _extraDiceOutcomeMessage =
+            'Blind roll: $roll.\nAttack Fails! 0 damage dealt (no defense required).';
+        widget.adventure.log(
+          'Blind roll $roll: attack fails! 0 damage dealt.',
+        );
+      } else {
+        _refreshBattleResolutionFromDice();
+        _extraDiceOutcomeMessage =
+            'Blind roll: $roll.\nAttack Touches! Proceeding with normal combat.';
+        widget.adventure.log(
+          'Blind roll $roll: attack touches.',
+        );
+      }
+      widget.onChanged();
+    });
+  }
+
+  bool _evasivePopinTriggered = false;
+  bool _evasiveRollResolved = false;
+
+  bool get _hasActiveEvasiveOnMinionDefender {
+    if (_evasiveRollResolved) return false;
+    if (_phase != CombatPhase.hero) return false;
+    return enemy.alterations.any((t) =>
+        t.toLowerCase() == 'evasive' || t.toLowerCase() == 'evitement');
+  }
+
+  Future<bool> _checkAndTriggerEvasivePopin() async {
+    if (_evasivePopinTriggered || _evasiveRollResolved || !mounted) return false;
+    if (_phase != CombatPhase.hero) return false;
+
+    final rule = TokenCatalogRepository.byLabel('Evasive') ??
+        TokenCatalogRepository.byLabel('Évitement');
+    if (rule == null) return false;
+
+    _evasivePopinTriggered = true;
+    var attempts = 0;
+
+    while (mounted) {
+      final hasEvasive = enemy.alterations.any((t) =>
+          t.toLowerCase() == 'evasive' || t.toLowerCase() == 'evitement');
+      if (!hasEvasive) break;
+
+      final effectiveDefense =
+          _battleAttackUndefendable ? 0 : _battleDefenseValue;
+      final netDamage = max(0, _battleAttackValue - effectiveDefense);
+      if (netDamage <= 0) break;
+
+      final currentEvasiveCount = enemy.alterations
+          .where((t) =>
+              t.toLowerCase() == 'evasive' || t.toLowerCase() == 'evitement')
+          .length;
+
+      final evasiveResult = await TokenAnimationDialog.show(
+        context,
+        rule: rule,
+        initialCount: currentEvasiveCount,
+        targetName: enemy.label,
+        currentHp: enemy.health,
+        currentCp: enemy.combatPoints,
+        customMessage: attempts > 0
+            ? 'Previous Evasive failed! Using next Evasive token ($currentEvasiveCount left).'
+            : null,
+      );
+
+      if (!mounted || evasiveResult == null) {
+        break;
+      }
+
+      attempts++;
+      final roll = evasiveResult.count;
+
+      // Remove exactly ONE Evasive token
+      final idx = enemy.alterations.indexWhere((t) =>
+          t.toLowerCase() == 'evasive' || t.toLowerCase() == 'evitement');
+      if (idx != -1) {
+        enemy.alterations.removeAt(idx);
+      }
+
+      if (roll <= 2) {
+        setState(() {
+          _battleAttackValue = 0;
+          _battleDefenseValue = 0;
+          _extraDiceOutcomeMessage =
+              'Evasive roll: $roll.\nAttack Avoided! 0 damage dealt to ${enemy.label}.';
+          widget.adventure.log(
+            '[TOKEN] ${enemy.label} spent Evasive (attempt #$attempts): rolled $roll -> 0 damage taken.',
+          );
+          widget.onChanged();
+        });
+        break;
+      } else {
+        setState(() {
+          _extraDiceOutcomeMessage =
+              'Evasive roll: $roll.\nEvasive Failed! (Attempt #$attempts)';
+          widget.adventure.log(
+            '[TOKEN] ${enemy.label} spent Evasive (attempt #$attempts): rolled $roll -> failed, normal damage applies.',
+          );
+          widget.onChanged();
+        });
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _evasivePopinTriggered = false;
+        if (attempts > 0) {
+          _evasiveRollResolved = true;
+        }
+      });
+    }
+
+    return attempts > 0;
+  }
 
   bool get _needsDruidFormRoll =>
       _aiMode &&
@@ -1266,7 +1813,13 @@ class _FightPageState extends State<FightPage> {
     return _visibleDiceCount.clamp(0, 5);
   }
 
-  int get _maxRolls => _phase == CombatPhase.hero || _isNaraxus ? 1 : 3;
+  int get _maxRolls {
+    if (_phase == CombatPhase.hero || _isNaraxus) return 1;
+    if (_phase == CombatPhase.minionAttack && _minionEntangledThisAttack) {
+      return 2;
+    }
+    return 3;
+  }
 
   bool get _isBattlePhase =>
       _phase == CombatPhase.hero || _phase == CombatPhase.minionAttack;
@@ -1297,7 +1850,7 @@ class _FightPageState extends State<FightPage> {
   }
 
   void _resolveMinionDefenseFromDice() {
-    final rolled = _dice.where((die) => die.value != null).toList();
+    final rolled = _activeDice.where((die) => die.value != null).toList();
     if (rolled.isEmpty) {
       return;
     }
@@ -1698,9 +2251,9 @@ class _FightPageState extends State<FightPage> {
       notes.add('Attack ready: roll 1 {die:any} to choose the Oni effect.');
     } else if (enemy.profileKey == 'rat-de-la-rue') {
       final suite = _bestSuiteLength(
-        _dice
-            .where((die) => die.value != null)
-            .map((die) => die.value!)
+        _activeDice
+            .map((die) => die.effectiveValue)
+            .whereType<int>()
             .toList(),
       );
       if (suite >= 3) {
@@ -1718,13 +2271,13 @@ class _FightPageState extends State<FightPage> {
       notes.add('No valid attack yet.');
     }
 
-    final values = _dice
-        .where((die) => die.value != null)
-        .map((die) => die.value!)
+    final values = _activeDice
+        .map((die) => die.effectiveValue)
+        .whereType<int>()
         .toList();
-    final symbols = _dice
-        .where((die) => die.symbol != null)
-        .map((die) => die.symbol!)
+    final symbols = _activeDice
+        .map((die) => die.symbol)
+        .whereType<DieSymbol>()
         .toList();
     final hasThreeSameValue = _hasRepeatedValue(values, 3);
     final hasFourSameSymbol = _hasRepeatedSymbol(symbols, 4);
@@ -1748,6 +2301,16 @@ class _FightPageState extends State<FightPage> {
       _applyConditionalRules(acc);
     } else {
       _applyLegacyConditionalSwitch(acc, hasThreeSameValue, hasFourSameSymbol);
+    }
+
+    final heroHasTargeted = widget.adventure.alterations.any(
+      (t) =>
+          _normalizeTokenKey(t) == 'targeted' ||
+          _normalizeTokenKey(t) == 'prispourcible',
+    );
+    if (heroHasTargeted && acc.attack > 0) {
+      acc.attack += 2;
+      acc.notes.add('Targeted: +2 damage on hero.');
     }
 
     _battleAttackValue = acc.attack.clamp(0, 99);
@@ -2072,12 +2635,30 @@ class _FightPageState extends State<FightPage> {
         notes.add('Thundering Roar: hero discards 1 card.');
         notes.add('Thundering Roar: 8 undefendable damage.');
       case 6:
-        attack = 10;
-        _battleAttackUndefendable = false;
-        notes.add("Dragon's Might: 10 damage.");
-        notes.add(
-          "Dragon's Might: the player rolls 1 die in the extra dice phase; on 5-6, Swoop also triggers.",
-        );
+        if (_minionHexedThisAttack) {
+          attack = 0;
+          _battleAttackUndefendable = false;
+          notes.add(
+            "Dragon's Might: canceled by Hex token (0 damage, no effect).",
+          );
+        } else {
+          attack = 10;
+          _battleAttackUndefendable = false;
+          notes.add("Dragon's Might: 10 damage.");
+          notes.add(
+            "Dragon's Might: the player rolls 1 die in the extra dice phase; on 5-6, Swoop also triggers.",
+          );
+        }
+    }
+
+    final heroHasTargeted = widget.adventure.alterations.any(
+      (t) =>
+          _normalizeTokenKey(t) == 'targeted' ||
+          _normalizeTokenKey(t) == 'prispourcible',
+    );
+    if (heroHasTargeted && attack > 0) {
+      attack += 2;
+      notes.add('Targeted: +2 damage on hero.');
     }
 
     _battleAttackValue = attack.clamp(0, 99);
@@ -2454,9 +3035,9 @@ class _FightPageState extends State<FightPage> {
         }
         return result;
       case MinionAttackStyle.suite:
-        final values = _dice
-            .where((die) => die.value != null)
-            .map((die) => die.value!)
+        final values = _activeDice
+            .map((die) => die.effectiveValue)
+            .whereType<int>()
             .toList();
         return _suiteDamage(enemy, _bestSuiteLength(values));
       case MinionAttackStyle.none:
@@ -2469,9 +3050,9 @@ class _FightPageState extends State<FightPage> {
       case MinionAttackStyle.symbols:
         return enemy.attackPlan.goals.any(_symbolGoalMet);
       case MinionAttackStyle.suite:
-        final values = _dice
-            .where((die) => die.value != null)
-            .map((die) => die.value!)
+        final values = _activeDice
+            .map((die) => die.effectiveValue)
+            .whereType<int>()
             .toList();
         return _bestSuiteLength(values) >= 3;
       case MinionAttackStyle.none:
@@ -2499,11 +3080,20 @@ class _FightPageState extends State<FightPage> {
     return tokens.where((token) => token == label).length;
   }
 
-  void _applyBattleResolution() {
+  Future<void> _applyBattleResolution() async {
     if (!_isBattlePhase) {
       return;
     }
+    if (_phase == CombatPhase.hero && _hasActiveEvasiveOnMinionDefender) {
+      final effectiveDefense =
+          _battleAttackUndefendable ? 0 : _battleDefenseValue;
+      final netDamage = max(0, _battleAttackValue - effectiveDefense);
+      if (netDamage > 0) {
+        await _checkAndTriggerEvasivePopin();
+      }
+    }
     _captureStepUndo();
+    final currentBattlePhase = _phase;
     late final CombatPhase nextPhase;
     setState(() {
       final effectiveDefense = _battleAttackUndefendable
@@ -2601,6 +3191,19 @@ class _FightPageState extends State<FightPage> {
           _lastBattleOutcomeMessage =
               '$_lastBattleOutcomeMessage Hoarding expires.';
         }
+        if (widget.adventure.alterations.any(
+          (t) =>
+              _normalizeTokenKey(t) == 'hex' ||
+              _normalizeTokenKey(t) == 'malefice',
+        )) {
+          widget.adventure.alterations.removeWhere(
+            (t) =>
+                _normalizeTokenKey(t) == 'hex' ||
+                _normalizeTokenKey(t) == 'malefice',
+          );
+          widget.adventure.log('[TOKEN] Hero Hex removed at end of offensive turn.');
+        }
+        _heroHexedThisAttack = false;
         _activeEnemyId = _firstEnemyTurnId();
         nextPhase = CombatPhase.minionUpkeep;
       } else {
@@ -2685,13 +3288,105 @@ class _FightPageState extends State<FightPage> {
             nextPhase = CombatPhase.heroUpkeep;
           }
         }
+        if (enemy.alterations.any(
+          (t) =>
+              _normalizeTokenKey(t) == 'hex' ||
+              _normalizeTokenKey(t) == 'malefice',
+        )) {
+          enemy.alterations.removeWhere(
+            (t) =>
+                _normalizeTokenKey(t) == 'hex' ||
+                _normalizeTokenKey(t) == 'malefice',
+          );
+          widget.adventure.log('[TOKEN] ${enemy.label} Hex removed at end of offensive turn.');
+        }
+        _minionHexedThisAttack = false;
+        _minionEntangledThisAttack = false;
+        for (final die in _dice) {
+          die.isHexed = false;
+        }
       }
       widget.onChanged();
     });
+    if (currentBattlePhase == CombatPhase.hero) {
+      await _triggerDelayedPoisonIfNeeded(forHero: true);
+    } else if (currentBattlePhase == CombatPhase.minionAttack) {
+      await _triggerDelayedPoisonIfNeeded(forHero: false);
+    }
     if (_isResolutionMode) {
       return;
     }
     _setPhase(nextPhase);
+  }
+
+  bool _isDelayedPoisonToken(String label) {
+    final k = _normalizeTokenKey(label);
+    return k == 'delayedpoison' ||
+        k == 'poisonlatent' ||
+        k == 'poisonretarde' ||
+        k == 'poisondiffere';
+  }
+
+  Future<void> _triggerDelayedPoisonIfNeeded({required bool forHero}) async {
+    final tokens = forHero ? widget.adventure.alterations : enemy.alterations;
+    final delayedCount = tokens.where((t) => _isDelayedPoisonToken(t)).length;
+    if (delayedCount <= 0 || !mounted) return;
+
+    final rule = TokenCatalogRepository.byLabel('Delayed Poison') ??
+        TokenCatalogRepository.byLabel('Poison latent') ??
+        TokenCatalogRepository.rules.firstWhere(
+          (r) => _isDelayedPoisonToken(r.label),
+          orElse: () => const StatusTokenRule(
+            label: 'Delayed Poison',
+            frLabel: 'Poison latent',
+            kind: StatusTokenKind.negative,
+            maxStack: 2,
+            persistent: false,
+            persistence: TokenPersistence.nonPersistent,
+            removable: true,
+            appSupported: true,
+            imageAsset: 'assets/token/Delayed-Poison.png',
+            description: 'A player inflicted with this token removes it at the conclusion of their turn and receives 3 dmg per token.',
+            aliases: ['Delayed Poison', 'Poison latent', 'Poison retardé', 'Poison différé'],
+            appDetails: 'Géré automatiquement en fin de tour (-3 PV par cumul + retrait des cumuls).',
+            appAnimation: true,
+            minionAllowed: true,
+            editorVisible: true,
+          ),
+        );
+
+    final targetName = forHero ? widget.adventure.hero.label : enemy.label;
+    final currentHp = forHero ? widget.adventure.health : enemy.health;
+    final currentCp = forHero ? widget.adventure.combatPoints : enemy.combatPoints;
+
+    final result = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      targetName: targetName,
+      initialCount: delayedCount,
+      currentHp: currentHp,
+      currentCp: currentCp,
+      customMessage: '$targetName removes $delayedCount Delayed Poison token${delayedCount > 1 ? 's' : ''} and receives ${delayedCount * 3} dmg.',
+    );
+
+    if (!mounted) return;
+    final finalCount = result?.count ?? delayedCount;
+    final damage = finalCount * 3;
+
+    setState(() {
+      tokens.removeWhere((t) => _isDelayedPoisonToken(t));
+      if (forHero) {
+        widget.adventure.setHeroHealth(
+          widget.adventure.health - damage,
+          source: 'Delayed Poison',
+        );
+        widget.adventure.log('[TOKEN] ${widget.adventure.hero.label} took $damage dmg from Delayed Poison, token(s) removed.');
+      } else {
+        enemy.health = (enemy.health - damage).clamp(0, 99);
+        widget.adventure.log('[TOKEN] ${enemy.label} took $damage dmg from Delayed Poison, token(s) removed.');
+      }
+      widget.onChanged();
+    });
   }
 
   void _replaceCurrentEnemyWithRandomLevel3() {
@@ -2739,10 +3434,134 @@ class _FightPageState extends State<FightPage> {
     _resetDice();
   }
 
-  void _applyHeroUpkeep({bool captureUndo = true}) {
+  Future<void> _triggerTokenAnimationDialogs(
+    List<String> tokens, {
+    required String targetName,
+    required int currentHp,
+    required int currentCp,
+    bool isRollPhase = false,
+    Set<String>? maskedTokens,
+  }) async {
+    if (tokens.isEmpty || !mounted) return;
+
+    final rulesToShow = <StatusTokenRule>[];
+    final processedLabels = <String>{};
+    for (final tokenLabel in List<String>.from(tokens)) {
+      final rule = TokenCatalogRepository.byLabel(tokenLabel);
+      if (rule == null || !rule.appAnimation || processedLabels.contains(rule.label)) {
+        continue;
+      }
+      final tokenKey = _normalizeTokenKey(rule.label);
+      if (maskedTokens != null && maskedTokens.contains(tokenKey)) {
+        continue;
+      }
+      final l = rule.label.toLowerCase();
+      if (l == 'blind' ||
+          l == 'éblouissement' ||
+          l == 'evasive' ||
+          l == 'evitement' ||
+          tokenLabel.toLowerCase() == 'éblouissement' ||
+          tokenLabel.toLowerCase() == 'evitement') {
+        continue;
+      }
+      if (l.contains('delayed poison') ||
+          l.contains('poison latent') ||
+          l.contains('poison retardé') ||
+          l.contains('poison différé')) {
+        continue;
+      }
+      final isKnockdown = l.contains('knockdown') || l.contains('terre');
+      if (isKnockdown && targetName != widget.adventure.hero.label && _isNaraxus) {
+        continue;
+      }
+      final isFirstStrike = l.contains('first strike') ||
+          l.contains('première frappe') ||
+          l.contains('premiere frappe') ||
+          l.contains('1st frappe') ||
+          l.contains('1er frappe');
+      if (isFirstStrike && targetName == widget.adventure.hero.label) {
+        continue;
+      }
+      final isEntangle = l.contains('entangle') || l.contains('enchevetrement');
+      final isHex = l.contains('hex') || l.contains('malefice');
+      final isTargeted = l.contains('targeted') || l.contains('prispourcible');
+      final isRollToken = isEntangle || isHex || isTargeted;
+      if (!isRollPhase && isRollToken) {
+        continue;
+      }
+      if (isRollPhase && !isRollToken) {
+        continue;
+      }
+      processedLabels.add(rule.label);
+      rulesToShow.add(rule);
+    }
+
+    if (rulesToShow.isEmpty || !mounted) return;
+
+    List<StatusTokenRule> executionOrder = rulesToShow;
+    if (rulesToShow.length > 1) {
+      final ordered = await TokenOrderingDialog.show(
+        context,
+        rules: rulesToShow,
+        targetName: targetName,
+        isRollPhase: isRollPhase,
+      );
+      if (!mounted) return;
+      if (ordered != null && ordered.isNotEmpty) {
+        executionOrder = ordered;
+      }
+    }
+
+    for (final rule in executionOrder) {
+      final tokenKey = _normalizeTokenKey(rule.label);
+      final initialCount = tokens.where((t) {
+        final r = TokenCatalogRepository.byLabel(t);
+        return r?.label == rule.label ||
+            t.toLowerCase() == rule.label.toLowerCase();
+      }).length;
+
+      final result = await TokenAnimationDialog.show(
+        context,
+        rule: rule,
+        initialCount: initialCount,
+        targetName: targetName,
+        currentHp: currentHp,
+        currentCp: currentCp,
+      );
+      if (!mounted) return;
+
+      if (result != null && result.dontShowAgain && maskedTokens != null) {
+        maskedTokens.add(tokenKey);
+      }
+
+      if (result != null && result.count != initialCount && mounted) {
+        setState(() {
+          tokens.removeWhere((t) {
+            final r = TokenCatalogRepository.byLabel(t);
+            return r?.label == rule.label ||
+                t.toLowerCase() == rule.label.toLowerCase();
+          });
+          for (var i = 0; i < result.count; i++) {
+            tokens.add(rule.label);
+          }
+          widget.onChanged();
+        });
+      }
+    }
+  }
+
+  Future<void> _applyHeroUpkeep({bool captureUndo = true}) async {
     if (!mounted || _heroUpkeepApplied || _phase != CombatPhase.heroUpkeep) {
       return;
     }
+    await _triggerTokenAnimationDialogs(
+      widget.adventure.alterations,
+      targetName: widget.adventure.hero.label,
+      currentHp: widget.adventure.health,
+      currentCp: widget.adventure.combatPoints,
+      maskedTokens: widget.adventure.maskedPopinTokens,
+    );
+    if (!mounted) return;
     if (captureUndo) {
       _captureStepUndo();
     }
@@ -2752,6 +3571,7 @@ class _FightPageState extends State<FightPage> {
       heroOutcome = GameEngine.heroUpkeep(
         tokens: widget.adventure.alterations,
         rollD6: () => _random.nextInt(6) + 1,
+        currentCp: widget.adventure.combatPoints,
       );
       widget.adventure.setHeroPc(
         widget.adventure.combatPoints + heroOutcome!.cpDelta,
@@ -2778,10 +3598,18 @@ class _FightPageState extends State<FightPage> {
     }
   }
 
-  void _applyUpkeep({bool captureUndo = true}) {
+  Future<void> _applyUpkeep({bool captureUndo = true}) async {
     if (_upkeepApplied) {
       return;
     }
+    await _triggerTokenAnimationDialogs(
+      enemy.alterations,
+      targetName: enemy.label,
+      currentHp: enemy.health,
+      currentCp: enemy.combatPoints,
+      maskedTokens: enemy.maskedPopinTokens,
+    );
+    if (!mounted) return;
     if (captureUndo) {
       _captureStepUndo();
     }
@@ -2811,6 +3639,8 @@ class _FightPageState extends State<FightPage> {
       final outcome = GameEngine.minionUpkeep(
         tokens: enemy.alterations,
         rollD6: () => _random.nextInt(6) + 1,
+        currentCp: enemy.combatPoints,
+        isNaxarus: _isNaraxus,
       );
       final cpDelta = _enemyHasInfiniteCp(enemy) ? 0 : outcome.cpDelta;
       enemy.combatPoints = (enemy.combatPoints + cpDelta).clamp(0, 99);
@@ -2911,10 +3741,15 @@ class _FightPageState extends State<FightPage> {
   }
 
   void _reserveBestSuite() {
-    final decision = MinionDiceEngine.chooseSuiteHold(_dice);
+    final active = _activeDice;
+    final decision = MinionDiceEngine.chooseSuiteHold(active);
     final needed = <int, int>{for (final value in decision.values) value: 1};
     for (final die in _dice) {
-      final value = die.value;
+      if (!active.contains(die)) {
+        die.reserved = false;
+        continue;
+      }
+      final value = die.effectiveValue;
       if (value == null || (needed[value] ?? 0) <= 0) {
         die.reserved = false;
       } else {
@@ -2940,7 +3775,12 @@ class _FightPageState extends State<FightPage> {
     var white = goal.white;
     var yellow = goal.yellow;
     var red = goal.red;
+    final active = _activeDice;
     for (final die in _dice) {
+      if (!active.contains(die)) {
+        die.reserved = false;
+        continue;
+      }
       final symbol = die.symbol;
       if (symbol == DieSymbol.white && white > 0) {
         die.reserved = true;
@@ -2966,7 +3806,7 @@ class _FightPageState extends State<FightPage> {
 
   Map<DieSymbol, int> _symbolCounts() {
     final counts = <DieSymbol, int>{};
-    for (final die in _dice) {
+    for (final die in _activeDice) {
       final symbol = die.symbol;
       if (symbol != null) {
         counts[symbol] = (counts[symbol] ?? 0) + 1;
@@ -3230,7 +4070,7 @@ class _CompactItemStripState extends State<CompactItemStrip> {
                         ),
                       ),
               ),
-              ?widget.trailing,
+              if (widget.trailing != null) widget.trailing!,
             ],
           );
         },
@@ -3240,13 +4080,18 @@ class _CompactItemStripState extends State<CompactItemStrip> {
 }
 
 class _CompactItemVisual extends StatelessWidget {
-  const _CompactItemVisual({required this.item, required this.color});
+  const _CompactItemVisual({
+    required this.item,
+    required this.color,
+    this.size = 30,
+  });
 
   static final RegExp _healthRewardPattern = RegExp(r'^\+(\d+) HP$');
   static final RegExp _cpRewardPattern = RegExp(r'^\+(\d+) CP$');
 
   final CompactItemModel item;
   final Color color;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -3256,7 +4101,7 @@ class _CompactItemVisual extends StatelessWidget {
         value: '+${healthMatch.group(1)!}',
         asset: 'assets/illustration/soin.webp',
         textColor: Colors.white,
-        size: 34,
+        size: size + 4,
         fontSize: 12,
       );
     }
@@ -3265,8 +4110,8 @@ class _CompactItemVisual extends StatelessWidget {
       final value = int.tryParse(cpMatch.group(1)!);
       if (value != null) {
         return SizedBox(
-          width: 36,
-          height: 36,
+          width: size + 6,
+          height: size + 6,
           child: FittedBox(
             fit: BoxFit.contain,
             child: _PcTriangleBadge(value: value),
@@ -3282,6 +4127,7 @@ class _CompactItemVisual extends StatelessWidget {
       value: item.label,
       tooltip: item.tooltip,
       color: color,
+      size: size,
     );
   }
 }
@@ -3388,12 +4234,14 @@ class CompactItemBadge extends StatelessWidget {
     required this.value,
     required this.tooltip,
     required this.color,
+    this.size = 30,
     super.key,
   });
 
   final String value;
   final String tooltip;
   final Color color;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -3406,7 +4254,7 @@ class CompactItemBadge extends StatelessWidget {
       return Stack(
         clipBehavior: Clip.none,
         children: [
-          StatusTokenImage(rule: rule, size: 30),
+          StatusTokenImage(rule: rule, size: size),
           if (count != null)
             Positioned(
               right: -2,
@@ -3420,8 +4268,8 @@ class CompactItemBadge extends StatelessWidget {
                 ),
                 child: Text(
                   count,
-                  style: const TextStyle(
-                    fontSize: 9,
+                  style: TextStyle(
+                    fontSize: (size * 0.3).clamp(8.0, 11.0),
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -3431,23 +4279,21 @@ class CompactItemBadge extends StatelessWidget {
       );
     }
     return Container(
-      constraints: BoxConstraints(minWidth: 30 + max(0, value.length - 2) * 8),
-      height: 28,
+      constraints: BoxConstraints(minWidth: size + max(0, value.length - 2) * 8),
+      height: size - 2,
       padding: const EdgeInsets.symmetric(horizontal: 5),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
         value,
-        maxLines: 1,
         style: TextStyle(
+          fontSize: (size * 0.38).clamp(9.0, 13.0),
+          fontWeight: FontWeight.bold,
           color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
-          shadows: const [Shadow(color: Colors.black, blurRadius: 3)],
         ),
       ),
     );
@@ -3662,6 +4508,12 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
   @override
   void didUpdateWidget(covariant EnemyRulesPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.enemy.id != widget.enemy.id || oldWidget.enemy.profileKey != widget.enemy.profileKey) {
+      _druidFormPreview = null;
+      _showAttack = widget.phase == CombatPhase.minionAttack;
+      _showDefense = widget.phase == CombatPhase.hero;
+      _showPassive = false;
+    }
     if (oldWidget.phase != widget.phase) {
       if (widget.phase == CombatPhase.hero) {
         _showAttack = false;
@@ -5893,6 +6745,12 @@ class CombatAiChatDock extends StatelessWidget {
     required this.onApply,
     required this.onFinish,
     required this.onChanged,
+    this.onEditHeroTokens,
+    this.onEditEnemyTokens,
+    this.showBlindButton = false,
+    this.onBlindPressed,
+    this.showEvasiveButton = false,
+    this.onEvasivePressed,
     super.key,
   });
 
@@ -5921,6 +6779,12 @@ class CombatAiChatDock extends StatelessWidget {
   final VoidCallback onApply;
   final VoidCallback? onFinish;
   final VoidCallback onChanged;
+  final VoidCallback? onEditHeroTokens;
+  final VoidCallback? onEditEnemyTokens;
+  final bool showBlindButton;
+  final VoidCallback? onBlindPressed;
+  final bool showEvasiveButton;
+  final VoidCallback? onEvasivePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -5948,6 +6812,19 @@ class CombatAiChatDock extends StatelessWidget {
     final isHeroBattle = phase == CombatPhase.hero;
     final attackColor = isHeroBattle ? heroAccent : enemy.rank.color;
     final defenseColor = isHeroBattle ? enemy.rank.color : heroAccent;
+    final defenderHasTargeted = phase == CombatPhase.hero
+        ? enemy.alterations.any(
+            (t) =>
+                _normalizeTokenKey(t) == 'targeted' ||
+                _normalizeTokenKey(t) == 'prispourcible',
+          )
+        : (phase == CombatPhase.minionAttack
+            ? adventure.alterations.any(
+                (t) =>
+                    _normalizeTokenKey(t) == 'targeted' ||
+                    _normalizeTokenKey(t) == 'prispourcible',
+              )
+            : false);
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xf2121212),
@@ -5979,6 +6856,11 @@ class CombatAiChatDock extends StatelessWidget {
               enemyColor: enemy.rank.color,
               heroName: adventure.hero.label,
               enemyName: enemy.label,
+              heroTokens: adventure.alterations,
+              enemyTokens: enemy.alterations,
+              onEditHeroTokens: onEditHeroTokens,
+              onEditEnemyTokens: onEditEnemyTokens,
+              onTokensChanged: onChanged,
               portraitAsset:
                   phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
                   ? adventure.hero.asset
@@ -6024,6 +6906,106 @@ class CombatAiChatDock extends StatelessWidget {
               },
             ),
           if (showResolution) ...[
+            if (defenderHasTargeted) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: attackValue > 0
+                      ? const Color(0xff271830)
+                      : const Color(0xff1a1722),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: attackValue > 0
+                        ? const Color(0xffe84393)
+                        : Colors.white24,
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/token/Targeted.png',
+                      width: 22,
+                      height: 22,
+                      errorBuilder: (ctx, err, stack) => const Icon(
+                        Icons.gps_fixed,
+                        color: Color(0xffe84393),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Targeted : ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Image.asset(
+                      'assets/token/bonus-atk-2.webp',
+                      height: 24,
+                      fit: BoxFit.contain,
+                      errorBuilder: (ctx, err, stack) => const Text(
+                        '+2 DMG',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          color: Color(0xffff7675),
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: attackValue > 0
+                            ? Colors.green.withValues(alpha: 0.2)
+                            : Colors.grey.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: attackValue > 0
+                              ? Colors.greenAccent
+                              : Colors.grey,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            attackValue > 0
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            size: 12,
+                            color: attackValue > 0
+                                ? Colors.greenAccent
+                                : Colors.grey,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            attackValue > 0
+                                ? 'Actif (+2)'
+                                : 'Inactif (ATK = 0)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: attackValue > 0
+                                  ? Colors.greenAccent
+                                  : Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               children: [
@@ -6037,21 +7019,83 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _BattleCounter(
-                    label: 'DEF',
-                    value: defenseValue,
-                    color: defenseColor,
-                    onChanged: onDefenseChanged,
-                  ),
+                  child: showBlindButton
+                      ? SizedBox(
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: defenseColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 4,
+                            ),
+                            onPressed: onBlindPressed,
+                            icon: Image.asset(
+                              'assets/token/Blind.png',
+                              width: 24,
+                              height: 24,
+                              errorBuilder: (ctx, err, stack) =>
+                                  const Icon(Icons.visibility_off, size: 20),
+                            ),
+                            label: const Text(
+                              'Blind',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        )
+                      : showEvasiveButton
+                          ? SizedBox(
+                              height: 52,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: defenseColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  elevation: 4,
+                                ),
+                                onPressed: onEvasivePressed,
+                                icon: Image.asset(
+                                  'assets/token/Evasive.png',
+                                  width: 24,
+                                  height: 24,
+                                  errorBuilder: (ctx, err, stack) =>
+                                      const Icon(Icons.shield, size: 20),
+                                ),
+                                label: const Text(
+                                  'Evasive',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : _BattleCounter(
+                              label: 'DEF',
+                              value: defenseValue,
+                              color: defenseColor,
+                              onChanged: onDefenseChanged,
+                            ),
                 ),
                 const SizedBox(width: 8),
                 SizedBox(
                   width: 56,
                   height: 52,
                   child: FilledButton(
-                    onPressed: onApply,
+                    onPressed: (showBlindButton || showEvasiveButton) ? null : onApply,
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xff8f43ff),
+                      disabledBackgroundColor: Colors.white10,
+                      disabledForegroundColor: Colors.white38,
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.zero,
                     ),
@@ -6165,6 +7209,11 @@ class _AiChatWithHealth extends StatefulWidget {
     this.portraitFit = BoxFit.cover,
     this.showPortraitVitals = true,
     this.showHealthControls = true,
+    this.heroTokens = const [],
+    this.enemyTokens = const [],
+    this.onEditHeroTokens,
+    this.onEditEnemyTokens,
+    this.onTokensChanged,
     required this.onHeroHpSaved,
     required this.onHeroCpSaved,
     required this.onEnemyHpSaved,
@@ -6187,6 +7236,11 @@ class _AiChatWithHealth extends StatefulWidget {
   final BoxFit portraitFit;
   final bool showPortraitVitals;
   final bool showHealthControls;
+  final List<String> heroTokens;
+  final List<String> enemyTokens;
+  final VoidCallback? onEditHeroTokens;
+  final VoidCallback? onEditEnemyTokens;
+  final VoidCallback? onTokensChanged;
   final ValueChanged<int> onHeroHpSaved;
   final ValueChanged<int> onHeroCpSaved;
   final ValueChanged<int> onEnemyHpSaved;
@@ -6293,6 +7347,10 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
           : widget.message.trim().split('\n').length;
       final chatHeight = (56.0 + lineCount * 18.0).clamp(86.0, 210.0);
       final portraitIsHero = widget.accent == heroAccent;
+      final tokens = portraitIsHero ? widget.heroTokens : widget.enemyTokens;
+      final onEditTokens = portraitIsHero
+          ? widget.onEditHeroTokens
+          : widget.onEditEnemyTokens;
       final portrait = SizedBox(
         width: 112,
         child: _AiChatPortraitVitals(
@@ -6308,6 +7366,11 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
               widget.showPortraitVitals &&
               (portraitIsHero || !widget.enemyCpInfinity),
           hpStyle: portraitIsHero ? _CombatHpStyle.hero : _CombatHpStyle.enemy,
+          tokens: tokens,
+          accent: widget.accent,
+          showTokens: widget.showPortraitVitals,
+          onEditTokens: onEditTokens ?? () {},
+          onTokensChanged: widget.onTokensChanged ?? () {},
           onHpTap: () => _openEditor(
             portraitIsHero
                 ? _QuickVitalTarget.heroHp
@@ -6453,6 +7516,11 @@ class _AiChatPortraitVitals extends StatelessWidget {
     required this.hpStyle,
     required this.onHpTap,
     required this.onCpTap,
+    this.tokens = const [],
+    this.accent = const Color(0xff8f43ff),
+    this.showTokens = false,
+    this.onEditTokens,
+    this.onTokensChanged,
   });
 
   final String asset;
@@ -6467,9 +7535,19 @@ class _AiChatPortraitVitals extends StatelessWidget {
   final _CombatHpStyle hpStyle;
   final VoidCallback onHpTap;
   final VoidCallback onCpTap;
+  final List<String> tokens;
+  final Color accent;
+  final bool showTokens;
+  final VoidCallback? onEditTokens;
+  final VoidCallback? onTokensChanged;
 
   @override
   Widget build(BuildContext context) {
+    final visibleItems = tokens
+        .where((value) => _isVisibleStatusTokenLabel(value))
+        .toList(growable: false);
+    final displayItems = _compactItemModels(visibleItems);
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -6504,6 +7582,112 @@ class _AiChatPortraitVitals extends StatelessWidget {
                 scale: 0.52,
                 alignment: Alignment.topRight,
                 child: _PcTriangleBadge(value: cp, infinity: cpInfinity),
+              ),
+            ),
+          ),
+        if (showTokens)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              height: 30,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.82),
+                border: Border(
+                  top: BorderSide(
+                    color: accent.withValues(alpha: 0.45),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: displayItems.isEmpty
+                        ? InkWell(
+                            onTap: onEditTokens,
+                            borderRadius: BorderRadius.circular(4),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 2),
+                              child: Text(
+                                'Tokens',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ),
+                          )
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            child: Row(
+                              children: displayItems.map((item) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 3),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(4),
+                                    onTap: () {
+                                      final rule = TokenCatalogRepository.byLabel(
+                                        _compactTokenBaseLabel(item.tooltip),
+                                      );
+                                      if (rule != null) {
+                                        showTokenDetails(
+                                          context,
+                                          rule,
+                                          getCount: () => tokens
+                                              .where((t) => t == rule.label)
+                                              .length,
+                                          onMinus: onTokensChanged != null
+                                              ? () {
+                                                  tokens.remove(rule.label);
+                                                  onTokensChanged!();
+                                                }
+                                              : null,
+                                          onPlus: onTokensChanged != null
+                                              ? () {
+                                                  tokens.add(rule.label);
+                                                  onTokensChanged!();
+                                                }
+                                              : null,
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(item.tooltip)),
+                                        );
+                                      }
+                                    },
+                                    child: Tooltip(
+                                      message: item.tooltip,
+                                      child: _CompactItemVisual(
+                                        item: item,
+                                        color: accent,
+                                        size: 24,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                  ),
+                  if (onEditTokens != null)
+                    InkWell(
+                      onTap: onEditTokens,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                        child: Icon(
+                          Icons.edit,
+                          size: 14,
+                          color: accent.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
@@ -7212,6 +8396,8 @@ class MinionAiPanel extends StatelessWidget {
     required this.onValidateEdit,
     required this.onToggleEdit,
     required this.onToggleRerollOne,
+    this.hasBlindOnAttacker = false,
+    this.onBlindPressed,
     super.key,
   });
 
@@ -7232,6 +8418,8 @@ class MinionAiPanel extends StatelessWidget {
   final VoidCallback onValidateEdit;
   final VoidCallback onToggleEdit;
   final VoidCallback onToggleRerollOne;
+  final bool hasBlindOnAttacker;
+  final VoidCallback? onBlindPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -7295,11 +8483,43 @@ class MinionAiPanel extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           if (visibleDice.isNotEmpty || isDefensePhase) ...[
+            if (hasBlindOnAttacker) ...[
+              SizedBox(
+                height: 46,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: enemy.rank.color,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 2,
+                  ),
+                  onPressed: onBlindPressed,
+                  icon: Image.asset(
+                    'assets/token/Blind.png',
+                    width: 24,
+                    height: 24,
+                    errorBuilder: (ctx, err, stack) =>
+                        const Icon(Icons.visibility_off, size: 20),
+                  ),
+                  label: const Text(
+                    'Blind',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             _SolidRollButton(
-              onPressed:
-                  !hasRollingDice && rollCount < maxRolls && diceToRoll > 0
-                  ? onRoll
-                  : null,
+              onPressed: hasBlindOnAttacker && isDefensePhase
+                  ? onBlindPressed
+                  : (!hasRollingDice && rollCount < maxRolls && diceToRoll > 0
+                      ? onRoll
+                      : null),
               color: enemy.rank.color,
               child: Text(
                 isDefensePhase
@@ -7861,6 +9081,7 @@ class ManualExtraDicePhasePanel extends StatefulWidget {
     this.initialDiceCount = 1,
     this.accent = const Color(0xff8f43ff),
     this.autoRoll = false,
+    this.isHexed = false,
     this.onChanged,
     super.key,
   });
@@ -7869,6 +9090,7 @@ class ManualExtraDicePhasePanel extends StatefulWidget {
   final int initialDiceCount;
   final Color accent;
   final bool autoRoll;
+  final bool isHexed;
   final ValueChanged<List<GameDie>>? onChanged;
 
   @override
@@ -7880,7 +9102,7 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
   final _random = Random();
   late final List<GameDie> _dice = List.generate(
     6,
-    (index) => GameDie(id: index),
+    (index) => GameDie(id: index)..isHexed = widget.isHexed,
   );
   late int _diceToRoll;
   int _rollCount = 0;
@@ -7913,7 +9135,8 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
         die
           ..value = null
           ..settled = true
-          ..reserved = false;
+          ..reserved = false
+          ..isHexed = widget.isHexed;
       }
     }
   }
@@ -8062,6 +9285,7 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
         die.value = _random.nextInt(6) + 1;
         die.settled = !_animationPending;
         die.rollTick++;
+        die.isHexed = widget.isHexed;
         rolledIds.add(die.id);
       }
       _rollCount++;
@@ -8103,6 +9327,7 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
         die.value = _random.nextInt(6) + 1;
         die.settled = combatDiceAnimationSeconds <= 0;
         die.rollTick++;
+        die.isHexed = widget.isHexed;
         _rerollMode = false;
         _animationPending = !die.settled;
         _notifyAfterAnimation([die.id]);
@@ -11464,9 +12689,17 @@ class GameDie {
   bool reserved = false;
   bool settled = true;
   int rollTick = 0;
+  bool isHexed = false;
+
+  int? get effectiveValue {
+    if (isHexed && value == 6) {
+      return null;
+    }
+    return value;
+  }
 
   DieSymbol? get symbol {
-    final face = value;
+    final face = effectiveValue;
     if (face == null) {
       return null;
     }
@@ -11849,6 +13082,9 @@ class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
     final value = !widget.die.settled || _controller.isAnimating
         ? _animatedValue
         : widget.die.value;
+    final isHexBlank = widget.die.isHexed &&
+        value == 6 &&
+        (widget.die.settled || !_controller.isAnimating);
     return InkWell(
       onTap: widget.onTap,
       borderRadius: BorderRadius.circular(8),
@@ -11873,14 +13109,18 @@ class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
               constraints: BoxConstraints(maxWidth: size),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: value == null ? Colors.white12 : Colors.transparent,
+                color: isHexBlank
+                    ? const Color(0xff38383a)
+                    : (value == null ? Colors.white12 : Colors.transparent),
                 borderRadius: BorderRadius.circular(8),
-                border: widget.highlight
-                    ? Border.all(
-                        color: widget.highlightColor ?? heroAccent,
-                        width: 3,
-                      )
-                    : null,
+                border: isHexBlank
+                    ? Border.all(color: Colors.white30, width: 1.5)
+                    : (widget.highlight
+                        ? Border.all(
+                            color: widget.highlightColor ?? heroAccent,
+                            width: 3,
+                          )
+                        : null),
                 boxShadow: widget.highlight
                     ? [
                         BoxShadow(
@@ -11901,10 +13141,19 @@ class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
                         fontWeight: FontWeight.w900,
                       ),
                     )
-                  : Image.asset(
-                      'assets/dice_faces/face_$value.webp',
-                      fit: BoxFit.contain,
-                    ),
+                  : isHexBlank
+                      ? const Text(
+                          'Ø',
+                          style: TextStyle(
+                            color: Colors.white38,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                          ),
+                        )
+                      : Image.asset(
+                          'assets/dice_faces/face_$value.webp',
+                          fit: BoxFit.contain,
+                        ),
             ),
           ),
           if (widget.highlight)
@@ -12044,6 +13293,1058 @@ class _CombatResolutionPanel extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class TokenOrderingDialog extends StatefulWidget {
+  const TokenOrderingDialog({
+    required this.rules,
+    required this.targetName,
+    required this.isRollPhase,
+    super.key,
+  });
+
+  final List<StatusTokenRule> rules;
+  final String targetName;
+  final bool isRollPhase;
+
+  static Future<List<StatusTokenRule>?> show(
+    BuildContext context, {
+    required List<StatusTokenRule> rules,
+    required String targetName,
+    required bool isRollPhase,
+  }) {
+    return showDialog<List<StatusTokenRule>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => TokenOrderingDialog(
+        rules: rules,
+        targetName: targetName,
+        isRollPhase: isRollPhase,
+      ),
+    );
+  }
+
+  @override
+  State<TokenOrderingDialog> createState() => _TokenOrderingDialogState();
+}
+
+class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
+  late List<StatusTokenRule> _orderedRules;
+
+  @override
+  void initState() {
+    super.initState();
+    _orderedRules = List<StatusTokenRule>.from(widget.rules);
+  }
+
+  void _moveUp(int index) {
+    if (index > 0) {
+      setState(() {
+        final item = _orderedRules.removeAt(index);
+        _orderedRules.insert(index - 1, item);
+      });
+    }
+  }
+
+  void _moveDown(int index) {
+    if (index < _orderedRules.length - 1) {
+      setState(() {
+        final item = _orderedRules.removeAt(index);
+        _orderedRules.insert(index + 1, item);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final phaseLabel = widget.isRollPhase ? 'Roll Phase' : 'Upkeep Phase';
+    return AlertDialog(
+      backgroundColor: const Color(0xff181424),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0xff8f43ff), width: 2),
+      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 320, maxWidth: 440),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff8f43ff).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.alt_route,
+                      color: Color(0xff8f43ff),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Token Resolution Order',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          'Target: ${widget.targetName} • $phaseLabel',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Timeline sequence overview bar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.04),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (var i = 0; i < _orderedRules.length; i++) ...[
+                        if (i > 0)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4),
+                            child: Icon(
+                              Icons.arrow_forward,
+                              size: 14,
+                              color: Color(0xff8f43ff),
+                            ),
+                          ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xff2a2240),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: const Color(0xff8f43ff).withOpacity(0.6),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${i + 1}. ',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xff8f43ff),
+                                ),
+                              ),
+                              Text(
+                                _orderedRules[i].label,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Choose the execution order of tokens:',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // List of tokens with ordering buttons
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var index = 0; index < _orderedRules.length; index++) ...[
+                    Builder(
+                      builder: (context) {
+                        final rule = _orderedRules[index];
+                        final imageAsset = rule.imageAsset;
+                        return Container(
+                          key: ValueKey(rule.label),
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xff251d38),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: const Color(0xff8f43ff).withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 24,
+                                height: 24,
+                                alignment: Alignment.center,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Color(0xff8f43ff),
+                                ),
+                                child: Text(
+                                  '${index + 1}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              if (imageAsset != null && imageAsset.isNotEmpty)
+                                Image.asset(
+                                  imageAsset,
+                                  width: 28,
+                                  height: 28,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.stars,
+                                    size: 24,
+                                    color: Color(0xff8f43ff),
+                                  ),
+                                )
+                              else
+                                const Icon(
+                                  Icons.stars,
+                                  size: 24,
+                                  color: Color(0xff8f43ff),
+                                ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      rule.label,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    if (rule.description.isNotEmpty)
+                                      Text(
+                                        rule.description,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.white54,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.keyboard_arrow_up, size: 20),
+                                color: index > 0 ? Colors.white70 : Colors.white24,
+                                onPressed: index > 0 ? () => _moveUp(index) : null,
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 28,
+                                  minHeight: 28,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.keyboard_arrow_down, size: 20),
+                                color: index < _orderedRules.length - 1
+                                    ? Colors.white70
+                                    : Colors.white24,
+                                onPressed: index < _orderedRules.length - 1
+                                    ? () => _moveDown(index)
+                                    : null,
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 28,
+                                  minHeight: 28,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xff8f43ff),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(46),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.check, size: 18),
+                label: const Text(
+                  'Confirm Order',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onPressed: () => Navigator.of(context).pop(_orderedRules),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TokenAnimationResult {
+  const TokenAnimationResult({
+    required this.count,
+    this.dontShowAgain = false,
+  });
+
+  final int count;
+  final bool dontShowAgain;
+}
+
+class TokenAnimationDialog extends StatefulWidget {
+  const TokenAnimationDialog({
+    required this.rule,
+    this.initialCount = 1,
+    this.targetName = '',
+    this.customMessage,
+    this.currentHp,
+    this.currentCp,
+    super.key,
+  });
+
+  final StatusTokenRule rule;
+  final int initialCount;
+  final String targetName;
+  final String? customMessage;
+  final int? currentHp;
+  final int? currentCp;
+
+  static Future<TokenAnimationResult?> show(
+    BuildContext context, {
+    required StatusTokenRule rule,
+    int initialCount = 1,
+    String targetName = '',
+    String? customMessage,
+    int? currentHp,
+    int? currentCp,
+  }) {
+    return showDialog<TokenAnimationResult>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => TokenAnimationDialog(
+        rule: rule,
+        initialCount: initialCount,
+        targetName: targetName,
+        customMessage: customMessage,
+        currentHp: currentHp,
+        currentCp: currentCp,
+      ),
+    );
+  }
+
+  @override
+  State<TokenAnimationDialog> createState() => _TokenAnimationDialogState();
+}
+
+class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
+  late int _count;
+  bool _editing = false;
+  bool _dontShowAgain = false;
+  int? _blindDieRoll;
+  int _blindRollTick = 0;
+  bool _manualEditBlind = false;
+  final Random _random = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    _count = widget.initialCount.clamp(0, widget.rule.maxStack);
+  }
+
+  int _computeHpDelta(int count) {
+    final l = widget.rule.label.toLowerCase();
+    if (l.contains('delayed poison') ||
+        l.contains('poison latent') ||
+        l.contains('poison retardé') ||
+        l.contains('poison différé')) {
+      return -count * 3;
+    }
+    if (l.contains('poison')) {
+      return -count;
+    }
+    if (l.contains('brûlure') || l.contains('brulure') || l.contains('burn')) {
+      return count > 0 ? -2 : 0;
+    }
+    return 0;
+  }
+
+  int _computeCpDelta(int count) {
+    final l = widget.rule.label.toLowerCase();
+    if (l.contains('knockdown') || l.contains('terre')) {
+      final currentCp = widget.currentCp ?? 0;
+      return count > 0 ? -(currentCp >= 2 ? 2 : currentCp) : 0;
+    }
+    return 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rule = widget.rule;
+    final title = rule.label;
+    final imageAsset = rule.imageAsset;
+    final description = widget.customMessage ??
+        (rule.description.isNotEmpty ? rule.description : rule.appDetails);
+
+    final l = rule.label.toLowerCase();
+    final isConcussion = l.contains('concussion') || l.contains('commotion');
+    final isKnockdown = l.contains('knockdown') || l.contains('terre');
+    final isBlind = l.contains('blind') || l.contains('éblouissement');
+    final isEvasive = l.contains('evasive') || l.contains('evitement');
+    final isDieRollToken = isBlind || isEvasive;
+    final isFirstStrike = l.contains('first strike') ||
+        l.contains('première frappe') ||
+        l.contains('premiere frappe') ||
+        l.contains('1st frappe') ||
+        l.contains('1er frappe');
+    final isEntangle = l.contains('entangle') || l.contains('enchevetrement');
+    final isHex = l.contains('hex') || l.contains('malefice');
+    final isTargeted = l.contains('targeted') || l.contains('prispourcible');
+    final isInfoOnly = isFirstStrike || isEntangle || isHex || isTargeted;
+
+    final hpDelta = _computeHpDelta(_count);
+    final cpDelta = _computeCpDelta(_count);
+
+    final hasHpChange = widget.currentHp != null && hpDelta != 0;
+    final hasCpChange = (widget.currentCp != null && cpDelta != 0) || (isConcussion && widget.currentCp != null);
+
+    final oldHp = widget.currentHp;
+    final newHp = oldHp != null ? (oldHp + hpDelta).clamp(0, 99) : null;
+
+    final oldCp = widget.currentCp;
+    final newCp = oldCp != null
+        ? (isConcussion ? oldCp : (oldCp + cpDelta).clamp(0, 99))
+        : null;
+
+    return AlertDialog(
+      backgroundColor: const Color(0xff181424),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0xff8f43ff), width: 2),
+      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          minWidth: isDieRollToken ? 340 : 300,
+          maxWidth: isDieRollToken ? 460 : 380,
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              right: -6,
+              top: -6,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white70, size: 22),
+                onPressed: () => Navigator.of(context).pop(null),
+                tooltip: 'Cancel',
+              ),
+            ),
+            SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 8),
+                  if (imageAsset != null && imageAsset.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xff2a2240),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xff8f43ff).withOpacity(0.5),
+                            blurRadius: 24,
+                            spreadRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        imageAsset,
+                        width: 96,
+                        height: 96,
+                        fit: BoxFit.contain,
+                        errorBuilder: (ctx, err, stack) => const Icon(
+                          Icons.stars,
+                          size: 80,
+                          color: Color(0xff8f43ff),
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xff2a2240),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xff8f43ff).withOpacity(0.5),
+                            blurRadius: 24,
+                            spreadRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.stars,
+                        size: 80,
+                        color: Color(0xff8f43ff),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _count > 1 ? '$title (x$_count)' : title,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (widget.targetName.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Triggered on ${widget.targetName}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xff8f43ff).withOpacity(0.9),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      description,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: Colors.white70,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  if (isDieRollToken) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xff251d38),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xff8f43ff).withOpacity(0.5),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            isEvasive ? 'Evasive Roll (1 D6)' : 'Blind Roll (1 D6)',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          DieTile(
+                            die: GameDie(id: 99)
+                              ..rollTick = _blindRollTick
+                              ..settled = true
+                              ..value = _blindDieRoll,
+                            onTap: () {
+                              setState(() {
+                                _blindRollTick++;
+                                _blindDieRoll = _random.nextInt(6) + 1;
+                                _manualEditBlind = false;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xff8f43ff),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _blindRollTick++;
+                                    _blindDieRoll = _random.nextInt(6) + 1;
+                                    _manualEditBlind = false;
+                                  });
+                                },
+                                icon: const Icon(Icons.casino, size: 18),
+                                label: Text(_blindDieRoll == null
+                                    ? 'Roll Die'
+                                    : 'Reroll Die'),
+                              ),
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  side: const BorderSide(color: Color(0xff8f43ff)),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _manualEditBlind = !_manualEditBlind;
+                                  });
+                                },
+                                icon: const Icon(Icons.edit, size: 18),
+                                label: const Text('Edit Die'),
+                              ),
+                            ],
+                          ),
+                          if (_manualEditBlind) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(6, (idx) {
+                                final val = idx + 1;
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        _blindRollTick++;
+                                        _blindDieRoll = val;
+                                        _manualEditBlind = false;
+                                      });
+                                    },
+                                    child: Container(
+                                      width: 32,
+                                      height: 32,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: _blindDieRoll == val
+                                            ? const Color(0xff8f43ff)
+                                            : const Color(0xff181424),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: Colors.white24),
+                                      ),
+                                      child: Text(
+                                        '$val',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ],
+                          if (_blindDieRoll != null) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xf2121212),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _blindDieRoll! <= 2
+                                      ? (isEvasive ? Colors.greenAccent : Colors.redAccent)
+                                      : (isEvasive ? Colors.redAccent : Colors.greenAccent),
+                                ),
+                              ),
+                              child: Text(
+                                isEvasive
+                                    ? (_blindDieRoll! <= 2
+                                        ? 'Evasive roll: $_blindDieRoll -> Attack Avoided! (0 Damage taken)'
+                                        : 'Evasive roll: $_blindDieRoll -> Evasive Failed! (Normal damage applies)')
+                                    : (_blindDieRoll! <= 2
+                                        ? 'Blind roll: $_blindDieRoll -> Attack Fails! (0 Damage)'
+                                        : 'Blind roll: $_blindDieRoll -> Attack Touches! (Proceed with defense)'),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (_editing && !isDieRollToken && !isInfoOnly) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xff251d38),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xff8f43ff)),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'Tokens: ',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: _count > 0
+                                  ? () => setState(() => _count--)
+                                  : null,
+                              child: Padding(
+                                padding: const EdgeInsets.all(6),
+                                child: Icon(
+                                  Icons.remove_circle_outline,
+                                  size: 22,
+                                  color: _count > 0 ? Colors.redAccent : Colors.grey,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Text(
+                                '$_count',
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: () => setState(() => _count++),
+                              child: const Padding(
+                                padding: EdgeInsets.all(6),
+                                child: Icon(
+                                  Icons.add_circle_outline,
+                                  size: 22,
+                                  color: Color(0xff8f43ff),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (hasHpChange || hasCpChange) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xff251d38),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xff8f43ff).withOpacity(0.4),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          if (hasHpChange)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.favorite, size: 16, color: Colors.redAccent),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    'HP: ',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    '$oldHp',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 6),
+                                    child: Icon(
+                                      Icons.arrow_forward,
+                                      size: 14,
+                                      color: Color(0xff8f43ff),
+                                    ),
+                                  ),
+                                  Text(
+                                    '$newHp',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: newHp! < oldHp!
+                                          ? Colors.redAccent
+                                          : Colors.greenAccent,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (hasCpChange)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.flash_on, size: 16, color: Colors.amberAccent),
+                                      const SizedBox(width: 6),
+                                      const Text(
+                                        'CP: ',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      Text(
+                                        '$oldCp',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white70,
+                                        ),
+                                      ),
+                                      const Padding(
+                                        padding: EdgeInsets.symmetric(horizontal: 6),
+                                        child: Icon(
+                                          Icons.arrow_forward,
+                                          size: 14,
+                                          color: Color(0xff8f43ff),
+                                        ),
+                                      ),
+                                      Text(
+                                        '$newCp',
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.amberAccent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (isConcussion)
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 2),
+                                      child: Text(
+                                        '(CP gain prevented)',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white70,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ),
+                                  if (isKnockdown)
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 2),
+                                      child: Text(
+                                        '(-2 CP before +1 CP upkeep)',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white70,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (rule.persistent) ...[
+                    const SizedBox(height: 6),
+                    InkWell(
+                      onTap: () => setState(() => _dontShowAgain = !_dontShowAgain),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Checkbox(
+                              value: _dontShowAgain,
+                              activeColor: const Color(0xff8f43ff),
+                              onChanged: (val) =>
+                                  setState(() => _dontShowAgain = val ?? false),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            const SizedBox(width: 4),
+                            const Flexible(
+                              child: Text(
+                                'Hide future reminders',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 18),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!isDieRollToken && !isInfoOnly) ...[
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Color(0xff8f43ff)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          onPressed: () => setState(() => _editing = !_editing),
+                          icon: Icon(_editing ? Icons.check : Icons.edit, size: 16),
+                          label: Text(_editing ? 'Hide' : 'Edit'),
+                        ),
+                        const SizedBox(width: 10),
+                      ],
+                      if (!isDieRollToken || _blindDieRoll != null) ...[
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xff8f43ff),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 36,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            elevation: 4,
+                          ),
+                          onPressed: () {
+                            if (isDieRollToken) {
+                              Navigator.of(context).pop(
+                                TokenAnimationResult(
+                                  count: _blindDieRoll ?? _count,
+                                  dontShowAgain: _dontShowAgain,
+                                ),
+                              );
+                            } else {
+                              Navigator.of(context).pop(
+                                TokenAnimationResult(
+                                  count: _count,
+                                  dontShowAgain: _dontShowAgain,
+                                ),
+                              );
+                            }
+                          },
+                          child: const Text(
+                            'OK',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
