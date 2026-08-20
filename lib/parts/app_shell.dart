@@ -258,9 +258,18 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
       },
       onStopCampaign: _stopActiveCampaign,
       onNaraxus: () => _openNaraxusHeroChoice(context),
+      onMatchup: () => _openMatchup(context),
       onSignInGoogle: _signInWithGoogle,
       onSignInAnonymous: _signInAnonymously,
       onSignOut: _signOut,
+    );
+  }
+
+  void _openMatchup(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const MatchupSetupPage(),
+      ),
     );
   }
 
@@ -473,6 +482,7 @@ class HomePage extends StatefulWidget {
     required this.onResume,
     required this.onStopCampaign,
     required this.onNaraxus,
+    required this.onMatchup,
     required this.onSignInGoogle,
     required this.onSignInAnonymous,
     required this.onSignOut,
@@ -486,6 +496,7 @@ class HomePage extends StatefulWidget {
   final VoidCallback onResume;
   final VoidCallback onStopCampaign;
   final VoidCallback onNaraxus;
+  final VoidCallback onMatchup;
   final VoidCallback onSignInGoogle;
   final VoidCallback onSignInAnonymous;
   final VoidCallback onSignOut;
@@ -590,6 +601,13 @@ class _HomePageState extends State<HomePage> {
                               label: 'Naraxus Battle',
                               icon: Icons.local_fire_department,
                               onPressed: widget.onNaraxus,
+                            ),
+                            const SizedBox(height: 20),
+                            ImageActionButton(
+                              label: 'Match-up',
+                              icon: Icons.sports_kabaddi,
+                              badgeLabel: 'Dev mode',
+                              onPressed: AppSettings.instance.developerMode ? widget.onMatchup : null,
                             ),
                           ],
                         ),

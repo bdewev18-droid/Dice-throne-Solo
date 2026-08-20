@@ -15,7 +15,7 @@ $main = Get-Content -Raw $mainPath
 
 $pubspec = [regex]::Replace(
   $pubspec,
-  '(?m)^version:\s*\S+$',
+  '(?m)^version:\s*\S+\r?$',
   "version: $Version+$BuildNumber",
   1
 )

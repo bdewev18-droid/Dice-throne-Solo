@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'data/enemy_profile_repository.dart';
 import 'data/fallback_enemy_profiles.dart';
+import 'data/matchup_repository.dart';
 import 'game_engine.dart';
 import 'history_repository.dart';
 import 'models/enemy_profile.dart';
@@ -21,8 +22,9 @@ part 'parts/map.dart';
 part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
+part 'parts/matchup.dart';
 
-const String appVersionLabel = 'Version 1.3.116';
+const String appVersionLabel = 'Version 1.3.105';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -1029,12 +1031,15 @@ class AppSettings extends ChangeNotifier {
   final ActiveAdventureStorage _storage;
   bool _developerMode = false;
   Set<String> _ownedHeroNames = {};
+  Set<String> _favoriteHeroNames = {};
   bool _loaded = false;
 
   bool get developerMode => _developerMode;
 
   bool ownsHero(HeroType hero) =>
       _ownedHeroNames.isEmpty || _ownedHeroNames.contains(hero.name);
+
+  bool isFavoriteHero(HeroType hero) => _favoriteHeroNames.contains(hero.name);
 
   Future<void> load() async {
     if (_loaded) {
@@ -1045,6 +1050,7 @@ class AppSettings extends ChangeNotifier {
       final raw = await _storage.read(_key);
       if (raw == null || raw.isEmpty) {
         _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
+        _favoriteHeroNames = {};
         return;
       }
       final json = jsonDecode(raw) as Map<String, dynamic>;
@@ -1056,9 +1062,14 @@ class AppSettings extends ChangeNotifier {
       if (_ownedHeroNames.isEmpty) {
         _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
       }
+      final favorites = json['favoriteHeroes'] as List<dynamic>?;
+      _favoriteHeroNames = favorites == null
+          ? {}
+          : favorites.map((value) => value.toString()).toSet();
     } catch (error) {
       debugPrint('App settings load skipped: $error');
       _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
+      _favoriteHeroNames = {};
     }
   }
 
@@ -1084,10 +1095,21 @@ class AppSettings extends ChangeNotifier {
     await _save(syncProfile: true);
   }
 
+  Future<void> toggleFavoriteHero(HeroType hero) async {
+    if (_favoriteHeroNames.contains(hero.name)) {
+      _favoriteHeroNames.remove(hero.name);
+    } else {
+      _favoriteHeroNames.add(hero.name);
+    }
+    notifyListeners();
+    await _save();
+  }
+
   Future<void> _save({bool syncProfile = false}) async {
     final payload = {
       'developerMode': _developerMode,
       'ownedHeroes': _ownedHeroNames.toList()..sort(),
+      'favoriteHeroes': _favoriteHeroNames.toList()..sort(),
     };
     await _storage.write(_key, jsonEncode(payload));
     if (syncProfile) {
