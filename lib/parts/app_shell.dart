@@ -268,7 +268,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   void _openMatchup(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => const MatchupSetupPage(),
+        builder: (_) => const MatchupHubPage(),
       ),
     );
   }

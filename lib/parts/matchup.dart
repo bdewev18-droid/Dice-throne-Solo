@@ -1,7 +1,796 @@
 part of '../main.dart';
 
 /// ============================================================================
-/// SECTION MATCH-UP (Format Tournoi Ban 3.1)
+/// SECTION MATCH-UP (Hub, Datas & Tournoi Ban 3.1)
+/// ============================================================================
+
+/// Page d'accueil du module Match-up : choix entre 1°) Datas et 2°) Jeu
+class MatchupHubPage extends StatelessWidget {
+  const MatchupHubPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Match-up', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: Colors.black,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xff8f43ff).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xff8f43ff).withValues(alpha: 0.4)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.query_stats, color: Color(0xffd18aff), size: 26),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Bienvenue dans la section Match-up. Choisis ton mode :',
+                        style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Option 1 : Datas
+              _MatchupHubCard(
+                title: '1°) Datas & Winrates',
+                subtitle: 'Consulte le tableau statistique complet des taux de victoires d\'un héros face aux 45 autres héros du jeu.',
+                icon: Icons.table_chart,
+                badge: 'Statistiques',
+                gradient: const [Color(0xff291d3d), Color(0xff1f1530)],
+                borderColor: const Color(0xffbb67ff),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const MatchupDataViewerPage(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 18),
+
+              // Option 2 : Jeu (Format Ban 3.1)
+              _MatchupHubCard(
+                title: '2°) Jeu — Tournoi Ban 3.1',
+                subtitle: 'Entraîne-toi au format tournoi : sélection de 3 héros, phase de ban, blind pick et coaching tactique IA.',
+                icon: Icons.sports_kabaddi,
+                badge: 'Entraînement',
+                gradient: const [Color(0xff3b1654), Color(0xff220c33)],
+                borderColor: const Color(0xffe056fd),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const MatchupSetupPage(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MatchupHubCard extends StatelessWidget {
+  const _MatchupHubCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.badge,
+    required this.gradient,
+    required this.borderColor,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final String badge;
+  final List<Color> gradient;
+  final Color borderColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: gradient,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor.withValues(alpha: 0.6), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: borderColor.withValues(alpha: 0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: borderColor.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: borderColor.withValues(alpha: 0.5)),
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 26),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: borderColor.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    badge,
+                    style: TextStyle(color: borderColor, fontSize: 10, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              subtitle,
+              style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Ouvrir', style: TextStyle(color: borderColor, fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_ios, color: borderColor, size: 12),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ============================================================================
+/// 1°) DATAS & WINRATES VIEWER (Tableau de bord statistique)
+/// ============================================================================
+
+enum _DataFilter { all, favorable, balanced, unfavorable, top10Only }
+enum _DataSort { winrateDesc, winrateAsc, name }
+
+class MatchupDataViewerPage extends StatefulWidget {
+  const MatchupDataViewerPage({super.key});
+
+  @override
+  State<MatchupDataViewerPage> createState() => _MatchupDataViewerPageState();
+}
+
+class _MatchupDataViewerPageState extends State<MatchupDataViewerPage> {
+  HeroType _selectedHero = HeroType.blackWidow;
+  final TextEditingController _searchController = TextEditingController();
+  _DataFilter _activeFilter = _DataFilter.all;
+  _DataSort _activeSort = _DataSort.winrateDesc;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<HeroType> _getAllHeroesRanked() {
+    final all = HeroType.values.where((h) => h != HeroType.benjamin).toList();
+    final top10 = MatchupData.top10Heroes;
+    final others = all.where((h) => !top10.contains(h)).toList()
+      ..sort((a, b) => a.label.compareTo(b.label));
+
+    return [...top10, ...others];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final allRankedHeroes = _getAllHeroesRanked();
+    final top10Index = MatchupData.top10Heroes.indexOf(_selectedHero);
+    final isTop10 = top10Index != -1;
+    final globalWR = MatchupData.globalWinrates[_selectedHero];
+
+    // Liste des adversaires (44 autres héros)
+    final opponents = HeroType.values
+        .where((h) => h != HeroType.benjamin && h != _selectedHero)
+        .toList();
+
+    // Calcul des compteurs
+    int favorableCount = 0;
+    int balancedCount = 0;
+    int unfavorableCount = 0;
+
+    for (final opp in opponents) {
+      final wr = MatchupData.getWinrate(_selectedHero, opp);
+      if (wr != null) {
+        if (wr >= 55.0) {
+          favorableCount++;
+        } else if (wr <= 45.0) {
+          unfavorableCount++;
+        } else {
+          balancedCount++;
+        }
+      }
+    }
+
+    // Filtrage par texte et catégorie
+    final query = _searchController.text.trim().toLowerCase();
+    var filteredOpponents = opponents.where((opp) {
+      if (query.isNotEmpty && !opp.label.toLowerCase().contains(query)) {
+        return false;
+      }
+      final wr = MatchupData.getWinrate(_selectedHero, opp);
+      switch (_activeFilter) {
+        case _DataFilter.all:
+          return true;
+        case _DataFilter.favorable:
+          return wr != null && wr >= 55.0;
+        case _DataFilter.balanced:
+          return wr != null && wr > 45.0 && wr < 55.0;
+        case _DataFilter.unfavorable:
+          return wr != null && wr <= 45.0;
+        case _DataFilter.top10Only:
+          return MatchupData.top10Heroes.contains(opp);
+      }
+    }).toList();
+
+    // Tri
+    filteredOpponents.sort((a, b) {
+      final wrA = MatchupData.getWinrate(_selectedHero, a);
+      final wrB = MatchupData.getWinrate(_selectedHero, b);
+
+      switch (_activeSort) {
+        case _DataSort.winrateDesc:
+          if (wrA == null && wrB == null) return a.label.compareTo(b.label);
+          if (wrA == null) return 1;
+          if (wrB == null) return -1;
+          return wrB.compareTo(wrA);
+        case _DataSort.winrateAsc:
+          if (wrA == null && wrB == null) return a.label.compareTo(b.label);
+          if (wrA == null) return 1;
+          if (wrB == null) return -1;
+          return wrA.compareTo(wrB);
+        case _DataSort.name:
+          return a.label.compareTo(b.label);
+      }
+    });
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Datas & Winrates', style: TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: Colors.black,
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+          children: [
+            // Sélecteur de Héros principal (Top 10 en premier)
+            const Text(
+              'CHOISIS LE HÉROS À ANALYSER (Top 10 en tête)',
+              style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 130,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: allRankedHeroes.length,
+                itemBuilder: (context, index) {
+                  final hero = allRankedHeroes[index];
+                  final isSelected = hero == _selectedHero;
+                  final rank = MatchupData.top10Heroes.indexOf(hero);
+                  final isHeroTop10 = rank != -1;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedHero = hero),
+                      child: Container(
+                        width: 85,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xffbb67ff)
+                                : isHeroTop10
+                                ? const Color(0xffffe22d).withValues(alpha: 0.5)
+                                : Colors.white24,
+                            width: isSelected ? 3 : (isHeroTop10 ? 1.5 : 1),
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xff8f43ff).withValues(alpha: 0.45),
+                                    blurRadius: 10,
+                                    spreadRadius: 1,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Transform.scale(
+                                scale: hero.imageScale,
+                                child: Image.asset(
+                                  hero.asset,
+                                  fit: BoxFit.cover,
+                                  alignment: hero.imageAlignment,
+                                ),
+                              ),
+                              const DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [Colors.transparent, Colors.black87],
+                                  ),
+                                ),
+                              ),
+                              if (isHeroTop10)
+                                Positioned(
+                                  top: 4,
+                                  left: 4,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xffffe22d),
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                    child: Text(
+                                      '#${rank + 1}',
+                                      style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w900),
+                                    ),
+                                  ),
+                                ),
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Text(
+                                    hero.label,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: isSelected ? const Color(0xffd18aff) : Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // Carte Récapitulative du Héros sélectionné
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xff291d3d), Color(0xff181424)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xff8f43ff), width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 90,
+                    height: 130,
+                    child: _RectangleHeroDisplayCard(hero: _selectedHero, height: 130),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _selectedHero.label,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                            if (isTop10)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xffffe22d),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'Top #${top10Index + 1}',
+                                  style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w900),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Text('Winrate Global : ', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                            Text(
+                              globalWR != null ? '${globalWR.toStringAsFixed(2)}%' : 'N/A',
+                              style: TextStyle(
+                                color: globalWR != null ? const Color(0xff57ff9b) : Colors.white54,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        const Divider(color: Colors.white12, height: 1),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            _MiniStatPill(
+                              label: '$favorableCount Avantageux',
+                              color: Colors.greenAccent,
+                              bgColor: Colors.green.withValues(alpha: 0.18),
+                            ),
+                            _MiniStatPill(
+                              label: '$balancedCount Équilibrés',
+                              color: Colors.amberAccent,
+                              bgColor: Colors.amber.withValues(alpha: 0.18),
+                            ),
+                            _MiniStatPill(
+                              label: '$unfavorableCount Défavorables',
+                              color: Colors.redAccent,
+                              bgColor: Colors.red.withValues(alpha: 0.18),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // Filtres & Recherche de Matchups
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      labelText: 'Rechercher un adversaire',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.search),
+                      isDense: true,
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                PopupMenuButton<_DataSort>(
+                  icon: const Icon(Icons.sort, color: Color(0xffbb67ff)),
+                  tooltip: 'Trier les résultats',
+                  onSelected: (sort) => setState(() => _activeSort = sort),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(value: _DataSort.winrateDesc, child: Text('Winrate : Meilleur d\'abord')),
+                    const PopupMenuItem(value: _DataSort.winrateAsc, child: Text('Winrate : Pire d\'abord')),
+                    const PopupMenuItem(value: _DataSort.name, child: Text('Alphabétique')),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // Chips de filtrage rapide
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _FilterChip(
+                    label: 'Tous (${opponents.length})',
+                    selected: _activeFilter == _DataFilter.all,
+                    onTap: () => setState(() => _activeFilter = _DataFilter.all),
+                  ),
+                  _FilterChip(
+                    label: 'Avantageux ($favorableCount)',
+                    selected: _activeFilter == _DataFilter.favorable,
+                    onTap: () => setState(() => _activeFilter = _DataFilter.favorable),
+                  ),
+                  _FilterChip(
+                    label: 'Équilibrés ($balancedCount)',
+                    selected: _activeFilter == _DataFilter.balanced,
+                    onTap: () => setState(() => _activeFilter = _DataFilter.balanced),
+                  ),
+                  _FilterChip(
+                    label: 'Défavorables ($unfavorableCount)',
+                    selected: _activeFilter == _DataFilter.unfavorable,
+                    onTap: () => setState(() => _activeFilter = _DataFilter.unfavorable),
+                  ),
+                  _FilterChip(
+                    label: 'Top 10 uniquement',
+                    selected: _activeFilter == _DataFilter.top10Only,
+                    onTap: () => setState(() => _activeFilter = _DataFilter.top10Only),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Grille des Matchups face aux adversaires
+            if (filteredOpponents.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: Text('Aucun adversaire correspondant', style: TextStyle(fontWeight: FontWeight.w900)),
+                ),
+              )
+            else
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 0.64,
+                ),
+                itemCount: filteredOpponents.length,
+                itemBuilder: (context, index) {
+                  final opponent = filteredOpponents[index];
+                  final wr = MatchupData.getWinrate(_selectedHero, opponent);
+                  final oppRank = MatchupData.top10Heroes.indexOf(opponent);
+                  final isOppTop10 = oppRank != -1;
+
+                  return _MatchupItemCard(
+                    hero: opponent,
+                    winrate: wr,
+                    topRank: isOppTop10 ? oppRank + 1 : null,
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: FilterChip(
+        label: Text(label),
+        selected: selected,
+        onSelected: (_) => onTap(),
+        selectedColor: const Color(0xff8f43ff).withValues(alpha: 0.35),
+        checkmarkColor: const Color(0xffbb67ff),
+        labelStyle: TextStyle(
+          color: selected ? Colors.white : Colors.white60,
+          fontWeight: selected ? FontWeight.w900 : FontWeight.normal,
+          fontSize: 11,
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniStatPill extends StatelessWidget {
+  const _MiniStatPill({
+    required this.label,
+    required this.color,
+    required this.bgColor,
+  });
+
+  final String label;
+  final Color color;
+  final Color bgColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
+
+/// Carte d'un matchup adverse dans la vue Datas
+class _MatchupItemCard extends StatelessWidget {
+  const _MatchupItemCard({
+    required this.hero,
+    required this.winrate,
+    required this.topRank,
+  });
+
+  final HeroType hero;
+  final double? winrate;
+  final int? topRank;
+
+  @override
+  Widget build(BuildContext context) {
+    final isFavorable = winrate != null && winrate! >= 55.0;
+    final isUnfavorable = winrate != null && winrate! <= 45.0;
+
+    final badgeColor = winrate == null
+        ? Colors.grey
+        : isFavorable
+        ? Colors.greenAccent
+        : isUnfavorable
+        ? Colors.redAccent
+        : Colors.amberAccent;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: badgeColor.withValues(alpha: 0.5), width: 1.5),
+        color: const Color(0xff181820),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Transform.scale(
+              scale: hero.imageScale,
+              child: Image.asset(
+                hero.asset,
+                fit: BoxFit.cover,
+                alignment: hero.imageAlignment,
+              ),
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black87],
+                ),
+              ),
+            ),
+            Positioned(
+              top: 6,
+              left: 6,
+              child: _HeroComplexityBadge(hero: hero),
+            ),
+            if (topRank != null)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xffffe22d),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '#$topRank',
+                    style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      hero.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: badgeColor.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: badgeColor),
+                      ),
+                      child: Text(
+                        winrate != null ? '${winrate!.toStringAsFixed(1)}%' : 'N/A',
+                        style: TextStyle(
+                          color: badgeColor,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ============================================================================
+/// 2°) JEU : CONFIGURATION DU TRIO JOUEUR (Format Tournoi Ban 3.1)
 /// ============================================================================
 
 class MatchupSetupPage extends StatefulWidget {
@@ -565,7 +1354,7 @@ class _HeroSlotCard extends StatelessWidget {
                 right: 4,
                 child: Container(
                   padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.black54,
                     shape: BoxShape.circle,
                   ),
@@ -598,7 +1387,7 @@ class _HeroSlotCard extends StatelessWidget {
 }
 
 /// ============================================================================
-/// ÉTAPE 2 : CONFIGURATION DES 3 HÉROS ADVERSES (4 MODES + EXPERT)
+/// CONFIGURATION DES 3 HÉROS ADVERSES (4 MODES + EXPERT)
 /// ============================================================================
 
 class MatchupEnemySelectionPage extends StatefulWidget {
@@ -1077,7 +1866,7 @@ class _ManualEnemyPickerModalState extends State<_ManualEnemyPickerModal> {
 }
 
 /// ============================================================================
-/// ÉTAPE 3 : ARÈNE DE MATCH-UP (DÉS, BAN, BLIND PICK, ANALYSE IA CHAT)
+/// 3°) ARÈNE DE MATCH-UP (DÉS, BAN, BLIND PICK, ANALYSE IA CHAT)
 /// ============================================================================
 
 class MatchupArenaPage extends StatefulWidget {
