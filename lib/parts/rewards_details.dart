@@ -636,7 +636,7 @@ Future<List<String>?> showAlterationDialog(
     final label = rule?.label ?? value;
     counts[label] = (counts[label] ?? 0) + 1;
   }
-  final effectiveDuelTokens = isMapPage ? current : (duelTokens ?? current);
+  final effectiveDuelTokens = duelTokens ?? current;
   final duelKeys = {
     ...effectiveDuelTokens
         .where((token) => _isVisibleStatusTokenLabel(token))

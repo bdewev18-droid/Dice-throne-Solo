@@ -242,7 +242,7 @@ class _HistoryPageState extends State<HistoryPage> {
         final r = list[i];
         final avgStr = _formatNumber(_averageScore(r.value));
         String p = '$avgStr avg';
-        String s = '${r.value.length} partie${r.value.length > 1 ? 's' : ''}';
+        String s = '${r.value.length} game${r.value.length > 1 ? 's' : ''}';
         
         // Also show the best score in the secondary if sort is 'best', just for info
         if (_sort == HistorySort.best) {
@@ -386,17 +386,19 @@ class _HistoryPageState extends State<HistoryPage> {
                       ),
                     ),
                     Expanded(child: _HistoryMetricText(runs.length.toString())),
-                    Expanded(
-                      child: _HistoryMetricText(
-                        _roundedAverageLabel(_averageEnemies(runs)),
+                    if (_difficulty != RunDifficulty.naraxus)
+                      Expanded(
+                        child: _HistoryMetricText(
+                          _roundedAverageLabel(_averageEnemies(runs)),
+                        ),
                       ),
-                    ),
                     Expanded(
                       child: _HistoryMetricText(
                         _roundedAverageLabel(_averageHp(runs)),
                       ),
                     ),
                     Expanded(
+                      flex: _difficulty == RunDifficulty.naraxus ? 2 : 1,
                       child: _HistoryMetricText(
                         _formatSmartDuration(
                           Duration(seconds: _averageDurationSeconds(runs).round()),
@@ -478,11 +480,15 @@ class _HistoryPageState extends State<HistoryPage> {
     });
   }
 
-  void _addManualRun() {
-    showDialog<void>(
+  void _addManualRun() async {
+    final record = await showDialog<GameRecord>(
       context: context,
       builder: (_) => const ManualRunDialog(),
-    ).then((_) => setState(() {}));
+    );
+    if (record != null) {
+      await HistoryRepository.instance.add(record);
+      if (mounted) setState(() {});
+    }
   }
 
   Future<void> _confirmDeleteSelected() async {
@@ -739,47 +745,48 @@ class _HistoryHeaderRow extends StatelessWidget {
             ),
           ),
           // 2. Enemies
-          Expanded(
-            child: _HistoryHeaderItem(
-              child: Image.asset(
-                'assets/minion.webp',
-                width: 20,
-                height: 20,
-                fit: BoxFit.contain,
-              ),
-              tooltip: 'Enemies defeated',
-              onTap: () => _openMultiStatSheet(
-                context,
-                title: 'Enemies Defeated',
-                iconWidget: Image.asset(
+          if (difficulty != RunDifficulty.naraxus)
+            Expanded(
+              child: _HistoryHeaderItem(
+                child: Image.asset(
                   'assets/minion.webp',
-                  width: 24,
-                  height: 24,
+                  width: 20,
+                  height: 20,
                   fit: BoxFit.contain,
                 ),
-                description:
-                    'Total number of enemies eliminated across games.',
-                lines: [
-                  _StatLineData(
-                    label: 'Minions eliminated',
-                    value: '$minionEnemiesTotal',
+                tooltip: 'Enemies defeated',
+                onTap: () => _openMultiStatSheet(
+                  context,
+                  title: 'Enemies Defeated',
+                  iconWidget: Image.asset(
+                    'assets/minion.webp',
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
                   ),
-                  _StatLineData(
-                    label: 'Naxarus Victories',
-                    value: '$naxarusVictories',
-                  ),
-                  _StatLineData(
-                    label: 'Minions eliminated avg',
-                    value: '${_formatNumber(minionEnemiesAvg)}/run',
-                  ),
-                  _StatLineData(
-                    label: 'Naxarus Victories avg',
-                    value: '${_formatNumber(naxarusVictoriesAvg)}/run',
-                  ),
-                ],
+                  description:
+                      'Total number of enemies eliminated across games.',
+                  lines: [
+                    _StatLineData(
+                      label: 'Minions eliminated',
+                      value: '$minionEnemiesTotal',
+                    ),
+                    _StatLineData(
+                      label: 'Naxarus Victories',
+                      value: '$naxarusVictories',
+                    ),
+                    _StatLineData(
+                      label: 'Minions eliminated avg',
+                      value: '${_formatNumber(minionEnemiesAvg)}/run',
+                    ),
+                    _StatLineData(
+                      label: 'Naxarus Victories avg',
+                      value: '${_formatNumber(naxarusVictoriesAvg)}/run',
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
           // 3. HP
           Expanded(
             child: _HistoryHeaderItem(
@@ -806,6 +813,7 @@ class _HistoryHeaderRow extends StatelessWidget {
           ),
           // 4. Time
           Expanded(
+            flex: difficulty == RunDifficulty.naraxus ? 2 : 1,
             child: _HistoryHeaderItem(
               child: const Icon(Icons.timer, size: 18, color: Color(0xffffe22d)),
               tooltip: 'Play time',
@@ -1072,9 +1080,7 @@ class _RunDetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isNaraxus = record.mode.difficulty == RunDifficulty.naraxus;
     final enemiesLabel = isNaraxus ? '-' : record.enemiesDefeated.toString();
-    final pointsLabel = isNaraxus
-        ? (record.isVictory || record.score >= 100 ? '1' : '0')
-        : record.score.toString();
+    final pointsLabel = record.score.toString();
 
     return Row(
       children: [
@@ -1097,7 +1103,7 @@ class _RunDetailRow extends StatelessWidget {
           ),
         ),
         const Expanded(child: _HistoryMetricText('1')),
-        Expanded(child: _HistoryMetricText(enemiesLabel)),
+        if (!isNaraxus) Expanded(child: _HistoryMetricText(enemiesLabel)),
         Expanded(
           child: _HistoryMetricText(
             record.healthRemaining == null
@@ -1105,7 +1111,10 @@ class _RunDetailRow extends StatelessWidget {
                 : record.healthRemaining.toString(),
           ),
         ),
-        Expanded(child: _HistoryMetricText(_formatSmartDuration(record.duration))),
+        Expanded(
+          flex: isNaraxus ? 2 : 1,
+          child: _HistoryMetricText(_formatSmartDuration(record.duration)),
+        ),
         Expanded(child: _HistoryMetricText(pointsLabel)),
       ],
     );

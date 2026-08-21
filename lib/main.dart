@@ -24,7 +24,7 @@ part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 part 'parts/matchup.dart';
 
-const String appVersionLabel = 'Version 1.3.106';
+const String appVersionLabel = 'Version 1.3.115';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);

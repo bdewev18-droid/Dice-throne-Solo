@@ -602,13 +602,15 @@ class _HomePageState extends State<HomePage> {
                               icon: Icons.local_fire_department,
                               onPressed: widget.onNaraxus,
                             ),
-                            const SizedBox(height: 20),
-                            ImageActionButton(
-                              label: 'Match-up',
-                              icon: Icons.sports_kabaddi,
-                              badgeLabel: 'Dev mode',
-                              onPressed: AppSettings.instance.developerMode ? widget.onMatchup : null,
-                            ),
+                            if (AppSettings.instance.developerMode) ...[
+                              const SizedBox(height: 20),
+                              ImageActionButton(
+                                label: 'Match-up',
+                                icon: Icons.sports_kabaddi,
+                                badgeLabel: 'Dev mode',
+                                onPressed: widget.onMatchup,
+                              ),
+                            ],
                           ],
                         ),
                       ),

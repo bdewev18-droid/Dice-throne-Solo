@@ -17,6 +17,7 @@ class UpkeepOutcome {
     required this.cpDelta,
     required this.healthDelta,
     required this.removedTokens,
+    this.addedTokens = const [],
     required this.log,
     this.logParts = const [],
     this.notes = const [],
@@ -25,6 +26,7 @@ class UpkeepOutcome {
   final int cpDelta;
   final int healthDelta;
   final List<String> removedTokens;
+  final List<String> addedTokens;
   final String log;
   final List<String> logParts;
   // Human-readable notes for tokens requiring player action (e.g. Powder Keg transfer).
@@ -55,6 +57,7 @@ class _UpkeepContext {
   int currentCp;
   bool concussionActive = false;
   final List<String> removedTokens = [];
+  final List<String> addedTokens = [];
   final List<String> logParts = [];
   final List<String> notes = [];
 
@@ -65,7 +68,9 @@ class _UpkeepContext {
       return tl == lower ||
           (lower == 'burn' && (tl == 'brûlure' || tl == 'brulure')) ||
           (lower == 'knockdown' && (tl == 'à terre' || tl == 'a terre')) ||
-          (lower == 'concussion' && tl == 'commotion');
+          (lower == 'concussion' && tl == 'commotion') ||
+          (lower == 'time bomb 1' && tl == 'bombe à retardement 1') ||
+          (lower == 'time bomb 2' && (tl == 'bombe à retardement 2' || tl == 'time bomb' || tl == 'bombe à retardement'));
     }).length;
   }
 
@@ -79,6 +84,8 @@ class _UpkeepContext {
           (lower == 'burn' && (tl == 'brûlure' || tl == 'brulure')) ||
           (lower == 'knockdown' && (tl == 'à terre' || tl == 'a terre')) ||
           (lower == 'concussion' && tl == 'commotion') ||
+          (lower == 'time bomb 1' && tl == 'bombe à retardement 1') ||
+          (lower == 'time bomb 2' && (tl == 'bombe à retardement 2' || tl == 'time bomb' || tl == 'bombe à retardement')) ||
           (lower == 'first strike' && (tl == 'première frappe' || tl == 'premiere frappe' || tl == '1st frappe'))) {
         removedTokens.add(t);
         n--;
@@ -282,6 +289,7 @@ class GameEngine {
       cpDelta: ctx.cpDelta,
       healthDelta: ctx.healthDelta,
       removedTokens: ctx.removedTokens,
+      addedTokens: ctx.addedTokens,
       log: ctx.logParts.join(', '),
       logParts: List<String>.from(ctx.logParts),
       notes: ctx.notes,
@@ -311,6 +319,7 @@ class GameEngine {
       cpDelta: ctx.cpDelta,
       healthDelta: ctx.healthDelta,
       removedTokens: ctx.removedTokens,
+      addedTokens: ctx.addedTokens,
       log: ctx.logParts.join(', '),
       logParts: List<String>.from(ctx.logParts),
       notes: ctx.notes,

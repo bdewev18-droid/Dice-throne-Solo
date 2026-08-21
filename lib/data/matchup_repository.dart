@@ -1,6 +1,9 @@
 import 'dart:math';
 import '../main.dart';
 
+enum MatchupDifficulty { normal, expert, cauchemar }
+
+
 class MatchupData {
   MatchupData._();
 
@@ -517,7 +520,7 @@ class MatchupData {
   /// Génère 3 héros adverses selon le mode sélectionné
   static List<HeroType> generateEnemyTrio({
     required MatchupMode mode,
-    required bool expert,
+    required MatchupDifficulty difficulty,
     required List<HeroType> playerTrio,
   }) {
     final random = Random();
@@ -525,30 +528,45 @@ class MatchupData {
 
     switch (mode) {
       case MatchupMode.free:
-        final pool = List<HeroType>.from(allAvailable)..shuffle(random);
-        return pool.take(3).toList();
-
       case MatchupMode.random:
         final pool = List<HeroType>.from(allAvailable)..shuffle(random);
         return pool.take(3).toList();
 
       case MatchupMode.top10:
-        if (expert) {
-          return _pickBestSynergyTrio(pool: top10Heroes, minTop: 2, topPool: top10Heroes, playerTrio: playerTrio);
-        } else {
-          final shuffledTop10 = List<HeroType>.from(top10Heroes)..shuffle(random);
-          final chosen = <HeroType>[shuffledTop10[0], shuffledTop10[1]];
-          final remainingPool = allAvailable.where((h) => !chosen.contains(h)).toList()..shuffle(random);
-          chosen.add(remainingPool.first);
-          return chosen;
-        }
-
       case MatchupMode.top5:
-        if (expert) {
-          return _pickBestSynergyTrio(pool: top10Heroes, minTop: 2, topPool: top5Heroes, playerTrio: playerTrio);
+        final topPool = mode == MatchupMode.top5 ? top5Heroes : top10Heroes;
+
+        if (difficulty == MatchupDifficulty.cauchemar) {
+          // Cauchemar: worst comp specifically against the player's trio
+          return _pickBestSynergyTrio(
+            pool: top10Heroes,
+            minTop: 2,
+            topPool: topPool,
+            playerTrio: playerTrio,
+          );
+        } else if (difficulty == MatchupDifficulty.expert) {
+          // Expert: 2 random from topPool, 3rd chosen to be solid against top10 meta, ignoring playerTrio
+          final shuffledTop = List<HeroType>.from(topPool)..shuffle(random);
+          final chosen = <HeroType>[shuffledTop[0], shuffledTop[1]];
+
+          HeroType? bestThird;
+          double bestScore = -1.0;
+
+          for (final third in allAvailable) {
+            if (chosen.contains(third)) continue;
+            final trio = [chosen[0], chosen[1], third];
+            final score = _evaluateTrioScore(trio, top10Heroes); // Ignore playerTrio, focus on meta
+            if (score > bestScore) {
+              bestScore = score;
+              bestThird = third;
+            }
+          }
+          chosen.add(bestThird ?? allAvailable.firstWhere((h) => !chosen.contains(h)));
+          return chosen;
         } else {
-          final shuffledTop5 = List<HeroType>.from(top5Heroes)..shuffle(random);
-          final chosen = <HeroType>[shuffledTop5[0], shuffledTop5[1]];
+          // Normal: 2 random from topPool, 1 random from all
+          final shuffledTop = List<HeroType>.from(topPool)..shuffle(random);
+          final chosen = <HeroType>[shuffledTop[0], shuffledTop[1]];
           final remainingPool = allAvailable.where((h) => !chosen.contains(h)).toList()..shuffle(random);
           chosen.add(remainingPool.first);
           return chosen;
@@ -606,12 +624,12 @@ class MatchupData {
   static HeroType pickAiBan({
     required List<HeroType> playerTrio,
     required List<HeroType> enemyTrio,
-    required bool expert,
+    required MatchupDifficulty difficulty,
   }) {
-    if (!expert) {
+    if (difficulty == MatchupDifficulty.normal) {
       return playerTrio[Random().nextInt(playerTrio.length)];
     }
-    // Mode Expert : Bannit le héros du joueur qui a le plus fort winrate moyen contre les 3 héros de l'IA
+    // Mode Expert / Cauchemar : Bannit le héros du joueur qui a le plus fort winrate moyen contre les 3 héros de l'IA
     HeroType? mostDangerousHero;
     double highestThreat = -1.0;
 
@@ -633,12 +651,12 @@ class MatchupData {
   static HeroType pickAiHero({
     required List<HeroType> enemyRemainingTwo,
     required List<HeroType> playerRemainingTwo,
-    required bool expert,
+    required MatchupDifficulty difficulty,
   }) {
-    if (!expert) {
+    if (difficulty == MatchupDifficulty.normal) {
       return enemyRemainingTwo[Random().nextInt(enemyRemainingTwo.length)];
     }
-    // Choix stratégique a priori : le héros ayant le meilleur winrate moyen face aux 2 héros restants possibles du joueur
+    // Mode Expert / Cauchemar : choix stratégique
     final h1 = enemyRemainingTwo[0];
     final h2 = enemyRemainingTwo[1];
 

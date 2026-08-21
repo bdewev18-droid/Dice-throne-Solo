@@ -144,6 +144,7 @@ class _FightPageState extends State<FightPage> {
   int _battleAttackValue = 0;
   int _battleDefenseValue = 0;
   bool _battleAttackUndefendable = false;
+  bool _defenseOnlyCardsUnlocked = false;
   int _battleReturnDamage = 0;
   bool _battleReturnDamageUndefendable = false;
   int _battleLifeSteal = 0;
@@ -518,6 +519,7 @@ class _FightPageState extends State<FightPage> {
                     primaryEnemy: _primaryEnemy,
                     secondaryEnemy: _secondaryEnemy,
                     canSwitchTarget: _canSwitchHeroTarget,
+                    shadowsActive: _shadowsActive,
                     onSelectTarget: _selectDualEnemyTarget,
                     returnDamage: _battleReturnDamage,
                     returnDamageUndefendable: _battleReturnDamageUndefendable,
@@ -530,6 +532,8 @@ class _FightPageState extends State<FightPage> {
                     showResolution: _isBattlePhase,
                     attackValue: _battleAttackValue,
                     defenseValue: _battleDefenseValue,
+                    showOnlyCardsCover: _phase == CombatPhase.minionAttack && _battleAttackUndefendable && !_defenseOnlyCardsUnlocked,
+                    onOnlyCardsUnlock: () => setState(() => _defenseOnlyCardsUnlocked = true),
                     onAttackChanged: (delta) => setState(() {
                       final defenderHasTargeted = _phase == CombatPhase.hero
                           ? enemy.alterations.any(
@@ -798,7 +802,7 @@ class _FightPageState extends State<FightPage> {
     }
     if (_phase == CombatPhase.hero && _hasActiveEvasiveOnMinionDefender) {
       final effectiveDefense =
-          _battleAttackUndefendable ? 0 : _battleDefenseValue;
+          _battleDefenseValue;
       final netDamage = max(0, _battleAttackValue - effectiveDefense);
       if (netDamage > 0) {
         _checkAndTriggerEvasivePopin();
@@ -1547,7 +1551,7 @@ class _FightPageState extends State<FightPage> {
         return;
       }
 
-      final roll = blindRollResult.count;
+      final roll = blindRollResult.dieRoll ?? blindRollResult.count;
       final targetList = isMinion
           ? enemy.alterations
           : widget.adventure.alterations;
@@ -1617,6 +1621,36 @@ class _FightPageState extends State<FightPage> {
     });
   }
 
+  bool _shadowsActive = false;
+
+  bool get _hasActiveShadowsOnHeroDefender {
+    if (_phase != CombatPhase.minionAttack) return false;
+    return widget.adventure.alterations.any((t) =>
+        t.toLowerCase() == 'shadows' || t.toLowerCase() == 'ombre');
+  }
+
+  Future<void> _triggerShadowsPopin() async {
+    final rule = TokenCatalogRepository.byLabel('Shadows') ??
+        TokenCatalogRepository.byLabel('Ombre');
+    if (rule == null) return;
+    final currentCount = widget.adventure.alterations.where((t) =>
+        t.toLowerCase() == 'shadows' || t.toLowerCase() == 'ombre').length;
+    await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: currentCount,
+      targetName: widget.adventure.hero.label,
+      currentHp: widget.adventure.health,
+      currentCp: widget.adventure.combatPoints,
+      customMessage: 'Shadows triggered!',
+    );
+    if (mounted) {
+      setState(() {
+        _shadowsActive = true;
+      });
+    }
+  }
+
   bool _evasivePopinTriggered = false;
   bool _evasiveRollResolved = false;
 
@@ -1644,7 +1678,7 @@ class _FightPageState extends State<FightPage> {
       if (!hasEvasive) break;
 
       final effectiveDefense =
-          _battleAttackUndefendable ? 0 : _battleDefenseValue;
+          _battleDefenseValue;
       final netDamage = max(0, _battleAttackValue - effectiveDefense);
       if (netDamage <= 0) break;
 
@@ -1670,7 +1704,7 @@ class _FightPageState extends State<FightPage> {
       }
 
       attempts++;
-      final roll = evasiveResult.count;
+      final roll = evasiveResult.dieRoll ?? evasiveResult.count;
 
       // Remove exactly ONE Evasive token
       final idx = enemy.alterations.indexWhere((t) =>
@@ -1828,6 +1862,7 @@ class _FightPageState extends State<FightPage> {
     _battleAttackValue = 0;
     _battleDefenseValue = 0;
     _battleAttackUndefendable = false;
+    _defenseOnlyCardsUnlocked = false;
     _battleReturnDamage = 0;
     _battleReturnDamageUndefendable = false;
     _battleLifeSteal = 0;
@@ -3086,19 +3121,32 @@ class _FightPageState extends State<FightPage> {
     }
     if (_phase == CombatPhase.hero && _hasActiveEvasiveOnMinionDefender) {
       final effectiveDefense =
-          _battleAttackUndefendable ? 0 : _battleDefenseValue;
+          _battleDefenseValue;
       final netDamage = max(0, _battleAttackValue - effectiveDefense);
       if (netDamage > 0) {
         await _checkAndTriggerEvasivePopin();
+      }
+    }
+    if (_phase == CombatPhase.minionAttack && _hasActiveShadowsOnHeroDefender) {
+      if (_battleAttackValue > 0) {
+        if (!_shadowsActive) {
+          await _triggerShadowsPopin();
+        } else {
+          widget.adventure.log('[TOKEN] Hero is in Shadows! Absorbed the attack.');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Shadows absorbed the attack!')));
+          }
+        }
+        _battleAttackValue = 0;
+        _battleDefenseValue = 0;
+        widget.adventure.log('[TOKEN] Hero Shadows activated! Negated all incoming damage.');
       }
     }
     _captureStepUndo();
     final currentBattlePhase = _phase;
     late final CombatPhase nextPhase;
     setState(() {
-      final effectiveDefense = _battleAttackUndefendable
-          ? 0
-          : _battleDefenseValue;
+      final effectiveDefense = _battleDefenseValue;
       final netDamage = max(0, _battleAttackValue - effectiveDefense);
       if (_phase == CombatPhase.hero) {
         final oldEnemyHealth = enemy.health;
@@ -3172,7 +3220,7 @@ class _FightPageState extends State<FightPage> {
         } else {
           _lastBattleOutcomeMessage =
               '${widget.adventure.hero.label} dealt $_battleAttackValue damage. '
-              '${_battleAttackUndefendable ? 'This attack is undefendable.' : '${enemy.label} prevented $_battleDefenseValue damage.'}\n'
+              '${_battleAttackUndefendable ? 'This attack is undefendable. ' : ''}${enemy.label} prevented $_battleDefenseValue damage.\n'
               'Net damage: deals $netDamage damage.'
               '${_battleReturnDamage > 0 ? ' Return damage: $_battleReturnDamage.' : ''}'
               '${_battleLifeSteal > 0 ? ' Steals $_battleLifeSteal health.' : ''}'
@@ -3204,6 +3252,13 @@ class _FightPageState extends State<FightPage> {
           widget.adventure.log('[TOKEN] Hero Hex removed at end of offensive turn.');
         }
         _heroHexedThisAttack = false;
+        
+        if (_shadowsActive) {
+          widget.adventure.alterations.removeWhere((t) => t.toLowerCase() == 'shadows' || t.toLowerCase() == 'ombre');
+          _shadowsActive = false;
+          widget.adventure.log('[TOKEN] Hero Shadows removed after completing a full turn.');
+        }
+
         _activeEnemyId = _firstEnemyTurnId();
         nextPhase = CombatPhase.minionUpkeep;
       } else {
@@ -3264,7 +3319,7 @@ class _FightPageState extends State<FightPage> {
 
         _lastBattleOutcomeMessage =
             '${enemy.label} dealt $_battleAttackValue damage. '
-            '${_battleAttackUndefendable ? 'This attack is undefendable.' : '${widget.adventure.hero.label} prevented $_battleDefenseValue damage.'}\n'
+            '${_battleAttackUndefendable ? 'This attack is undefendable. ' : ''}${widget.adventure.hero.label} prevented $_battleDefenseValue damage.\n'
             'Net damage: deals $netDamage damage.'
             '${_battleHeroTokens.isNotEmpty ? ' ${widget.adventure.hero.label} receives ${_battleHeroTokens.join(', ')}.' : ''}'
             '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_battleMinionTokens.join(', ')}.' : ''}'
@@ -3534,6 +3589,52 @@ class _FightPageState extends State<FightPage> {
         maskedTokens.add(tokenKey);
       }
 
+      if (result != null && result.dieRoll != null && mounted) {
+        final roll = result.dieRoll!;
+        final isTimeBomb1 = tokenKey == 'time bomb 1' || tokenKey == 'bombe à retardement 1';
+        final isTimeBomb2 = tokenKey == 'time bomb 2' || tokenKey == 'bombe à retardement 2' || (tokenKey == 'time bomb' && !isTimeBomb1);
+        
+        if (isTimeBomb1) {
+          setState(() {
+            tokens.removeWhere((t) {
+              final r = TokenCatalogRepository.byLabel(t);
+              return r?.label == rule.label || t.toLowerCase() == rule.label.toLowerCase();
+            });
+            if (roll <= 5) {
+              tokens.add('Time bomb 2');
+              widget.adventure.log('[TOKEN] $targetName rolled $roll for Time Bomb 1: transforms into Time Bomb 2.');
+            } else {
+              widget.adventure.log('[TOKEN] $targetName rolled 6 for Time Bomb 1: token removed.');
+            }
+            widget.onChanged();
+          });
+          continue;
+        } else if (isTimeBomb2) {
+          setState(() {
+            tokens.removeWhere((t) {
+              final r = TokenCatalogRepository.byLabel(t);
+              return r?.label == rule.label || t.toLowerCase() == rule.label.toLowerCase();
+            });
+            if (roll <= 5) {
+              widget.adventure.log('[TOKEN] $targetName rolled $roll for Time Bomb 2: takes 4 dmg and token removed.');
+              if (targetName == widget.adventure.hero.label) {
+                widget.adventure.setHeroHealth(
+                  widget.adventure.health - 4,
+                  source: 'Time bomb 2',
+                );
+              } else {
+                final EnemyNode targetEnemy = widget.adventure.enemies.firstWhere((e) => e.label == targetName, orElse: () => _primaryEnemy);
+                targetEnemy.health = (targetEnemy.health - 4).clamp(0, 999);
+              }
+            } else {
+              widget.adventure.log('[TOKEN] $targetName rolled 6 for Time Bomb 2: token removed.');
+            }
+            widget.onChanged();
+          });
+          continue;
+        }
+      }
+
       if (result != null && result.count != initialCount && mounted) {
         setState(() {
           tokens.removeWhere((t) {
@@ -3553,6 +3654,11 @@ class _FightPageState extends State<FightPage> {
   Future<void> _applyHeroUpkeep({bool captureUndo = true}) async {
     if (!mounted || _heroUpkeepApplied || _phase != CombatPhase.heroUpkeep) {
       return;
+    }
+    final hasShadows = widget.adventure.alterations.any((t) => t.toLowerCase() == 'shadows' || t.toLowerCase() == 'ombre');
+    if (hasShadows && !_shadowsActive) {
+      await _triggerShadowsPopin();
+      widget.adventure.log('[TOKEN] Hero Shadows activated at start of Upkeep.');
     }
     await _triggerTokenAnimationDialogs(
       widget.adventure.alterations,
@@ -3582,6 +3688,7 @@ class _FightPageState extends State<FightPage> {
       for (final t in heroOutcome!.removedTokens) {
         widget.adventure.alterations.remove(t);
       }
+      widget.adventure.alterations.addAll(heroOutcome!.addedTokens);
       if (heroOutcome != null && heroOutcome!.logParts.isNotEmpty) {
         for (final part in heroOutcome!.logParts) {
           widget.adventure.log('[TOKEN] ${widget.adventure.hero.label}: $part');
@@ -3648,6 +3755,7 @@ class _FightPageState extends State<FightPage> {
       for (final token in outcome.removedTokens) {
         enemy.alterations.remove(token);
       }
+      enemy.alterations.addAll(outcome.addedTokens);
       _upkeepApplied = true;
       if (passiveLog.isNotEmpty) {
         widget.adventure.log('${enemy.label} passive: $passiveLog.');
@@ -3675,6 +3783,9 @@ class _FightPageState extends State<FightPage> {
     }
     if (outcome.removedTokens.isNotEmpty) {
       parts.add('removed ${outcome.removedTokens.join(', ')}');
+    }
+    if (outcome.addedTokens.isNotEmpty) {
+      parts.add('added ${outcome.addedTokens.join(', ')}');
     }
     return parts.join(', ');
   }
@@ -6740,6 +6851,8 @@ class CombatAiChatDock extends StatelessWidget {
     required this.showResolution,
     required this.attackValue,
     required this.defenseValue,
+    this.showOnlyCardsCover = false,
+    this.onOnlyCardsUnlock,
     required this.onAttackChanged,
     required this.onDefenseChanged,
     required this.onApply,
@@ -6751,6 +6864,7 @@ class CombatAiChatDock extends StatelessWidget {
     this.onBlindPressed,
     this.showEvasiveButton = false,
     this.onEvasivePressed,
+    this.shadowsActive = false,
     super.key,
   });
 
@@ -6762,6 +6876,7 @@ class CombatAiChatDock extends StatelessWidget {
   final EnemyNode primaryEnemy;
   final EnemyNode? secondaryEnemy;
   final bool canSwitchTarget;
+  final bool shadowsActive;
   final ValueChanged<EnemyNode> onSelectTarget;
   final int returnDamage;
   final bool returnDamageUndefendable;
@@ -6774,6 +6889,8 @@ class CombatAiChatDock extends StatelessWidget {
   final bool showResolution;
   final int attackValue;
   final int defenseValue;
+  final bool showOnlyCardsCover;
+  final VoidCallback? onOnlyCardsUnlock;
   final ValueChanged<int> onAttackChanged;
   final ValueChanged<int> onDefenseChanged;
   final VoidCallback onApply;
@@ -6856,7 +6973,12 @@ class CombatAiChatDock extends StatelessWidget {
               enemyColor: enemy.rank.color,
               heroName: adventure.hero.label,
               enemyName: enemy.label,
-              heroTokens: adventure.alterations,
+              heroTokens: adventure.alterations.map((t) {
+                if (shadowsActive && (t.toLowerCase() == 'shadows' || t.toLowerCase() == 'ombre')) {
+                  return '${t}_active';
+                }
+                return t;
+              }).toList(),
               enemyTokens: enemy.alterations,
               onEditHeroTokens: onEditHeroTokens,
               onEditEnemyTokens: onEditEnemyTokens,
@@ -7079,12 +7201,35 @@ class CombatAiChatDock extends StatelessWidget {
                                 ),
                               ),
                             )
-                          : _BattleCounter(
-                              label: 'DEF',
-                              value: defenseValue,
-                              color: defenseColor,
-                              onChanged: onDefenseChanged,
-                            ),
+                          : showOnlyCardsCover
+                              ? SizedBox(
+                                  height: 52,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: defenseColor,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      elevation: 4,
+                                    ),
+                                    onPressed: onOnlyCardsUnlock,
+                                    child: const Text(
+                                      'Only cards',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : _BattleCounter(
+                                  label: 'DEF',
+                                  value: defenseValue,
+                                  color: defenseColor,
+                                  onChanged: onDefenseChanged,
+                                ),
                 ),
                 const SizedBox(width: 8),
                 SizedBox(
@@ -10474,16 +10619,29 @@ class TokenBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rule = TokenCatalogRepository.byLabel(label);
+    final isActive = label.endsWith('_active');
+    final actualLabel = isActive ? label.replaceAll('_active', '') : label;
+    final rule = TokenCatalogRepository.byLabel(actualLabel);
     if (rule != null) {
       if (!rule.editorVisible) {
         return const SizedBox.shrink();
+      }
+      Widget badge = StatusTokenImage(rule: rule, size: 30);
+      if (isActive) {
+        badge = Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.purpleAccent, width: 2),
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: const [BoxShadow(color: Colors.purple, blurRadius: 4, spreadRadius: 1)],
+          ),
+          child: badge,
+        );
       }
       return Tooltip(
         message: rule.label,
         child: GestureDetector(
           onTap: () => showTokenDetails(context, rule),
-          child: StatusTokenImage(rule: rule, size: 30),
+          child: badge,
         ),
       );
     }
@@ -13638,10 +13796,12 @@ class TokenAnimationResult {
   const TokenAnimationResult({
     required this.count,
     this.dontShowAgain = false,
+    this.dieRoll,
   });
 
   final int count;
   final bool dontShowAgain;
+  final int? dieRoll;
 }
 
 class TokenAnimationDialog extends StatefulWidget {
@@ -13743,7 +13903,9 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
     final isKnockdown = l.contains('knockdown') || l.contains('terre');
     final isBlind = l.contains('blind') || l.contains('éblouissement');
     final isEvasive = l.contains('evasive') || l.contains('evitement');
-    final isDieRollToken = isBlind || isEvasive;
+    final isTimeBomb1 = l.contains('time bomb 1') || l.contains('bombe à retardement 1');
+    final isTimeBomb2 = l.contains('time bomb 2') || l.contains('bombe à retardement 2') || (l.contains('time bomb') && !isTimeBomb1);
+    final isDieRollToken = isBlind || isEvasive || isTimeBomb1 || isTimeBomb2;
     final isFirstStrike = l.contains('first strike') ||
         l.contains('première frappe') ||
         l.contains('premiere frappe') ||
@@ -13899,7 +14061,9 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                       child: Column(
                         children: [
                           Text(
-                            isEvasive ? 'Evasive Roll (1 D6)' : 'Blind Roll (1 D6)',
+                            isEvasive ? 'Evasive Roll (1 D6)' : 
+                            isBlind ? 'Blind Roll (1 D6)' : 
+                            isTimeBomb1 ? 'Time Bomb 1 (1 D6)' : 'Time Bomb 2 (1 D6)',
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
@@ -14012,9 +14176,11 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                 color: const Color(0xf2121212),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: _blindDieRoll! <= 2
-                                      ? (isEvasive ? Colors.greenAccent : Colors.redAccent)
-                                      : (isEvasive ? Colors.redAccent : Colors.greenAccent),
+                                  color: (isTimeBomb1 || isTimeBomb2)
+                                      ? (_blindDieRoll! <= 5 ? Colors.redAccent : Colors.greenAccent)
+                                      : _blindDieRoll! <= 2
+                                          ? (isEvasive ? Colors.greenAccent : Colors.redAccent)
+                                          : (isEvasive ? Colors.redAccent : Colors.greenAccent),
                                 ),
                               ),
                               child: Text(
@@ -14022,9 +14188,17 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                     ? (_blindDieRoll! <= 2
                                         ? 'Evasive roll: $_blindDieRoll -> Attack Avoided! (0 Damage taken)'
                                         : 'Evasive roll: $_blindDieRoll -> Evasive Failed! (Normal damage applies)')
-                                    : (_blindDieRoll! <= 2
-                                        ? 'Blind roll: $_blindDieRoll -> Attack Fails! (0 Damage)'
-                                        : 'Blind roll: $_blindDieRoll -> Attack Touches! (Proceed with defense)'),
+                                    : isBlind
+                                        ? (_blindDieRoll! <= 2
+                                            ? 'Blind roll: $_blindDieRoll -> Attack Fails! (0 Damage)'
+                                            : 'Blind roll: $_blindDieRoll -> Attack Touches! (Proceed with defense)')
+                                        : isTimeBomb1
+                                            ? (_blindDieRoll! <= 5
+                                                ? 'Time bomb roll: $_blindDieRoll -> Transforms into Time Bomb 2!'
+                                                : 'Time bomb roll: $_blindDieRoll -> Token removed!')
+                                            : (_blindDieRoll! <= 5
+                                                ? 'Time bomb roll: $_blindDieRoll -> Take 4 undefendable dmg!'
+                                                : 'Time bomb roll: $_blindDieRoll -> Token removed!'),
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -14315,8 +14489,9 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                             if (isDieRollToken) {
                               Navigator.of(context).pop(
                                 TokenAnimationResult(
-                                  count: _blindDieRoll ?? _count,
+                                  count: _count,
                                   dontShowAgain: _dontShowAgain,
+                                  dieRoll: _blindDieRoll,
                                 ),
                               );
                             } else {
