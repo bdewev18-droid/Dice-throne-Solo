@@ -1,0 +1,2087 @@
+﻿{
+  "version": 1,
+  "tokens": [
+    {
+      "label": "Concussion",
+      "frLabel": "Commotion",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "appAnimation": true,
+      "imageAsset": "assets/token/concussion.png",
+      "description": "A player afflicted with this token skips gaining CP during their Upkeep Phase and then removes this token.",
+      "aliases": [
+        "Commotion",
+        "Concussion"
+      ],
+      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (annule le gain de +1 CP et retrait du token Ã  la fin de l'upkeep, non persistant).",
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Blind",
+      "frLabel": "Blind",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Blind.png",
+      "description": "The next time a player afflicted with this token activates an Offensive Ability, they must remove it and roll 1 die. On 1-2, their Offensive Ability fails to activate and has no effect of any kind. If a player concludes their Offensive Roll Phase without activating an Offensive Ability, remove this token.",
+      "aliases": [
+        "Blind",
+        "Ã©blouissement"
+      ],
+      "appDetails": "Jet de dÃ© 1-2 annulant l'attaque lors de la roll phase.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Stun",
+      "frLabel": "Ã©tourdissement",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/stun.png",
+      "description": "A player afflicted with this token may take no actions of any kind (i.e. no cards may be played, no defense may be made, no status tokens or passive abilities may be used, etc). After the attack concludes, the player who inflicted Stun removes the token and then immediately targets the same opponent with an additional Offensive Roll Phase",
+      "aliases": [
+        "Stun",
+        "Ã©tourdissement"
+      ],
+      "appDetails": "Bloque toutes les actions du joueur et accorde une phase de roll supplÃ©mentaire Ã  l'attaquant.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Entangle",
+      "frLabel": "EnchevÃªtrement",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Entangle.png",
+      "description": "A player afflicted with this token gets 1 fewer Roll Attempts during their next Offensive Roll Phase. At the conclusion of the Roll Phase, remove this token.",
+      "aliases": [
+        "EnchevÃªtrement",
+        "Entangle"
+      ],
+      "appDetails": "RÃ©duit de 1 le nombre de relances d'attaque.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Targeted",
+      "frLabel": "Pris pour cible",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Targeted.png",
+      "description": "When a player afflicted with this token is Attacked by an opponent, the incoming Attack dmg is increased by 2. Attack Modifier. Persistent.",
+      "aliases": [
+        "Pris pour cible",
+        "Targeted"
+      ],
+      "appDetails": "+2 damage to incoming attacks.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Evasive",
+      "frLabel": "Evitement",
+      "kind": "positive",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Evasive.png",
+      "description": "When a player with this token has incoming damage (from any source), they may choose to spend it. If spent, roll 1 die. If the outcome is 1-2, no dmg is received (although other associated effects may still apply). Multiple tokens may be spent in an attempt to prevent the same source of damage.",
+      "aliases": [
+        "Evasive",
+        "Evitement"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Burn",
+      "frLabel": "BrÃ»lure",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/burn.png",
+      "description": "A player afflicted with this token is dealt 2 dmg during their Upkeep Phase. Persistent.",
+      "aliases": [
+        "BrÃ»lure",
+        "Burn"
+      ],
+      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (-2 PV, persistant).",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Knockdown",
+      "frLabel": "A terre",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "persistence": "non_persistent",
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/A-terre.png",
+      "description": "A player afflicted with this token loses 2 CP during their Upkeep Phase (before gaining +1 CP). Then remove this token.",
+      "aliases": [
+        "A terre",
+        "Ã€ terre",
+        "Knockdown"
+      ],
+      "appDetails": "En phase Upkeep : dÃ©duit 2 PC (avant le gain de +1 PC). Non-persistant (retirÃ© lors de l'Upkeep). Naxarus est immunisÃ©.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Shadows",
+      "frLabel": "ombre",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Shadows.png",
+      "description": "When a player with this token is damaged as a result of an opponentâ€™s Offensive Roll Phase, no damage is received and no defense is made (although the attack still â€œsucceedsâ€ & other effects may apply). Discard this token after the affected player starts & concludes a single turn while under its effects.",
+      "aliases": [
+        "Shadows",
+        "ombre"
+      ],
+      "appDetails": "Annulation complÃ¨te des dÃ©gÃ¢ts d'une attaque subie.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Sneak Attack",
+      "frLabel": "Attaque furtive",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Sneak-Attack.png",
+      "description": "After Attacking, a player with this token may spend it and roll 1 die to add the value of the die to their damage total. Attack Modifier.",
+      "aliases": [
+        "Attaque furtive",
+        "Sneak Attack"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Poison",
+      "frLabel": "poison",
+      "kind": "negative",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "appAnimation": true,
+      "imageAsset": "assets/token/poison.png",
+      "description": "A player afflicted with this token is dealt 1 dmg per Poison token during the Upkeep Phase of their turn. Persistent.",
+      "aliases": [
+        "Poison",
+        "poison"
+      ],
+      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (-1 PV par cumul de Poison, persistant).",
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Cleanse",
+      "frLabel": "Purification",
+      "kind": "positive",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Cleanse.png",
+      "description": "A player with this token may spend it at any time to remove a single status effect from themselves.",
+      "aliases": [
+        "Cleanse",
+        "Purification"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Accuracy",
+      "frLabel": "PrÃ©cision",
+      "kind": "positive",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Accuracy.png",
+      "description": "A player with this token may spend it at the conclusion of their Offensive Roll Phase to make their Attack undefendable.",
+      "aliases": [
+        "Accuracy",
+        "PrÃ©cision"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Blessing of Divinity",
+      "frLabel": "BÃ©nÃ©diction divine",
+      "kind": "unique",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": false,
+      "appSupported": false,
+      "imageAsset": "assets/token/Blessing-of-Divinity.png",
+      "description": "The next time a player (or team) with this token would have their health reduced to 0, remove this token and set their health to 1 instead. This token may not be removed or transferred by any other means.",
+      "aliases": [
+        "Blessing of Divinity",
+        "BÃ©nÃ©diction divine"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Crit",
+      "frLabel": "Critique",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/crit.png",
+      "description": "If a player with this token is dealing at least dmg as a result of their Offensive Roll Phase, this token may be spent to add 4 dmg. Attack Modifier.",
+      "aliases": [
+        "Crit",
+        "Critique"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Protect",
+      "frLabel": "Protection",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Protect.png",
+      "description": "A player with this token may spend it at any time to prevent Â½ incoming damage (rounded up).",
+      "aliases": [
+        "Protect",
+        "Protection"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Retribution",
+      "frLabel": "RÃ©tribution",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Retribution.png",
+      "description": "This token may be spent after being Attacked as a result of an opponentâ€™s Offensive Roll Phase to deal half of the incoming dmg (rounded up) back to the attacker.",
+      "aliases": [
+        "Retribution",
+        "RÃ©tribution"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Delayed Poison",
+      "frLabel": "Poison latent",
+      "kind": "negative",
+      "maxStack": 2,
+      "persistent": false,
+      "persistence": "non_persistent",
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Delayed-Poison.png",
+      "description": "A player inflicted with this token removes it at the conclusion of their turn and then receives 3 dmg per token (max 2).",
+      "aliases": [
+        "Delayed Poison",
+        "Poison latent",
+        "Poison retardÃ©",
+        "Poison diffÃ©rÃ©"
+      ],
+      "appDetails": "GÃ©rÃ© automatiquement en fin de tour (-3 PV par cumul, max 2, aprÃ¨s rÃ©solution du combat + retrait des cumuls).",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Ninjitsu",
+      "frLabel": "Ninjitsu",
+      "kind": "positive",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Ninjutsu.webp",
+      "description": "After Attacking, a player with this token may spend it and roll 1 die: â€¢ On 1-3, add 1 dmg. â€¢ On 4-5, add 2 dmg. â€¢ On 6, choose to either add 2 dmg, inflict Delayed Poison, or make your Attack undefendable. Attack Modifier.",
+      "aliases": [
+        "Ninjitsu"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Smoke Bomb",
+      "frLabel": "bombe fumigÃ¨ne",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Smoke-Bomb.png",
+      "description": "When a player with this token receives dmg, they may choose to spend it. If spent, roll 1 die. If the outcome is 1-3, no dmg is received (although other associated effects may still apply).",
+      "aliases": [
+        "Smoke Bomb",
+        "bombe fumigÃ¨ne"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Barbed Vine",
+      "frLabel": "Ronces",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Barbed-Vine.png",
+      "description": "A player afflicted with this token receives 1 dmg for each Roll Attempt beyond the first during their Offensive Roll Phase, up to a maximum of 2 dmg per turn. This token is removed and then the dmg is applied at the conclusion of the Roll Phase.",
+      "aliases": [
+        "Barbed Vine",
+        "Ronces"
+      ],
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Wellspring",
+      "frLabel": "Source",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Wellspring.png",
+      "description": "A player with this token may spend it during their Main Phase & roll 1 die: gain Â½ the value as Health (rounded up).",
+      "aliases": [
+        "Source",
+        "Wellspring"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Reload",
+      "frLabel": "Recharge",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Reload.png",
+      "description": "If a player concludes their Offensive Roll Phase with an Attack, they may spend this token. If spent, roll 1 die and add Â½ the value as dmg (rounded up). Attack Modifier.",
+      "aliases": [
+        "Recharge",
+        "Reload"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Back Strike",
+      "frLabel": "Riposte",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Back-Strike.png",
+      "description": "When a player with Back Strike has incoming damage as a result of an opponentâ€™s Offensive Roll Phase, they may choose to spend this token. If spent, roll 1 die. Then deal Â½ the value as dmg (rounded up) to that opponent.",
+      "aliases": [
+        "Back Strike",
+        "Riposte"
+      ],
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Honor",
+      "frLabel": "Honneur",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/honor.png",
+      "description": "Spend to increase your Attack dmg by 1, or spend 2 Honor to increase your Attack dmg by 3. Attack Modifier.",
+      "aliases": [
+        "Honneur",
+        "Honor"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Shame",
+      "frLabel": "Honte",
+      "kind": "negative",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/shame.png",
+      "description": "When player afflicted with Shame concludes their Offensive Roll Phase with an Attack, remove this token and reduce that Attack dmg by 1. Attack Modifier.",
+      "aliases": [
+        "Honte",
+        "Shame"
+      ],
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Bleed",
+      "frLabel": "HÃ©morragie",
+      "kind": "negative",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Bleed.png",
+      "description": "A player afflicted with this token must roll 1 die during their Upkeep Phase. On 1-4, they are dealt 1 dmg. On 5-6, remove this token.",
+      "aliases": [
+        "Bleed",
+        "HÃ©morragie"
+      ],
+      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (jet D6 par cumul : 1-4 = -1 PV, 5-6 = token retirÃ©).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Constrict",
+      "frLabel": "Compression",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Constrict.png",
+      "description": "During their next Offensive Roll Phase, a player afflicted with this token must pay 1 CP for each Roll Attempt beyond the first. At the conclusion of the Roll Phase, remove this token.",
+      "aliases": [
+        "Compression",
+        "Constrict"
+      ],
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Cursed Doubloon",
+      "frLabel": "Doublon maudit",
+      "kind": "unique",
+      "maxStack": 5,
+      "persistent": true,
+      "removable": false,
+      "appSupported": true,
+      "imageAsset": "assets/token/Cursed-Doubloon.png",
+      "description": "â€¢ Any player other than the Pirate afflicted with Cursed Doubloons is dealt 1 dmg per Cursed Doubloon during their Upkeep Phase. â€¢ Whenever the Pirate would gain a Cursed Doubloon, she may choose not to. â€¢ Cursed Doubloon tokens may stack up to 5x on the Pirate and up to 3x on anyone else.",
+      "aliases": [
+        "Cursed Doubloon",
+        "Doublon maudit"
+      ],
+      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (-1 PV par cumul, ignorÃ© pour le hÃ©ros Pirate).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Powder Keg",
+      "frLabel": "Baril de poudre",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Powder-Keg.png",
+      "description": "A player inflicted with this token must roll 1 die during their Upkeep Phase. On 1-2, the Keg blows up. On 3-5, nothing happens. On 6, the player afflicted with Powder Keg may transfer the token to a chosen player. Additionally, if a player becomes inflicted with Powder Keg while already inflicted with Powder Keg, the first Keg immediately blows up. When a Keg blows up, remove it and deal 3 dmg as an isolated source of undefendable dmg.",
+      "aliases": [
+        "Baril de poudre",
+        "Powder Keg"
+      ],
+      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (jet D6 : 1-2 = explosion -3 PV + retrait, 3-5 = rien, 6 = notification transfert).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Parlay",
+      "frLabel": "Pourparlers",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Parlay.png",
+      "description": "A player afflicted with Parlay may not deal any dmg as a result of their Offensive Roll Phase (although other effects may still apply). At the conclusion of the Roll Phase, remove this token.",
+      "aliases": [
+        "Parlay",
+        "Pourparlers"
+      ],
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Wither",
+      "frLabel": "DÃ©pÃ©rissement",
+      "kind": "negative",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Wither.png",
+      "description": "If a player with a Wither token would deal damage as a result of an Attack, reduce that dmg by 1 per Wither token. Attack Modifier. Persistent.",
+      "aliases": [
+        "DÃ©pÃ©rissement",
+        "Wither"
+      ],
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Nanite",
+      "frLabel": "Nanite",
+      "kind": "negative",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Nanite.png",
+      "description": "When Detonated, remove all tokens and deal dmg based on the number of Nanites on each player: â€¢ 1 Nanite: receive 1 dmg. â€¢ 2 Nanites: receive 3 dmg. â€¢ 3 Nanites: receive 5 dmg. During Upkeep Phase, a player rolls 1 die per Nanite they are afflicted with: on 6, remove this token.",
+      "aliases": [
+        "Nanite"
+      ],
+      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (jet 1D6 par Nanite, retirÃ© sur un 6).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Blinding Light",
+      "frLabel": "LumiÃ¨re aveuglante",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Blinding-Light.png",
+      "description": "The next time a player afflicted with this token activates an Offensive Ability, they must remove this token and roll 1 die: On 1, their Offensive Ability fails to activate and has no effect of any kind. On 2-3, any dmg they would deal for the remainder of the Roll Phase is reduced by Â½ (rounded up).",
+      "aliases": [
+        "Blinding Light",
+        "LumiÃ¨re aveuglante"
+      ],
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Flight",
+      "frLabel": "Vol",
+      "kind": "positive",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Flight.png",
+      "description": "A player with this token may spend it at any time during the Roll Phase. Once spent, roll 2 dice. If a 6 was rolled, Activate this token. If Activated during the Offensive Roll Phase, this playerâ€™s Attack becomes undefendable. If Activated during the Defensive Roll Phase, ignore all incoming damage.",
+      "aliases": [
+        "Flight",
+        "Vol"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Holy Presence",
+      "frLabel": "PrÃ©sence Divine",
+      "kind": "unique",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": false,
+      "appSupported": true,
+      "imageAsset": "assets/token/Holy-Presence.png",
+      "description": "During their Upkeep Phase, a player with this token deals 1 dmg to all opponents. This token may not be transferred by any means (but can be removed).",
+      "aliases": [
+        "Holy Presence",
+        "PrÃ©sence Divine"
+      ],
+      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (journal & notes : 1 dÃ©gÃ¢t sortant par cumul Ã  tous les adversaires).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Mesmerize",
+      "frLabel": "Hypnose",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Mesmerize.png",
+      "description": "A player with this token may spend it and roll 1 die. On 5-6, you may force the opponent to reroll any one die.",
+      "aliases": [
+        "Hypnose",
+        "Mesmerize"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Cheer",
+      "frLabel": "Joie",
+      "kind": "positive",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Cheer.png",
+      "description": "A player with this token may: Spend 1 to re-roll 1 of their dice. Spend 3 to change any one of their dice to a 6.",
+      "aliases": [
+        "Cheer",
+        "Joie"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Coal",
+      "frLabel": "Charbon",
+      "kind": "negative",
+      "maxStack": 4,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Coal.png",
+      "description": "The next time a player with four of these tokens would gain CP, they must first remove all Coal tokens. Then reduce the amount of CP gained by 1.",
+      "aliases": [
+        "Charbon",
+        "Coal"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Gift",
+      "frLabel": "Cadeau",
+      "kind": "negative",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Gift.png",
+      "description": "During your Main Phase, you may spend this token to draw a card from the Reject deck and put it into play. This token may not be transferred by any means (but can be removed).",
+      "aliases": [
+        "Cadeau",
+        "Gift"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Grim Pursuit",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Grim-Pursuit.png",
+      "description": "A player with this token may spend it to activate one of the following effects: - Perform an additional Roll Attempt during your Offensive Roll Phase. - After Attacking, roll 5 : add 1 Ã— [horseshoe die icon] dmg. Attack Modifier. Each effect may only be activated once per turn.",
+      "aliases": [
+        "Grim Pursuit"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Decrep-ify",
+      "frLabel": "",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Decrep-ify.png",
+      "description": "During their next Offensive Roll Phase, a player afflicted with this token may only re-roll a maximum of 2 dice when performing any Roll Attempt after their first Roll Attempt. Additionally, reduce any Attack dmg by 1. Attack Modifier. At the conclusion of the Roll Phase, remove this token.",
+      "aliases": [
+        "Decrep-ify"
+      ],
+      "appDetails": "Pris en compte dans l'application.",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Prey",
+      "frLabel": "",
+      "kind": "negative",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Prey.png",
+      "description": "When a player afflicted with this token is Attacked by an opponent, the Attacker may roll 1 die. On 1, remove this token. On 2â€“5, the Attacker increases their dmg by 1. On 6, the Attacker increases their dmg by 2. Attack Modifier.",
+      "aliases": [
+        "Prey"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Hex",
+      "frLabel": "MalÃ©fice",
+      "kind": "unique",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/hex.png",
+      "description": "A player afflicted with this token must treat all of their die faces with a 6 as if those faces are completely blank instead. At the conclusion of their turn, remove this token. This token may not be transferred by any means (but can be removed).",
+      "aliases": [
+        "Hex",
+        "MalÃ©fice",
+        "Malefice",
+        "malefice"
+      ],
+      "appDetails": "Tous les 6 lors des jets d'attaque deviennent des dÃ©s blancs sans effet ni symbole.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Regenerate",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Regenerate.png",
+      "description": "When you gain this token, place it on the side up. During their Upkeep Phase, a player with this token does the following based on which side is face-up: â€¢ Regenerate : Heal 2 and flip it to the side. â€¢ Regenerate : Heal 1 and remove this token. Additionally, if a player gains Regenerate while at Stack Limit, they may flip a [1 token] to the [2 token] side instead.",
+      "aliases": [
+        "Regenerate"
+      ],
+      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (2+ cumuls = +2 PV et retrait d'un cumul ; 1 cumul = +1 PV et retrait).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Wound",
+      "frLabel": "",
+      "kind": "negative",
+      "maxStack": 5,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Wound.png",
+      "description": "A player afflicted with this token is dealt 1 dmg during their Upkeep Phase. Then roll 1 die: on 4-6, remove this token.",
+      "aliases": [
+        "Wound"
+      ],
+      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (-1 PV par cumul, puis jet D6 >= 4 pour retirer la stack).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Disarm",
+      "frLabel": "",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Disarm.png",
+      "description": "During their Upkeep Phase, a player afflicted with this token may choose to discard 1 card . If they do not (or cannot), they must skip their Income Phase instead. Then remove this token.",
+      "aliases": [
+        "Disarm"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Guard Break",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Guard-Break.png",
+      "description": "If a player concludes their Offensive Roll Phase with an Attack, they may spend this token and roll 1 die. If the outcome is 4-5, the Attack becomes undefendable",
+      "aliases": [
+        "Guard Break"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Charged Gem",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Charged-Gem.png",
+      "description": "A player with this token may spend it during their Main Phase and roll 1 die: â€¢ On 1-2, gain 1CP. â€¢ On 3-4, deal 2 as an isolated source of undefendable dmg to a chosen opponent. â€¢ On 5-6, gain 1CP and deal 2 as an isolated source of undefendable dmg to a chosen opponent.",
+      "aliases": [
+        "Charged Gem"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Sun-Marked",
+      "frLabel": "",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Sun-Marked.png",
+      "description": "When a player afflicted with this token is Attacked by an opponent, the Attacker Heals 2. Attack Modifier. Persistent.",
+      "aliases": [
+        "Sun-Marked"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Cosmic flare",
+      "frLabel": "Lueur cosmique",
+      "kind": "positive",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/cosmic-flare.webp",
+      "description": "During their Upkeep Phase, a player with this token deals 1 dmg per Cosmic Flare Cosmic Flare to all opponents. Then remove 1 of these tokens.",
+      "aliases": [
+        "Cosmic flare",
+        "Lueur cosmique"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Radiance",
+      "frLabel": "Ã©clat",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/radiance.webp",
+      "description": "A player with this token may spend it to change the value of any die rolled as a part of the Roll Attempt during their Defensive Roll Phase to a 6.",
+      "aliases": [
+        "Radiance",
+        "Ã©clat"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Agility",
+      "frLabel": "AgilitÃ©",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Agility.webp",
+      "description": "When a player with this token receives damage, they may spend it and roll 1 . If the outcome is 1â€“3, prevent 1/2 incoming damage (rounded up).",
+      "aliases": [
+        "Agility",
+        "AgilitÃ©"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Time bomb 1",
+      "frLabel": "Bombe Ã  retardement 1",
+      "kind": "negative",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/time-bomb-2.webp",
+      "description": "During their Upkeep Phase, roll 1 die:\nOn 1-5, flip it to Time Bomb 2.\nOn 6, remove the token.",
+      "aliases": [
+        "Time bomb 1",
+        "Bombe Ã  retardement 1"
+      ],
+      "appDetails": "En phase d'upkeep: sur 1 Ã  5, se transforme en Time bomb 2. Sur 6, retirÃ©.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true,
+      "persistence": "persistent"
+    },
+    {
+      "label": "Time bomb 2",
+      "frLabel": "Bombe Ã  retardement 2",
+      "kind": "negative",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/token-time-bomb-1.webp",
+      "description": "During their Upkeep Phase, roll 1 die:\nOn 1-5, remove the token and receive 4 undefendable dmg.\nOn 6, remove the token.",
+      "aliases": [
+        "Bombe Ã  retardement",
+        "Time bomb 1", "Time bomb 2",
+        "Time bomb 2",
+        "Bombe Ã  retardement 2"
+      ],
+      "appDetails": "En phase d'upkeep: sur 1 Ã  5, inflige 4 dÃ©gÃ¢ts imparables et est retirÃ©. Sur 6, retirÃ©.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true,
+      "persistence": "persistent"
+    },
+    {
+      "label": "DÃ©jÃ  vue",
+      "frLabel": "dÃ©jÃ  vue",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/deja-vu.webp",
+      "description": "Instead of activating an Ability, a player with this token may spend it to conclude their current Offensive Roll Phase and then start a new Offensive Roll Phase.",
+      "aliases": [
+        "DÃ©jÃ  vue",
+        "dÃ©jÃ  vue"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Premonition",
+      "frLabel": "PrÃ©monition",
+      "kind": "positive",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Premonition.webp",
+      "description": "A player with these tokens may spend them once per turn during their Income Phase to activate one of the following effects:\n1 token: draw 2 instead of 1.\n3 tokens: draw 3 instead of 1.\nWhen activated, one of the drawn cards must be placed on either the top or bottom of the deck.",
+      "aliases": [
+        "Premonition",
+        "PrÃ©monition"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Crimson bands",
+      "frLabel": "Bandes pourpres",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/crimson-bands.webp",
+      "description": "A player afflicted with this token cannot play cards during their next Roll Phase. Then, at the conclusion of that Roll Phase, remove this token.",
+      "aliases": [
+        "Bandes pourpres",
+        "Crimson bands"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Probability Manipulation",
+      "frLabel": "Manipulation des probabilitÃ©s",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/probability-manipulation.webp",
+      "description": "Spend to change the value of any of your dice displaying an even number (2, 4, 6), up or down by a value of 1 (a value of 6 cannot be increased).",
+      "aliases": [
+        "Manipulation des probabilitÃ©s",
+        "Probability Manipulation"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Reality Warp",
+      "frLabel": "Distorsion du rÃ©el",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/reality-warp.webp",
+      "description": "If a player is inflicted with this token when they begin their Offensive Roll Phase, they must remove it and use one of Scarlet Witchâ€™s dice in place of one of their own until the end of the Offensive Roll Phase.",
+      "aliases": [
+        "Distorsion du rÃ©el",
+        "Reality Warp"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Conjure",
+      "frLabel": "Conjuration",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Conjure.webp",
+      "description": "Once per turn, a player with this token may spend it during their Main Phase to either:\nGain a Positive Status Effect from a chosen playerâ€™s leaflet. Any opponent may prevent this by discarding  1 of their choice.\nInflict Reality Warp Reality Warp on a chosen opponent.",
+      "aliases": [
+        "Conjuration",
+        "Conjure"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Crackle",
+      "frLabel": "CrÃ©pitement",
+      "kind": "positive",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/crackle.webp",
+      "description": "If a player concludes their Offensive Roll Phase with an Attack, they may spend this token. If spent, add 1 dmg per Positive or Negative Status Effect on their Hero Board (excluding the Crackle Crackle that was just spent), up to a maximum of 3. Only two Crackle Crackle may be spent per turn. Attack Modifier.",
+      "aliases": [
+        "Crackle",
+        "CrÃ©pitement"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Bag of Tricks",
+      "frLabel": "Sac Ã  Malice",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Sac_a_malice.webp",
+      "description": "During their Upkeep Phase, a player with this token removes it and rolls 1 :\nOn 1, lose .\nOn 2â€“5, Loki chooses whether the player heals 2 , gains 1CP, or receives  2  undefendable dmg.\nOn 6, gain 2CP .",
+      "aliases": [
+        "Bag of Tricks",
+        "Sac Ã  Malice"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Webbed",
+      "frLabel": "EntoilÃ©",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Webbed.webp",
+      "description": "When this token is inflicted deal  2 as an isolated source of undefendable dmg.\nThe next time a player afflicted with this token is Attacked with normal damage, the damage type becomes undefendable instead and this token is immediately removed.",
+      "aliases": [
+        "EntoilÃ©",
+        "Webbed"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Electrokinesis",
+      "frLabel": "Ã©lectrokinÃ©sie",
+      "kind": "positive",
+      "maxStack": 4,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Electrokinesis.webp",
+      "description": "Once per turn, a player may spend 4 Electrokinesis  during their Main Phase to draw 1 card .",
+      "aliases": [
+        "Electrokinesis",
+        "Ã©lectrokinÃ©sie"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Battle plan",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 4,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/battle-plan.webp",
+      "description": "A player with these tokens may spend them to activate each effect once per turn:\n1 token: Examine a chosen opponentâ€™s hand.\n3 tokens: Look at the top three cards of your deck. If any of them are Leadership Cards, you may reveal one of them to your opponent and add it to your hand. Each remaining card may be discarded or put back in any order.\n3 tokens: Inflict Focus Fire  on a chosen opponent.",
+      "aliases": [
+        "Battle plan"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Support",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/support.webp",
+      "description": "Spend these tokens for a variety of effects:\n1 token: A chosen player gains 1CP.\n1 token: A chosen player may re-roll 1 of their dice at any time.\n3 tokens: A chosen player may draw 1 card .",
+      "aliases": [
+        "Support"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Focus Fire",
+      "frLabel": "",
+      "kind": "negative",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/focus-fire.webp",
+      "description": "When a player with this token is Attacked by an opponent, the Attacker increases their damage by 1. Attack Modifier. Persistent.",
+      "aliases": [
+        "Focus Fire"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Dissolution",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Dissolution.webp",
+      "description": "A player with this token may spend it during their Main Phase. When spent, choose a player to Heal 2 or remove a Negative Status Effect from that player.",
+      "aliases": [
+        "Dissolution"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Disruption",
+      "frLabel": "",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Disruption.webp",
+      "description": "During their Upkeep Phase, a player afflicted with this token may choose to lose 1CP . If they do not (or cannot), they receive 2 undefendable dmg instead. Then remove this token.",
+      "aliases": [
+        "Disruption"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Dice cube",
+      "frLabel": "",
+      "kind": "negative",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Dice cube.webp",
+      "description": "A player afflicted with this token cannot alter the lowest value die from their first Roll Attempt during their Offensive Roll Phase. If at Stack Limit, this affects the two lowest value dice rolled (instead of one).\nAt the conclusion of the Roll Phase, remove these tokens (even if an Ability wasnâ€™t activated successfully).",
+      "aliases": [
+        "Dice cube"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Force Field",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Force-field.webp",
+      "description": "Remove this token and one other Positive Status Effect on your Hero Board, then choose a player to prevent  incoming damage (rounded up).",
+      "aliases": [
+        "Force Field"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Acuity",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 4,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Acuity.webp",
+      "description": "1 token: Re-roll 1 of your dice at any time.\n2 tokens: Gain 1 CP .\n4 tokens: Inflict Phoenix Burn Phoenix Burn on a chosen opponent.",
+      "aliases": [
+        "Acuity"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Flame blast",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 5,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/flame-blast.webp",
+      "description": "If Dark Phoenix is Active, she may spend Flame Blast to increase her Attack dmg by  1 or spend 3 Flame Blast to increase her Attack dmg by 4. Attack Modifier.",
+      "aliases": [
+        "Flame blast"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Phoenix burn",
+      "frLabel": "",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/phoenix-burn.webp",
+      "description": "A player afflicted with this token is dealt 2  undefendable dmg during their Upkeep Phase. Then roll 1 dice : on 5â€“6, remove this token.",
+      "aliases": [
+        "Phoenix burn"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Paralyse",
+      "frLabel": "",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Paralyse.webp",
+      "description": "A player afflicted with this token cannot gain or inflict any status effects associated with any of their Offensive Abilities (all other effects of the ability still apply).\nWhen a player with this token concludes their Roll Phase, remove it.",
+      "aliases": [
+        "Paralyse"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Infiltration",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Infiltration.webp",
+      "description": "A player with this token may spend it and then choose a die rolled by any player (including themselves) during their Defensive Roll Attempt. The chosen die must be re-rolled.",
+      "aliases": [
+        "Infiltration"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Influence",
+      "frLabel": "",
+      "kind": "negative",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/influence.webp",
+      "description": "A player afflicted with these tokens must roll 1 Dice  at the start of their Offensive Roll Phase per token. For every 1â€“3 rolled, they get one fewer Roll Attempt. Then remove all of these tokens.",
+      "aliases": [
+        "Influence"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Ionic Energy",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 4,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Ionic-Energy.webp",
+      "description": "A player with this token may choose to spend it to add the indicated number of damage to their Attack.\nYou may only spend up to 2 tokens per turn.\nAlternatively, pay 1CP to spend up to 4 tokens this turn.\nAttack Modifier.",
+      "aliases": [
+        "Ionic Energy"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Skyward",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/skyward.webp",
+      "description": "When a player with this token is Attacked, they may choose to spend it. If spent, you and your Attacker each roll 1Dice . \nThe player who spent this token may pay 1 CP to re-roll their die (may do this multiple times):\nIf your outcome is greater, deal 3  undefendable dmg back to the Attacker.\nIf your outcome is equal, prevent  4incoming dmg.",
+      "aliases": [
+        "Skyward"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Tornado",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 4,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Tornado.webp",
+      "description": "A player with this token may spend it at the start of their Offensive Roll Phase. For each token spent, gain an opponentâ€™s die. These dice may be included in all Roll Attempts during this Offensive Roll Phase.",
+      "aliases": [
+        "Tornado"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Wind shear",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/wind-shear.webp",
+      "description": "A player with this token may spend it when being Attacked to prevent 2 incoming dmg.\nThen choose an opponent to receive 2 as an isolated source of undefendable dmg.",
+      "aliases": [
+        "Wind shear"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Rage",
+      "frLabel": "",
+      "kind": "positive",
+      "maxStack": 3,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Rage.webp",
+      "description": "A player with this token may:\nSpend 1 and discard 1  to add 3 dmg to their Attack. Attack Modifier.\nSpend 3 to draw 1 .",
+      "aliases": [
+        "Rage"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Chaos",
+      "frLabel": "Chaos",
+      "kind": "negative",
+      "maxStack": 99,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/Chaos.webp",
+      "description": "Chaos token.",
+      "aliases": [
+        "Chaos"
+      ],
+      "appDetails": "GÃ©rÃ© dans la logique IA / Boss (calcul des cumuls de Chaos pour dÃ©clencheurs et modificateurs).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Main du roi",
+      "frLabel": "Main du roi",
+      "kind": "positive",
+      "maxStack": 99,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Gift.png",
+      "description": "Special support token.",
+      "aliases": [
+        "King's Hand",
+        "Main du roi"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "First Strike",
+      "frLabel": "PremiÃ¨re Frappe",
+      "kind": "unique",
+      "maxStack": 1,
+      "persistent": false,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/1er-frappe.webp",
+      "description": "This unit starts first.",
+      "aliases": [
+        "First Strike",
+        "PremiÃ¨re Frappe"
+      ],
+      "minionAllowed": true,
+      "editorVisible": true,
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": true
+    },
+    {
+      "label": "Salve",
+      "frLabel": "Salve",
+      "kind": "positive",
+      "maxStack": 99,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Salve.webp",
+      "description": "Spend to gain 6 health.",
+      "aliases": [
+        "Salve",
+        "Salvo"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Silence",
+      "frLabel": "Silence",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Silence.webp",
+      "description": "Silence token.",
+      "aliases": [
+        "Silence"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Hoarding",
+      "frLabel": "Hoarding",
+      "kind": "negative",
+      "maxStack": 99,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": null,
+      "description": "Hero loses 1 die during the next battle phase.",
+      "aliases": [
+        "Hoarding"
+      ],
+      "editorVisible": false,
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true
+    },
+    {
+      "label": "DÃ©gat Bonus 1",
+      "frLabel": "DÃ©gat Bonus 1",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/bonus-atk-1.webp",
+      "description": "Bonus damage token (+1 attack).",
+      "aliases": [
+        "Bonus Damage 1",
+        "DÃ©gat Bonus 1"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "DÃ©gat Bonus 2",
+      "frLabel": "DÃ©gat Bonus 2",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/bonus-atk-2.webp",
+      "description": "Bonus damage token (+2 attack).",
+      "aliases": [
+        "Bonus Damage 2",
+        "DÃ©gat Bonus 2"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "DÃ©gat Bonus 3",
+      "frLabel": "DÃ©gat Bonus 3",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/bonus-atk-3.webp",
+      "description": "Bonus damage token (+3 attack).",
+      "aliases": [
+        "Bonus Damage 3",
+        "DÃ©gat Bonus 3"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "DÃ©gat Bonus 4",
+      "frLabel": "DÃ©gat Bonus 4",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/bonus-atk-4.webp",
+      "description": "Bonus damage token (+4 attack).",
+      "aliases": [
+        "Bonus Damage 4",
+        "DÃ©gat Bonus 4"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Domination",
+      "frLabel": "Domination",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Dominance.webp",
+      "description": "Domination token.",
+      "aliases": [
+        "Domination"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Parasite",
+      "frLabel": "Parasite",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Parasite.webp",
+      "description": "Parasite token.",
+      "aliases": [
+        "Parasite"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Prime",
+      "frLabel": "Prime",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Prime.webp",
+      "description": "Bounty token.",
+      "aliases": [
+        "Bounty",
+        "Prime"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Siphon vital",
+      "frLabel": "Siphon vital",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/Life_Siphon.webp",
+      "description": "Life siphon token.",
+      "aliases": [
+        "Life Siphon",
+        "Siphon vital"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Sort 6",
+      "frLabel": "Sort 6",
+      "kind": "positive",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": false,
+      "imageAsset": "assets/token/spellbound.webp",
+      "description": "Spellbound token.",
+      "aliases": [
+        "Sort 6",
+        "Spellbound"
+      ],
+      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Forme Ours",
+      "frLabel": "Forme Ours",
+      "kind": "unique",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": null,
+      "description": "Dark Druid bear form.",
+      "aliases": [
+        "Bear Form",
+        "Forme Ours"
+      ],
+      "editorVisible": false,
+      "appDetails": "GÃ©rÃ© dans la gestion des postures du combat.",
+      "appAnimation": false,
+      "minionAllowed": true
+    },
+    {
+      "label": "Forme Elan",
+      "frLabel": "Forme Elan",
+      "kind": "unique",
+      "maxStack": 1,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": null,
+      "description": "Dark Druid elk form.",
+      "aliases": [
+        "Elk Form",
+        "Forme Elan"
+      ],
+      "editorVisible": false,
+      "appDetails": "GÃ©rÃ© dans la gestion des postures du combat.",
+      "appAnimation": false,
+      "minionAllowed": true
+    }
+  ],
+  "heroTokens": {
+    "Barbarian": [
+      "Concussion",
+      "Stun"
+    ],
+    "Moon Elf": [
+      "Blind",
+      "Entangle",
+      "Targeted",
+      "Evasive"
+    ],
+    "Pyromancer": [
+      "Stun",
+      "Burn",
+      "Fire Mastery",
+      "Knockdown"
+    ],
+    "Shadow Thief": [
+      "Shadows",
+      "Sneak Attack",
+      "Poison"
+    ],
+    "Monk": [
+      "Chi",
+      "Evasive",
+      "Knockdown",
+      "Cleanse"
+    ],
+    "Paladin": [
+      "Accuracy",
+      "Blessing of Divinity",
+      "Crit",
+      "Protect",
+      "Retribution"
+    ],
+    "Ninja": [
+      "Delayed Poison",
+      "Ninjitsu",
+      "Smoke Bomb"
+    ],
+    "Treant": [
+      "Barbed Vine",
+      "Seedling Spirit",
+      "Sapling Spirit",
+      "Dryad Spirit",
+      "Wellspring"
+    ],
+    "Gunslinger": [
+      "Reload",
+      "Evasive",
+      "Knockdown",
+      "Prime ?"
+    ],
+    "Samurai": [
+      "Back Strike",
+      "Honor",
+      "Shame"
+    ],
+    "Huntress": [
+      "Bleed",
+      "Nyra",
+      "Nyra Bond"
+    ],
+    "Tactician": [
+      "Constrict",
+      "Protect",
+      "Tactical Advantage",
+      "Targeted"
+    ],
+    "Cursed Pirate": [
+      "Cursed Doubloon",
+      "Powder Keg",
+      "Parlay",
+      "Wither"
+    ],
+    "Artificer": [
+      "Synth",
+      "Nanite"
+    ],
+    "Seraph": [
+      "Blessing of Divinity",
+      "Cleanse",
+      "Flight",
+      "Holy Presence"
+    ],
+    "Vampire Lord": [
+      "Bleed",
+      "Blood Power",
+      "Mesmerize"
+    ],
+    "Santa": [
+      "Cheer",
+      "Egg Nog"
+    ],
+    "Krampus": [
+      "Coal",
+      "Gift"
+    ],
+    "Headless horseman": [
+      "Dreadful",
+      "Grim Pursuit"
+    ],
+    "Necromancer": [
+      "Decrep-ify",
+      "Resurrect"
+    ],
+    "Pale lady": [
+      "Moon Shard",
+      "Bleed",
+      "Prey"
+    ],
+    "Raveness": [
+      "Feather",
+      "Hex"
+    ],
+    "Forgemaster": [],
+    "Druid": [
+      "Regenerate",
+      "Shape Shift",
+      "Wound"
+    ],
+    "Duelist": [
+      "Disarm",
+      "Guard Break"
+    ],
+    "Sun Elf": [
+      "Charged Gem",
+      "Sun Marked"
+    ],
+    "Alchemist": [
+      "Poison"
+    ],
+    "Mystic Brawler": [
+      "Concussion"
+    ],
+    "Black Panther": [
+      "kinetic energy",
+      "Vibranium suit"
+    ],
+    "Black Widow": [
+      "Agility",
+      "Time bomb 1", "Time bomb 2"
+    ],
+    "Captain Marvel": [
+      "Cosmic ray",
+      "Cosmic flare",
+      "Radiance"
+    ],
+    "Doctor Strange": [
+      "DÃ©jÃ  vue",
+      "Premonition",
+      "Crimson bands"
+    ],
+    "Scarlet Witch": [
+      "Probability Manipulation",
+      "Reality Warp",
+      "Conjure",
+      "Crackle"
+    ],
+    "Loki": [
+      "Bag of Tricks"
+    ],
+    "Miles Morales Spider-Man": [
+      "Webbed"
+    ],
+    "Thor": [
+      "Guard Break",
+      "Electrokinesis"
+    ],
+    "Cyclops": [
+      "Battle plan",
+      "Support",
+      "Focus Fire"
+    ],
+    "Gambit": [
+      "Dissolution",
+      "Disruption"
+    ],
+    "Iceman": [
+      "Dice cube"
+    ],
+    "Jean Grey": [
+      "Acuity",
+      "Force Field",
+      "Flame blast",
+      "Phoenix burn"
+    ],
+    "Psylocke": [
+      "Agility",
+      "Paralyse",
+      "Infiltration"
+    ],
+    "Rogue": [
+      "Influence",
+      "Ionic Energy"
+    ],
+    "Strom": [
+      "Tornado",
+      "Wind shear"
+    ],
+    "Wolverine": [
+      "Rage"
+    ]
+  }
+}
+
