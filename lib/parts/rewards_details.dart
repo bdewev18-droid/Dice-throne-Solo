@@ -995,9 +995,9 @@ class TokenPickerCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _TokenCardRoundButton(
-                  icon: Icons.add,
-                  tooltip: 'Add',
-                  onPressed: onPlus,
+                  icon: Icons.remove,
+                  tooltip: 'Remove',
+                  onPressed: onMinus,
                 ),
                 SizedBox(
                   width: 24,
@@ -1011,9 +1011,9 @@ class TokenPickerCard extends StatelessWidget {
                   ),
                 ),
                 _TokenCardRoundButton(
-                  icon: Icons.remove,
-                  tooltip: 'Remove',
-                  onPressed: onMinus,
+                  icon: Icons.add,
+                  tooltip: 'Add',
+                  onPressed: onPlus,
                 ),
               ],
             ),

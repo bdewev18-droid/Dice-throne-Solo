@@ -1,0 +1,7664 @@
+{
+  "alchemist": {
+    "heroId": "alchemist",
+    "heroName": "Alchemist",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Alchemist Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "artificer": {
+    "heroId": "artificer",
+    "heroName": "Artificer",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Artificer Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "barbare": {
+    "heroId": "barbare",
+    "heroName": "Barbarian",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Barbarian Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "blackPanther": {
+    "heroId": "blackPanther",
+    "heroName": "Black Panther",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Black Panther Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "blackWidow": {
+    "heroId": "blackWidow",
+    "heroName": "Black Widow",
+    "active": true,
+    "selectedVariant": "v2",
+    "variants": {
+      "v2": {
+        "label": "Black Widow (v2)",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5.3,
+            "avgUndef": 0.8,
+            "avgToken": 0,
+            "avgCounter": 1.8,
+            "avgDef": 0.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 8,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 5,
+                "undef": 0,
+                "token": 0,
+                "counter": 3,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 3,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6.8,
+            "avgUndef": 0,
+            "avgToken": 2,
+            "avgCounter": 1.5,
+            "avgDef": 1.8,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 9,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 7,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 4,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 6,
+                "undef": 0,
+                "token": 4,
+                "counter": 2,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 5,
+                "undef": 0,
+                "token": 4,
+                "counter": 3,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 8.3,
+            "avgUndef": 2.8,
+            "avgToken": 3,
+            "avgCounter": 1.3,
+            "avgDef": 1.3,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 11,
+                "token": 0,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 10,
+                "undef": 0,
+                "token": 4,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 9,
+                "undef": 0,
+                "token": 4,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 14,
+                "undef": 0,
+                "token": 4,
+                "counter": 2,
+                "def": 1,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 5.8,
+            "avgUndef": 2.8,
+            "avgToken": 2,
+            "avgCounter": 1.3,
+            "avgDef": 4.1,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 11,
+                "token": 4,
+                "counter": 1,
+                "def": 3.5,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 10,
+                "undef": 0,
+                "token": 4,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 5,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 10.5,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 8,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 0.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 7,
+            "avgUndef": 2.8,
+            "avgToken": 3,
+            "avgCounter": 2,
+            "avgDef": 3.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 15,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 8,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 11,
+                "token": 4,
+                "counter": 3,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 3,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 13,
+                "undef": 0,
+                "token": 8,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 6,
+            "avgAtk": 0,
+            "avgUndef": 10,
+            "avgToken": 4,
+            "avgCounter": 2,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 10,
+                "token": 4,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "captainMarvel": {
+    "heroId": "captainMarvel",
+    "heroName": "Captain Marvel",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Captain Marvel Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "cyclops": {
+    "heroId": "cyclops",
+    "heroName": "Cyclops",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Cyclops Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "cursedPirate": {
+    "heroId": "cursedPirate",
+    "heroName": "Cursed Pirate",
+    "active": true,
+    "selectedVariant": "v2",
+    "variants": {
+      "v2": {
+        "label": "Pirate (v2)",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 7.4,
+            "avgUndef": 0,
+            "avgToken": 0,
+            "avgCounter": 2,
+            "avgDef": 2.4,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 9,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 7,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 8,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 7,
+                "undef": 0,
+                "token": 0,
+                "counter": 3,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 7,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 5,
+            "avgUndef": 5.2,
+            "avgToken": 3.6,
+            "avgCounter": 1.6,
+            "avgDef": 3.2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 0,
+                "token": 6,
+                "counter": 1,
+                "def": 4,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 12,
+                "token": 6,
+                "counter": 2,
+                "def": 8,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 12,
+                "token": 3,
+                "counter": 1,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 7,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 11,
+                "undef": 2,
+                "token": 3,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 9,
+            "avgUndef": 0,
+            "avgToken": 1.8,
+            "avgCounter": 1.6,
+            "avgDef": 2.4,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 0,
+                "token": 0,
+                "counter": 4,
+                "def": 6,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 7,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 15,
+                "undef": 0,
+                "token": 6,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 9,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 7,
+                "undef": 0,
+                "token": 3,
+                "counter": 2,
+                "def": 4,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 3.6,
+            "avgUndef": 3.8,
+            "avgToken": 0.6,
+            "avgCounter": 2.6,
+            "avgDef": 1.2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 2,
+                "undef": 0,
+                "token": 0,
+                "counter": 3,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 7,
+                "token": 0,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 7,
+                "undef": 0,
+                "token": 3,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 12,
+                "token": 0,
+                "counter": 4,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 9,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 4.5,
+            "avgUndef": 3.5,
+            "avgToken": 2.3,
+            "avgCounter": 2,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 9,
+                "undef": 0,
+                "token": 6,
+                "counter": 4,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 7,
+                "token": 0,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 9,
+                "undef": 0,
+                "token": 3,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 7,
+                "token": 0,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      },
+      "v1": {
+        "label": "Pirate (v1)",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 11.3,
+            "avgUndef": 0,
+            "avgToken": 0,
+            "avgCounter": 0,
+            "avgDef": 3.7,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 13,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 4,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 10,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 16,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 10,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 9,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 12,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 6,
+                "atk": 8,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 4,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 11.5,
+            "avgUndef": 0,
+            "avgToken": 0,
+            "avgCounter": 0,
+            "avgDef": 3.7,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 15,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 12,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 10,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 9,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 4,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 13,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 4,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 11,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 6,
+                "atk": 11,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 13.8,
+            "avgUndef": 0,
+            "avgToken": 0,
+            "avgCounter": 0,
+            "avgDef": 4.7,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 12,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 18,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 12,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 15,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 19,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 16,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 5,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 6,
+                "atk": 14,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 12.8,
+            "avgUndef": 0,
+            "avgToken": 0,
+            "avgCounter": 0,
+            "avgDef": 6,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 13,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 10,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 18,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 10,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 10,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 20,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 10,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 8,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 4,
+                "heal": 0
+              },
+              {
+                "runId": 6,
+                "atk": 8,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 17.5,
+            "avgUndef": 0,
+            "avgToken": 0,
+            "avgCounter": 0,
+            "avgDef": 5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 21,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 10,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 14,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "deadpool": {
+    "heroId": "deadpool",
+    "heroName": "Deadpool",
+    "active": true,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Deadpool Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 4.3,
+            "avgUndef": 2.8,
+            "avgToken": 0.8,
+            "avgCounter": 1.3,
+            "avgDef": 0,
+            "avgHeal": 1.7,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 0,
+                "heal": 1
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 8,
+                "token": 3,
+                "counter": 1,
+                "def": 0,
+                "heal": 1
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 0,
+                "heal": 1
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 6,
+                "token": 0,
+                "counter": 2,
+                "def": 0,
+                "heal": 2
+              },
+              {
+                "runId": 5,
+                "atk": 9,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 0,
+                "heal": 1
+              },
+              {
+                "runId": 6,
+                "atk": 11,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 0,
+                "heal": 4
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 1.8,
+            "avgUndef": 3.8,
+            "avgToken": 1,
+            "avgCounter": 0.7,
+            "avgDef": 0,
+            "avgHeal": 2.2,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 0,
+                "heal": 1
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 6,
+                "token": 3,
+                "counter": 0,
+                "def": 0,
+                "heal": 1
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 7,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 4
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 4,
+                "token": 0,
+                "counter": 1,
+                "def": 0,
+                "heal": 2
+              },
+              {
+                "runId": 5,
+                "atk": 11,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 0,
+                "heal": 1
+              },
+              {
+                "runId": 6,
+                "atk": 0,
+                "undef": 6,
+                "token": 3,
+                "counter": 1,
+                "def": 0,
+                "heal": 4
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 2.5,
+            "avgUndef": 2.8,
+            "avgToken": 0.8,
+            "avgCounter": 0.8,
+            "avgDef": 0,
+            "avgHeal": 1.7,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 10,
+                "undef": 0,
+                "token": 2,
+                "counter": 2,
+                "def": 0,
+                "heal": 2
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 4,
+                "token": 0,
+                "counter": 1,
+                "def": 0,
+                "heal": 1
+              },
+              {
+                "runId": 3,
+                "atk": 5,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 1
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 6,
+                "token": 3,
+                "counter": 0,
+                "def": 0,
+                "heal": 3
+              },
+              {
+                "runId": 5,
+                "atk": 0,
+                "undef": 3,
+                "token": 0,
+                "counter": 2,
+                "def": 0,
+                "heal": 1
+              },
+              {
+                "runId": 6,
+                "atk": 0,
+                "undef": 4,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 2
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 5.5,
+            "avgUndef": 2.5,
+            "avgToken": 1.7,
+            "avgCounter": 1.5,
+            "avgDef": 0,
+            "avgHeal": 4,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 9,
+                "undef": 0,
+                "token": 2,
+                "counter": 1,
+                "def": 0,
+                "heal": 7
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 4,
+                "token": 0,
+                "counter": 1,
+                "def": 0,
+                "heal": 4
+              },
+              {
+                "runId": 3,
+                "atk": 6,
+                "undef": 0,
+                "token": 0,
+                "counter": 3,
+                "def": 0,
+                "heal": 6
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 11,
+                "token": 3,
+                "counter": 0,
+                "def": 0,
+                "heal": 2
+              },
+              {
+                "runId": 5,
+                "atk": 10,
+                "undef": 0,
+                "token": 2,
+                "counter": 2,
+                "def": 0,
+                "heal": 2
+              },
+              {
+                "runId": 6,
+                "atk": 8,
+                "undef": 0,
+                "token": 3,
+                "counter": 2,
+                "def": 0,
+                "heal": 3
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 4.7,
+            "avgUndef": 3.5,
+            "avgToken": 1.7,
+            "avgCounter": 0.8,
+            "avgDef": 1,
+            "avgHeal": 2.5,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 6,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 4
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 4,
+                "token": 3,
+                "counter": 1,
+                "def": 0,
+                "heal": 3
+              },
+              {
+                "runId": 3,
+                "atk": 9,
+                "undef": 0,
+                "token": 3,
+                "counter": 1,
+                "def": 0,
+                "heal": 1
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 11,
+                "token": 0,
+                "counter": 1,
+                "def": 6,
+                "heal": 2
+              },
+              {
+                "runId": 5,
+                "atk": 11,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 0,
+                "heal": 1
+              },
+              {
+                "runId": 6,
+                "atk": 8,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 4
+              }
+            ]
+          },
+          {
+            "turn": 6,
+            "avgAtk": 0,
+            "avgUndef": 5.8,
+            "avgToken": 0,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 3.5,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 4,
+                "token": 0,
+                "counter": 0,
+                "def": 6,
+                "heal": 1
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 11,
+                "token": 0,
+                "counter": 2,
+                "def": 0,
+                "heal": 2
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 4,
+                "token": 0,
+                "counter": 1,
+                "def": 0,
+                "heal": 4
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 4,
+                "token": 0,
+                "counter": 1,
+                "def": 0,
+                "heal": 7
+              }
+            ]
+          },
+          {
+            "turn": 7,
+            "avgAtk": 0,
+            "avgUndef": 6,
+            "avgToken": 1,
+            "avgCounter": 1.5,
+            "avgDef": 3,
+            "avgHeal": 4.5,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 4,
+                "token": 0,
+                "counter": 2,
+                "def": 0,
+                "heal": 2
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 8,
+                "token": 2,
+                "counter": 1,
+                "def": 6,
+                "heal": 7
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "doctorStrange": {
+    "heroId": "doctorStrange",
+    "heroName": "Doctor Strange",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Doctor Strange Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "druid": {
+    "heroId": "druid",
+    "heroName": "Druid",
+    "active": true,
+    "selectedVariant": "equilibre",
+    "variants": {
+      "equilibre": {
+        "label": "Druide Équilibré",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 3.5,
+            "avgUndef": 1,
+            "avgToken": 1.5,
+            "avgCounter": 0.5,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 2,
+                "token": 0,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 7,
+                "undef": 0,
+                "token": 3,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 5.5,
+            "avgUndef": 0,
+            "avgToken": 3.5,
+            "avgCounter": 0.5,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 0,
+                "token": 3,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 6,
+                "undef": 0,
+                "token": 4,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7.5,
+            "avgUndef": 0,
+            "avgToken": 3.5,
+            "avgCounter": 1.5,
+            "avgDef": 0.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 0,
+                "token": 3,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 9,
+                "undef": 0,
+                "token": 4,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 6.5,
+            "avgUndef": 0,
+            "avgToken": 3.5,
+            "avgCounter": 0.5,
+            "avgDef": 4.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 4,
+                "undef": 0,
+                "token": 3,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 9,
+                "undef": 0,
+                "token": 4,
+                "counter": 1,
+                "def": 7,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8.5,
+            "avgUndef": 0,
+            "avgToken": 1.5,
+            "avgCounter": 1,
+            "avgDef": 1,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 0,
+                "token": 3,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 12,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 6,
+            "avgAtk": 0,
+            "avgUndef": 5,
+            "avgToken": 3,
+            "avgCounter": 2,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 5,
+                "token": 3,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 7,
+            "avgAtk": 7,
+            "avgUndef": 0,
+            "avgToken": 3,
+            "avgCounter": 2,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 0,
+                "token": 3,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      },
+      "agro": {
+        "label": "Druide Agro",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 7.2,
+            "avgUndef": 0,
+            "avgToken": 2.6,
+            "avgCounter": 1.6,
+            "avgDef": 1.2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 0,
+                "token": 1,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 6,
+                "undef": 0,
+                "token": 3,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 9,
+                "undef": 0,
+                "token": 3,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 7,
+                "undef": 0,
+                "token": 3,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 7,
+                "undef": 0,
+                "token": 3,
+                "counter": 4,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 5.4,
+            "avgUndef": 1.2,
+            "avgToken": 3.8,
+            "avgCounter": 1.8,
+            "avgDef": 1,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 6,
+                "token": 4,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 5,
+                "undef": 0,
+                "token": 4,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 6,
+                "undef": 0,
+                "token": 4,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 7,
+                "undef": 0,
+                "token": 3,
+                "counter": 5,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 9,
+                "undef": 0,
+                "token": 4,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 4,
+            "avgUndef": 1.2,
+            "avgToken": 3,
+            "avgCounter": 1.4,
+            "avgDef": 3.4,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 6,
+                "token": 3,
+                "counter": 1,
+                "def": 7,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 7,
+                "undef": 0,
+                "token": 4,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 6,
+                "undef": 0,
+                "token": 3,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 0,
+                "token": 1,
+                "counter": 1,
+                "def": 7,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 7,
+                "undef": 0,
+                "token": 4,
+                "counter": 3,
+                "def": 1,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 5.6,
+            "avgUndef": 2.4,
+            "avgToken": 4,
+            "avgCounter": 1.8,
+            "avgDef": 2.2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 0,
+                "token": 4,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 12,
+                "token": 4,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 7,
+                "undef": 0,
+                "token": 4,
+                "counter": 3,
+                "def": 7,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 7,
+                "undef": 0,
+                "token": 4,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 9,
+                "undef": 0,
+                "token": 4,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 7,
+            "avgUndef": 2.7,
+            "avgToken": 4,
+            "avgCounter": 2.3,
+            "avgDef": 1.7,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 12,
+                "undef": 0,
+                "token": 4,
+                "counter": 3,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 8,
+                "token": 4,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 9,
+                "undef": 0,
+                "token": 4,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      },
+      "survie": {
+        "label": "Druide Survie",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5.8,
+            "avgUndef": 0,
+            "avgToken": 0,
+            "avgCounter": 1.5,
+            "avgDef": 2.2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 5,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 3,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 11,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 6,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 4,
+                "heal": 0
+              },
+              {
+                "runId": 6,
+                "atk": 6,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 3,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.3,
+            "avgToken": 0,
+            "avgCounter": 2.3,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 9,
+                "undef": 0,
+                "token": 0,
+                "counter": 3,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 11,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 6,
+                "token": 0,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 6,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 6,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 5,
+                "undef": 2,
+                "token": 0,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 6,
+                "atk": 5,
+                "undef": 0,
+                "token": 0,
+                "counter": 3,
+                "def": 1,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7.8,
+            "avgUndef": 2,
+            "avgToken": 0.5,
+            "avgCounter": 1.8,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 12,
+                "token": 0,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 10,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 10,
+                "undef": 0,
+                "token": 0,
+                "counter": 4,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 7,
+                "undef": 0,
+                "token": 3,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 10,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 6,
+                "atk": 10,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 2,
+            "avgUndef": 6.3,
+            "avgToken": 0.7,
+            "avgCounter": 1.3,
+            "avgDef": 4.2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 6,
+                "token": 0,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 8,
+                "token": 0,
+                "counter": 2,
+                "def": 8,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 6,
+                "undef": 0,
+                "token": 1,
+                "counter": 1,
+                "def": 7,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 12,
+                "token": 3,
+                "counter": 1,
+                "def": 4,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 6,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 6,
+                "atk": 0,
+                "undef": 12,
+                "token": 0,
+                "counter": 1,
+                "def": 3,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 7.3,
+            "avgUndef": 2,
+            "avgToken": 2.7,
+            "avgCounter": 1.3,
+            "avgDef": 2.3,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 0,
+                "token": 0,
+                "counter": 1,
+                "def": 3,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 6,
+                "undef": 0,
+                "token": 4,
+                "counter": 1,
+                "def": 3,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 12,
+                "token": 3,
+                "counter": 1,
+                "def": 3,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 12,
+                "undef": 0,
+                "token": 3,
+                "counter": 1,
+                "def": 1,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 14,
+                "undef": 0,
+                "token": 3,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 6,
+                "atk": 6,
+                "undef": 0,
+                "token": 3,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 6,
+            "avgAtk": 2,
+            "avgUndef": 2.5,
+            "avgToken": 3,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 4,
+                "undef": 0,
+                "token": 3,
+                "counter": 3,
+                "def": 3,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 5,
+                "token": 3,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "duelist": {
+    "heroId": "duelist",
+    "heroName": "Duelist",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Duelist Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "elfeLunaire": {
+    "heroId": "elfeLunaire",
+    "heroName": "Moon Elf",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Moon Elf Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "forgemaster": {
+    "heroId": "forgemaster",
+    "heroName": "Forgemaster",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Forgemaster Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "gambit": {
+    "heroId": "gambit",
+    "heroName": "Gambit",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Gambit Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "gunslinger": {
+    "heroId": "gunslinger",
+    "heroName": "Gunslinger",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Gunslinger Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "headlessHorseman": {
+    "heroId": "headlessHorseman",
+    "heroName": "Headless Horseman",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Headless Horseman Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "huntress": {
+    "heroId": "huntress",
+    "heroName": "Huntress",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Huntress Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "iceman": {
+    "heroId": "iceman",
+    "heroName": "Iceman",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Iceman Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "jeanGrey": {
+    "heroId": "jeanGrey",
+    "heroName": "Jean Grey",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Jean Grey Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "krampus": {
+    "heroId": "krampus",
+    "heroName": "Krampus",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Krampus Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "loki": {
+    "heroId": "loki",
+    "heroName": "Loki",
+    "active": true,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Loki Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 0,
+            "avgUndef": 5,
+            "avgToken": 2,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "hasIllusion": false,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 5,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 7,
+            "avgUndef": 0,
+            "avgToken": 0,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "hasIllusion": false,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 0,
+            "avgToken": 0,
+            "avgCounter": 0,
+            "avgDef": 6,
+            "avgHeal": 0,
+            "hasIllusion": false,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 6,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 0,
+            "avgUndef": 12,
+            "avgToken": 0,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "hasIllusion": true,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 12,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 0,
+            "avgUndef": 0,
+            "avgToken": 0,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 4,
+            "hasIllusion": false,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 4
+              }
+            ]
+          },
+          {
+            "turn": 6,
+            "avgAtk": 7,
+            "avgUndef": 0,
+            "avgToken": 0,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "hasIllusion": false,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 7,
+            "avgAtk": 0,
+            "avgUndef": 10,
+            "avgToken": 4,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 4,
+            "hasIllusion": true,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 10,
+                "token": 4,
+                "counter": 0,
+                "def": 0,
+                "heal": 4
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "monk": {
+    "heroId": "monk",
+    "heroName": "Monk",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Monk Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "mysticBrawler": {
+    "heroId": "mysticBrawler",
+    "heroName": "Mystic Brawler",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Mystic Brawler Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "necromancer": {
+    "heroId": "necromancer",
+    "heroName": "Necromancer",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Necromancer Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "ninja": {
+    "heroId": "ninja",
+    "heroName": "Ninja",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Ninja Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "paladin": {
+    "heroId": "paladin",
+    "heroName": "Paladin",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Paladin Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "paleLady": {
+    "heroId": "paleLady",
+    "heroName": "Pale Lady",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Pale Lady Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "psylocke": {
+    "heroId": "psylocke",
+    "heroName": "Psylocke",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Psylocke Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "pyromancer": {
+    "heroId": "pyromancer",
+    "heroName": "Pyromancer",
+    "active": true,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Pyromancienne avec Défense",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 4.5,
+            "avgUndef": 1.3,
+            "avgToken": 0.5,
+            "avgCounter": 2.8,
+            "avgDef": 0.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 0,
+                "token": 0,
+                "counter": 5,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 6,
+                "undef": 0,
+                "token": 0,
+                "counter": 3,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 6,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 5,
+                "token": 0,
+                "counter": 3,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 3,
+            "avgUndef": 9.3,
+            "avgToken": 0.5,
+            "avgCounter": 3.3,
+            "avgDef": 1,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 12,
+                "undef": 0,
+                "token": 0,
+                "counter": 4,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 5,
+                "token": 0,
+                "counter": 5,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 15,
+                "token": 2,
+                "counter": 0,
+                "def": 4,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 17,
+                "token": 0,
+                "counter": 4,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 4.8,
+            "avgUndef": 8.8,
+            "avgToken": 1,
+            "avgCounter": 2,
+            "avgDef": 1,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 16,
+                "token": 2,
+                "counter": 5,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 10,
+                "undef": 7,
+                "token": 0,
+                "counter": 1,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 9,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 4,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 12,
+                "token": 0,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 2,
+            "avgUndef": 7.3,
+            "avgToken": 0.7,
+            "avgCounter": 2,
+            "avgDef": 3.3,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 0,
+                "token": 0,
+                "counter": 4,
+                "def": 6,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 16,
+                "token": 2,
+                "counter": 0,
+                "def": 4,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 6,
+                "token": 0,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 0,
+            "avgUndef": 12,
+            "avgToken": 0,
+            "avgCounter": 0,
+            "avgDef": 1,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 12,
+                "token": 0,
+                "counter": 0,
+                "def": 1,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      },
+      "sans_def": {
+        "label": "Pyromancienne sans Défense",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 4.6,
+            "avgUndef": 1.8,
+            "avgToken": 0.8,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 5,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 9,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 4,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 8,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 3.6,
+            "avgUndef": 7.2,
+            "avgToken": 1.2,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 9,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 12,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 9,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 12,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 0,
+                "undef": 12,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 4.2,
+            "avgUndef": 4.8,
+            "avgToken": 1.6,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 12,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 12,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 6,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 9,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 6,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 2.8,
+            "avgUndef": 6.6,
+            "avgToken": 2,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 4,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 8,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 5,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 6,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 5,
+                "atk": 0,
+                "undef": 18,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 0,
+            "avgUndef": 11.8,
+            "avgToken": 2,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 14,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 12,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 19,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 2,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 6,
+            "avgAtk": 0,
+            "avgUndef": 12,
+            "avgToken": 2,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 12,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "raveness": {
+    "heroId": "raveness",
+    "heroName": "Raveness",
+    "active": true,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Raveness Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 2.7,
+            "avgUndef": 0,
+            "avgToken": 1.3,
+            "avgCounter": 2,
+            "avgDef": 2.3,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 2,
+                "atk": 8,
+                "undef": 0,
+                "token": 1,
+                "counter": 2,
+                "def": 3,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 0,
+                "token": 2,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 0,
+                "token": 1,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 0,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2.7,
+            "avgDef": 1.3,
+            "avgHeal": 2,
+            "runs": [
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 0,
+                "token": 2,
+                "counter": 3,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 0,
+                "token": 2,
+                "counter": 2,
+                "def": 2,
+                "heal": 3
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 9,
+                "token": 2,
+                "counter": 3,
+                "def": 2,
+                "heal": 3
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 0,
+            "avgUndef": 0,
+            "avgToken": 2,
+            "avgCounter": 3,
+            "avgDef": 2.7,
+            "avgHeal": 1,
+            "runs": [
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 0,
+                "token": 3,
+                "counter": 3,
+                "def": 2,
+                "heal": 3
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 0,
+                "token": 2,
+                "counter": 2,
+                "def": 6,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 0,
+                "token": 1,
+                "counter": 4,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 0,
+            "avgUndef": 0,
+            "avgToken": 2,
+            "avgCounter": 2.7,
+            "avgDef": 0,
+            "avgHeal": 2,
+            "runs": [
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 0,
+                "token": 2,
+                "counter": 4,
+                "def": 0,
+                "heal": 3
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 0,
+                "token": 0,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 0,
+                "token": 4,
+                "counter": 2,
+                "def": 0,
+                "heal": 3
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 0,
+            "avgUndef": 5,
+            "avgToken": 2.3,
+            "avgCounter": 3,
+            "avgDef": 1.3,
+            "avgHeal": 3,
+            "runs": [
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 0,
+                "token": 3,
+                "counter": 4,
+                "def": 0,
+                "heal": 3
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 15,
+                "token": 1,
+                "counter": 2,
+                "def": 2,
+                "heal": 3
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 0,
+                "token": 3,
+                "counter": 3,
+                "def": 2,
+                "heal": 3
+              }
+            ]
+          },
+          {
+            "turn": 6,
+            "avgAtk": 0,
+            "avgUndef": 5.3,
+            "avgToken": 2.3,
+            "avgCounter": 2,
+            "avgDef": 1.3,
+            "avgHeal": 2,
+            "runs": [
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 16,
+                "token": 3,
+                "counter": 2,
+                "def": 2,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 0,
+                "token": 3,
+                "counter": 0,
+                "def": 2,
+                "heal": 3
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 0,
+                "token": 1,
+                "counter": 4,
+                "def": 0,
+                "heal": 3
+              }
+            ]
+          },
+          {
+            "turn": 7,
+            "avgAtk": 0,
+            "avgUndef": 6.5,
+            "avgToken": 4,
+            "avgCounter": 1.5,
+            "avgDef": 1,
+            "avgHeal": 3,
+            "runs": [
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 0,
+                "token": 5,
+                "counter": 2,
+                "def": 0,
+                "heal": 3
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 13,
+                "token": 3,
+                "counter": 1,
+                "def": 2,
+                "heal": 3
+              }
+            ]
+          },
+          {
+            "turn": 8,
+            "avgAtk": 9,
+            "avgUndef": 0,
+            "avgToken": 4,
+            "avgCounter": 2,
+            "avgDef": 2,
+            "avgHeal": 3,
+            "runs": [
+              {
+                "runId": 3,
+                "atk": 9,
+                "undef": 0,
+                "token": 4,
+                "counter": 2,
+                "def": 2,
+                "heal": 3
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "rogue": {
+    "heroId": "rogue",
+    "heroName": "Rogue",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Rogue Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "samurai": {
+    "heroId": "samurai",
+    "heroName": "Samurai",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Samurai Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "santa": {
+    "heroId": "santa",
+    "heroName": "Santa",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Santa Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "scarletWitch": {
+    "heroId": "scarletWitch",
+    "heroName": "Scarlet Witch",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Scarlet Witch Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "seraph": {
+    "heroId": "seraph",
+    "heroName": "Seraph",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Seraph Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "shadowThief": {
+    "heroId": "shadowThief",
+    "heroName": "Shadow Thief",
+    "active": true,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Voleur / Shadow Thief",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 0,
+            "avgUndef": 0.8,
+            "avgToken": 0.3,
+            "avgCounter": 0.8,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 3,
+                "token": 0,
+                "counter": 3,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 0,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 0,
+                "token": 1,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 7.5,
+            "avgUndef": 0,
+            "avgToken": 1,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 10,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 6,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 8,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 6,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 6.3,
+            "avgUndef": 0,
+            "avgToken": 1.3,
+            "avgCounter": 0.8,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 0,
+                "token": 0,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 2,
+                "undef": 0,
+                "token": 1,
+                "counter": 3,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 7,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 6,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 16,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 6.5,
+            "avgUndef": 0,
+            "avgToken": 1.8,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 0,
+                "token": 1,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 6,
+                "undef": 0,
+                "token": 1,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 14,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 6,
+                "undef": 0,
+                "token": 3,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 1,
+            "avgUndef": 9.8,
+            "avgToken": 2.3,
+            "avgCounter": 0.8,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 1,
+                "token": 2,
+                "counter": 3,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 0,
+                "undef": 18,
+                "token": 1,
+                "counter": 0,
+                "def": 6,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 4,
+                "undef": 0,
+                "token": 3,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 4,
+                "atk": 0,
+                "undef": 20,
+                "token": 3,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 6,
+            "avgAtk": 11.3,
+            "avgUndef": 0,
+            "avgToken": 2.7,
+            "avgCounter": 0.7,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 16,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 2,
+                "atk": 7,
+                "undef": 0,
+                "token": 3,
+                "counter": 2,
+                "def": 0,
+                "heal": 0
+              },
+              {
+                "runId": 3,
+                "atk": 11,
+                "undef": 0,
+                "token": 3,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 7,
+            "avgAtk": 0,
+            "avgUndef": 0,
+            "avgToken": 2,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 0,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 8,
+            "avgAtk": 7,
+            "avgUndef": 0,
+            "avgToken": 2,
+            "avgCounter": 0,
+            "avgDef": 0,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 0,
+                "token": 2,
+                "counter": 0,
+                "def": 0,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "spiderman": {
+    "heroId": "spiderman",
+    "heroName": "Miles Morales Spider-Man",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Miles Morales Spider-Man Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "storm": {
+    "heroId": "storm",
+    "heroName": "Storm",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Storm Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "sunElf": {
+    "heroId": "sunElf",
+    "heroName": "Sun Elf",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Sun Elf Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "tacticien": {
+    "heroId": "tacticien",
+    "heroName": "Tactician",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Tactician Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "thor": {
+    "heroId": "thor",
+    "heroName": "Thor",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Thor Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "treant": {
+    "heroId": "treant",
+    "heroName": "Treant",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Treant Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "vampireLord": {
+    "heroId": "vampireLord",
+    "heroName": "Vampire Lord",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Vampire Lord Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "wolverine": {
+    "heroId": "wolverine",
+    "heroName": "Wolverine",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Wolverine Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "benjamin": {
+    "heroId": "benjamin",
+    "heroName": "Benjamin",
+    "active": false,
+    "selectedVariant": "standard",
+    "variants": {
+      "standard": {
+        "label": "Benjamin Standard",
+        "turns": [
+          {
+            "turn": 1,
+            "avgAtk": 5,
+            "avgUndef": 1,
+            "avgToken": 0.5,
+            "avgCounter": 1,
+            "avgDef": 1.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 5,
+                "undef": 1,
+                "token": 0.5,
+                "counter": 1,
+                "def": 1.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 2,
+            "avgAtk": 6,
+            "avgUndef": 1.5,
+            "avgToken": 1,
+            "avgCounter": 1,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 6,
+                "undef": 1.5,
+                "token": 1,
+                "counter": 1,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 3,
+            "avgAtk": 7,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 4,
+            "avgAtk": 7.5,
+            "avgUndef": 2,
+            "avgToken": 1.5,
+            "avgCounter": 1.5,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 7.5,
+                "undef": 2,
+                "token": 1.5,
+                "counter": 1.5,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          },
+          {
+            "turn": 5,
+            "avgAtk": 8,
+            "avgUndef": 3,
+            "avgToken": 2,
+            "avgCounter": 2,
+            "avgDef": 2.5,
+            "avgHeal": 0,
+            "runs": [
+              {
+                "runId": 1,
+                "atk": 8,
+                "undef": 3,
+                "token": 2,
+                "counter": 2,
+                "def": 2.5,
+                "heal": 0
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

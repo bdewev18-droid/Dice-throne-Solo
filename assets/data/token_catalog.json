@@ -1,4 +1,4 @@
-﻿{
+{
   "version": 1,
   "tokens": [
     {
@@ -41,26 +41,29 @@
     },
     {
       "label": "Stun",
-      "frLabel": "Ã©tourdissement",
+      "frLabel": "Étourdissement",
       "kind": "negative",
       "maxStack": 1,
       "persistent": false,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/stun.png",
       "description": "A player afflicted with this token may take no actions of any kind (i.e. no cards may be played, no defense may be made, no status tokens or passive abilities may be used, etc). After the attack concludes, the player who inflicted Stun removes the token and then immediately targets the same opponent with an additional Offensive Roll Phase",
       "aliases": [
         "Stun",
-        "Ã©tourdissement"
+        "Étourdissement",
+        "étourdissement",
+        "Etourdissement",
+        "etourdissement"
       ],
-      "appDetails": "Bloque toutes les actions du joueur et accorde une phase de roll supplÃ©mentaire Ã  l'attaquant.",
-      "appAnimation": false,
+      "appDetails": "Bloque toutes les actions du joueur et accorde une phase de roll supplémentaire à l'attaquant.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Entangle",
-      "frLabel": "EnchevÃªtrement",
+      "frLabel": "Enchevêtrement",
       "kind": "negative",
       "maxStack": 1,
       "persistent": false,
@@ -69,10 +72,10 @@
       "imageAsset": "assets/token/Entangle.png",
       "description": "A player afflicted with this token gets 1 fewer Roll Attempts during their next Offensive Roll Phase. At the conclusion of the Roll Phase, remove this token.",
       "aliases": [
-        "EnchevÃªtrement",
+        "Enchevêtrement",
         "Entangle"
       ],
-      "appDetails": "RÃ©duit de 1 le nombre de relances d'attaque.",
+      "appDetails": "Réduit de 1 le nombre de relances d'attaque.",
       "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
@@ -98,19 +101,20 @@
     },
     {
       "label": "Evasive",
-      "frLabel": "Evitement",
+      "frLabel": "Évitement",
       "kind": "positive",
       "maxStack": 3,
-      "persistent": true,
+      "persistent": false,
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Evasive.png",
       "description": "When a player with this token has incoming damage (from any source), they may choose to spend it. If spent, roll 1 die. If the outcome is 1-2, no dmg is received (although other associated effects may still apply). Multiple tokens may be spent in an attempt to prevent the same source of damage.",
       "aliases": [
         "Evasive",
+        "Évitement",
         "Evitement"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Jet de dé 1-2 annulant tous les dégâts de l'attaque reçue.",
       "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
@@ -161,6 +165,7 @@
       "kind": "positive",
       "maxStack": 1,
       "persistent": false,
+      "persistence": "nonPersistent",
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Shadows.png",
@@ -180,16 +185,19 @@
       "kind": "positive",
       "maxStack": 1,
       "persistent": false,
+      "persistence": "semiPersistent",
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Sneak-Attack.png",
-      "description": "After Attacking, a player with this token may spend it and roll 1 die to add the value of the die to their damage total. Attack Modifier.",
+      "description": "After Attacking, a player with this token may spend it and roll 1 die to add half the value of the die (rounded up) to their damage total. Attack Modifier.",
       "aliases": [
         "Attaque furtive",
-        "Sneak Attack"
+        "Sneak Attack",
+        "attaque furtive",
+        "sneak attack"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appDetails": "Modificateur d'attaque : lance 1 dé et ajoute la moitié arrondie au supérieur en dégâts d'attaque.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -336,14 +344,14 @@
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Delayed-Poison.png",
-      "description": "A player inflicted with this token removes it at the conclusion of their turn and then receives 3 dmg per token (max 2).",
+      "description": "A player afflicted with this token removes it at the conclusion of their turn and then receives 3 indefendable dmg per token (max 2).",
       "aliases": [
         "Delayed Poison",
         "Poison latent",
-        "Poison retardÃ©",
-        "Poison diffÃ©rÃ©"
+        "Poison retardé",
+        "Poison différé"
       ],
-      "appDetails": "GÃ©rÃ© automatiquement en fin de tour (-3 PV par cumul, max 2, aprÃ¨s rÃ©solution du combat + retrait des cumuls).",
+      "appDetails": "Géré automatiquement en fin de tour (-3 PV imparables par cumul, max 2, après résolution du combat + retrait des cumuls).",
       "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
@@ -391,6 +399,7 @@
       "kind": "negative",
       "maxStack": 1,
       "persistent": false,
+      "persistence": "nonPersistent",
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Barbed-Vine.png",
@@ -400,7 +409,7 @@
         "Ronces"
       ],
       "appDetails": "Pris en compte dans l'application.",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -410,16 +419,19 @@
       "kind": "positive",
       "maxStack": 1,
       "persistent": false,
+      "persistence": "semiPersistent",
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Wellspring.png",
-      "description": "A player with this token may spend it during their Main Phase & roll 1 die: gain Â½ the value as Health (rounded up).",
+      "description": "A player with this token may spend it during their Upkeep or Roll Phase & roll 1 die: gain ½ the value as Health (rounded up).",
       "aliases": [
         "Source",
-        "Wellspring"
+        "Wellspring",
+        "source",
+        "wellspring"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appDetails": "Jet de 1 dé : ajoute la moitié du résultat arrondi au supérieur en points de vie.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -501,20 +513,22 @@
     },
     {
       "label": "Bleed",
-      "frLabel": "HÃ©morragie",
+      "frLabel": "Hémorragie",
       "kind": "negative",
       "maxStack": 2,
       "persistent": true,
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Bleed.png",
-      "description": "A player afflicted with this token must roll 1 die during their Upkeep Phase. On 1-4, they are dealt 1 dmg. On 5-6, remove this token.",
+      "description": "In Dice Throne, Bleed is a negative status effect with a stack limit of 2 that deals damage or gets removed during your upkeep phase. Roll 1 die per token: on 1-4, take 1 damage; on 5-6, remove this token. Resolve each Bleed token independently one at a time.",
       "aliases": [
         "Bleed",
-        "HÃ©morragie"
+        "Hémorragie",
+        "Hemorragie",
+        "Saignement"
       ],
-      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (jet D6 par cumul : 1-4 = -1 PV, 5-6 = token retirÃ©).",
-      "appAnimation": false,
+      "appDetails": "Jet de dé 1 D6 en phase Upkeep par token : 1-4 = 1 dégât infligé, 5-6 = token retiré. Résolu indépendamment un par un.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -524,16 +538,19 @@
       "kind": "negative",
       "maxStack": 1,
       "persistent": false,
+      "persistence": "nonPersistent",
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Constrict.png",
       "description": "During their next Offensive Roll Phase, a player afflicted with this token must pay 1 CP for each Roll Attempt beyond the first. At the conclusion of the Roll Phase, remove this token.",
       "aliases": [
         "Compression",
-        "Constrict"
+        "Constrict",
+        "compression",
+        "constrict"
       ],
-      "appDetails": "Pris en compte dans l'application.",
-      "appAnimation": false,
+      "appDetails": "Phase d'attaque : chaque relance au-delà de la première coûte 1 CP. Interdit si 0 CP. L'IA relance tant qu'elle a des CP et n'a pas atteint ses dégâts max. Retiré à la fin de la phase d'attaque.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -633,20 +650,24 @@
     },
     {
       "label": "Blinding Light",
-      "frLabel": "LumiÃ¨re aveuglante",
+      "frLabel": "Lumière aveuglante",
       "kind": "negative",
       "maxStack": 1,
       "persistent": false,
+      "persistence": "nonPersistent",
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Blinding-Light.png",
-      "description": "The next time a player afflicted with this token activates an Offensive Ability, they must remove this token and roll 1 die: On 1, their Offensive Ability fails to activate and has no effect of any kind. On 2-3, any dmg they would deal for the remainder of the Roll Phase is reduced by Â½ (rounded up).",
+      "description": "The next time a player afflicted with this token activates an Offensive Ability, they must remove this token and roll 1 die: On 1, their Offensive Ability fails to activate and has no effect of any kind. On 2–3, any dmg they would deal for the remainder of the Roll Phase is reduced by ½ (rounded up).",
       "aliases": [
         "Blinding Light",
-        "LumiÃ¨re aveuglante"
+        "Lumière aveuglante",
+        "Lumiere aveuglante",
+        "blinding light",
+        "lumiere aveuglante"
       ],
-      "appDetails": "Pris en compte dans l'application.",
-      "appAnimation": false,
+      "appDetails": "Couvre le bouton d'attaque. Sur 1: attaque échoue (0 dégât bloqué). Sur 2-3: dégâts réduits de moitié.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -733,15 +754,17 @@
       "maxStack": 4,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Coal.png",
       "description": "The next time a player with four of these tokens would gain CP, they must first remove all Coal tokens. Then reduce the amount of CP gained by 1.",
       "aliases": [
         "Charbon",
-        "Coal"
+        "Coal",
+        "charbon",
+        "coal"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appDetails": "Déclenché en Upkeep lorsque l'unité a 4 tokens : retire les 4 tokens et réduit le gain d'upkeep de 1 CP (0 CP gagné). Inefficace sur Naxarus. Ne se déclenche pas si le héros est déjà au max (15 CP).",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -793,10 +816,14 @@
       "imageAsset": "assets/token/Decrep-ify.png",
       "description": "During their next Offensive Roll Phase, a player afflicted with this token may only re-roll a maximum of 2 dice when performing any Roll Attempt after their first Roll Attempt. Additionally, reduce any Attack dmg by 1. Attack Modifier. At the conclusion of the Roll Phase, remove this token.",
       "aliases": [
-        "Decrep-ify"
+        "Decrep-ify",
+        "decrepify",
+        "Decrepify",
+        "décrépitude",
+        "decrepitude"
       ],
-      "appDetails": "Pris en compte dans l'application.",
-      "appAnimation": false,
+      "appDetails": "Pris en compte dans l'application. Modificateur de -1 en attaque affiché. Limite de 2 dés max en relance pour l'IA.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -987,38 +1014,43 @@
     },
     {
       "label": "Agility",
-      "frLabel": "AgilitÃ©",
+      "frLabel": "Agilité",
       "kind": "positive",
       "maxStack": 2,
-      "persistent": true,
+      "persistent": false,
+      "persistence": "semi_persistent",
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Agility.webp",
-      "description": "When a player with this token receives damage, they may spend it and roll 1 . If the outcome is 1â€“3, prevent 1/2 incoming damage (rounded up).",
+      "description": "When a player with this token receives damage, they may spend it and roll 1 die. If 1-3, prevent 1/2 incoming damage (rounded up). If 2 Agility succeed against the same Attack, all incoming damage is prevented.",
       "aliases": [
         "Agility",
-        "AgilitÃ©"
+        "Agilité",
+        "agilité",
+        "Agilite",
+        "agilite"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appDetails": "Jet de dé 1-3: divise par 2 les dégâts entrants (arrondi au supérieur). 2 Agilité réussies = annulation totale des dégâts. Utilisable même contre des attaques imparables.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Time bomb 1",
-      "frLabel": "Bombe Ã  retardement 1",
+      "frLabel": "Bombe à retardement 1",
       "kind": "negative",
       "maxStack": 2,
       "persistent": true,
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/time-bomb-2.webp",
-      "description": "During their Upkeep Phase, roll 1 die:\nOn 1-5, flip it to Time Bomb 2.\nOn 6, remove the token.",
+      "description": "During their Upkeep Phase, roll 1 die:\nOn 1-5, flip it to Time Bomb 2.\nOn 6, transfer this token to an opponent.",
       "aliases": [
         "Time bomb 1",
-        "Bombe Ã  retardement 1"
+        "Bombe à retardement 1",
+        "Bombe à retardement"
       ],
-      "appDetails": "En phase d'upkeep: sur 1 Ã  5, se transforme en Time bomb 2. Sur 6, retirÃ©.",
+      "appDetails": "En phase d'upkeep: sur 1 à 5, se transforme en Time bomb 2. Sur 6, transféré à l'adversaire.",
       "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
@@ -1026,21 +1058,19 @@
     },
     {
       "label": "Time bomb 2",
-      "frLabel": "Bombe Ã  retardement 2",
+      "frLabel": "Bombe à retardement 2",
       "kind": "negative",
       "maxStack": 2,
       "persistent": true,
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/token-time-bomb-1.webp",
-      "description": "During their Upkeep Phase, roll 1 die:\nOn 1-5, remove the token and receive 4 undefendable dmg.\nOn 6, remove the token.",
+      "description": "During their Upkeep Phase, roll 1 die:\nOn 1-5, remove the token and receive 4 undefendable dmg.\nOn 6, transfer this token to an opponent.",
       "aliases": [
-        "Bombe Ã  retardement",
-        "Time bomb 1", "Time bomb 2",
         "Time bomb 2",
-        "Bombe Ã  retardement 2"
+        "Bombe à retardement 2"
       ],
-      "appDetails": "En phase d'upkeep: sur 1 Ã  5, inflige 4 dÃ©gÃ¢ts imparables et est retirÃ©. Sur 6, retirÃ©.",
+      "appDetails": "En phase d'upkeep: sur 1 à 5, inflige 4 dégâts imparables et est retiré. Sur 6, transféré à l'adversaire.",
       "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
@@ -1333,14 +1363,17 @@
       "maxStack": 2,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Dice cube.webp",
-      "description": "A player afflicted with this token cannot alter the lowest value die from their first Roll Attempt during their Offensive Roll Phase. If at Stack Limit, this affects the two lowest value dice rolled (instead of one).\nAt the conclusion of the Roll Phase, remove these tokens (even if an Ability wasnâ€™t activated successfully).",
+      "description": "A player afflicted with this token cannot alter the lowest value die from their first Roll Attempt during their Offensive Roll Phase. If at Stack Limit, this affects the two lowest value dice rolled (instead of one).\nAt the conclusion of the Roll Phase, remove these tokens (even if an Ability wasn't activated successfully).",
       "aliases": [
-        "Dice cube"
+        "Dice cube",
+        "dice cube",
+        "cube",
+        "Cube"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appDetails": "Phase d'attaque : bloque la relance du (ou des 2) plus petit dé du lancer 1. L'IA gardera obligatoirement ce(s) dé(s) pour la suite.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },

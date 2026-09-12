@@ -21,6 +21,7 @@ class UpkeepOutcome {
     required this.log,
     this.logParts = const [],
     this.notes = const [],
+    this.coalActive = false,
   });
 
   final int cpDelta;
@@ -31,6 +32,7 @@ class UpkeepOutcome {
   final List<String> logParts;
   // Human-readable notes for tokens requiring player action (e.g. Powder Keg transfer).
   final List<String> notes;
+  final bool coalActive;
 }
 
 class _UpkeepContext {
@@ -56,6 +58,7 @@ class _UpkeepContext {
   int healthDelta = 0;
   int currentCp;
   bool concussionActive = false;
+  bool coalActive = false;
   final List<String> removedTokens = [];
   final List<String> addedTokens = [];
   final List<String> logParts = [];
@@ -69,6 +72,8 @@ class _UpkeepContext {
           (lower == 'burn' && (tl == 'brûlure' || tl == 'brulure')) ||
           (lower == 'knockdown' && (tl == 'à terre' || tl == 'a terre')) ||
           (lower == 'concussion' && tl == 'commotion') ||
+          (lower == 'coal' && tl == 'charbon') ||
+          (lower == 'bleed' && (tl == 'hémorragie' || tl == 'hemorragie' || tl == 'saignement')) ||
           (lower == 'time bomb 1' && tl == 'bombe à retardement 1') ||
           (lower == 'time bomb 2' && (tl == 'bombe à retardement 2' || tl == 'time bomb' || tl == 'bombe à retardement'));
     }).length;
@@ -84,6 +89,8 @@ class _UpkeepContext {
           (lower == 'burn' && (tl == 'brûlure' || tl == 'brulure')) ||
           (lower == 'knockdown' && (tl == 'à terre' || tl == 'a terre')) ||
           (lower == 'concussion' && tl == 'commotion') ||
+          (lower == 'coal' && tl == 'charbon') ||
+          (lower == 'bleed' && (tl == 'hémorragie' || tl == 'hemorragie' || tl == 'saignement')) ||
           (lower == 'time bomb 1' && tl == 'bombe à retardement 1') ||
           (lower == 'time bomb 2' && (tl == 'bombe à retardement 2' || tl == 'time bomb' || tl == 'bombe à retardement')) ||
           (lower == 'first strike' && (tl == 'première frappe' || tl == 'premiere frappe' || tl == '1st frappe'))) {
@@ -97,8 +104,11 @@ class _UpkeepContext {
     if (!isHero) {
       return currentCp - initialCpValue;
     }
-    final naturalGain = concussionActive ? 0 : 1;
-    final finalCp = currentCp + naturalGain;
+    if (initialCpValue >= 15) {
+      return 0;
+    }
+    final naturalGain = (concussionActive || coalActive) ? 0 : 1;
+    final finalCp = (currentCp + naturalGain).clamp(0, 15);
     return finalCp - initialCpValue;
   }
 }
@@ -159,6 +169,9 @@ class GameEngine {
       if (removed > 0) parts.add('$removed removed');
       ctx.logParts.add('Bleed: ${parts.join(', ')}');
     },
+    'Hémorragie': (ctx) => _upkeepHandlers['Bleed']?.call(ctx),
+    'Hemorragie': (ctx) => _upkeepHandlers['Bleed']?.call(ctx),
+    'Saignement': (ctx) => _upkeepHandlers['Bleed']?.call(ctx),
 
     // Wound — 1 dmg per stack, then roll d6: 4-6 → remove that stack
     'Wound': (ctx) {
@@ -257,6 +270,19 @@ class GameEngine {
     },
     'Commotion': (ctx) => _upkeepHandlers['Concussion']?.call(ctx),
 
+    // Coal / Charbon — 4 stacks: when gaining CP in upkeep, remove all 4 stacks and reduce CP gained by 1.
+    'Coal': (ctx) {
+      if (ctx.isNaxarus) return;
+      final n = ctx.count('Coal');
+      if (n < 4) return;
+      if (ctx.isHero && ctx.initialCpValue >= 15) return;
+      ctx.coalActive = true;
+      ctx.remove('Coal', times: 4);
+      ctx.logParts.remove('+ 1 CP');
+      ctx.logParts.add('4 Coal tokens removed: upkeep CP gain reduced by 1');
+    },
+    'Charbon': (ctx) => _upkeepHandlers['Coal']?.call(ctx),
+
     // First Strike / Première Frappe - minion starts combat & removes itself (non-persistent)
     'First Strike': (ctx) {
       ctx.logParts.add('Première Frappe');
@@ -271,6 +297,7 @@ class GameEngine {
     required int Function() rollD6,
     int currentCp = 0,
     bool isNaxarus = false,
+    Set<String> skipTokens = const {},
   }) {
     final ctx = _UpkeepContext(
       tokens: tokens,
@@ -281,6 +308,7 @@ class GameEngine {
     );
     final seen = <String>{};
     for (final token in tokens) {
+      if (skipTokens.contains(token)) continue;
       if (seen.add(token)) {
         _upkeepHandlers[token]?.call(ctx);
       }
@@ -293,6 +321,7 @@ class GameEngine {
       log: ctx.logParts.join(', '),
       logParts: List<String>.from(ctx.logParts),
       notes: ctx.notes,
+      coalActive: ctx.coalActive,
     );
   }
 
@@ -301,6 +330,7 @@ class GameEngine {
     required int Function() rollD6,
     int currentCp = 0,
     bool isPirate = false,
+    Set<String> skipTokens = const {},
   }) {
     final ctx = _UpkeepContext(
       tokens: tokens,
@@ -310,6 +340,7 @@ class GameEngine {
     );
     final seen = <String>{};
     for (final token in tokens) {
+      if (skipTokens.contains(token)) continue;
       if (seen.add(token)) {
         if (token == 'Cursed Doubloon' && isPirate) continue;
         _upkeepHandlers[token]?.call(ctx);
@@ -323,6 +354,7 @@ class GameEngine {
       log: ctx.logParts.join(', '),
       logParts: List<String>.from(ctx.logParts),
       notes: ctx.notes,
+      coalActive: ctx.coalActive,
     );
   }
 

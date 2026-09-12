@@ -59,6 +59,30 @@ http
       });
       return;
     }
+
+    if (request.method === 'POST' && urlPath === '/api/save-simulation-stats') {
+      let body = '';
+      request.on('data', chunk => { body += chunk.toString(); });
+      request.on('end', () => {
+        try {
+          const json = JSON.parse(body);
+          const statsPath1 = path.resolve(__dirname, '..', 'docs', 'hero_simulation_stats.json');
+          const statsPath2 = path.resolve(__dirname, '..', 'web', 'simulation', 'hero_simulation_stats.json');
+          fs.writeFileSync(statsPath1, JSON.stringify(json, null, 2) + '\n');
+          fs.writeFileSync(statsPath2, JSON.stringify(json, null, 2) + '\n');
+          
+          response.writeHead(200, {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          });
+          response.end(JSON.stringify({ success: true }));
+        } catch (e) {
+          response.writeHead(500, { 'Content-Type': 'application/json' });
+          response.end(JSON.stringify({ error: e.message }));
+        }
+      });
+      return;
+    }
     
     // Handle CORS preflight just in case
     if (request.method === 'OPTIONS') {
@@ -91,6 +115,38 @@ http
       const livePath = path.resolve(__dirname, '..', 'assets', 'data', 'token_catalog.json');
       if (fs.existsSync(livePath)) {
         sendFile(response, livePath);
+        return;
+      }
+    }
+
+    // Serve web/simulation directly so edits are immediate without rebuilding
+    if (relativePath.startsWith('simulation/assets/')) {
+      const assetRel = relativePath.slice('simulation/assets/'.length);
+      const liveAssetPath = path.resolve(__dirname, '..', 'assets', assetRel);
+      if (fs.existsSync(liveAssetPath) && !fs.statSync(liveAssetPath).isDirectory()) {
+        sendFile(response, liveAssetPath);
+        return;
+      }
+    }
+
+    if (relativePath.startsWith('simulation/') || relativePath === 'simulation') {
+      let simRel = relativePath === 'simulation' ? 'index.html' : relativePath.slice('simulation/'.length);
+      if (!simRel || simRel.endsWith('/')) {
+        simRel = path.join(simRel, 'index.html');
+      }
+      const liveSimPath = path.resolve(__dirname, '..', 'web', 'simulation', simRel);
+      if (fs.existsSync(liveSimPath) && !fs.statSync(liveSimPath).isDirectory()) {
+        sendFile(response, liveSimPath);
+        return;
+      }
+    }
+
+    // Serve assets directly from assets/ directory if not found in build/web
+    if (relativePath.startsWith('assets/')) {
+      const assetRel = relativePath.slice('assets/'.length);
+      const liveAssetPath = path.resolve(__dirname, '..', 'assets', assetRel);
+      if (fs.existsSync(liveAssetPath) && !fs.statSync(liveAssetPath).isDirectory()) {
+        sendFile(response, liveAssetPath);
         return;
       }
     }

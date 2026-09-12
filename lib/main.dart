@@ -9,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'active_adventure_storage.dart';
 import 'data/enemy_profile_repository.dart';
 import 'data/fallback_enemy_profiles.dart';
-import 'data/matchup_repository.dart';
 import 'game_engine.dart';
 import 'history_repository.dart';
 import 'models/enemy_profile.dart';
@@ -22,9 +21,8 @@ part 'parts/map.dart';
 part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
-part 'parts/matchup.dart';
 
-const String appVersionLabel = 'Version 1.3.115';
+const String appVersionLabel = 'Version 1.3.138';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -853,7 +851,7 @@ String _tokenShortLabel(String label) {
     'blind' || 'eblouissement' => 'EBL',
     'entangle' || 'enchevetrement' => 'ROOT',
     'evasive' || 'evitement' => 'EVA',
-    'bleed' || 'hemorragie' => 'HEM',
+    'bleed' || 'hemorragie' || 'saignement' => 'HEM',
     'kingshand' || 'mainduroi' => 'KH',
     'shadows' || 'ombre' => 'SHD',
     'parasite' => 'PAR',
@@ -865,6 +863,7 @@ String _tokenShortLabel(String label) {
     'spellbound' || 'sort6' => 'SPL',
     'hex' || 'malefice' => 'HEX',
     'hoarding' => 'HLD',
+    'sneakattack' || 'attaquefurtive' => 'SNK',
     _ =>
       source.length <= 4
           ? source.toUpperCase()
@@ -1256,7 +1255,7 @@ class EnemyNode {
     required this.id,
     required this.label,
     required this.rank,
-    required this.maxHealth,
+    required int maxHealth,
     required this.cp,
     required this.attacks,
     required this.defense,
@@ -1273,7 +1272,10 @@ class EnemyNode {
     List<DisplayRow> passiveDisplayRows = const [],
     this.branch,
     this.step = 0,
-  }) : health = maxHealth,
+    int? initialHealth,
+  }) : initialHealth = initialHealth ?? maxHealth,
+       maxHealth = (initialHealth ?? maxHealth) + 10,
+       health = initialHealth ?? maxHealth,
        combatPoints = cp,
        rewardRank = rewardRank ?? rank,
        rewardRanks = rewardRanks.isEmpty
@@ -1291,6 +1293,7 @@ class EnemyNode {
   final int id;
   String label;
   EnemyRank rank;
+  int initialHealth;
   int maxHealth;
   int cp;
   List<String> attacks;
@@ -1349,6 +1352,7 @@ class EnemyNode {
   Map<String, dynamic> toJson() => {
     'id': id,
     'health': health,
+    'initialHealth': initialHealth,
     'combatPoints': combatPoints,
     'alterations': alterations,
     'defeated': defeated,
@@ -1363,7 +1367,8 @@ class EnemyNode {
     if (restoredProfile != null) {
       label = restoredProfile.name;
       rank = restoredProfile.rank;
-      maxHealth = restoredProfile.maxHealth;
+      initialHealth = restoredProfile.maxHealth;
+      maxHealth = restoredProfile.maxHealth + 10;
       cp = restoredProfile.cp;
       attacks = restoredProfile.attacks;
       defense = restoredProfile.defense;
@@ -1391,6 +1396,10 @@ class EnemyNode {
     rewardRanks = restoredRewardRanks.isEmpty
         ? List<EnemyRank>.filled(rewardChests, rewardRank)
         : restoredRewardRanks;
+    if (json['initialHealth'] != null) {
+      initialHealth = (json['initialHealth'] as num).toInt();
+      maxHealth = initialHealth + 10;
+    }
     health = ((json['health'] as num?)?.toInt() ?? health).clamp(0, maxHealth);
     combatPoints = ((json['combatPoints'] as num?)?.toInt() ?? combatPoints)
         .clamp(0, 99);
@@ -1403,7 +1412,8 @@ class EnemyNode {
   void applyProfile(EnemyProfile profile) {
     label = profile.name;
     rank = profile.rank;
-    maxHealth = profile.maxHealth;
+    initialHealth = profile.maxHealth;
+    maxHealth = profile.maxHealth + 10;
     cp = profile.cp;
     attacks = profile.attacks;
     defense = profile.defense;
@@ -1418,7 +1428,7 @@ class EnemyNode {
     rewardRanks = profile.rewardRanks.isEmpty
         ? List<EnemyRank>.filled(rewardChests, rewardRank)
         : List<EnemyRank>.from(profile.rewardRanks);
-    health = maxHealth;
+    health = initialHealth;
     combatPoints = cp;
     alterations
       ..clear()
@@ -1427,10 +1437,15 @@ class EnemyNode {
 }
 
 class AdventureState {
-  AdventureState({required this.hero, required this.config})
-    : targetScore = config.targetScore,
-      startedAt = DateTime.now(),
-      enemies = _generateEnemies(config) {
+  AdventureState({
+    required this.hero,
+    required this.config,
+    int? startingHealth,
+  }) : targetScore = config.targetScore,
+       startedAt = DateTime.now(),
+       initialHealth = startingHealth ?? (config.mode == SurvivalMode.naraxus ? 50 : 30),
+       health = startingHealth ?? (config.mode == SurvivalMode.naraxus ? 50 : 30),
+       enemies = _generateEnemies(config) {
     _refreshAvailability();
     log('Run created: ${config.label}, target $targetScore points.');
   }
@@ -1439,7 +1454,9 @@ class AdventureState {
     required this.hero,
     required this.config,
     required this.startedAt,
+    int? initialHealth,
   }) : targetScore = config.targetScore,
+       initialHealth = initialHealth ?? (config.mode == SurvivalMode.naraxus ? 50 : 30),
        enemies = _generateEnemies(config);
 
   final HeroType hero;
@@ -1451,6 +1468,8 @@ class AdventureState {
   final Set<String> maskedPopinTokens = <String>{};
   final List<String> bonuses = [];
   final DateTime startedAt;
+  final int initialHealth;
+  int get maxHealth => initialHealth + 10;
   int health = 30;
   int combatPoints = 2;
   int score = 0;
@@ -1474,6 +1493,7 @@ class AdventureState {
     'hero': hero.name,
     'config': config.toJson(),
     'startedAt': startedAt.toIso8601String(),
+    'initialHealth': initialHealth,
     'health': health,
     'combatPoints': combatPoints,
     'score': score,
@@ -1490,6 +1510,9 @@ class AdventureState {
   factory AdventureState.fromJson(Map<String, dynamic> json) {
     final hero = _enumByName(HeroType.values, json['hero'] as String?);
     final configJson = json['config'] as Map?;
+    final configMode = configJson?['mode']?.toString();
+    final initialHealth = (json['initialHealth'] as num?)?.toInt() ??
+        (configMode == 'naraxus' ? 50 : 30);
     final state = AdventureState._restored(
       hero: hero ?? HeroType.barbare,
       config: configJson == null
@@ -1501,10 +1524,14 @@ class AdventureState {
       startedAt:
           DateTime.tryParse(json['startedAt']?.toString() ?? '') ??
           DateTime.now(),
+      initialHealth: initialHealth,
     );
 
     state
-      ..health = ((json['health'] as num?)?.toInt() ?? 30).clamp(0, 99)
+      ..health = ((json['health'] as num?)?.toInt() ?? initialHealth).clamp(
+        0,
+        state.maxHealth,
+      )
       ..combatPoints = ((json['combatPoints'] as num?)?.toInt() ?? 2).clamp(
         0,
         99,
@@ -1545,7 +1572,7 @@ class AdventureState {
 
   void setHeroHealth(int value, {String? source}) {
     final oldHealth = health;
-    health = value.clamp(0, 99);
+    health = value.clamp(0, maxHealth);
     if (oldHealth != health && source != 'silent') {
       log('[HP] Hero HP: $oldHealth ➔ $health${source != null ? ' ($source)' : ' (Manual Adjustment)'}');
     }
@@ -1605,7 +1632,7 @@ class AdventureState {
   void applyReward(int d20, EnemyRank rank) {
     final outcome = GameEngine.rewardForD20(d20, chest: rank.rewardChestKey);
     if (outcome.healthDelta != 0) {
-      health = (health + outcome.healthDelta).clamp(0, 99);
+      health = (health + outcome.healthDelta).clamp(0, maxHealth);
     }
     if (outcome.cpDelta != 0) {
       combatPoints = (combatPoints + outcome.cpDelta).clamp(0, 99);

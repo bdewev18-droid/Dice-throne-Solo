@@ -135,10 +135,13 @@ class _FightPageState extends State<FightPage> {
   late CombatPhase _phase;
   bool _upkeepApplied = false;
   bool _heroUpkeepApplied = false;
+  bool _heroCoalTriggered = false;
+  bool _minionCoalTriggered = false;
   bool _specialAttackReady = false;
   bool _specialAttackMode = false;
   final bool _aiMode = true;
   bool _showManualExtraDicePhase = false;
+  Set<int> _lockedDiceCubeIds = {};
   bool _developerMode = AppSettings.instance.developerMode;
   bool _reviewingLog = false;
   int _battleAttackValue = 0;
@@ -265,6 +268,12 @@ class _FightPageState extends State<FightPage> {
             _heroAttackCount,
             _lastHeroAttack,
             _heroAttackTotal,
+            blindingLightRoll: _blindingLightRoll,
+            blindingLightZeroDamage: _blindingLightZeroDamage,
+            blindingLightReducedDamage: _blindingLightReducedDamage,
+            blindingLightBaseAttack: _blindingLightBaseAttack,
+            heroCoalTriggered: _heroCoalTriggered,
+            minionCoalTriggered: _minionCoalTriggered,
           )
         : '';
     final canAdvancePhase =
@@ -531,37 +540,18 @@ class _FightPageState extends State<FightPage> {
                     notes: _battleNotes,
                     showResolution: _isBattlePhase,
                     attackValue: _battleAttackValue,
+                    attackModifier: _battleAttackModifier,
                     defenseValue: _battleDefenseValue,
+                    defenseModifier: _battleDefenseModifier,
+                    showStunCover: _isDefenderStunned,
                     showOnlyCardsCover: _phase == CombatPhase.minionAttack && _battleAttackUndefendable && !_defenseOnlyCardsUnlocked,
                     onOnlyCardsUnlock: () => setState(() => _defenseOnlyCardsUnlocked = true),
                     onAttackChanged: (delta) => setState(() {
-                      final defenderHasTargeted = _phase == CombatPhase.hero
-                          ? enemy.alterations.any(
-                              (t) =>
-                                  _normalizeTokenKey(t) == 'targeted' ||
-                                  _normalizeTokenKey(t) == 'prispourcible',
-                            )
-                          : widget.adventure.alterations.any(
-                              (t) =>
-                                  _normalizeTokenKey(t) == 'targeted' ||
-                                  _normalizeTokenKey(t) == 'prispourcible',
-                            );
-                      if (defenderHasTargeted) {
-                        if (delta > 0) {
-                          if (_battleAttackValue == 0) {
-                            _battleAttackValue = 3;
-                          } else {
-                            _battleAttackValue =
-                                (_battleAttackValue + delta).clamp(0, 99);
-                          }
-                        } else if (delta < 0) {
-                          if (_battleAttackValue <= 3) {
-                            _battleAttackValue = 0;
-                          } else {
-                            _battleAttackValue =
-                                (_battleAttackValue + delta).clamp(0, 99);
-                          }
-                        }
+                      if (_blindingLightZeroDamage) return;
+                      if (_blindingLightRoll == 2 || _blindingLightRoll == 3) {
+                        _blindingLightBaseAttack = (_blindingLightBaseAttack + delta).clamp(0, 99);
+                        _blindingLightReducedDamage = (_blindingLightBaseAttack / 2.0).ceil();
+                        _battleAttackValue = (_blindingLightBaseAttack - _blindingLightReducedDamage).clamp(0, 99);
                       } else {
                         _battleAttackValue = (_battleAttackValue + delta).clamp(
                           0,
@@ -585,13 +575,78 @@ class _FightPageState extends State<FightPage> {
                     onEditEnemyTokens: _editEnemyTokens,
                     showBlindButton: _hasActiveBlindOnAttacker,
                     onBlindPressed: _checkAndTriggerBlindPopin,
-                    showEvasiveButton: _hasActiveEvasiveOnMinionDefender &&
-                        (_battleAttackValue -
-                                (_battleAttackUndefendable
-                                    ? 0
-                                    : _battleDefenseValue) >
-                            0),
-                    onEvasivePressed: _checkAndTriggerEvasivePopin,
+                    showEvasiveAttackCover:
+                        (_phase == CombatPhase.minionAttack && (_heroEvasiveAvoided || (_heroAgilityActive && _heroAgilitySuccesses >= 2))) ||
+                        (_phase == CombatPhase.hero && (_minionEvasiveAvoided || _minionAgilityAvoided)),
+                    heroEvasiveCount: _heroEvasiveCount,
+                    heroEvasiveAvoided: _heroEvasiveAvoided,
+                    onUseHeroEvasive: _triggerHeroEvasiveAttempt,
+                    heroAgilityCount: _heroAgilityCount,
+                    heroAgilityActive: _heroAgilityActive,
+                    heroAgilitySuccesses: _heroAgilitySuccesses,
+                    heroAgilityPrevented: _heroAgilityDamagePrevented,
+                    onUseHeroAgility: _triggerHeroAgilityAttempt,
+                    minionAgilityAvoided: _minionAgilityAvoided,
+                    heroShadowsCount: _heroShadowsCount,
+                    onUseHeroShadows: _triggerHeroShadowsAttempt,
+                    attackerSneakAttackCount: _phase == CombatPhase.hero
+                        ? _heroSneakAttackCount
+                        : _minionSneakAttackCount,
+                    attackerSneakAttackActive: _phase == CombatPhase.hero
+                        ? _heroSneakAttackActive
+                        : _minionSneakAttackActive,
+                    attackerSneakAttackBonus: _phase == CombatPhase.hero
+                        ? _heroSneakAttackBonus
+                        : _minionSneakAttackBonus,
+                    canUseAttackerSneakAttack: _canUseAttackerSneakAttack,
+                    onUseAttackerSneakAttack: _phase == CombatPhase.hero
+                        ? _triggerHeroSneakAttackAttempt
+                        : _triggerMinionSneakAttackAttempt,
+                    barbedVineActive: _phase == CombatPhase.hero
+                        ? widget.adventure.alterations.any(_isBarbedVineToken)
+                        : (_phase == CombatPhase.minionAttack
+                            ? enemy.alterations.any(_isBarbedVineToken)
+                            : false),
+                    barbedVineCount: _phase == CombatPhase.hero
+                        ? _heroBarbedVineCount
+                        : (_phase == CombatPhase.minionAttack
+                            ? _minionBarbedVineCount
+                            : 0),
+                    constrictActive: _phase == CombatPhase.hero
+                        ? widget.adventure.alterations.any(_isConstrictToken)
+                        : (_phase == CombatPhase.minionAttack
+                            ? enemy.alterations.any(_isConstrictToken)
+                            : false),
+                    constrictCount: _phase == CombatPhase.hero
+                        ? _heroConstrictCount
+                        : (_phase == CombatPhase.minionAttack
+                            ? _minionConstrictCount
+                            : 0),
+                    decrepifyActive: _phase == CombatPhase.hero
+                        ? widget.adventure.alterations.any(_isDecrepifyToken)
+                        : (_phase == CombatPhase.minionAttack
+                            ? enemy.alterations.any(_isDecrepifyToken)
+                            : false),
+                    diceCubeActive: _phase == CombatPhase.hero
+                        ? widget.adventure.alterations.any(_isDiceCubeToken)
+                        : (_phase == CombatPhase.minionAttack
+                            ? enemy.alterations.any(_isDiceCubeToken)
+                            : false),
+                    diceCubeCount: _phase == CombatPhase.hero
+                        ? widget.adventure.alterations.where(_isDiceCubeToken).length
+                        : (_phase == CombatPhase.minionAttack
+                            ? enemy.alterations.where(_isDiceCubeToken).length
+                            : 0),
+                    heroWellspringCount: _heroWellspringCount,
+                    onUseHeroWellspring: _triggerHeroWellspringAttempt,
+                    enemyWellspringCount: _minionWellspringCount,
+                    onUseEnemyWellspring: _triggerMinionWellspringAttempt,
+                    showBlindingLightAttackCover: _hasActiveBlindingLightOnAttacker,
+                    onBlindingLightPressed: _checkAndTriggerBlindingLightPopin,
+                    blindingLightZeroDamage: _blindingLightZeroDamage,
+                    blindingLightReducedDamage: _blindingLightReducedDamage,
+                    blindingLightBaseAttack: _blindingLightBaseAttack,
+                    blindingLightRoll: _blindingLightRoll,
                   ),
               ],
             ),
@@ -651,6 +706,17 @@ class _FightPageState extends State<FightPage> {
       for (final t in removed) {
         widget.adventure.log('[TOKEN REMOVED] Hero lost token: $t');
       }
+      if (added.any(_isShadowsToken)) {
+        if (_phase == CombatPhase.hero || _phase == CombatPhase.heroUpkeep) {
+          _shadowsGainedHeroTurnCount = _heroTurnCount;
+        }
+        if (_phase == CombatPhase.minionAttack) {
+          widget.adventure.log('[TOKEN] Hero gained Shadows on defense -> Activated!');
+        }
+      }
+      if (!values.any(_isShadowsToken)) {
+        _shadowsGainedHeroTurnCount = null;
+      }
       widget.onChanged();
       setState(() {});
     }
@@ -694,17 +760,29 @@ class _FightPageState extends State<FightPage> {
     if (_phase == CombatPhase.minionAttack &&
         _rollCount > 0 &&
         !_specialAttackMode &&
-        enemy.alterations.contains('Ronces')) {
-      if (enemy.health <= 1) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ronces would defeat the minion: reroll blocked.'),
-          ),
-        );
-        return;
-      }
+        enemy.alterations.any(_isBarbedVineToken) &&
+        !_isNaraxus) {
+      final oldHealth = enemy.health;
       enemy.health = (enemy.health - 1).clamp(0, 99);
-      widget.adventure.log('Ronces: minion loses 1 HP for reroll.');
+      widget.adventure.log(
+        '[TOKEN] Barbed Vine: ${enemy.label} HP $oldHealth ➔ ${enemy.health} (1 counter damage for roll attempt ${_rollCount + 1}).',
+      );
+      if (enemy.health <= 0) {
+        widget.adventure.log(
+          '[TOKEN] Barbed Vine: ${enemy.label} has 0 HP (defeated by Barbed Vine counter damage)!',
+        );
+      }
+    }
+    if (_phase == CombatPhase.minionAttack &&
+        _rollCount > 0 &&
+        !_specialAttackMode &&
+        enemy.alterations.any(_isConstrictToken) &&
+        !_isNaraxus) {
+      final oldCp = enemy.combatPoints;
+      enemy.combatPoints = (enemy.combatPoints - 1).clamp(0, 99);
+      widget.adventure.log(
+        '[TOKEN] Constrict: ${enemy.label} CP $oldCp ➔ ${enemy.combatPoints} (paid 1 CP for roll attempt ${_rollCount + 1}).',
+      );
     }
     final rolledIds = <int>[];
     setState(() {
@@ -782,7 +860,53 @@ class _FightPageState extends State<FightPage> {
     if (_phase == CombatPhase.minionAttack && _aiMode) {
       _applyMinionDiceStrategy();
     }
+    
+    if (_rollCount == 1) {
+      final hasDiceCube = _phase == CombatPhase.hero
+          ? widget.adventure.alterations.any(_isDiceCubeToken)
+          : enemy.alterations.any(_isDiceCubeToken);
+      if (hasDiceCube) {
+        final count = _phase == CombatPhase.hero
+            ? widget.adventure.alterations.where(_isDiceCubeToken).length
+            : enemy.alterations.where(_isDiceCubeToken).length;
+        final lockCount = min(2, count >= 2 ? 2 : 1);
+        
+        final sortedDice = _activeDice.where((d) => d.effectiveValue != null).toList()
+          ..sort((a, b) => a.effectiveValue!.compareTo(b.effectiveValue!));
+        
+        for (int i = 0; i < min(lockCount, sortedDice.length); i++) {
+          final d = sortedDice[i];
+          _lockedDiceCubeIds.add(d.id);
+          d.reserved = true; 
+        }
+        widget.adventure.log('[TOKEN] Dice cube locked ${min(lockCount, sortedDice.length)} lowest die/dice.');
+      }
+    }
+
     _refreshBattleResolutionFromDice();
+    if (_phase == CombatPhase.minionAttack &&
+        enemy.alterations.any(_isBarbedVineToken) &&
+        !_isNaraxus &&
+        _rollCount >= 1 &&
+        _hasValidMinionAttack) {
+      widget.adventure.log(
+        '[TOKEN] Barbed Vine: ${enemy.label} achieved a valid attack on roll $_rollCount and stops rolling.',
+      );
+    }
+    if (_phase == CombatPhase.minionAttack &&
+        enemy.alterations.any(_isConstrictToken) &&
+        !_isNaraxus &&
+        _rollCount >= 1) {
+      if (enemy.combatPoints <= 0) {
+        widget.adventure.log(
+          '[TOKEN] Constrict: ${enemy.label} has 0 CP and stops rolling.',
+        );
+      } else if (_minionReachedMaxDamage(enemy, _dice)) {
+        widget.adventure.log(
+          '[TOKEN] Constrict: ${enemy.label} reached max damage on roll $_rollCount and stops rolling.',
+        );
+      }
+    }
     if (_rollCount == _maxRolls) {
       _specialAttackReady = _shouldResolveSpecialAttack();
       if (_phase == CombatPhase.minionAttack &&
@@ -798,14 +922,6 @@ class _FightPageState extends State<FightPage> {
             'After $_rollCount attack rolls, no valid attack combination: dice deselected.',
           );
         }
-      }
-    }
-    if (_phase == CombatPhase.hero && _hasActiveEvasiveOnMinionDefender) {
-      final effectiveDefense =
-          _battleDefenseValue;
-      final netDamage = max(0, _battleAttackValue - effectiveDefense);
-      if (netDamage > 0) {
-        _checkAndTriggerEvasivePopin();
       }
     }
   }
@@ -914,6 +1030,10 @@ class _FightPageState extends State<FightPage> {
         return;
       }
       if (_rollCount > 0) {
+        if (_lockedDiceCubeIds.contains(die.id)) {
+          widget.adventure.log('[TOKEN] Dice cube: Cannot alter die ${die.id + 1}.');
+          return;
+        }
         die.reserved = !die.reserved;
       }
     });
@@ -935,6 +1055,16 @@ class _FightPageState extends State<FightPage> {
     setState(() {
       if (_phase != phase && phase != CombatPhase.heroUpkeep) {
         _heroUpkeepApplied = false;
+        _heroCoalTriggered = false;
+      }
+      if (phase != CombatPhase.minionUpkeep) {
+        _minionCoalTriggered = false;
+      }
+      if (phase == CombatPhase.hero) {
+        _heroTurnCount++;
+        if (_heroShadowsCount > 0 && _shadowsGainedHeroTurnCount == null) {
+          _shadowsGainedHeroTurnCount = _heroTurnCount;
+        }
       }
       _phase = phase;
       _upkeepApplied = false;
@@ -1012,8 +1142,12 @@ class _FightPageState extends State<FightPage> {
           _normalizeTokenKey(t) == 'hex' ||
           _normalizeTokenKey(t) == 'malefice',
     );
+    final hasBarbedVine = widget.adventure.alterations.any(_isBarbedVineToken);
+    final hasConstrict = widget.adventure.alterations.any(_isConstrictToken);
+    final hasDecrepify = widget.adventure.alterations.any(_isDecrepifyToken);
+    final hasDiceCube = widget.adventure.alterations.any(_isDiceCubeToken);
     _heroHexedThisAttack = hasHex;
-    if (hasEntangle || hasHex) {
+    if (hasEntangle || hasHex || hasBarbedVine || hasConstrict || hasDecrepify || hasDiceCube) {
       await _triggerTokenAnimationDialogs(
         widget.adventure.alterations,
         targetName: widget.adventure.hero.label,
@@ -1074,7 +1208,11 @@ class _FightPageState extends State<FightPage> {
         die.isHexed = _minionHexedThisAttack;
       }
     });
-    if (hasEntangle || hasHex) {
+    final hasBarbedVine = enemy.alterations.any(_isBarbedVineToken);
+    final hasConstrict = enemy.alterations.any(_isConstrictToken);
+    final hasDecrepify = enemy.alterations.any(_isDecrepifyToken);
+    final hasDiceCube = enemy.alterations.any(_isDiceCubeToken);
+    if (hasEntangle || hasHex || hasBarbedVine || hasConstrict || hasDecrepify || hasDiceCube) {
       await _triggerTokenAnimationDialogs(
         enemy.alterations,
         targetName: enemy.label,
@@ -1097,6 +1235,9 @@ class _FightPageState extends State<FightPage> {
           widget.onChanged();
         });
       }
+    }
+    if (enemy.alterations.any(_isWellspringToken) && enemy.health > 0 && mounted) {
+      await _triggerMinionWellspringAttempt();
     }
   }
 
@@ -1433,6 +1574,7 @@ class _FightPageState extends State<FightPage> {
 
   void _resetDice() {
     _rollCount = 0;
+    _lockedDiceCubeIds.clear();
     _diceAnimationPending = false;
     _editingDieId = null;
     _editMode = false;
@@ -1621,20 +1763,34 @@ class _FightPageState extends State<FightPage> {
     });
   }
 
-  bool _shadowsActive = false;
+  int _heroTurnCount = 0;
+  int? _shadowsGainedHeroTurnCount;
+
+  bool _isShadowsToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'shadows' || k == 'shadow' || k == 'ombre';
+  }
+
+  int get _heroShadowsCount =>
+      widget.adventure.alterations.where(_isShadowsToken).length;
+
+  bool get _shadowsActive =>
+      _phase == CombatPhase.minionAttack && _heroShadowsCount > 0;
 
   bool get _hasActiveShadowsOnHeroDefender {
     if (_phase != CombatPhase.minionAttack) return false;
-    return widget.adventure.alterations.any((t) =>
-        t.toLowerCase() == 'shadows' || t.toLowerCase() == 'ombre');
+    return widget.adventure.alterations.any(_isShadowsToken);
+  }
+
+  void _triggerHeroShadowsAttempt() {
+    // Shadows is automatic and non-persistent.
   }
 
   Future<void> _triggerShadowsPopin() async {
     final rule = TokenCatalogRepository.byLabel('Shadows') ??
         TokenCatalogRepository.byLabel('Ombre');
     if (rule == null) return;
-    final currentCount = widget.adventure.alterations.where((t) =>
-        t.toLowerCase() == 'shadows' || t.toLowerCase() == 'ombre').length;
+    final currentCount = _heroShadowsCount;
     await TokenAnimationDialog.show(
       context,
       rule: rule,
@@ -1645,20 +1801,438 @@ class _FightPageState extends State<FightPage> {
       customMessage: 'Shadows triggered!',
     );
     if (mounted) {
-      setState(() {
-        _shadowsActive = true;
-      });
+      setState(() {});
     }
   }
 
   bool _evasivePopinTriggered = false;
   bool _evasiveRollResolved = false;
+  bool _heroEvasiveAvoided = false;
+  bool _minionEvasiveAvoided = false;
+
+  bool _isEvasiveToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'evasive' || k == 'evitement';
+  }
+
+  bool _isBleedToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'bleed' || k == 'hemorragie' || k == 'saignement';
+  }
+
+  bool _isTimeBomb1(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'timebomb1' || k == 'bombearetardement1' || k == 'bombeàretardement1';
+  }
+
+  bool _isTimeBomb2(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'timebomb2' ||
+        k == 'bombearetardement2' ||
+        k == 'bombeàretardement2' ||
+        ((k == 'timebomb' || k == 'bombearetardement' || k == 'bombeàretardement') && !k.contains('1'));
+  }
+
+  bool _isTimeBombToken(String t) {
+    return _isTimeBomb1(t) || _isTimeBomb2(t);
+  }
+
+  bool _heroSneakAttackActive = false;
+  int _heroSneakAttackBonus = 0;
+  bool _minionSneakAttackActive = false;
+  int _minionSneakAttackBonus = 0;
+
+  bool _isSneakAttackToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'sneakattack' || k == 'attaquefurtive';
+  }
+
+  int get _heroSneakAttackCount =>
+      widget.adventure.alterations.where(_isSneakAttackToken).length;
+
+  int get _minionSneakAttackCount =>
+      enemy.alterations.where(_isSneakAttackToken).length;
+
+  bool _isBarbedVineToken(String t) => _isBarbedVineAlteration(t);
+
+  int get _heroBarbedVineCount =>
+      widget.adventure.alterations.where(_isBarbedVineToken).length;
+
+  int get _minionBarbedVineCount =>
+      enemy.alterations.where(_isBarbedVineToken).length;
+
+  bool _isConstrictToken(String t) => _isConstrictAlteration(t);
+  bool _isDecrepifyToken(String t) => _isDecrepifyAlteration(t);
+  bool _isDiceCubeToken(String t) => _isDiceCubeAlteration(t);
+
+  int get _heroConstrictCount =>
+      widget.adventure.alterations.where(_isConstrictToken).length;
+
+  int get _minionConstrictCount =>
+      enemy.alterations.where(_isConstrictToken).length;
+
+  bool _isWellspringToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'wellspring' || k == 'source';
+  }
+
+  int get _heroWellspringCount =>
+      widget.adventure.alterations.where(_isWellspringToken).length;
+
+  int get _minionWellspringCount =>
+      enemy.alterations.where(_isWellspringToken).length;
+
+  bool _isBlindingLightToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'blindinglight' || k == 'lumiereaveuglante';
+  }
+
+  bool _blindingLightResolved = false;
+  int? _blindingLightRoll;
+  int _blindingLightReducedDamage = 0;
+  int _blindingLightBaseAttack = 0;
+  bool _blindingLightZeroDamage = false;
+
+  bool get _hasActiveBlindingLightOnAttacker {
+    if (_blindingLightResolved) return false;
+    final isMinionAttacker = _phase == CombatPhase.minionAttack;
+    final isHeroAttacker = _phase == CombatPhase.hero;
+    if (!isMinionAttacker && !isHeroAttacker) return false;
+    final targetList = isMinionAttacker
+        ? enemy.alterations
+        : widget.adventure.alterations;
+    return targetList.any(_isBlindingLightToken);
+  }
+
+  Future<void> _triggerHeroWellspringAttempt() async {
+    final rule = TokenCatalogRepository.byLabel('Wellspring');
+    if (rule == null) return;
+    final result = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: 1,
+      targetName: widget.adventure.hero.label,
+      currentHp: widget.adventure.health,
+      currentCp: widget.adventure.combatPoints,
+    );
+    if (result == null || result.dieRoll == null) return;
+    final roll = result.dieRoll!;
+    final heal = (roll / 2.0).ceil();
+    setState(() {
+      final oldHp = widget.adventure.health;
+      widget.adventure.setHeroHealth(oldHp + heal, source: 'Wellspring');
+      final idx = widget.adventure.alterations.indexWhere(_isWellspringToken);
+      if (idx >= 0) widget.adventure.alterations.removeAt(idx);
+      widget.adventure.log(
+        '[TOKEN] Wellspring: ${widget.adventure.hero.label} rolled $roll -> +$heal HP ($oldHp ➔ ${widget.adventure.health}).',
+      );
+      widget.onChanged();
+    });
+  }
+
+  Future<void> _triggerMinionWellspringAttempt() async {
+    final rule = TokenCatalogRepository.byLabel('Wellspring');
+    if (rule == null) return;
+    final result = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: 1,
+      targetName: enemy.label,
+      currentHp: enemy.health,
+      currentCp: enemy.combatPoints,
+    );
+    if (result == null || result.dieRoll == null) return;
+    final roll = result.dieRoll!;
+    final heal = (roll / 2.0).ceil();
+    setState(() {
+      final oldHp = enemy.health;
+      enemy.health = (enemy.health + heal).clamp(0, enemy.maxHealth);
+      final idx = enemy.alterations.indexWhere(_isWellspringToken);
+      if (idx >= 0) enemy.alterations.removeAt(idx);
+      widget.adventure.log(
+        '[TOKEN] Wellspring: ${enemy.label} rolled $roll -> +$heal HP ($oldHp ➔ ${enemy.health}).',
+      );
+      widget.onChanged();
+    });
+  }
+
+  Future<void> _checkAndTriggerBlindingLightPopin() async {
+    final isMinion = _phase == CombatPhase.minionAttack;
+    final targetList = isMinion
+        ? enemy.alterations
+        : widget.adventure.alterations;
+    if (!targetList.any(_isBlindingLightToken)) return;
+
+    final rule = TokenCatalogRepository.byLabel('Blinding Light');
+    if (rule == null) return;
+
+    final targetName = isMinion ? enemy.label : widget.adventure.hero.label;
+
+    final result = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: 1,
+      targetName: targetName,
+      currentHp: isMinion ? enemy.health : widget.adventure.health,
+      currentCp: isMinion ? enemy.combatPoints : widget.adventure.combatPoints,
+    );
+
+    if (result == null || result.dieRoll == null) return;
+
+    final roll = result.dieRoll!;
+    _blindingLightRoll = roll;
+    _blindingLightResolved = true;
+
+    targetList.removeWhere(_isBlindingLightToken);
+
+    setState(() {
+      _blindingLightBaseAttack = _battleAttackValue;
+      if (roll == 1) {
+        _blindingLightZeroDamage = true;
+        _blindingLightReducedDamage = _battleAttackValue;
+        _battleAttackValue = 0;
+        _battleAttackUndefendable = false;
+        widget.adventure.log(
+          '[TOKEN] Blinding Light roll 1: Offensive Ability fails! 0 damage dealt (cannot be modified).',
+        );
+      } else if (roll == 2 || roll == 3) {
+        final initialAtk = _battleAttackValue;
+        final reduction = (initialAtk / 2.0).ceil();
+        _blindingLightReducedDamage = reduction;
+        _battleAttackValue = (initialAtk - reduction).clamp(0, 99);
+        widget.adventure.log(
+          '[TOKEN] Blinding Light roll $roll: Attack damage reduced by half (-$reduction). Net ATK: $_battleAttackValue.',
+        );
+      } else {
+        _blindingLightReducedDamage = 0;
+        widget.adventure.log(
+          '[TOKEN] Blinding Light roll $roll: Full attack damage applies normally ($_battleAttackValue).',
+        );
+      }
+      widget.onChanged();
+    });
+  }
+
+  bool get _hasValidMinionAttack {
+    if (_isNaraxus) return true;
+    if (_shouldResolveSpecialAttack()) return true;
+    if (_currentMinionAttackResult() != null) return true;
+    if (_currentAttackGoalMet()) return true;
+    if (_battleAttackValue > 0) return true;
+    return false;
+  }
+
+  bool get _canUseAttackerSneakAttack {
+    if (_phase == CombatPhase.hero) {
+      if (_heroSneakAttackActive) return false;
+      if (_heroSneakAttackCount <= 0) return false;
+      if (_battleAttackValue <= 0) return false;
+      if (_minionEvasiveAvoided || _minionAgilityAvoided) return false;
+      final effectiveDefense = (_isDefenderStunned || _battleAttackUndefendable)
+          ? 0
+          : (_battleDefenseValue + _battleDefenseModifier);
+      final targetedMod = enemy.alterations.any(_isTargetedToken) ? 2 : 0;
+      final currentDamage = max(0, (_battleAttackValue + targetedMod) - effectiveDefense);
+      return currentDamage > 0;
+    } else if (_phase == CombatPhase.minionAttack) {
+      if (_minionSneakAttackActive) return false;
+      if (_minionSneakAttackCount <= 0) return false;
+      if (_battleAttackValue <= 0) return false;
+      if (_heroEvasiveAvoided) return false;
+      if (_shadowsActive) return false;
+      if (_heroAgilityActive && _heroAgilitySuccesses >= 2) return false;
+      final effectiveDefense = (_isDefenderStunned || _battleAttackUndefendable)
+          ? 0
+          : (_battleDefenseValue + _battleDefenseModifier);
+      final targetedMod = widget.adventure.alterations.any(_isTargetedToken) ? 2 : 0;
+      final currentDamage = max(0, (_battleAttackValue + targetedMod) - effectiveDefense);
+      return currentDamage > 0;
+    }
+    return false;
+  }
+
+  Future<void> _triggerHeroSneakAttackAttempt() async {
+    final rule = TokenCatalogRepository.byLabel('Sneak Attack') ??
+        TokenCatalogRepository.byLabel('Attaque furtive');
+    if (rule == null) return;
+    final count = _heroSneakAttackCount;
+    if (count <= 0) return;
+
+    final result = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: count,
+      targetName: widget.adventure.hero.label,
+      currentHp: widget.adventure.health,
+      currentCp: widget.adventure.combatPoints,
+    );
+
+    if (!mounted || result == null) return;
+
+    final roll = result.dieRoll;
+    if (roll == null) return;
+
+    final bonus = (roll / 2).ceil();
+
+    final idx = widget.adventure.alterations.indexWhere(_isSneakAttackToken);
+    if (idx != -1) {
+      widget.adventure.alterations.removeAt(idx);
+    }
+
+    setState(() {
+      _heroSneakAttackActive = true;
+      _heroSneakAttackBonus = bonus;
+      _extraDiceOutcomeMessage =
+          'Sneak Attack roll: $roll -> +$bonus Attack Modifier!';
+      widget.adventure.log(
+        '[TOKEN] ${widget.adventure.hero.label} spent Sneak Attack: rolled $roll -> +$bonus Attack Modifier.',
+      );
+      widget.onChanged();
+    });
+  }
+
+  Future<void> _triggerMinionSneakAttackAttempt() async {
+    final rule = TokenCatalogRepository.byLabel('Sneak Attack') ??
+        TokenCatalogRepository.byLabel('Attaque furtive');
+    if (rule == null) return;
+    final count = _minionSneakAttackCount;
+    if (count <= 0) return;
+
+    final result = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: count,
+      targetName: enemy.label,
+      currentHp: enemy.health,
+      currentCp: enemy.combatPoints,
+    );
+
+    if (!mounted || result == null) return;
+
+    final roll = result.dieRoll;
+    if (roll == null) return;
+
+    final bonus = (roll / 2).ceil();
+
+    final idx = enemy.alterations.indexWhere(_isSneakAttackToken);
+    if (idx != -1) {
+      enemy.alterations.removeAt(idx);
+    }
+
+    setState(() {
+      _minionSneakAttackActive = true;
+      _minionSneakAttackBonus = bonus;
+      _extraDiceOutcomeMessage =
+          'Sneak Attack roll: $roll -> +$bonus Attack Modifier!';
+      widget.adventure.log(
+        '[TOKEN] ${enemy.label} spent Sneak Attack: rolled $roll -> +$bonus Attack Modifier.',
+      );
+      widget.onChanged();
+    });
+  }
+
+  bool _isTargetedToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'targeted' || k == 'prispourcible';
+  }
+
+  int get _battleAttackModifier {
+    if (_battleAttackValue <= 0) return 0;
+    final defenderHasTargeted = _phase == CombatPhase.hero
+        ? enemy.alterations.any(_isTargetedToken)
+        : widget.adventure.alterations.any(_isTargetedToken);
+    
+    final attackerHasDecrepify = _phase == CombatPhase.hero
+        ? widget.adventure.alterations.any(_isDecrepifyToken)
+        : enemy.alterations.any(_isDecrepifyToken);
+
+    var mod = defenderHasTargeted ? 2 : 0;
+    if (attackerHasDecrepify) mod -= 1;
+
+    if (_phase == CombatPhase.hero && _heroSneakAttackActive) {
+      mod += _heroSneakAttackBonus;
+    } else if (_phase == CombatPhase.minionAttack && _minionSneakAttackActive) {
+      mod += _minionSneakAttackBonus;
+    }
+    return mod;
+  }
+
+  int get _battleDefenseModifier {
+    if (_phase == CombatPhase.minionAttack && _heroAgilityActive) {
+      final incoming = _battleAttackValue + _battleAttackModifier;
+      final baseDef = _isDefenderStunned ? 0 : _battleDefenseValue;
+      final remainder = max(0, incoming - baseDef);
+      if (_heroAgilitySuccesses >= 2) {
+        return remainder;
+      } else if (_heroAgilitySuccesses == 1) {
+        return (remainder / 2).ceil();
+      }
+      return 0;
+    }
+    return 0;
+  }
+
+  int get _heroEvasiveCount =>
+      widget.adventure.alterations.where((t) => _isEvasiveToken(t)).length;
 
   bool get _hasActiveEvasiveOnMinionDefender {
     if (_evasiveRollResolved) return false;
     if (_phase != CombatPhase.hero) return false;
-    return enemy.alterations.any((t) =>
-        t.toLowerCase() == 'evasive' || t.toLowerCase() == 'evitement');
+    return enemy.alterations.any((t) => _isEvasiveToken(t));
+  }
+
+  Future<void> _triggerHeroEvasiveAttempt() async {
+    final rule = TokenCatalogRepository.byLabel('Evasive') ??
+        TokenCatalogRepository.byLabel('Évitement');
+    if (rule == null) return;
+
+    final count = _heroEvasiveCount;
+    if (count <= 0) return;
+
+    final evasiveResult = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: count,
+      targetName: widget.adventure.hero.label,
+      currentHp: widget.adventure.health,
+      currentCp: widget.adventure.combatPoints,
+    );
+
+    if (!mounted || evasiveResult == null) return;
+
+    final roll = evasiveResult.dieRoll ?? evasiveResult.count;
+    final spent = evasiveResult.spentCount.clamp(1, count);
+
+    // Remove spent Evasive tokens
+    for (var i = 0; i < spent; i++) {
+      final idx = widget.adventure.alterations.indexWhere((t) => _isEvasiveToken(t));
+      if (idx != -1) {
+        widget.adventure.alterations.removeAt(idx);
+      }
+    }
+
+    if (roll <= 2) {
+      setState(() {
+        _heroEvasiveAvoided = true;
+        _battleAttackValue = 0;
+        _battleDefenseValue = 0;
+        _extraDiceOutcomeMessage =
+            'Evasive roll: $roll (tentatives: $spent).\nAttack Avoided! 0 damage taken by ${widget.adventure.hero.label}.';
+        widget.adventure.log(
+          '[TOKEN] ${widget.adventure.hero.label} spent $spent Evasive: rolled $roll -> 0 damage taken.',
+        );
+        widget.onChanged();
+      });
+    } else {
+      setState(() {
+        _extraDiceOutcomeMessage =
+            'Evasive roll: $roll (tentatives: $spent).\nEvasive Failed! Normal damage applies.';
+        widget.adventure.log(
+          '[TOKEN] ${widget.adventure.hero.label} spent $spent Evasive: rolled $roll -> failed ($roll).',
+        );
+        widget.onChanged();
+      });
+    }
   }
 
   Future<bool> _checkAndTriggerEvasivePopin() async {
@@ -1669,84 +2243,260 @@ class _FightPageState extends State<FightPage> {
         TokenCatalogRepository.byLabel('Évitement');
     if (rule == null) return false;
 
+    final currentEvasiveCount = enemy.alterations
+        .where((t) => _isEvasiveToken(t))
+        .length;
+    if (currentEvasiveCount <= 0) return false;
+
+    final effectiveDefense = _isDefenderStunned ? 0 : _battleDefenseValue;
+    final netDamage = max(0, _battleAttackValue - effectiveDefense);
+    final willKill = (enemy.health - netDamage) <= 0;
+    final isMajorDamage = netDamage >= 9;
+    if (!willKill && !isMajorDamage) return false;
+    if (netDamage <= 0) return false;
+
     _evasivePopinTriggered = true;
-    var attempts = 0;
 
-    while (mounted) {
-      final hasEvasive = enemy.alterations.any((t) =>
-          t.toLowerCase() == 'evasive' || t.toLowerCase() == 'evitement');
-      if (!hasEvasive) break;
+    final evasiveResult = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: currentEvasiveCount,
+      targetName: enemy.label,
+      currentHp: enemy.health,
+      currentCp: enemy.combatPoints,
+    );
 
-      final effectiveDefense =
-          _battleDefenseValue;
-      final netDamage = max(0, _battleAttackValue - effectiveDefense);
-      if (netDamage <= 0) break;
-
-      final currentEvasiveCount = enemy.alterations
-          .where((t) =>
-              t.toLowerCase() == 'evasive' || t.toLowerCase() == 'evitement')
-          .length;
-
-      final evasiveResult = await TokenAnimationDialog.show(
-        context,
-        rule: rule,
-        initialCount: currentEvasiveCount,
-        targetName: enemy.label,
-        currentHp: enemy.health,
-        currentCp: enemy.combatPoints,
-        customMessage: attempts > 0
-            ? 'Previous Evasive failed! Using next Evasive token ($currentEvasiveCount left).'
-            : null,
-      );
-
-      if (!mounted || evasiveResult == null) {
-        break;
+    if (!mounted || evasiveResult == null) {
+      if (mounted) {
+        setState(() {
+          _evasivePopinTriggered = false;
+        });
       }
+      return false;
+    }
 
-      attempts++;
-      final roll = evasiveResult.dieRoll ?? evasiveResult.count;
+    final roll = evasiveResult.dieRoll ?? evasiveResult.count;
+    final spent = evasiveResult.spentCount.clamp(1, currentEvasiveCount);
 
-      // Remove exactly ONE Evasive token
-      final idx = enemy.alterations.indexWhere((t) =>
-          t.toLowerCase() == 'evasive' || t.toLowerCase() == 'evitement');
+    // Remove spent Evasive tokens
+    for (var i = 0; i < spent; i++) {
+      final idx = enemy.alterations.indexWhere((t) => _isEvasiveToken(t));
       if (idx != -1) {
         enemy.alterations.removeAt(idx);
       }
+    }
 
-      if (roll <= 2) {
-        setState(() {
-          _battleAttackValue = 0;
-          _battleDefenseValue = 0;
-          _extraDiceOutcomeMessage =
-              'Evasive roll: $roll.\nAttack Avoided! 0 damage dealt to ${enemy.label}.';
-          widget.adventure.log(
-            '[TOKEN] ${enemy.label} spent Evasive (attempt #$attempts): rolled $roll -> 0 damage taken.',
-          );
-          widget.onChanged();
-        });
-        break;
-      } else {
-        setState(() {
-          _extraDiceOutcomeMessage =
-              'Evasive roll: $roll.\nEvasive Failed! (Attempt #$attempts)';
-          widget.adventure.log(
-            '[TOKEN] ${enemy.label} spent Evasive (attempt #$attempts): rolled $roll -> failed, normal damage applies.',
-          );
-          widget.onChanged();
-        });
-      }
+    if (roll <= 2) {
+      setState(() {
+        _battleAttackValue = 0;
+        _battleDefenseValue = 0;
+        _minionEvasiveAvoided = true;
+        _extraDiceOutcomeMessage =
+            'Evasive roll: $roll (tentatives: $spent).\nAttack Avoided! 0 damage dealt to ${enemy.label}.';
+        widget.adventure.log(
+          '[TOKEN] ${enemy.label} spent $spent Evasive: rolled $roll -> 0 damage taken.',
+        );
+        widget.onChanged();
+      });
+    } else {
+      setState(() {
+        _extraDiceOutcomeMessage =
+            'Evasive roll: $roll (tentatives: $spent).\nEvasive Failed! ($spent token(s) used)';
+        widget.adventure.log(
+          '[TOKEN] ${enemy.label} spent $spent Evasive: rolled $roll -> failed, normal damage applies.',
+        );
+        widget.onChanged();
+      });
     }
 
     if (mounted) {
       setState(() {
         _evasivePopinTriggered = false;
-        if (attempts > 0) {
-          _evasiveRollResolved = true;
-        }
+        _evasiveRollResolved = true;
       });
     }
 
-    return attempts > 0;
+    return true;
+  }
+
+  bool _agilityPopinTriggered = false;
+  bool _agilityRollResolved = false;
+  bool _heroAgilityActive = false;
+  int _heroAgilitySuccesses = 0;
+  int _heroAgilityDamagePrevented = 0;
+  bool _minionAgilityAvoided = false;
+
+  bool _isAgilityToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'agility' || k == 'agilite' || k == 'agilité';
+  }
+
+  int get _heroAgilityCount =>
+      widget.adventure.alterations.where((t) => _isAgilityToken(t)).length;
+
+  bool get _hasActiveAgilityOnMinionDefender {
+    if (_agilityRollResolved) return false;
+    if (_phase != CombatPhase.hero) return false;
+    return enemy.alterations.any((t) => _isAgilityToken(t));
+  }
+
+  Future<void> _triggerHeroAgilityAttempt() async {
+    final rule = TokenCatalogRepository.byLabel('Agility') ??
+        TokenCatalogRepository.byLabel('Agilité');
+    if (rule == null) return;
+
+    final count = _heroAgilityCount;
+    if (count <= 0) return;
+
+    final agilityResult = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: count,
+      targetName: widget.adventure.hero.label,
+      currentHp: widget.adventure.health,
+      currentCp: widget.adventure.combatPoints,
+    );
+
+    if (!mounted || agilityResult == null) return;
+
+    final spent = agilityResult.spentCount.clamp(1, count);
+    final newSuccesses = agilityResult.agilitySuccessCount ??
+        ((agilityResult.dieRoll != null && agilityResult.dieRoll! <= 3) ? 1 : 0);
+
+    // Remove spent Agility tokens
+    for (var i = 0; i < spent; i++) {
+      final idx = widget.adventure.alterations.indexWhere((t) => _isAgilityToken(t));
+      if (idx != -1) {
+        widget.adventure.alterations.removeAt(idx);
+      }
+    }
+
+    setState(() {
+      _heroAgilityActive = true;
+      _heroAgilitySuccesses = (_heroAgilitySuccesses + newSuccesses).clamp(0, 2);
+
+      final incomingDamage = _battleAttackValue + _battleAttackModifier;
+      final effectiveDefense = _isDefenderStunned ? 0 : _battleDefenseValue;
+      final remainder = max(0, incomingDamage - effectiveDefense);
+
+      if (_heroAgilitySuccesses >= 2) {
+        _heroAgilityDamagePrevented = remainder;
+        _extraDiceOutcomeMessage =
+            'Agility (2/2 réussis) :\nAttaque totalement annulée ! 0 dégât subi par ${widget.adventure.hero.label}.';
+        widget.adventure.log(
+          '[TOKEN] ${widget.adventure.hero.label} spent $spent Agility: 2 successes -> 0 damage taken.',
+        );
+      } else if (_heroAgilitySuccesses == 1) {
+        final prevented = (remainder / 2).ceil();
+        _heroAgilityDamagePrevented = prevented;
+        _extraDiceOutcomeMessage =
+            'Agility (1/2 réussi) :\nDégâts divisés par 2 (-$prevented dégâts reçus).';
+        widget.adventure.log(
+          '[TOKEN] ${widget.adventure.hero.label} spent $spent Agility: 1 success -> prevented $prevented dmg.',
+        );
+      } else {
+        _heroAgilityDamagePrevented = 0;
+        _extraDiceOutcomeMessage =
+            'Agility (0/$spent réussi) :\nÉchec ! Dégâts normaux appliqués.';
+        widget.adventure.log(
+          '[TOKEN] ${widget.adventure.hero.label} spent $spent Agility: failed -> normal damage applies.',
+        );
+      }
+      widget.onChanged();
+    });
+  }
+
+  Future<bool> _checkAndTriggerAgilityPopinOnEnemy() async {
+    if (_agilityPopinTriggered || _agilityRollResolved || !mounted) return false;
+    if (_phase != CombatPhase.hero) return false;
+
+    final rule = TokenCatalogRepository.byLabel('Agility') ??
+        TokenCatalogRepository.byLabel('Agilité');
+    if (rule == null) return false;
+
+    final currentAgilityCount = enemy.alterations
+        .where((t) => _isAgilityToken(t))
+        .length;
+    if (currentAgilityCount <= 0) return false;
+
+    final effectiveDefense = _isDefenderStunned ? 0 : _battleDefenseValue;
+    final netDamage = max(0, _battleAttackValue - effectiveDefense);
+    if (netDamage <= 0) return false;
+
+    _agilityPopinTriggered = true;
+
+    final agilityResult = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: currentAgilityCount,
+      targetName: enemy.label,
+      currentHp: enemy.health,
+      currentCp: enemy.combatPoints,
+    );
+
+    if (!mounted || agilityResult == null) {
+      if (mounted) {
+        setState(() {
+          _agilityPopinTriggered = false;
+        });
+      }
+      return false;
+    }
+
+    final spent = agilityResult.spentCount.clamp(1, currentAgilityCount);
+    final successes = agilityResult.agilitySuccessCount ??
+        ((agilityResult.dieRoll != null && agilityResult.dieRoll! <= 3) ? 1 : 0);
+
+    // Remove spent Agility tokens
+    for (var i = 0; i < spent; i++) {
+      final idx = enemy.alterations.indexWhere((t) => _isAgilityToken(t));
+      if (idx != -1) {
+        enemy.alterations.removeAt(idx);
+      }
+    }
+
+    if (successes >= 2) {
+      setState(() {
+        _battleAttackValue = 0;
+        _battleDefenseValue = 0;
+        _minionAgilityAvoided = true;
+        _extraDiceOutcomeMessage =
+            'Agility (2/2 réussis) :\nAttaque totalement annulée ! 0 dégât infligé à ${enemy.label}.';
+        widget.adventure.log(
+          '[TOKEN] ${enemy.label} spent $spent Agility: 2 successes -> 0 damage taken.',
+        );
+        widget.onChanged();
+      });
+    } else if (successes == 1) {
+      final prevented = (netDamage / 2).ceil();
+      setState(() {
+        _battleAttackValue = max(0, _battleAttackValue - prevented);
+        _extraDiceOutcomeMessage =
+            'Agility (1/2 réussi) :\nDégâts divisés par 2 (-$prevented dégâts infligés).';
+        widget.adventure.log(
+          '[TOKEN] ${enemy.label} spent $spent Agility: 1 success -> prevented $prevented dmg.',
+        );
+        widget.onChanged();
+      });
+    } else {
+      setState(() {
+        _extraDiceOutcomeMessage =
+            'Agility (0/$spent réussi) :\nÉchec ! Dégâts normaux appliqués.';
+        widget.adventure.log(
+          '[TOKEN] ${enemy.label} spent $spent Agility: failed -> normal damage applies.',
+        );
+        widget.onChanged();
+      });
+    }
+
+    if (mounted) {
+      setState(() {
+        _agilityPopinTriggered = false;
+        _agilityRollResolved = true;
+      });
+    }
+
+    return true;
   }
 
   bool get _needsDruidFormRoll =>
@@ -1847,10 +2597,48 @@ class _FightPageState extends State<FightPage> {
     return _visibleDiceCount.clamp(0, 5);
   }
 
+  bool _minionReachedMaxDamage(EnemyNode enemy, List<GameDie> dice) {
+    if (enemy.attackPlan.style == MinionAttackStyle.suite) {
+      final values = dice
+          .map((die) => die.effectiveValue)
+          .whereType<int>()
+          .toList();
+      return _bestSuiteLength(values) >= 5;
+    }
+    if (enemy.attackPlan.style == MinionAttackStyle.symbols) {
+      final current = _currentMinionAttackResult()?.value ?? 0;
+      if (current <= 0) return false;
+      var maxDamage = 0;
+      for (final goal in enemy.attackPlan.goals) {
+        final dmg = _damageForSymbolGoal(enemy, goal)?.value ?? 0;
+        if (dmg > maxDamage) maxDamage = dmg;
+      }
+      return current >= maxDamage;
+    }
+    return true;
+  }
+
   int get _maxRolls {
     if (_phase == CombatPhase.hero || _isNaraxus) return 1;
-    if (_phase == CombatPhase.minionAttack && _minionEntangledThisAttack) {
-      return 2;
+    if (_phase == CombatPhase.minionAttack) {
+      if (enemy.alterations.any(_isBarbedVineToken) &&
+          _rollCount >= 1 &&
+          _hasValidMinionAttack) {
+        return _rollCount;
+      }
+      if (enemy.alterations.any(_isConstrictToken) &&
+          _rollCount >= 1 &&
+          !_isNaraxus) {
+        if (enemy.combatPoints <= 0) {
+          return _rollCount;
+        }
+        if (_minionReachedMaxDamage(enemy, _dice)) {
+          return _rollCount;
+        }
+      }
+      if (_minionEntangledThisAttack) {
+        return 2;
+      }
     }
     return 3;
   }
@@ -1874,6 +2662,25 @@ class _FightPageState extends State<FightPage> {
     _battleNotes.clear();
     _extraDiceOutcomeMessage = '';
     _viseerDefensePassivePending = false;
+    _heroEvasiveAvoided = false;
+    _minionEvasiveAvoided = false;
+    _evasivePopinTriggered = false;
+    _evasiveRollResolved = false;
+    _heroAgilityActive = false;
+    _heroAgilitySuccesses = 0;
+    _heroAgilityDamagePrevented = 0;
+    _minionAgilityAvoided = false;
+    _agilityPopinTriggered = false;
+    _agilityRollResolved = false;
+    _heroSneakAttackActive = false;
+    _heroSneakAttackBonus = 0;
+    _minionSneakAttackActive = false;
+    _minionSneakAttackBonus = 0;
+    _blindingLightResolved = false;
+    _blindingLightRoll = null;
+    _blindingLightReducedDamage = 0;
+    _blindingLightBaseAttack = 0;
+    _blindingLightZeroDamage = false;
   }
 
   void _refreshBattleResolutionFromDice() {
@@ -2148,6 +2955,24 @@ class _FightPageState extends State<FightPage> {
     _battleNotes
       ..clear()
       ..addAll(notes);
+
+    final netDamage = max(0, _battleAttackValue - _battleDefenseValue);
+    final willKill = (enemy.health - netDamage) <= 0;
+    final isMajorDamage = netDamage >= 9;
+    if ((willKill || isMajorDamage) && _hasActiveEvasiveOnMinionDefender) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _checkAndTriggerEvasivePopin();
+        }
+      });
+    }
+    if (netDamage > 0 && _hasActiveAgilityOnMinionDefender) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _checkAndTriggerAgilityPopinOnEnemy();
+        }
+      });
+    }
   }
 
   Iterable<int> _defenseSelectionIds({
@@ -2344,7 +3169,6 @@ class _FightPageState extends State<FightPage> {
           _normalizeTokenKey(t) == 'prispourcible',
     );
     if (heroHasTargeted && acc.attack > 0) {
-      acc.attack += 2;
       acc.notes.add('Targeted: +2 damage on hero.');
     }
 
@@ -2692,7 +3516,6 @@ class _FightPageState extends State<FightPage> {
           _normalizeTokenKey(t) == 'prispourcible',
     );
     if (heroHasTargeted && attack > 0) {
-      attack += 2;
       notes.add('Targeted: +2 damage on hero.');
     }
 
@@ -3119,43 +3942,51 @@ class _FightPageState extends State<FightPage> {
     if (!_isBattlePhase) {
       return;
     }
-    if (_phase == CombatPhase.hero && _hasActiveEvasiveOnMinionDefender) {
-      final effectiveDefense =
-          _battleDefenseValue;
+    if (_phase == CombatPhase.hero &&
+        !_isDefenderStunned &&
+        _hasActiveEvasiveOnMinionDefender) {
+      final effectiveDefense = _battleDefenseValue;
       final netDamage = max(0, _battleAttackValue - effectiveDefense);
-      if (netDamage > 0) {
+      final willKill = (enemy.health - netDamage) <= 0;
+      final isMajorDamage = netDamage >= 9;
+      if (willKill || isMajorDamage) {
         await _checkAndTriggerEvasivePopin();
       }
     }
-    if (_phase == CombatPhase.minionAttack && _hasActiveShadowsOnHeroDefender) {
-      if (_battleAttackValue > 0) {
-        if (!_shadowsActive) {
-          await _triggerShadowsPopin();
-        } else {
-          widget.adventure.log('[TOKEN] Hero is in Shadows! Absorbed the attack.');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Shadows absorbed the attack!')));
-          }
-        }
-        _battleAttackValue = 0;
-        _battleDefenseValue = 0;
-        widget.adventure.log('[TOKEN] Hero Shadows activated! Negated all incoming damage.');
+    if (_phase == CombatPhase.hero &&
+        !_isDefenderStunned &&
+        _hasActiveAgilityOnMinionDefender) {
+      final effectiveDefense = _battleDefenseValue;
+      final netDamage = max(0, _battleAttackValue - effectiveDefense);
+      if (netDamage > 0) {
+        await _checkAndTriggerAgilityPopinOnEnemy();
       }
+    }
+    if (_phase == CombatPhase.minionAttack && _shadowsActive) {
+      widget.adventure.log('[TOKEN] Hero Shadows active: negating incoming attack damage.');
     }
     _captureStepUndo();
     final currentBattlePhase = _phase;
+    final wasDefenderStunned = _isDefenderStunned;
     late final CombatPhase nextPhase;
     setState(() {
-      final effectiveDefense = _battleDefenseValue;
-      final netDamage = max(0, _battleAttackValue - effectiveDefense);
+      final effectiveAttack = _battleAttackValue + _battleAttackModifier;
+      final effectiveDefense = wasDefenderStunned ? 0 : (_battleDefenseValue + _battleDefenseModifier);
+      final rawDamage = max(0, effectiveAttack - effectiveDefense);
+      final netDamage = (_phase == CombatPhase.minionAttack && _shadowsActive) ? 0 : rawDamage;
       if (_phase == CombatPhase.hero) {
         final oldEnemyHealth = enemy.health;
         enemy.health = (enemy.health - netDamage).clamp(0, 99);
         
         final buffer = StringBuffer();
         buffer.writeln('### Hero Roll Phase');
-        buffer.writeln('ATK: $_battleAttackValue [ATK]');
-        if (effectiveDefense > 0) {
+        buffer.writeln('ATK: $effectiveAttack [ATK]');
+        if (_heroSneakAttackActive) {
+          buffer.writeln('[TOKEN] Sneak Attack modifier: +$_heroSneakAttackBonus');
+        }
+        if (wasDefenderStunned) {
+          buffer.writeln('DEF blocked: 0 (Enemy was stunned)');
+        } else if (effectiveDefense > 0) {
           buffer.writeln('DEF blocked: $effectiveDefense [DEF]');
         }
         buffer.writeln('Damage taken by enemy: $netDamage');
@@ -3212,15 +4043,20 @@ class _FightPageState extends State<FightPage> {
           buffer.writeln('[TOKEN:$token] applied to hero');
         }
 
+        if (wasDefenderStunned) {
+          enemy.alterations.removeWhere((t) => _isStunToken(t));
+          buffer.writeln('[TOKEN:Stun] Enemy Stun removed after attack.');
+        }
+
         widget.adventure.log(buffer.toString().trim());
 
-        if (_battleAttackValue == 0) {
+        if (effectiveAttack == 0) {
           _lastBattleOutcomeMessage =
               '${widget.adventure.hero.label} attack failed.';
         } else {
           _lastBattleOutcomeMessage =
-              '${widget.adventure.hero.label} dealt $_battleAttackValue damage. '
-              '${_battleAttackUndefendable ? 'This attack is undefendable. ' : ''}${enemy.label} prevented $_battleDefenseValue damage.\n'
+              '${widget.adventure.hero.label} dealt $effectiveAttack damage. '
+              '${_battleAttackUndefendable ? 'This attack is undefendable. ' : ''}${wasDefenderStunned ? '${enemy.label} was stunned and could not defend.\n' : '${enemy.label} prevented $effectiveDefense damage.\n'}'
               'Net damage: deals $netDamage damage.'
               '${_battleReturnDamage > 0 ? ' Return damage: $_battleReturnDamage.' : ''}'
               '${_battleLifeSteal > 0 ? ' Steals $_battleLifeSteal health.' : ''}'
@@ -3253,31 +4089,74 @@ class _FightPageState extends State<FightPage> {
         }
         _heroHexedThisAttack = false;
         
-        if (_shadowsActive) {
-          widget.adventure.alterations.removeWhere((t) => t.toLowerCase() == 'shadows' || t.toLowerCase() == 'ombre');
-          _shadowsActive = false;
-          widget.adventure.log('[TOKEN] Hero Shadows removed after completing a full turn.');
+        if (_heroShadowsCount > 0) {
+          if (_shadowsGainedHeroTurnCount == null) {
+            _shadowsGainedHeroTurnCount = _heroTurnCount;
+          } else if (_shadowsGainedHeroTurnCount! < _heroTurnCount) {
+            widget.adventure.alterations.removeWhere(_isShadowsToken);
+            _shadowsGainedHeroTurnCount = null;
+            widget.adventure.log('[TOKEN] Hero Shadows expired at the end of the turn.');
+            buffer.writeln('[TOKEN:Shadows] Hero Shadows expired at end of turn.');
+          }
         }
 
-        _activeEnemyId = _firstEnemyTurnId();
-        nextPhase = CombatPhase.minionUpkeep;
+        if (widget.adventure.alterations.any(_isBarbedVineToken)) {
+          widget.adventure.alterations.removeWhere(_isBarbedVineToken);
+          widget.adventure.log('[TOKEN] Hero Barbed Vine removed at end of offensive roll phase.');
+          buffer.writeln('[TOKEN:Barbed Vine] Hero Barbed Vine removed at end of offensive roll phase.');
+        }
+
+        if (widget.adventure.alterations.any(_isConstrictToken)) {
+          widget.adventure.alterations.removeWhere(_isConstrictToken);
+          widget.adventure.log('[TOKEN] Hero Constrict removed at end of offensive roll phase.');
+          buffer.writeln('[TOKEN:Constrict] Hero Constrict removed at end of offensive roll phase.');
+        }
+        if (widget.adventure.alterations.any(_isDecrepifyToken)) {
+          widget.adventure.alterations.removeWhere(_isDecrepifyToken);
+          widget.adventure.log('[TOKEN] Hero Decrep-ify removed at end of offensive roll phase.');
+          buffer.writeln('[TOKEN:Decrep-ify] Hero Decrep-ify removed at end of offensive roll phase.');
+        }
+        if (widget.adventure.alterations.any(_isDiceCubeToken)) {
+          widget.adventure.alterations.removeWhere(_isDiceCubeToken);
+          widget.adventure.log('[TOKEN] Hero Dice cube removed at end of offensive roll phase.');
+          buffer.writeln('[TOKEN:Dice cube] Hero Dice cube removed at end of offensive roll phase.');
+        }
+
+        final enemySurvived = enemy.health > 0;
+        if (wasDefenderStunned && enemySurvived) {
+          nextPhase = CombatPhase.hero;
+        } else {
+          _activeEnemyId = _firstEnemyTurnId();
+          nextPhase = CombatPhase.minionUpkeep;
+        }
       } else {
         final shouldSummonLevel3 = _discipleSummonLevel3;
         
         final buffer = StringBuffer();
         buffer.writeln('### Enemy Roll Phase (${enemy.label})');
-        buffer.writeln('ATK: $_battleAttackValue [ATK]');
-        if (effectiveDefense > 0) {
+        buffer.writeln('ATK: $effectiveAttack [ATK]');
+        if (_minionSneakAttackActive) {
+          buffer.writeln('[TOKEN] Sneak Attack modifier: +$_minionSneakAttackBonus');
+        }
+        if (wasDefenderStunned) {
+          buffer.writeln('DEF blocked: 0 (Hero was stunned)');
+        } else if (effectiveDefense > 0) {
           buffer.writeln('DEF blocked: $effectiveDefense [DEF]');
         }
-        buffer.writeln('Damage taken by hero: $netDamage');
+        buffer.writeln(
+          (_phase == CombatPhase.minionAttack && _shadowsActive)
+              ? 'Damage taken by hero: 0 (Negated by Shadows)'
+              : 'Damage taken by hero: $netDamage',
+        );
 
         widget.adventure.setHeroHealth(widget.adventure.health - netDamage, source: 'Enemy damage');
         if (_battleLifeSteal > 0) {
-          widget.adventure.setHeroHealth(
-            widget.adventure.health - _battleLifeSteal,
-            source: 'Lifesteal',
-          );
+          if (!_shadowsActive) {
+            widget.adventure.setHeroHealth(
+              widget.adventure.health - _battleLifeSteal,
+              source: 'Lifesteal',
+            );
+          }
           final oldEnemyHealth = enemy.health;
           enemy.health = (enemy.health + _battleLifeSteal).clamp(
             0,
@@ -3315,12 +4194,42 @@ class _FightPageState extends State<FightPage> {
           buffer.writeln('[TOKEN:$token] applied to hero');
         }
 
+        if (wasDefenderStunned) {
+          widget.adventure.alterations.removeWhere((t) => _isStunToken(t));
+          buffer.writeln('[TOKEN:Stun] Hero Stun removed after attack.');
+        }
+
+        final shadowsWasActive = _shadowsActive;
+        if (shadowsWasActive) {
+          widget.adventure.alterations.removeWhere(_isShadowsToken);
+          _shadowsGainedHeroTurnCount = null;
+          buffer.writeln('[TOKEN:Shadows] Hero Shadows consumed and removed.');
+        }
+
+        if (enemy.alterations.any(_isBarbedVineToken)) {
+          enemy.alterations.removeWhere(_isBarbedVineToken);
+          buffer.writeln('[TOKEN:Barbed Vine] Minion Barbed Vine removed after offensive roll phase.');
+        }
+
+        if (enemy.alterations.any(_isConstrictToken)) {
+          enemy.alterations.removeWhere(_isConstrictToken);
+          buffer.writeln('[TOKEN:Constrict] Minion Constrict removed after offensive roll phase.');
+        }
+        if (enemy.alterations.any(_isDecrepifyToken)) {
+          enemy.alterations.removeWhere(_isDecrepifyToken);
+          buffer.writeln('[TOKEN:Decrep-ify] Minion Decrep-ify removed after offensive roll phase.');
+        }
+        if (enemy.alterations.any(_isDiceCubeToken)) {
+          enemy.alterations.removeWhere(_isDiceCubeToken);
+          buffer.writeln('[TOKEN:Dice cube] Minion Dice cube removed after offensive roll phase.');
+        }
+
         widget.adventure.log(buffer.toString().trim());
 
         _lastBattleOutcomeMessage =
-            '${enemy.label} dealt $_battleAttackValue damage. '
-            '${_battleAttackUndefendable ? 'This attack is undefendable. ' : ''}${widget.adventure.hero.label} prevented $_battleDefenseValue damage.\n'
-            'Net damage: deals $netDamage damage.'
+            '${enemy.label} dealt $effectiveAttack damage. '
+            '${_battleAttackUndefendable ? 'This attack is undefendable. ' : ''}${wasDefenderStunned ? '${widget.adventure.hero.label} was stunned and could not defend.\n' : '${widget.adventure.hero.label} prevented $effectiveDefense damage.\n'}'
+            '${shadowsWasActive ? 'Net damage: 0 damage (Absorbed by Shadows).' : 'Net damage: deals $netDamage damage.'}'
             '${_battleHeroTokens.isNotEmpty ? ' ${widget.adventure.hero.label} receives ${_battleHeroTokens.join(', ')}.' : ''}'
             '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_battleMinionTokens.join(', ')}.' : ''}'
             '${_battleEnemyHeal > 0 ? ' ${enemy.label} heals $_battleEnemyHeal HP.' : ''}'
@@ -3330,9 +4239,12 @@ class _FightPageState extends State<FightPage> {
         if (enemy.health <= 0) {
           _grantViseerRewardIfNeeded(enemy);
         }
+        final heroSurvived = widget.adventure.health > 0;
         if (shouldSummonLevel3) {
           _replaceCurrentEnemyWithRandomLevel3();
           nextPhase = CombatPhase.intro;
+        } else if (wasDefenderStunned && heroSurvived) {
+          nextPhase = CombatPhase.minionAttack;
         } else {
           final nextEnemy = _nextEnemyTurnIdAfter(enemy.id);
           if (nextEnemy != null) {
@@ -3361,17 +4273,90 @@ class _FightPageState extends State<FightPage> {
           die.isHexed = false;
         }
       }
+      _blindingLightResolved = false;
+      _blindingLightRoll = null;
+      _blindingLightReducedDamage = 0;
+      _blindingLightBaseAttack = 0;
+      _blindingLightZeroDamage = false;
       widget.onChanged();
     });
+
+    final defenderSurvived = currentBattlePhase == CombatPhase.hero
+        ? enemy.health > 0
+        : widget.adventure.health > 0;
+
+    if (wasDefenderStunned && defenderSurvived) {
+      await _triggerStunPopin(
+        targetName: currentBattlePhase == CombatPhase.hero
+            ? enemy.label
+            : widget.adventure.hero.label,
+      );
+    }
+
     if (currentBattlePhase == CombatPhase.hero) {
-      await _triggerDelayedPoisonIfNeeded(forHero: true);
+      if (!wasDefenderStunned || enemy.health <= 0) {
+        await _triggerDelayedPoisonIfNeeded(forHero: true);
+      }
     } else if (currentBattlePhase == CombatPhase.minionAttack) {
-      await _triggerDelayedPoisonIfNeeded(forHero: false);
+      if (!wasDefenderStunned || widget.adventure.health <= 0) {
+        await _triggerDelayedPoisonIfNeeded(forHero: false);
+      }
     }
     if (_isResolutionMode) {
       return;
     }
     _setPhase(nextPhase);
+  }
+
+  bool _isStunToken(String label) {
+    final k = _normalizeTokenKey(label);
+    return k == 'stun' || k == 'etourdissement';
+  }
+
+  bool get _isDefenderStunned {
+    if (_phase == CombatPhase.hero) {
+      return enemy.alterations.any((t) => _isStunToken(t)) ||
+          _battleMinionTokens.any((t) => _isStunToken(t));
+    } else if (_phase == CombatPhase.minionAttack) {
+      return widget.adventure.alterations.any((t) => _isStunToken(t)) ||
+          _battleHeroTokens.any((t) => _isStunToken(t));
+    }
+    return false;
+  }
+
+  Future<void> _triggerStunPopin({required String targetName}) async {
+    if (!mounted) return;
+    final rule = TokenCatalogRepository.byLabel('Stun') ??
+        TokenCatalogRepository.byLabel('Étourdissement') ??
+        TokenCatalogRepository.rules.firstWhere(
+          (r) => _isStunToken(r.label),
+          orElse: () => const StatusTokenRule(
+            label: 'Stun',
+            frLabel: 'Étourdissement',
+            kind: StatusTokenKind.negative,
+            maxStack: 1,
+            persistent: false,
+            persistence: TokenPersistence.nonPersistent,
+            removable: true,
+            appSupported: true,
+            imageAsset: 'assets/token/stun.png',
+            description:
+                'A player afflicted with this token may take no actions of any kind (i.e. no cards may be played, no defense may be made, no status tokens or passive abilities may be used, etc). After the attack concludes, the player who inflicted Stun removes the token and then immediately targets the same opponent with an additional Offensive Roll Phase.',
+            aliases: ['Stun', 'Étourdissement'],
+            appDetails:
+                "Bloque toutes les actions du joueur et accorde une phase de roll supplémentaire à l'attaquant.",
+            appAnimation: true,
+            minionAllowed: true,
+            editorVisible: true,
+          ),
+        );
+
+    await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      targetName: targetName,
+      initialCount: 1,
+    );
   }
 
   bool _isDelayedPoisonToken(String label) {
@@ -3421,7 +4406,6 @@ class _FightPageState extends State<FightPage> {
       initialCount: delayedCount,
       currentHp: currentHp,
       currentCp: currentCp,
-      customMessage: '$targetName removes $delayedCount Delayed Poison token${delayedCount > 1 ? 's' : ''} and receives ${delayedCount * 3} dmg.',
     );
 
     if (!mounted) return;
@@ -3489,7 +4473,7 @@ class _FightPageState extends State<FightPage> {
     _resetDice();
   }
 
-  Future<void> _triggerTokenAnimationDialogs(
+  Future<Set<String>> _triggerTokenAnimationDialogs(
     List<String> tokens, {
     required String targetName,
     required int currentHp,
@@ -3497,16 +4481,21 @@ class _FightPageState extends State<FightPage> {
     bool isRollPhase = false,
     Set<String>? maskedTokens,
   }) async {
-    if (tokens.isEmpty || !mounted) return;
+    final resolvedTokenKeys = <String>{};
+    if (tokens.isEmpty || !mounted) return resolvedTokenKeys;
 
     final rulesToShow = <StatusTokenRule>[];
     final processedLabels = <String>{};
     for (final tokenLabel in List<String>.from(tokens)) {
       final rule = TokenCatalogRepository.byLabel(tokenLabel);
-      if (rule == null || !rule.appAnimation || processedLabels.contains(rule.label)) {
+      if (rule == null || !rule.appAnimation) {
         continue;
       }
       final tokenKey = _normalizeTokenKey(rule.label);
+      final isUnitary = !isRollPhase;
+      if (!isUnitary && processedLabels.contains(rule.label)) {
+        continue;
+      }
       if (maskedTokens != null && maskedTokens.contains(tokenKey)) {
         continue;
       }
@@ -3515,8 +4504,14 @@ class _FightPageState extends State<FightPage> {
           l == 'éblouissement' ||
           l == 'evasive' ||
           l == 'evitement' ||
+          l == 'agility' ||
+          l == 'agilité' ||
+          l == 'agilite' ||
           tokenLabel.toLowerCase() == 'éblouissement' ||
-          tokenLabel.toLowerCase() == 'evitement') {
+          tokenLabel.toLowerCase() == 'evitement' ||
+          tokenLabel.toLowerCase() == 'agility' ||
+          tokenLabel.toLowerCase() == 'agilité' ||
+          tokenLabel.toLowerCase() == 'agilite') {
         continue;
       }
       if (l.contains('delayed poison') ||
@@ -3524,6 +4519,27 @@ class _FightPageState extends State<FightPage> {
           l.contains('poison retardé') ||
           l.contains('poison différé')) {
         continue;
+      }
+      if (l.contains('blinding light') ||
+          l.contains('lumière aveuglante') ||
+          l.contains('lumiere aveuglante')) {
+        continue;
+      }
+      if (l == 'wellspring' || l == 'source') {
+        continue;
+      }
+      final isCoal = l == 'coal' || l == 'charbon';
+      if (isCoal) {
+        if (targetName != widget.adventure.hero.label && _isNaraxus) {
+          continue;
+        }
+        final coalCount = tokens.where(_isCoalToken).length;
+        if (coalCount < 4) {
+          continue;
+        }
+        if (targetName == widget.adventure.hero.label && currentCp >= 15) {
+          continue;
+        }
       }
       final isKnockdown = l.contains('knockdown') || l.contains('terre');
       if (isKnockdown && targetName != widget.adventure.hero.label && _isNaraxus) {
@@ -3540,7 +4556,11 @@ class _FightPageState extends State<FightPage> {
       final isEntangle = l.contains('entangle') || l.contains('enchevetrement');
       final isHex = l.contains('hex') || l.contains('malefice');
       final isTargeted = l.contains('targeted') || l.contains('prispourcible');
-      final isRollToken = isEntangle || isHex || isTargeted;
+      final isBarbedVine = l.contains('barbed vine') || l.contains('ronces');
+      final isConstrict = l.contains('constrict') || l.contains('compression');
+      final isDecrepify = l.contains('decrepify') || l.contains('decrepitude') || l.contains('decrep-ify');
+      final isDiceCube = l.contains('dice cube') || l.contains('cube');
+      final isRollToken = isEntangle || isHex || isTargeted || isBarbedVine || isConstrict || isDecrepify || isDiceCube;
       if (!isRollPhase && isRollToken) {
         continue;
       }
@@ -3551,86 +4571,254 @@ class _FightPageState extends State<FightPage> {
       rulesToShow.add(rule);
     }
 
-    if (rulesToShow.isEmpty || !mounted) return;
+    if (rulesToShow.isEmpty || !mounted) return resolvedTokenKeys;
 
     List<StatusTokenRule> executionOrder = rulesToShow;
-    if (rulesToShow.length > 1) {
+    final hasMultipleDistinctTokens =
+        rulesToShow.map((r) => _normalizeTokenKey(r.label)).toSet().length > 1;
+    if (rulesToShow.length > 1 && hasMultipleDistinctTokens) {
       final ordered = await TokenOrderingDialog.show(
         context,
         rules: rulesToShow,
         targetName: targetName,
         isRollPhase: isRollPhase,
       );
-      if (!mounted) return;
+      if (!mounted) return resolvedTokenKeys;
       if (ordered != null && ordered.isNotEmpty) {
         executionOrder = ordered;
       }
     }
 
+    var runningHp = currentHp;
+    var runningCp = currentCp;
+    var unresolvedBleeds = tokens.where((t) => _isBleedToken(t)).length;
+    var unresolvedTimeBomb1 = tokens.where((t) => _isTimeBomb1(t)).length;
+    var unresolvedTimeBomb2 = tokens.where((t) => _isTimeBomb2(t)).length;
+
+    final isUnitary = !isRollPhase;
+
     for (final rule in executionOrder) {
       final tokenKey = _normalizeTokenKey(rule.label);
-      final initialCount = tokens.where((t) {
-        final r = TokenCatalogRepository.byLabel(t);
-        return r?.label == rule.label ||
-            t.toLowerCase() == rule.label.toLowerCase();
-      }).length;
+      final isBleed = _isBleedToken(rule.label);
+      final isTb1 = _isTimeBomb1(rule.label);
+      final isTb2 = _isTimeBomb2(rule.label);
+      final isCoal = _isCoalToken(rule.label);
+
+      if (isBleed && unresolvedBleeds <= 0) {
+        continue;
+      }
+      if (isTb1 && unresolvedTimeBomb1 <= 0) {
+        continue;
+      }
+      if (isTb2 && unresolvedTimeBomb2 <= 0) {
+        continue;
+      }
+
+      final initialCount = isCoal
+          ? tokens.where(_isCoalToken).length
+          : (isUnitary
+              ? 1
+              : (isBleed
+                  ? unresolvedBleeds
+                  : isTb1
+                      ? unresolvedTimeBomb1
+                      : isTb2
+                          ? unresolvedTimeBomb2
+                          : tokens.where((t) {
+                              final r = TokenCatalogRepository.byLabel(t);
+                              return r?.label == rule.label ||
+                                  t.toLowerCase() == rule.label.toLowerCase();
+                            }).length));
 
       final result = await TokenAnimationDialog.show(
         context,
         rule: rule,
         initialCount: initialCount,
         targetName: targetName,
-        currentHp: currentHp,
-        currentCp: currentCp,
+        currentHp: runningHp,
+        currentCp: runningCp,
       );
-      if (!mounted) return;
+      if (!mounted) return resolvedTokenKeys;
 
       if (result != null && result.dontShowAgain && maskedTokens != null) {
         maskedTokens.add(tokenKey);
       }
 
+      int deltaHp = 0;
+      int deltaCp = 0;
+      final l = rule.label.toLowerCase();
+      if (l.contains('delayed poison') ||
+          l.contains('poison latent') ||
+          l.contains('poison retardé') ||
+          l.contains('poison différé')) {
+        deltaHp = -initialCount * 3;
+      } else if (l.contains('poison')) {
+        deltaHp = -initialCount;
+      } else if (l.contains('brûlure') || l.contains('brulure') || l.contains('burn')) {
+        deltaHp = initialCount > 0 ? -2 : 0;
+      } else if (isBleed) {
+        final rolls = result?.allDiceRolls ?? (result?.dieRoll != null ? [result!.dieRoll!] : <int>[]);
+        deltaHp = -rolls.where((r) => r <= 4).length;
+      } else if (isTb2) {
+        final rolls = result?.allDiceRolls ?? (result?.dieRoll != null ? [result!.dieRoll!] : <int>[]);
+        deltaHp = -rolls.where((r) => r <= 5).length * 4;
+      }
+
+      if (l.contains('knockdown') || l.contains('terre')) {
+        deltaCp = -(runningCp >= 2 ? 2 : runningCp);
+      }
+
+      runningHp = (runningHp + deltaHp).clamp(0, 99);
+      runningCp = (runningCp + deltaCp).clamp(0, 99);
+
+      if (isCoal && initialCount >= 4 && mounted) {
+        resolvedTokenKeys.add('coal');
+        setState(() {
+          var removed = 0;
+          for (final t in List<String>.from(tokens)) {
+            if (removed >= 4) break;
+            if (_isCoalToken(t)) {
+              tokens.remove(t);
+              removed++;
+            }
+          }
+          if (targetName == widget.adventure.hero.label) {
+            _heroCoalTriggered = true;
+          } else {
+            _minionCoalTriggered = true;
+          }
+          widget.adventure.log(
+            '[TOKEN] $targetName: 4 Coal tokens removed, upkeep CP gain reduced by 1.',
+          );
+          widget.onChanged();
+        });
+      }
+
       if (result != null && result.dieRoll != null && mounted) {
         final roll = result.dieRoll!;
-        final isTimeBomb1 = tokenKey == 'time bomb 1' || tokenKey == 'bombe à retardement 1';
-        final isTimeBomb2 = tokenKey == 'time bomb 2' || tokenKey == 'bombe à retardement 2' || (tokenKey == 'time bomb' && !isTimeBomb1);
-        
+        final isTimeBomb1 = _isTimeBomb1(rule.label);
+        final isTimeBomb2 = _isTimeBomb2(rule.label);
+
         if (isTimeBomb1) {
+          resolvedTokenKeys.add('timebomb1');
+          final rolls = result.allDiceRolls ?? [roll];
+          unresolvedTimeBomb1 -= rolls.length;
           setState(() {
-            tokens.removeWhere((t) {
-              final r = TokenCatalogRepository.byLabel(t);
-              return r?.label == rule.label || t.toLowerCase() == rule.label.toLowerCase();
-            });
-            if (roll <= 5) {
-              tokens.add('Time bomb 2');
-              widget.adventure.log('[TOKEN] $targetName rolled $roll for Time Bomb 1: transforms into Time Bomb 2.');
-            } else {
-              widget.adventure.log('[TOKEN] $targetName rolled 6 for Time Bomb 1: token removed.');
+            for (final r in rolls) {
+              final removeIdx = tokens.indexWhere((t) => _isTimeBomb1(t));
+              if (removeIdx >= 0) {
+                tokens.removeAt(removeIdx);
+              }
+              if (r <= 5) {
+                tokens.add('Time bomb 2');
+                widget.adventure.log(
+                  '[TOKEN] $targetName rolled $r for Time Bomb 1: transforms into Time Bomb 2.',
+                );
+              } else {
+                if (targetName == widget.adventure.hero.label) {
+                  enemy.alterations.add('Time bomb 1');
+                  widget.adventure.log(
+                    '[TOKEN] $targetName rolled 6 for Time Bomb 1: transferred to ${enemy.label}.',
+                  );
+                } else {
+                  widget.adventure.alterations.add('Time bomb 1');
+                  widget.adventure.log(
+                    '[TOKEN] $targetName rolled 6 for Time Bomb 1: transferred to ${widget.adventure.hero.label}.',
+                  );
+                }
+              }
             }
             widget.onChanged();
           });
           continue;
         } else if (isTimeBomb2) {
+          resolvedTokenKeys.add('timebomb2');
+          final rolls = result.allDiceRolls ?? [roll];
+          unresolvedTimeBomb2 -= rolls.length;
           setState(() {
-            tokens.removeWhere((t) {
-              final r = TokenCatalogRepository.byLabel(t);
-              return r?.label == rule.label || t.toLowerCase() == rule.label.toLowerCase();
-            });
-            if (roll <= 5) {
-              widget.adventure.log('[TOKEN] $targetName rolled $roll for Time Bomb 2: takes 4 dmg and token removed.');
-              if (targetName == widget.adventure.hero.label) {
-                widget.adventure.setHeroHealth(
-                  widget.adventure.health - 4,
-                  source: 'Time bomb 2',
-                );
-              } else {
-                final EnemyNode targetEnemy = widget.adventure.enemies.firstWhere((e) => e.label == targetName, orElse: () => _primaryEnemy);
-                targetEnemy.health = (targetEnemy.health - 4).clamp(0, 999);
+            for (final r in rolls) {
+              final removeIdx = tokens.indexWhere((t) => _isTimeBomb2(t));
+              if (removeIdx >= 0) {
+                tokens.removeAt(removeIdx);
               }
-            } else {
-              widget.adventure.log('[TOKEN] $targetName rolled 6 for Time Bomb 2: token removed.');
+              if (r <= 5) {
+                widget.adventure.log(
+                  '[TOKEN] $targetName rolled $r for Time Bomb 2: explodes for 4 undefendable dmg.',
+                );
+                if (targetName == widget.adventure.hero.label) {
+                  widget.adventure.setHeroHealth(
+                    widget.adventure.health - 4,
+                    source: 'Time bomb 2',
+                  );
+                } else {
+                  final EnemyNode targetEnemy = widget.adventure.enemies.firstWhere(
+                    (e) => e.label == targetName,
+                    orElse: () => enemy,
+                  );
+                  targetEnemy.health = (targetEnemy.health - 4).clamp(0, 999);
+                }
+              } else {
+                if (targetName == widget.adventure.hero.label) {
+                  enemy.alterations.add('Time bomb 2');
+                  widget.adventure.log(
+                    '[TOKEN] $targetName rolled 6 for Time Bomb 2: transferred to ${enemy.label}.',
+                  );
+                } else {
+                  widget.adventure.alterations.add('Time bomb 2');
+                  widget.adventure.log(
+                    '[TOKEN] $targetName rolled 6 for Time Bomb 2: transferred to ${widget.adventure.hero.label}.',
+                  );
+                }
+              }
             }
             widget.onChanged();
           });
+          continue;
+        } else if (isBleed) {
+          resolvedTokenKeys.add('bleed');
+          final rolls = result.allDiceRolls ?? [roll];
+          if (rolls.isNotEmpty) {
+            unresolvedBleeds -= rolls.length;
+            setState(() {
+              var totalDmg = 0;
+              var removedCount = 0;
+              for (final r in rolls) {
+                if (r <= 4) {
+                  totalDmg += 1;
+                } else {
+                  removedCount += 1;
+                  final removeIdx = tokens.indexWhere((t) => _isBleedToken(t));
+                  if (removeIdx >= 0) {
+                    tokens.removeAt(removeIdx);
+                  }
+                }
+              }
+              if (totalDmg > 0) {
+                if (targetName == widget.adventure.hero.label) {
+                  widget.adventure.setHeroHealth(
+                    widget.adventure.health - totalDmg,
+                    source: 'Bleed',
+                  );
+                } else {
+                  final EnemyNode targetEnemy = widget.adventure.enemies.firstWhere(
+                    (e) => e.label == targetName,
+                    orElse: () => enemy,
+                  );
+                  targetEnemy.health = (targetEnemy.health - totalDmg).clamp(0, 999);
+                }
+              }
+              final rollSummary =
+                  rolls.length == 1 ? 'rolled ${rolls.first}' : 'rolls $rolls';
+              final effectSummary = [
+                if (totalDmg > 0) '$totalDmg dmg taken',
+                if (removedCount > 0) '$removedCount Bleed removed',
+              ].join(', ');
+              widget.adventure.log(
+                '[TOKEN] $targetName $rollSummary for Bleed -> ${effectSummary.isEmpty ? "no damage, token remains" : effectSummary}.',
+              );
+              widget.onChanged();
+            });
+          }
           continue;
         }
       }
@@ -3649,18 +4837,14 @@ class _FightPageState extends State<FightPage> {
         });
       }
     }
+    return resolvedTokenKeys;
   }
 
   Future<void> _applyHeroUpkeep({bool captureUndo = true}) async {
     if (!mounted || _heroUpkeepApplied || _phase != CombatPhase.heroUpkeep) {
       return;
     }
-    final hasShadows = widget.adventure.alterations.any((t) => t.toLowerCase() == 'shadows' || t.toLowerCase() == 'ombre');
-    if (hasShadows && !_shadowsActive) {
-      await _triggerShadowsPopin();
-      widget.adventure.log('[TOKEN] Hero Shadows activated at start of Upkeep.');
-    }
-    await _triggerTokenAnimationDialogs(
+    final resolvedInPopin = await _triggerTokenAnimationDialogs(
       widget.adventure.alterations,
       targetName: widget.adventure.hero.label,
       currentHp: widget.adventure.health,
@@ -3674,13 +4858,30 @@ class _FightPageState extends State<FightPage> {
     UpkeepOutcome? heroOutcome;
     setState(() {
       _heroUpkeepApplied = true;
+      final skip = <String>{};
+      if (resolvedInPopin.contains('bleed')) {
+        skip.addAll({'Bleed', 'Hémorragie', 'Hemorragie', 'Saignement'});
+      }
+      if (resolvedInPopin.contains('timebomb1')) {
+        skip.addAll({'Time bomb 1', 'Bombe à retardement 1', 'bombe a retardement 1'});
+      }
+      if (resolvedInPopin.contains('timebomb2')) {
+        skip.addAll({'Time bomb 2', 'Bombe à retardement 2', 'bombe a retardement 2'});
+      }
+      if (resolvedInPopin.contains('coal') || _heroCoalTriggered) {
+        skip.addAll({'Coal', 'Charbon', 'coal', 'charbon'});
+      }
       heroOutcome = GameEngine.heroUpkeep(
         tokens: widget.adventure.alterations,
         rollD6: () => _random.nextInt(6) + 1,
         currentCp: widget.adventure.combatPoints,
+        skipTokens: skip,
       );
+      final heroCpDelta = (resolvedInPopin.contains('coal') || _heroCoalTriggered)
+          ? 0
+          : heroOutcome!.cpDelta;
       widget.adventure.setHeroPc(
-        widget.adventure.combatPoints + heroOutcome!.cpDelta,
+        widget.adventure.combatPoints + heroCpDelta,
       );
       widget.adventure.setHeroHealth(
         widget.adventure.health + heroOutcome!.healthDelta,
@@ -3709,7 +4910,7 @@ class _FightPageState extends State<FightPage> {
     if (_upkeepApplied) {
       return;
     }
-    await _triggerTokenAnimationDialogs(
+    final resolvedInPopin = await _triggerTokenAnimationDialogs(
       enemy.alterations,
       targetName: enemy.label,
       currentHp: enemy.health,
@@ -3743,15 +4944,34 @@ class _FightPageState extends State<FightPage> {
       if (_isViseerNode(enemy)) {
         passiveLog = _resolveViseerPassive(source: 'Viseer upkeep');
       }
+      final skip = <String>{};
+      if (resolvedInPopin.contains('bleed')) {
+        skip.addAll({'Bleed', 'Hémorragie', 'Hemorragie', 'Saignement'});
+      }
+      if (resolvedInPopin.contains('timebomb1')) {
+        skip.addAll({'Time bomb 1', 'Bombe à retardement 1', 'bombe a retardement 1'});
+      }
+      if (resolvedInPopin.contains('timebomb2')) {
+        skip.addAll({'Time bomb 2', 'Bombe à retardement 2', 'bombe a retardement 2'});
+      }
+      if (resolvedInPopin.contains('coal') || _minionCoalTriggered) {
+        skip.addAll({'Coal', 'Charbon', 'coal', 'charbon'});
+      }
       final outcome = GameEngine.minionUpkeep(
         tokens: enemy.alterations,
         rollD6: () => _random.nextInt(6) + 1,
         currentCp: enemy.combatPoints,
         isNaxarus: _isNaraxus,
+        skipTokens: skip,
       );
+      final hadCoal = resolvedInPopin.contains('coal') || outcome.coalActive || _minionCoalTriggered;
+      final naturalGain = (_isNaraxus || _enemyHasInfiniteCp(enemy) || hadCoal) ? 0 : 1;
       final cpDelta = _enemyHasInfiniteCp(enemy) ? 0 : outcome.cpDelta;
-      enemy.combatPoints = (enemy.combatPoints + cpDelta).clamp(0, 99);
-      enemy.health = (enemy.health + outcome.healthDelta).clamp(0, 99);
+      enemy.combatPoints = (enemy.combatPoints + naturalGain + cpDelta).clamp(0, 99);
+      enemy.health = (enemy.health + outcome.healthDelta).clamp(
+        0,
+        enemy.maxHealth,
+      );
       for (final token in outcome.removedTokens) {
         enemy.alterations.remove(token);
       }
@@ -3773,6 +4993,9 @@ class _FightPageState extends State<FightPage> {
         
       } else {
           }
+    }
+    if (enemy.alterations.any(_isWellspringToken) && enemy.health > 0 && mounted) {
+      await _triggerMinionWellspringAttempt();
     }
   }
 
@@ -3847,7 +5070,19 @@ class _FightPageState extends State<FightPage> {
       case MinionAttackStyle.symbols:
         _reserveSymbolGoal();
       case MinionAttackStyle.none:
-        return;
+        break;
+    }
+
+    if (_rollCount >= 1 && enemy.alterations.any(_isDecrepifyToken)) {
+      final active = _activeDice;
+      final unreserved = active.where((d) => !d.reserved).toList();
+      if (unreserved.length > 2) {
+        unreserved.sort((a, b) => (b.effectiveValue ?? 0).compareTo(a.effectiveValue ?? 0));
+        for (int i = 0; i < unreserved.length - 2; i++) {
+          unreserved[i].reserved = true;
+        }
+        widget.adventure.log('[TOKEN] Decrep-ify: Minion is limited to rerolling 2 dice.');
+      }
     }
   }
 
@@ -4148,26 +5383,49 @@ class _CompactItemStripState extends State<CompactItemStrip> {
                                         showTokenDetails(
                                           context,
                                           rule,
-                                          getCount: widget.onTokensChanged != null ? () => widget.items.where((t) => t == rule.label).length : null,
-                                          onMinus: widget.onTokensChanged != null ? () {
-                                            widget.items.remove(rule.label);
-                                            widget.onTokensChanged!();
-                                          } : null,
-                                          onPlus: widget.onTokensChanged != null ? () {
-                                            widget.items.add(rule.label);
-                                            widget.onTokensChanged!();
-                                          } : null,
+                                          getCount: widget.onTokensChanged != null
+                                              ? () => widget.items
+                                                  .where((t) => _compactTokenBaseLabel(t) == rule.label)
+                                                  .length
+                                              : null,
+                                          onMinus: widget.onTokensChanged != null
+                                              ? () {
+                                                  final idx = widget.items.indexWhere(
+                                                    (t) => _compactTokenBaseLabel(t) == rule.label,
+                                                  );
+                                                  if (idx != -1) {
+                                                    widget.items.removeAt(idx);
+                                                    widget.onTokensChanged!();
+                                                  }
+                                                }
+                                              : null,
+                                          onPlus: widget.onTokensChanged != null
+                                              ? () {
+                                                  widget.items.add(rule.label);
+                                                  widget.onTokensChanged!();
+                                                }
+                                              : null,
                                         );
                                       } else {
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
-                                          SnackBar(content: Text(item.tooltip)),
+                                          SnackBar(
+                                            content: Text(
+                                              item.tooltip.replaceAll(
+                                                RegExp(r'_active', caseSensitive: false),
+                                                '',
+                                              ),
+                                            ),
+                                          ),
                                         );
                                       }
                                     },
                                     child: Tooltip(
-                                      message: item.tooltip,
+                                      message: item.tooltip.replaceAll(
+                                        RegExp(r'_active', caseSensitive: false),
+                                        '',
+                                      ),
                                       child: _CompactItemVisual(
                                         item: item,
                                         color: widget.accent,
@@ -4356,16 +5614,39 @@ class CompactItemBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isActive = tooltip.toLowerCase().contains('_active') ||
+        value.toLowerCase().contains('_active');
     final rule = TokenCatalogRepository.byLabel(
       _compactTokenBaseLabel(tooltip),
-    );
+    ) ?? TokenCatalogRepository.byLabel(_compactTokenBaseLabel(value));
     if (rule != null) {
-      final countMatch = RegExp(r' x(\d+)').firstMatch(tooltip);
+      final cleanTooltip = tooltip.replaceAll(
+        RegExp(r'_active', caseSensitive: false),
+        '',
+      );
+      final countMatch = RegExp(r' x(\d+)').firstMatch(cleanTooltip);
       final count = countMatch?.group(1);
+      Widget image = StatusTokenImage(rule: rule, size: size);
+      if (isActive) {
+        image = Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.greenAccent, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.greenAccent.withValues(alpha: 0.6),
+                blurRadius: 4,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: image,
+        );
+      }
       return Stack(
         clipBehavior: Clip.none,
         children: [
-          StatusTokenImage(rule: rule, size: size),
+          image,
           if (count != null)
             Positioned(
               right: -2,
@@ -4412,7 +5693,10 @@ class CompactItemBadge extends StatelessWidget {
 }
 
 String _compactTokenBaseLabel(String value) {
-  return value.replaceFirst(RegExp(r' x\d+$'), '').trim();
+  return value
+      .replaceFirst(RegExp(r' x\d+$'), '')
+      .replaceAll(RegExp(r'_active', caseSensitive: false), '')
+      .trim();
 }
 
 List<CompactItemModel> _compactItemModels(List<String> values) {
@@ -6850,7 +8134,10 @@ class CombatAiChatDock extends StatelessWidget {
     required this.notes,
     required this.showResolution,
     required this.attackValue,
+    this.attackModifier,
     required this.defenseValue,
+    this.defenseModifier,
+    this.showStunCover = false,
     this.showOnlyCardsCover = false,
     this.onOnlyCardsUnlock,
     required this.onAttackChanged,
@@ -6862,9 +8149,41 @@ class CombatAiChatDock extends StatelessWidget {
     this.onEditEnemyTokens,
     this.showBlindButton = false,
     this.onBlindPressed,
-    this.showEvasiveButton = false,
-    this.onEvasivePressed,
+    this.showEvasiveAttackCover = false,
+    this.heroEvasiveCount = 0,
+    this.heroEvasiveAvoided = false,
+    this.onUseHeroEvasive,
+    this.heroAgilityCount = 0,
+    this.heroAgilityActive = false,
+    this.heroAgilitySuccesses = 0,
+    this.heroAgilityPrevented = 0,
+    this.onUseHeroAgility,
+    this.minionAgilityAvoided = false,
     this.shadowsActive = false,
+    this.heroShadowsCount = 0,
+    this.onUseHeroShadows,
+    this.attackerSneakAttackCount = 0,
+    this.attackerSneakAttackActive = false,
+    this.attackerSneakAttackBonus = 0,
+    this.canUseAttackerSneakAttack = false,
+    this.onUseAttackerSneakAttack,
+    this.barbedVineActive = false,
+    this.barbedVineCount = 0,
+    this.constrictActive = false,
+    this.constrictCount = 0,
+    this.decrepifyActive = false,
+    this.diceCubeActive = false,
+    this.diceCubeCount = 0,
+    this.heroWellspringCount = 0,
+    this.onUseHeroWellspring,
+    this.enemyWellspringCount = 0,
+    this.onUseEnemyWellspring,
+    this.showBlindingLightAttackCover = false,
+    this.onBlindingLightPressed,
+    this.blindingLightZeroDamage = false,
+    this.blindingLightReducedDamage = 0,
+    this.blindingLightBaseAttack = 0,
+    this.blindingLightRoll,
     super.key,
   });
 
@@ -6877,6 +8196,30 @@ class CombatAiChatDock extends StatelessWidget {
   final EnemyNode? secondaryEnemy;
   final bool canSwitchTarget;
   final bool shadowsActive;
+  final int heroShadowsCount;
+  final VoidCallback? onUseHeroShadows;
+  final int attackerSneakAttackCount;
+  final bool attackerSneakAttackActive;
+  final int attackerSneakAttackBonus;
+  final bool canUseAttackerSneakAttack;
+  final VoidCallback? onUseAttackerSneakAttack;
+  final bool barbedVineActive;
+  final int barbedVineCount;
+  final bool constrictActive;
+  final int constrictCount;
+  final bool decrepifyActive;
+  final bool diceCubeActive;
+  final int diceCubeCount;
+  final int heroWellspringCount;
+  final VoidCallback? onUseHeroWellspring;
+  final int enemyWellspringCount;
+  final VoidCallback? onUseEnemyWellspring;
+  final bool showBlindingLightAttackCover;
+  final VoidCallback? onBlindingLightPressed;
+  final bool blindingLightZeroDamage;
+  final int blindingLightReducedDamage;
+  final int blindingLightBaseAttack;
+  final int? blindingLightRoll;
   final ValueChanged<EnemyNode> onSelectTarget;
   final int returnDamage;
   final bool returnDamageUndefendable;
@@ -6888,7 +8231,10 @@ class CombatAiChatDock extends StatelessWidget {
   final List<String> notes;
   final bool showResolution;
   final int attackValue;
+  final int? attackModifier;
   final int defenseValue;
+  final int? defenseModifier;
+  final bool showStunCover;
   final bool showOnlyCardsCover;
   final VoidCallback? onOnlyCardsUnlock;
   final ValueChanged<int> onAttackChanged;
@@ -6900,8 +8246,16 @@ class CombatAiChatDock extends StatelessWidget {
   final VoidCallback? onEditEnemyTokens;
   final bool showBlindButton;
   final VoidCallback? onBlindPressed;
-  final bool showEvasiveButton;
-  final VoidCallback? onEvasivePressed;
+  final bool showEvasiveAttackCover;
+  final int heroEvasiveCount;
+  final bool heroEvasiveAvoided;
+  final VoidCallback? onUseHeroEvasive;
+  final int heroAgilityCount;
+  final bool heroAgilityActive;
+  final int heroAgilitySuccesses;
+  final int heroAgilityPrevented;
+  final VoidCallback? onUseHeroAgility;
+  final bool minionAgilityAvoided;
 
   @override
   Widget build(BuildContext context) {
@@ -6914,9 +8268,38 @@ class CombatAiChatDock extends StatelessWidget {
         : enemy.rank.color;
     final enemyCpInfinity =
         enemy.profileKey == 'naraxus' || enemy.profileKey == 'viseer';
+    final cleanHeroTokens = heroTokens
+        .map((t) => t.replaceAll(RegExp(r'_active', caseSensitive: false), ''))
+        .toList();
+    final cleanMinionTokens = minionTokens
+        .map((t) => t.replaceAll(RegExp(r'_active', caseSensitive: false), ''))
+        .toList();
+    final isHeroBattle = phase == CombatPhase.hero;
+    final hasBlindingLightInAiMessage = aiMessage.contains('Blinding Light (D6:');
+    String? blindingLightInterpretation;
+    if (!hasBlindingLightInAiMessage) {
+      final attackerName = isHeroBattle ? adventure.hero.label : enemy.label;
+      if (blindingLightRoll != null) {
+        if (blindingLightZeroDamage || blindingLightRoll == 1) {
+          blindingLightInterpretation =
+              'Blinding Light (D6: 1) on $attackerName: Offensive Ability fails to activate! 0 damage dealt.';
+        } else if (blindingLightRoll == 2 || blindingLightRoll == 3) {
+          final netDmg = (blindingLightBaseAttack - blindingLightReducedDamage).clamp(0, 99);
+          blindingLightInterpretation =
+              'Blinding Light (D6: $blindingLightRoll) on $attackerName: Attack damage is reduced by half (-$blindingLightReducedDamage). Net attack: $netDmg.';
+        } else {
+          blindingLightInterpretation =
+              'Blinding Light (D6: $blindingLightRoll) on $attackerName: Attack applies at full strength ($blindingLightBaseAttack damage).';
+        }
+      } else if (showBlindingLightAttackCover) {
+        blindingLightInterpretation =
+            'Blinding Light is active on $attackerName: Roll 1 D6 on attack (1 = fails, 2-3 = ½ damage, 4-6 = full damage).';
+      }
+    }
     final tokenText = [
-      if (heroTokens.isNotEmpty) 'Hero: ${heroTokens.join(', ')}',
-      if (minionTokens.isNotEmpty) 'Minion: ${minionTokens.join(', ')}',
+      if (cleanHeroTokens.isNotEmpty) 'Hero: ${cleanHeroTokens.join(', ')}',
+      if (cleanMinionTokens.isNotEmpty) 'Minion: ${cleanMinionTokens.join(', ')}',
+      if (blindingLightInterpretation != null) blindingLightInterpretation,
       if (returnDamage > 0)
         returnDamageUndefendable
             ? 'Returns $returnDamage undefendable damage'
@@ -6926,7 +8309,6 @@ class CombatAiChatDock extends StatelessWidget {
       if (cpSteal > 0) 'CP steal: $cpSteal',
       if (enemy.profileKey != 'naraxus') ...notes,
     ];
-    final isHeroBattle = phase == CombatPhase.hero;
     final attackColor = isHeroBattle ? heroAccent : enemy.rank.color;
     final defenseColor = isHeroBattle ? enemy.rank.color : heroAccent;
     final defenderHasTargeted = phase == CombatPhase.hero
@@ -6942,6 +8324,42 @@ class CombatAiChatDock extends StatelessWidget {
                     _normalizeTokenKey(t) == 'prispourcible',
               )
             : false);
+    final bool showHeroEvasiveRow =
+        phase == CombatPhase.minionAttack &&
+        (heroEvasiveCount > 0 || heroEvasiveAvoided);
+    final bool showHeroAgilityRow =
+        phase == CombatPhase.minionAttack &&
+        (heroAgilityCount > 0 || heroAgilityActive);
+    final bool showHeroShadowsRow =
+        phase == CombatPhase.minionAttack &&
+        (heroShadowsCount > 0 || shadowsActive);
+    final bool showBarbedVineRow =
+        (phase == CombatPhase.hero || phase == CombatPhase.minionAttack) &&
+        (barbedVineActive || barbedVineCount > 0);
+    final bool showConstrictRow =
+        (phase == CombatPhase.hero || phase == CombatPhase.minionAttack) &&
+        (constrictActive || constrictCount > 0);
+    final bool showDecrepifyRow =
+        (phase == CombatPhase.hero || phase == CombatPhase.minionAttack) &&
+        decrepifyActive;
+    final bool showDiceCubeRow =
+        (phase == CombatPhase.hero || phase == CombatPhase.minionAttack) &&
+        (diceCubeActive || diceCubeCount > 0);
+    final bool showSneakAttackRow =
+        (phase == CombatPhase.hero || phase == CombatPhase.minionAttack) &&
+        (attackerSneakAttackCount > 0 || attackerSneakAttackActive);
+    final bool showShadowsAttackCover =
+        phase == CombatPhase.minionAttack && shadowsActive;
+    final bool isAgilityAvoided =
+        (phase == CombatPhase.minionAttack &&
+            heroAgilityActive &&
+            heroAgilitySuccesses >= 2) ||
+        (phase == CombatPhase.hero && minionAgilityAvoided);
+    final bool isHeroTurn = phase == CombatPhase.heroUpkeep || phase == CombatPhase.hero;
+    final bool isMinionTurn = phase == CombatPhase.minionUpkeep || phase == CombatPhase.minionAttack;
+    final bool showWellspringRow = (isHeroTurn && heroWellspringCount > 0) || (isMinionTurn && enemyWellspringCount > 0);
+    final int wellspringCount = isHeroTurn ? heroWellspringCount : enemyWellspringCount;
+    final VoidCallback? onUseWellspring = isHeroTurn ? onUseHeroWellspring : onUseEnemyWellspring;
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xf2121212),
@@ -6977,9 +8395,27 @@ class CombatAiChatDock extends StatelessWidget {
                 if (shadowsActive && (t.toLowerCase() == 'shadows' || t.toLowerCase() == 'ombre')) {
                   return '${t}_active';
                 }
+                if (phase == CombatPhase.hero &&
+                    (barbedVineActive || barbedVineCount > 0) &&
+                    (t.toLowerCase() == 'barbed vine' ||
+                     t.toLowerCase() == 'barbedvine' ||
+                     t.toLowerCase() == 'ronces' ||
+                     t.toLowerCase() == 'ronce')) {
+                  return '${t}_active';
+                }
                 return t;
               }).toList(),
-              enemyTokens: enemy.alterations,
+              enemyTokens: enemy.alterations.map((t) {
+                if (phase == CombatPhase.minionAttack &&
+                    (barbedVineActive || barbedVineCount > 0) &&
+                    (t.toLowerCase() == 'barbed vine' ||
+                     t.toLowerCase() == 'barbedvine' ||
+                     t.toLowerCase() == 'ronces' ||
+                     t.toLowerCase() == 'ronce')) {
+                  return '${t}_active';
+                }
+                return t;
+              }).toList(),
               onEditHeroTokens: onEditHeroTokens,
               onEditEnemyTokens: onEditEnemyTokens,
               onTokensChanged: onChanged,
@@ -7012,7 +8448,7 @@ class CombatAiChatDock extends StatelessWidget {
               },
               onEnemyHpSaved: (value) {
                 final oldHp = enemy.health;
-                enemy.health = value.clamp(0, 99);
+                enemy.health = value.clamp(0, enemy.maxHealth);
                 if (oldHp != enemy.health) {
                   adventure.log('[HP] ${enemy.label} HP: $oldHp ➔ ${enemy.health} (Manual Adjustment)');
                 }
@@ -7027,6 +8463,69 @@ class CombatAiChatDock extends StatelessWidget {
                 onChanged();
               },
             ),
+          if (showWellspringRow) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xff1f1a2e),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xff8f43ff).withValues(alpha: 0.6),
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Image.asset(
+                    'assets/token/Wellspring.png',
+                    width: 22,
+                    height: 22,
+                    errorBuilder: (ctx, err, stack) => const Icon(
+                      Icons.water_drop,
+                      color: Color(0xff8f43ff),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    wellspringCount > 1
+                        ? 'Wellspring (x$wellspringCount)'
+                        : 'Wellspring',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const Spacer(),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff8f43ff),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: onUseWellspring,
+                    child: const Text(
+                      'Use',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (showResolution) ...[
             if (defenderHasTargeted) ...[
               const SizedBox(height: 6),
@@ -7128,16 +8627,767 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
               ),
             ],
+            if (showHeroEvasiveRow) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: heroEvasiveAvoided
+                      ? const Color(0xff132b1e)
+                      : const Color(0xff1f1a2e),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: heroEvasiveAvoided
+                        ? Colors.greenAccent.withValues(alpha: 0.6)
+                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/token/Evasive.png',
+                      width: 22,
+                      height: 22,
+                      errorBuilder: (ctx, err, stack) => const Icon(
+                        Icons.shield,
+                        color: Color(0xff8f43ff),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Evasive (x$heroEvasiveCount)',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (heroEvasiveAvoided)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.greenAccent,
+                            width: 1,
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              size: 12,
+                              color: Colors.greenAccent,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Avoided (0 DMG)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.greenAccent,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xff8f43ff),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: onUseHeroEvasive,
+                        child: const Text(
+                          'Use',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+            if (showHeroAgilityRow) ...[
+              const SizedBox(height: 8),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xff1f1b2e),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: heroAgilityActive
+                        ? Colors.greenAccent.withValues(alpha: 0.6)
+                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/token/Agility.webp',
+                      width: 22,
+                      height: 22,
+                      errorBuilder: (ctx, err, stack) => const Icon(
+                        Icons.speed,
+                        color: Color(0xff8f43ff),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Agility (x$heroAgilityCount)',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (heroAgilityActive) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.greenAccent,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.check_circle,
+                              size: 12,
+                              color: Colors.greenAccent,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              heroAgilitySuccesses >= 2
+                                  ? 'Avoided (0 DMG)'
+                                  : (heroAgilitySuccesses == 1
+                                      ? 'Half DMG (-$heroAgilityPrevented)'
+                                      : 'Failed (0 prevented)'),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.greenAccent,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (heroAgilityCount > 0 && heroAgilitySuccesses < 2) ...[
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xff8f43ff),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: onUseHeroAgility,
+                          child: const Text(
+                            'Use',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ] else
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xff8f43ff),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: onUseHeroAgility,
+                        child: const Text(
+                          'Use',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+            if (showHeroShadowsRow) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xff132b1e),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.greenAccent.withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/token/Shadows.png',
+                      width: 22,
+                      height: 22,
+                      errorBuilder: (ctx, err, stack) => const Icon(
+                        Icons.shield_outlined,
+                        color: Color(0xff8f43ff),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      heroShadowsCount > 1 ? 'Shadows (x$heroShadowsCount)' : 'Shadows',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.greenAccent,
+                          width: 1,
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            size: 12,
+                            color: Colors.greenAccent,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Actif',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.greenAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (showBarbedVineRow) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xff132b1e),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.greenAccent.withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/token/Barbed-Vine.png',
+                      width: 22,
+                      height: 22,
+                      errorBuilder: (ctx, err, stack) => const Icon(
+                        Icons.grass,
+                        color: Color(0xff8f43ff),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      barbedVineCount > 1
+                          ? 'Barbed Vine (x$barbedVineCount)'
+                          : 'Barbed Vine',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.greenAccent,
+                          width: 1,
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            size: 12,
+                            color: Colors.greenAccent,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Actif',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.greenAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (showConstrictRow) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xff132b1e),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.greenAccent.withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/token/Constrict.png',
+                      width: 22,
+                      height: 22,
+                      errorBuilder: (ctx, err, stack) => const Icon(
+                        Icons.link,
+                        color: Color(0xff8f43ff),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      constrictCount > 1
+                          ? 'Constrict (x$constrictCount)'
+                          : 'Constrict',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.greenAccent,
+                          width: 1,
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            size: 12,
+                            color: Colors.greenAccent,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Actif',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.greenAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (showDecrepifyRow) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xff132b1e),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.greenAccent.withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/token/Decrep-ify.png',
+                      width: 22,
+                      height: 22,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Decrep-ify',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.greenAccent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.greenAccent, width: 1),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_circle, size: 12, color: Colors.greenAccent),
+                          SizedBox(width: 4),
+                          Text(
+                            'Actif',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.greenAccent),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (showDiceCubeRow) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xff132b1e),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.greenAccent.withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/token/Dice cube.webp',
+                      width: 22,
+                      height: 22,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      diceCubeCount > 1 ? 'Dice cube (x$diceCubeCount)' : 'Dice cube',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.greenAccent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.greenAccent, width: 1),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_circle, size: 12, color: Colors.greenAccent),
+                          SizedBox(width: 4),
+                          Text(
+                            'Actif',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.greenAccent),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (showSneakAttackRow) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: attackerSneakAttackActive
+                      ? const Color(0xff132b1e)
+                      : const Color(0xff1f1a2e),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: attackerSneakAttackActive
+                        ? Colors.greenAccent.withValues(alpha: 0.6)
+                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/token/Sneak-Attack.png',
+                      width: 22,
+                      height: 22,
+                      errorBuilder: (ctx, err, stack) => const Icon(
+                        Icons.flash_on,
+                        color: Color(0xff8f43ff),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      attackerSneakAttackCount > 1
+                          ? 'Sneak Attack (x$attackerSneakAttackCount)'
+                          : 'Sneak Attack',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (attackerSneakAttackActive)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.greenAccent,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.check_circle,
+                              size: 12,
+                              color: Colors.greenAccent,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Actif (+$attackerSneakAttackBonus)',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.greenAccent,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: canUseAttackerSneakAttack
+                              ? const Color(0xff8f43ff)
+                              : Colors.grey.shade700,
+                          foregroundColor: canUseAttackerSneakAttack
+                              ? Colors.white
+                              : Colors.white38,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: canUseAttackerSneakAttack
+                            ? onUseAttackerSneakAttack
+                            : null,
+                        child: const Text(
+                          'Use',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: _BattleCounter(
-                    label: 'ATK',
-                    value: attackValue,
-                    color: attackColor,
-                    onChanged: onAttackChanged,
-                  ),
+                  child: showBlindingLightAttackCover
+                      ? SizedBox(
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xff8f43ff),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 4,
+                            ),
+                            onPressed: onBlindingLightPressed,
+                            icon: Image.asset(
+                              'assets/token/Blinding-Light.png',
+                              width: 24,
+                              height: 24,
+                              errorBuilder: (ctx, err, stack) =>
+                                  const Icon(Icons.flash_off, size: 20),
+                            ),
+                            label: const Text(
+                              'Blinding Light',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        )
+                      : (showShadowsAttackCover || showEvasiveAttackCover)
+                          ? SizedBox(
+                              height: 52,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: attackColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 8,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      showShadowsAttackCover
+                                          ? 'assets/token/Shadows.png'
+                                          : (isAgilityAvoided
+                                              ? 'assets/token/Agility.webp'
+                                              : 'assets/token/Evasive.png'),
+                                      width: 24,
+                                      height: 24,
+                                      errorBuilder: (ctx, err, stack) => Icon(
+                                        showShadowsAttackCover
+                                            ? Icons.shield_outlined
+                                            : (isAgilityAvoided ? Icons.speed : Icons.shield),
+                                        size: 20,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      showShadowsAttackCover
+                                          ? 'Shadows (0 DMG)'
+                                          : (isAgilityAvoided
+                                              ? 'Agility (0 DMG)'
+                                              : 'Evasive (0 DMG)'),
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : _BattleCounter(
+                              label: 'ATK',
+                              value: blindingLightReducedDamage > 0
+                                  ? blindingLightBaseAttack
+                                  : attackValue,
+                              modifier: blindingLightReducedDamage > 0
+                                  ? -blindingLightReducedDamage
+                                  : attackModifier,
+                              color: blindingLightZeroDamage
+                                  ? Colors.greenAccent
+                                  : attackColor,
+                              isLocked: blindingLightZeroDamage,
+                              onChanged: blindingLightZeroDamage
+                                  ? (_) {}
+                                  : onAttackChanged,
+                            ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -7171,33 +9421,37 @@ class CombatAiChatDock extends StatelessWidget {
                             ),
                           ),
                         )
-                      : showEvasiveButton
+                      : showStunCover
                           ? SizedBox(
                               height: 52,
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: defenseColor,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  elevation: 4,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: defenseColor,
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                onPressed: onEvasivePressed,
-                                icon: Image.asset(
-                                  'assets/token/Evasive.png',
-                                  width: 24,
-                                  height: 24,
-                                  errorBuilder: (ctx, err, stack) =>
-                                      const Icon(Icons.shield, size: 20),
-                                ),
-                                label: const Text(
-                                  'Evasive',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      'assets/token/stun.png',
+                                      width: 24,
+                                      height: 24,
+                                      errorBuilder: (ctx, err, stack) =>
+                                          const Icon(Icons.flash_on, size: 20, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      'Stun',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             )
@@ -7207,7 +9461,7 @@ class CombatAiChatDock extends StatelessWidget {
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: defenseColor,
-                                      foregroundColor: Colors.white,
+                                      foregroundColor: Colors.black,
                                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -7220,6 +9474,7 @@ class CombatAiChatDock extends StatelessWidget {
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
+                                        color: Colors.black,
                                       ),
                                     ),
                                   ),
@@ -7227,26 +9482,33 @@ class CombatAiChatDock extends StatelessWidget {
                               : _BattleCounter(
                                   label: 'DEF',
                                   value: defenseValue,
+                                  modifier: defenseModifier,
                                   color: defenseColor,
                                   onChanged: onDefenseChanged,
                                 ),
                 ),
                 const SizedBox(width: 8),
-                SizedBox(
-                  width: 56,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: (showBlindButton || showEvasiveButton) ? null : onApply,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xff8f43ff),
-                      disabledBackgroundColor: Colors.white10,
-                      disabledForegroundColor: Colors.white38,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.zero,
-                    ),
-                    child: const Text(
-                      'OK',
-                      style: TextStyle(fontWeight: FontWeight.w900),
+                Visibility(
+                  visible: !showBlindingLightAttackCover,
+                  maintainSize: true,
+                  maintainAnimation: true,
+                  maintainState: true,
+                  child: SizedBox(
+                    width: 56,
+                    height: 52,
+                    child: FilledButton(
+                      onPressed: showBlindButton ? null : onApply,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xff8f43ff),
+                        disabledBackgroundColor: Colors.white10,
+                        disabledForegroundColor: Colors.white38,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
                     ),
                   ),
                 ),
@@ -7784,12 +10046,17 @@ class _AiChatPortraitVitals extends StatelessWidget {
                                           context,
                                           rule,
                                           getCount: () => tokens
-                                              .where((t) => t == rule.label)
+                                              .where((t) => _compactTokenBaseLabel(t) == rule.label)
                                               .length,
                                           onMinus: onTokensChanged != null
                                               ? () {
-                                                  tokens.remove(rule.label);
-                                                  onTokensChanged!();
+                                                  final idx = tokens.indexWhere(
+                                                    (t) => _compactTokenBaseLabel(t) == rule.label,
+                                                  );
+                                                  if (idx != -1) {
+                                                    tokens.removeAt(idx);
+                                                    onTokensChanged!();
+                                                  }
                                                 }
                                               : null,
                                           onPlus: onTokensChanged != null
@@ -7801,12 +10068,22 @@ class _AiChatPortraitVitals extends StatelessWidget {
                                         );
                                       } else {
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text(item.tooltip)),
+                                          SnackBar(
+                                            content: Text(
+                                              item.tooltip.replaceAll(
+                                                RegExp(r'_active', caseSensitive: false),
+                                                '',
+                                              ),
+                                            ),
+                                          ),
                                         );
                                       }
                                     },
                                     child: Tooltip(
-                                      message: item.tooltip,
+                                      message: item.tooltip.replaceAll(
+                                        RegExp(r'_active', caseSensitive: false),
+                                        '',
+                                      ),
                                       child: _CompactItemVisual(
                                         item: item,
                                         color: accent,
@@ -7869,10 +10146,10 @@ class _AiChatVitalEditor extends StatelessWidget {
       child: Row(
         children: [
           _CompactRoundIconButton(
-            icon: Icons.add,
-            tooltip: 'Add $label',
+            icon: Icons.remove,
+            tooltip: 'Remove $label',
             color: color,
-            onPressed: () => onChanged(1),
+            onPressed: () => onChanged(-1),
           ),
           Expanded(
             child: Column(
@@ -7898,10 +10175,10 @@ class _AiChatVitalEditor extends StatelessWidget {
             ),
           ),
           _CompactRoundIconButton(
-            icon: Icons.remove,
-            tooltip: 'Remove $label',
+            icon: Icons.add,
+            tooltip: 'Add $label',
             color: color,
-            onPressed: () => onChanged(-1),
+            onPressed: () => onChanged(1),
           ),
           const SizedBox(width: 4),
           SizedBox(
@@ -8365,12 +10642,16 @@ class _BattleCounter extends StatelessWidget {
     required this.value,
     required this.color,
     required this.onChanged,
+    this.modifier,
+    this.isLocked = false,
   });
 
   final String label;
   final int value;
+  final int? modifier;
   final Color color;
   final ValueChanged<int> onChanged;
+  final bool isLocked;
 
   @override
   Widget build(BuildContext context) {
@@ -8384,12 +10665,15 @@ class _BattleCounter extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _CompactRoundIconButton(
-            icon: Icons.add,
-            tooltip: 'Add',
-            color: color,
-            onPressed: () => onChanged(1),
-          ),
+          if (!isLocked)
+            _CompactRoundIconButton(
+              icon: Icons.remove,
+              tooltip: 'Remove',
+              color: color,
+              onPressed: () => onChanged(-1),
+            )
+          else
+            const SizedBox(width: 28),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -8402,23 +10686,46 @@ class _BattleCounter extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                Text(
-                  value.toString(),
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        value.toString(),
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      if (modifier != null && modifier != 0) ...[
+                        const SizedBox(width: 3),
+                        Text(
+                          modifier! > 0 ? '+$modifier' : '$modifier',
+                          style: const TextStyle(
+                            color: Colors.greenAccent,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          _CompactRoundIconButton(
-            icon: Icons.remove,
-            tooltip: 'Remove',
-            color: color,
-            onPressed: () => onChanged(-1),
-          ),
+          if (!isLocked)
+            _CompactRoundIconButton(
+              icon: Icons.add,
+              tooltip: 'Add',
+              color: color,
+              onPressed: () => onChanged(1),
+            )
+          else
+            const SizedBox(width: 28),
         ],
       ),
     );
@@ -8744,8 +11051,14 @@ String _aiMessageFor(
   String extraDiceOutcome,
   int heroAttackCount,
   int lastHeroAttack,
-  int heroAttackTotal,
-) {
+  int heroAttackTotal, {
+  int? blindingLightRoll,
+  bool blindingLightZeroDamage = false,
+  int blindingLightReducedDamage = 0,
+  int blindingLightBaseAttack = 0,
+  bool heroCoalTriggered = false,
+  bool minionCoalTriggered = false,
+}) {
   return switch (phase) {
     CombatPhase.intro => _introAiMessage(adventure, enemy, historyRecords),
     CombatPhase.heroUpkeep => _heroUpkeepAiMessage(
@@ -8753,6 +11066,7 @@ String _aiMessageFor(
       enemy,
       historyRecords,
       lastBattleOutcome,
+      coalTriggered: heroCoalTriggered,
     ),
     CombatPhase.hero => _heroBattleAiMessage(
       enemy,
@@ -8761,6 +11075,10 @@ String _aiMessageFor(
       heroAttackCount,
       lastHeroAttack,
       heroAttackTotal,
+      blindingLightRoll: blindingLightRoll,
+      blindingLightZeroDamage: blindingLightZeroDamage,
+      blindingLightReducedDamage: blindingLightReducedDamage,
+      blindingLightBaseAttack: blindingLightBaseAttack,
     ),
     CombatPhase.minionUpkeep => _minionUpkeepAiMessage(
       adventure,
@@ -8768,6 +11086,7 @@ String _aiMessageFor(
       historyRecords,
       lastBattleOutcome,
       extraDiceOutcome,
+      coalTriggered: minionCoalTriggered,
     ),
     CombatPhase.minionAttack => _minionAttackAiMessage(
       enemy,
@@ -8775,6 +11094,10 @@ String _aiMessageFor(
       rollCount,
       adventure,
       extraDiceOutcome,
+      blindingLightRoll: blindingLightRoll,
+      blindingLightZeroDamage: blindingLightZeroDamage,
+      blindingLightReducedDamage: blindingLightReducedDamage,
+      blindingLightBaseAttack: blindingLightBaseAttack,
     ),
   };
 }
@@ -8880,17 +11203,26 @@ String _heroUpkeepAiMessage(
   AdventureState adventure,
   EnemyNode enemy,
   List<GameRecord> historyRecords,
-  String lastBattleOutcome,
-) {
+  String lastBattleOutcome, {
+  bool coalTriggered = false,
+}) {
   final tokenSummary = _tokenUpkeepSummary(
     owner: adventure.hero.label,
     tokens: adventure.alterations,
     isHero: true,
+    currentCp: adventure.combatPoints,
   );
+  final hasCoal4 = adventure.alterations.where(_isCoalToken).length >= 4;
+  final coalSpent = coalTriggered || (hasCoal4 && adventure.combatPoints < 15);
   final lines = <String>[
     if (lastBattleOutcome.isNotEmpty) lastBattleOutcome,
     '**Upkeep of ${adventure.hero.label}.**',
-    '${adventure.hero.label} gains 1 CP and is now at ${adventure.combatPoints} CP.',
+    if (coalSpent)
+      '4 Coal tokens removed: upkeep CP gain reduced by 1 (0 CP gained). ${adventure.hero.label} remains at ${adventure.combatPoints} CP.'
+    else if (adventure.combatPoints >= 15)
+      '${adventure.hero.label} is at maximum CP (15 CP) and gains no more CP.'
+    else
+      '${adventure.hero.label} gains 1 CP and is now at ${adventure.combatPoints} CP.',
     if (tokenSummary.isNotEmpty) tokenSummary,
     if (!adventure.alterations.contains('Commotion'))
       '${adventure.hero.label} should draw 1 card before the battle phase.',
@@ -8903,13 +11235,18 @@ String _minionUpkeepAiMessage(
   EnemyNode enemy,
   List<GameRecord> historyRecords,
   String lastBattleOutcome,
-  String extraDiceOutcome,
-) {
+  String extraDiceOutcome, {
+  bool coalTriggered = false,
+}) {
   final tokenSummary = _tokenUpkeepSummary(
     owner: enemy.label,
     tokens: enemy.alterations,
     isHero: false,
+    currentCp: enemy.combatPoints,
   );
+  final isNaxOrViseer = enemy.profileKey == 'naraxus' || enemy.profileKey == 'viseer';
+  final hasCoal4 = enemy.alterations.where(_isCoalToken).length >= 4;
+  final coalSpent = (coalTriggered || hasCoal4) && !isNaxOrViseer;
   final lines = <String>[
     if (lastBattleOutcome.isNotEmpty) lastBattleOutcome,
     '**Upkeep of ${enemy.label}.**',
@@ -8917,7 +11254,9 @@ String _minionUpkeepAiMessage(
       extraDiceOutcome.isEmpty
           ? 'Druid passive: roll 1 {die:any} to discover the active form. The next phase is locked until this roll is done.'
           : extraDiceOutcome,
-    if (enemy.profileKey != 'naraxus' && enemy.profileKey != 'viseer')
+    if (coalSpent)
+      '4 Coal tokens removed: upkeep CP gain reduced by 1 (0 CP gained). ${enemy.label} remains at ${enemy.combatPoints} CP.'
+    else if (!isNaxOrViseer)
       '${enemy.label} gains 1 CP and is now at ${enemy.combatPoints} CP.',
     if (tokenSummary.isNotEmpty) tokenSummary,
   ];
@@ -8930,20 +11269,39 @@ String _heroBattleAiMessage(
   List<GameRecord> historyRecords,
   int heroAttackCount,
   int lastHeroAttack,
-  int heroAttackTotal,
-) {
+  int heroAttackTotal, {
+  int? blindingLightRoll,
+  bool blindingLightZeroDamage = false,
+  int blindingLightReducedDamage = 0,
+  int blindingLightBaseAttack = 0,
+}) {
   final intro = heroAttackCount == 0
       ? '_${adventure.hero.label} enters the fight. How much damage will the first attack deal?_'
       : heroAttackCount == 1
       ? 'The first attack dealt $lastHeroAttack damage. Can ${adventure.hero.label} do better?'
       : '${adventure.hero.label} averages ${(heroAttackTotal / heroAttackCount).toStringAsFixed(1)} damage per attack. Can this turn beat that?';
+  final isZeroDamage = blindingLightZeroDamage || blindingLightRoll == 1;
   return [
     '**Battle phase.**',
     intro,
     '${enemy.label} is waiting for the hero attack result.',
-    'If the attack is defendable, roll ${enemy.label} defense.',
+    if (!isZeroDamage)
+      'If the attack is defendable, roll ${enemy.label} defense.',
     if (adventure.alterations.contains('Silence'))
       'Silence is active: ${adventure.hero.label} cannot validate a suite this turn.',
+    if (adventure.alterations.any(_isBarbedVineAlteration))
+      'Barbed Vine is active: each roll attempt beyond the first inflicts 1 counter damage on ${adventure.hero.label}.',
+    if (adventure.alterations.any(_isConstrictAlteration))
+      'Constrict is active: each roll attempt beyond the first costs ${adventure.hero.label} 1 CP. Rolling stops at 0 CP.',
+    if (blindingLightRoll != null)
+      if (isZeroDamage)
+        'Blinding Light (D6: 1): ${adventure.hero.label}\'s Offensive Ability fails to activate! 0 damage dealt.'
+      else if (blindingLightRoll == 2 || blindingLightRoll == 3)
+        'Blinding Light (D6: $blindingLightRoll): ${adventure.hero.label}\'s attack damage is reduced by half (-$blindingLightReducedDamage). Net attack: ${(blindingLightBaseAttack - blindingLightReducedDamage).clamp(0, 99)}.'
+      else
+        'Blinding Light (D6: $blindingLightRoll): ${adventure.hero.label}\'s attack applies at full strength ($blindingLightBaseAttack damage).'
+    else if (adventure.alterations.any((t) => _normalizeTokenKey(t) == 'blindinglight' || _normalizeTokenKey(t) == 'lumiereaveuglante'))
+      'Blinding Light is active: ${adventure.hero.label} must roll 1 D6 on attack (1 = fails, 2-3 = ½ damage, 4-6 = full damage).',
   ].join('\n');
 }
 
@@ -8951,6 +11309,7 @@ String _tokenUpkeepSummary({
   required String owner,
   required List<String> tokens,
   required bool isHero,
+  int currentCp = 0,
 }) {
   if (tokens.isEmpty) {
     return '';
@@ -8968,7 +11327,7 @@ String _tokenUpkeepSummary({
       lines.add(
         '$owner will receive ${List.filled(count, '1 poison damage').join(' and ')}. Total: $count HP will be removed at the end of upkeep.',
       );
-    } else if (lower.contains('hémorragie') || lower.contains('hemorragie')) {
+    } else if (lower.contains('bleed') || lower.contains('hémorragie') || lower.contains('hemorragie') || lower.contains('saignement')) {
       lines.add('$count Bleed token${count > 1 ? 's' : ''} found on $owner.');
       lines.add(
         isHero
@@ -8978,6 +11337,10 @@ String _tokenUpkeepSummary({
     } else if (lower.contains('brûlure') || lower.contains('brulure')) {
       lines.add('$count Burn token${count > 1 ? 's' : ''} found on $owner.');
       lines.add('Resolve Burn damage before moving to battle.');
+    } else if (lower.contains('coal') || lower.contains('charbon')) {
+      if (count < 4) {
+        lines.add('$count Coal token${count > 1 ? 's' : ''} found on $owner (accumulates up to 4 to reduce next CP gain).');
+      }
     }
   }
   if (lines.isEmpty) {
@@ -8997,25 +11360,92 @@ Map<String, int> _tokenCounts(List<String> tokens) {
   return counts;
 }
 
+bool _isCoalToken(String t) {
+  final clean = t.replaceAll(RegExp(r'_active', caseSensitive: false), '');
+  final k = _normalizeTokenKey(clean);
+  return k == 'coal' || k == 'charbon';
+}
+
+bool _isBarbedVineAlteration(String t) {
+  final clean = t.replaceAll(RegExp(r'_active', caseSensitive: false), '');
+  final k = _normalizeTokenKey(clean);
+  return k == 'barbedvine' || k == 'barbedvines' || k == 'ronces' || k == 'ronce';
+}
+
+bool _isConstrictAlteration(String t) {
+  final clean = t.replaceAll(RegExp(r'_active', caseSensitive: false), '');
+  final k = _normalizeTokenKey(clean);
+  return k == 'constrict' || k == 'compression';
+}
+
+bool _isDecrepifyAlteration(String t) {
+  final clean = t.replaceAll(RegExp(r'_active', caseSensitive: false), '');
+  final k = _normalizeTokenKey(clean);
+  return k == 'decrepify' || k == 'decrepitude' || k == 'decrep-ify';
+}
+
+bool _isDiceCubeAlteration(String t) {
+  final clean = t.replaceAll(RegExp(r'_active', caseSensitive: false), '');
+  final k = _normalizeTokenKey(clean);
+  return k == 'dicecube' || k == 'cube';
+}
+
 String _minionAttackAiMessage(
   EnemyNode enemy,
   List<GameDie> dice,
   int rollCount,
   AdventureState adventure,
-  String extraDiceOutcome,
-) {
+  String extraDiceOutcome, {
+  int? blindingLightRoll,
+  bool blindingLightZeroDamage = false,
+  int blindingLightReducedDamage = 0,
+  int blindingLightBaseAttack = 0,
+}) {
   final rolled = dice.where((die) => die.value != null).toList();
   if (enemy.profileKey == 'naraxus') {
     return _naraxusAiMessage(enemy, rolled, adventure, extraDiceOutcome);
   }
+  final hasBarbedVine = enemy.alterations.any(_isBarbedVineAlteration);
+  final hasConstrict = enemy.alterations.any(_isConstrictAlteration);
+  final hasBlindingLight = enemy.alterations.any((t) => _normalizeTokenKey(t) == 'blindinglight' || _normalizeTokenKey(t) == 'lumiereaveuglante');
+  final isZeroDamage = blindingLightZeroDamage || blindingLightRoll == 1;
+
+  if (enemy.health <= 0) {
+    return '${enemy.label} was defeated by Barbed Vine counter damage!';
+  }
+
+  String? blindingLightNote;
+  if (blindingLightRoll != null) {
+    if (isZeroDamage) {
+      blindingLightNote = 'Blinding Light (D6: 1): Offensive Ability fails to activate! 0 damage dealt.';
+    } else if (blindingLightRoll == 2 || blindingLightRoll == 3) {
+      final netDmg = (blindingLightBaseAttack - blindingLightReducedDamage).clamp(0, 99);
+      blindingLightNote = 'Blinding Light (D6: $blindingLightRoll): Attack damage is reduced by half (-$blindingLightReducedDamage). Net attack: $netDmg.';
+    } else {
+      blindingLightNote = 'Blinding Light (D6: $blindingLightRoll): Attack applies at full strength ($blindingLightBaseAttack damage).';
+    }
+  } else if (hasBlindingLight) {
+    blindingLightNote = 'Afflicted by Blinding Light: must roll 1 D6 on attack (1 = fails, 2-3 = ½ damage, 4-6 = full damage).';
+  }
+
   if (rollCount == 0 || rolled.isEmpty) {
+    final blPrefix = blindingLightNote != null ? '$blindingLightNote\n' : '';
+    final constrictPrefix = hasConstrict
+        ? 'Afflicted by Constrict: each reroll beyond the first costs 1 CP. I stop if I reach 0 CP or max damage.\n'
+        : '';
     if (enemy.attackPlan.style == MinionAttackStyle.suite) {
       return '**Battle phase.**\n'
           'I use ${enemy.attacks.first}.\n'
-          'First target: micro suite. If it succeeds, I will try to improve.';
+          '$blPrefix'
+          '${hasBarbedVine ? 'Afflicted by Barbed Vine: I will stop rolling as soon as a suite is validated to avoid counter damage.\n' : ''}'
+          '$constrictPrefix'
+          'First target: micro suite. If it succeeds, ${hasBarbedVine ? 'I will stop immediately.' : 'I will try to improve.'}';
     }
     return '**Battle phase.**\n'
         'I use ${enemy.attacks.first}.\n'
+        '$blPrefix'
+        '${hasBarbedVine ? 'Afflicted by Barbed Vine: I will stop rolling as soon as an attack is validated to avoid counter damage.\n' : ''}'
+        '${constrictPrefix}'
         'First target: the smallest valid symbol attack.';
   }
 
@@ -9024,51 +11454,115 @@ String _minionAttackAiMessage(
       rolled.where((die) => die.reserved).map((die) => die.value!).toList()
         ..sort();
 
+  _AttackDamage? adjustDamage(_AttackDamage? raw) {
+    if (raw == null) return null;
+    if (isZeroDamage) {
+      return const _AttackDamage(0);
+    }
+    if (blindingLightRoll == 2 || blindingLightRoll == 3) {
+      final reduced = (raw.value / 2.0).ceil();
+      return _AttackDamage((raw.value - reduced).clamp(0, 99), imparable: raw.imparable);
+    }
+    return raw;
+  }
+
+  final blLine = blindingLightNote != null ? '\n$blindingLightNote' : '';
+
   if (enemy.attackPlan.style == MinionAttackStyle.suite) {
     final decision = MinionDiceEngine.chooseSuiteHold(dice);
     final best = _bestSuiteLength(values);
     final rollLabel = _rollLabel(rollCount);
     if (best >= 5) {
-      final damage = _suiteDamage(enemy, 5);
+      final damage = adjustDamage(_suiteDamage(enemy, 5));
+      if (hasBarbedVine && rollCount < 3) {
+        return 'On my $rollLabel roll, large suite validated with ${_bestSuiteValues(values, 5).join('/')}.\n'
+            'Afflicted by Barbed Vine, I stop my attack rolls here to avoid taking counter damage.$blLine\n'
+            '${_defenseInstruction(adventure, damage)}';
+      }
       return rollCount >= 3
-          ? 'After my 3 attack rolls, large suite validated with ${_bestSuiteValues(values, 5).join('/')}.\n'
+          ? 'After my 3 attack rolls, large suite validated with ${_bestSuiteValues(values, 5).join('/')}.$blLine\n'
                 '${_defenseInstruction(adventure, damage)}'
-          : 'On my $rollLabel roll, large suite validated with ${_bestSuiteValues(values, 5).join('/')}.\n'
+          : 'On my $rollLabel roll, large suite validated with ${_bestSuiteValues(values, 5).join('/')}.$blLine\n'
                 'The resolution line is ready; I can still try to improve if one roll remains.';
     }
     if (best == 4) {
-      final damage = _suiteDamage(enemy, 4);
+      final damage = adjustDamage(_suiteDamage(enemy, 4));
+      if (hasBarbedVine && rollCount < 3) {
+        return 'On my $rollLabel roll, small suite validated with ${_bestSuiteValues(values, 4).join('/')}.\n'
+            'Afflicted by Barbed Vine, I stop my attack rolls here to avoid taking counter damage.$blLine\n'
+            '${_defenseInstruction(adventure, damage)}';
+      }
       return rollCount >= 3
-          ? 'After my 3 attack rolls, small suite validated with ${_bestSuiteValues(values, 4).join('/')}.\n'
+          ? 'After my 3 attack rolls, small suite validated with ${_bestSuiteValues(values, 4).join('/')}.$blLine\n'
                 '${_defenseInstruction(adventure, damage)}'
-          : 'On my $rollLabel roll, small suite validated with ${_bestSuiteValues(values, 4).join('/')}.\n'
+          : 'On my $rollLabel roll, small suite validated with ${_bestSuiteValues(values, 4).join('/')}.$blLine\n'
                 'I can hit, then try to improve if one roll remains.';
     }
     if (best == 3) {
-      final damage = _suiteDamage(enemy, 3);
+      final damage = adjustDamage(_suiteDamage(enemy, 3));
+      if (hasBarbedVine && rollCount < 3) {
+        return 'On my $rollLabel roll, micro suite validated with ${_bestSuiteValues(values, 3).join('/')}.\n'
+            'Afflicted by Barbed Vine, I stop my attack rolls here to avoid taking counter damage.$blLine\n'
+            '${_defenseInstruction(adventure, damage)}';
+      }
       return rollCount >= 3
-          ? 'After my 3 attack rolls, micro suite validated with ${_bestSuiteValues(values, 3).join('/')}.\n'
+          ? 'After my 3 attack rolls, micro suite validated with ${_bestSuiteValues(values, 3).join('/')}.$blLine\n'
                 '${_defenseInstruction(adventure, damage)}'
-          : 'On my $rollLabel roll, micro suite validated.\n'
+          : 'On my $rollLabel roll, micro suite validated.$blLine\n'
                 'I keep ${kept.join('/')} and can keep rolling to improve.';
     }
-    return 'On my $rollLabel roll, I deal no damage yet.\n'
+    return 'On my $rollLabel roll, I deal no damage yet.'
+        '${hasBarbedVine ? '\nAfflicted by Barbed Vine: rerolling will inflict 1 counter damage on me.' : ''}$blLine\n'
         '${decision.reason}\n'
         'Kept dice: ${kept.isEmpty ? 'nothing' : kept.join('/')}.';
   }
 
-  final symbolDamage = _bestSymbolAttackDamage(enemy, dice);
+  final rawSymbolDamage = _bestSymbolAttackDamage(enemy, dice);
+  final symbolDamage = rawSymbolDamage != null ? adjustDamage(rawSymbolDamage) : null;
   final rollLabel = _rollLabel(rollCount);
   if (rollCount >= 3) {
     return symbolDamage == null
-        ? 'After my 3 attack rolls, no valid attack combination was made.'
-        : 'After my 3 attack rolls, the attack is validated with ${_reservedDiceText(dice)}.\n'
+        ? 'After my 3 attack rolls, no valid attack combination was made.$blLine'
+        : 'After my 3 attack rolls, the attack is validated with ${_reservedDiceText(dice)}.$blLine\n'
               '${_defenseInstruction(adventure, symbolDamage)}';
   }
+  if (symbolDamage != null) {
+    if (hasBarbedVine) {
+      return 'On my $rollLabel roll, attack is validated with ${_reservedDiceText(dice)}.\n'
+          'Afflicted by Barbed Vine, I stop my attack rolls here to avoid taking counter damage.$blLine\n'
+          '${_defenseInstruction(adventure, symbolDamage)}';
+    }
+    return 'On my $rollLabel roll, the attack is validated with ${_reservedDiceText(dice)}.$blLine\n'
+        'I can hit, or try to improve if a roll remains.\n'
+        '${_defenseInstruction(adventure, symbolDamage)}';
+  }
   return kept.isEmpty
-      ? 'On my $rollLabel roll, I deal no damage yet.\nI reroll toward the first attack.'
-      : 'On my $rollLabel roll, I keep ${kept.join('/')}.\nI try to improve the attack.';
+      ? 'On my $rollLabel roll, I deal no damage yet.${hasBarbedVine ? '\nAfflicted by Barbed Vine: rerolling will inflict 1 counter damage on me.' : ''}$blLine\nI reroll toward the first attack.'
+      : 'On my $rollLabel roll, I keep ${kept.join('/')}.${hasBarbedVine ? '\nAfflicted by Barbed Vine: rerolling will inflict 1 counter damage on me.' : ''}$blLine\nI try to improve the attack.';
 }
+
+String minionAttackAiMessage(
+  EnemyNode enemy,
+  List<GameDie> dice,
+  int rollCount,
+  AdventureState adventure,
+  String extraDiceOutcome, {
+  int? blindingLightRoll,
+  bool blindingLightZeroDamage = false,
+  int blindingLightReducedDamage = 0,
+  int blindingLightBaseAttack = 0,
+}) =>
+    _minionAttackAiMessage(
+      enemy,
+      dice,
+      rollCount,
+      adventure,
+      extraDiceOutcome,
+      blindingLightRoll: blindingLightRoll,
+      blindingLightZeroDamage: blindingLightZeroDamage,
+      blindingLightReducedDamage: blindingLightReducedDamage,
+      blindingLightBaseAttack: blindingLightBaseAttack,
+    );
 
 String _defenseInstruction(AdventureState adventure, _AttackDamage? damage) {
   if (damage == null || damage.value <= 0) {
@@ -11429,10 +13923,10 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
             ),
           ),
           _CompactRoundIconButton(
-            icon: Icons.add,
-            tooltip: 'Add',
+            icon: Icons.remove,
+            tooltip: 'Remove',
             color: accent,
-            onPressed: () => setState(() => _draftValues[key] = value + 1),
+            onPressed: () => setState(() => _draftValues[key] = value - 1),
           ),
           Expanded(
             child: Center(
@@ -11448,10 +13942,10 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
             ),
           ),
           _CompactRoundIconButton(
-            icon: Icons.remove,
-            tooltip: 'Remove',
+            icon: Icons.add,
+            tooltip: 'Add',
             color: accent,
-            onPressed: () => setState(() => _draftValues[key] = value - 1),
+            onPressed: () => setState(() => _draftValues[key] = value + 1),
           ),
           const SizedBox(width: 4),
           SizedBox(
@@ -11492,7 +13986,7 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
         widget.adventure.setHeroPc(value);
       case 'enemyHp':
         final oldHealth = widget.enemy.health;
-        widget.enemy.health = value.clamp(0, 99);
+        widget.enemy.health = value.clamp(0, widget.enemy.maxHealth);
         if (oldHealth != widget.enemy.health) {
           widget.adventure.log('[HP] ${widget.enemy.label} HP: $oldHealth ➔ ${widget.enemy.health} (Manual Adjustment)');
         }
@@ -12385,9 +14879,9 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
                         ),
                         const Spacer(),
                         RoundIconButton(
-                          icon: Icons.add,
-                          tooltip: 'Add',
-                          onPressed: () => setState(() => _draftValue++),
+                          icon: Icons.remove,
+                          tooltip: 'Remove',
+                          onPressed: () => setState(() => _draftValue--),
                         ),
                         SizedBox(
                           width: 58,
@@ -12401,9 +14895,9 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
                           ),
                         ),
                         RoundIconButton(
-                          icon: Icons.remove,
-                          tooltip: 'Remove',
-                          onPressed: () => setState(() => _draftValue--),
+                          icon: Icons.add,
+                          tooltip: 'Add',
+                          onPressed: () => setState(() => _draftValue++),
                         ),
                       ],
                     ),
@@ -12439,7 +14933,7 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
 
   void _saveEnemyStat() {
     if (_editing == 'HP') {
-      enemy.health = _draftValue.clamp(0, 99);
+      enemy.health = _draftValue.clamp(0, enemy.maxHealth);
     } else if (_editing == 'CP') {
       enemy.combatPoints = _draftValue.clamp(0, 99);
     }
@@ -12840,7 +15334,7 @@ DieSymbol _symbolForFace(int face) {
 }
 
 class GameDie {
-  GameDie({required this.id});
+  GameDie({required this.id, this.value, this.reserved = false});
 
   final int id;
   int? value;
@@ -13619,7 +16113,9 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                                 ),
                               ),
                               Text(
-                                _orderedRules[i].label,
+                                _orderedRules.where((r) => r.label == _orderedRules[i].label).length > 1
+                                    ? '${_orderedRules[i].label} #${_orderedRules.sublist(0, i + 1).where((r) => r.label == _orderedRules[i].label).length}'
+                                    : _orderedRules[i].label,
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
@@ -13652,8 +16148,11 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                       builder: (context) {
                         final rule = _orderedRules[index];
                         final imageAsset = rule.imageAsset;
+                        final displayLabel = _orderedRules.where((r) => r.label == rule.label).length > 1
+                            ? '${rule.label} #${_orderedRules.sublist(0, index + 1).where((r) => r.label == rule.label).length}'
+                            : rule.label;
                         return Container(
-                          key: ValueKey(rule.label),
+                          key: ValueKey('${rule.label}_$index'),
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -13710,7 +16209,7 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      rule.label,
+                                      displayLabel,
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -13797,11 +16296,19 @@ class TokenAnimationResult {
     required this.count,
     this.dontShowAgain = false,
     this.dieRoll,
+    this.spentCount = 1,
+    this.agilitySuccessCount,
+    this.allDiceRolls,
+    this.sneakAttackBonus,
   });
 
   final int count;
   final bool dontShowAgain;
   final int? dieRoll;
+  final int spentCount;
+  final int? agilitySuccessCount;
+  final List<int>? allDiceRolls;
+  final int? sneakAttackBonus;
 }
 
 class TokenAnimationDialog extends StatefulWidget {
@@ -13851,9 +16358,13 @@ class TokenAnimationDialog extends StatefulWidget {
 
 class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
   late int _count;
+  int _spentCount = 1;
   bool _editing = false;
   bool _dontShowAgain = false;
   int? _blindDieRoll;
+  int? _firstAgilityRoll;
+  int? _firstBleedRoll;
+  final List<int> _previousRolls = [];
   int _blindRollTick = 0;
   bool _manualEditBlind = false;
   final Random _random = Random();
@@ -13878,6 +16389,19 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
     if (l.contains('brûlure') || l.contains('brulure') || l.contains('burn')) {
       return count > 0 ? -2 : 0;
     }
+    if (l == 'bleed' || l == 'hémorragie' || l == 'hemorragie' || l == 'saignement') {
+      if (_blindDieRoll == null && _previousRolls.isEmpty) return 0;
+      var dmg = 0;
+      for (final r in _previousRolls) {
+        if (r <= 4) dmg++;
+      }
+      if (_blindDieRoll != null && _blindDieRoll! <= 4) dmg++;
+      return -dmg;
+    }
+    if (l == 'wellspring' || l == 'source') {
+      if (_blindDieRoll != null) return (_blindDieRoll! / 2.0).ceil();
+      return 0;
+    }
     return 0;
   }
 
@@ -13899,13 +16423,33 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
         (rule.description.isNotEmpty ? rule.description : rule.appDetails);
 
     final l = rule.label.toLowerCase();
+    final isCoal = l == 'coal' || l == 'charbon';
     final isConcussion = l.contains('concussion') || l.contains('commotion');
     final isKnockdown = l.contains('knockdown') || l.contains('terre');
-    final isBlind = l.contains('blind') || l.contains('éblouissement');
+    final isBlindingLight = l.contains('blinding light') ||
+        l.contains('blindinglight') ||
+        l.contains('lumière aveuglante') ||
+        l.contains('lumiere aveuglante');
+    final isBlind = !isBlindingLight &&
+        (l.contains('blind') ||
+            l.contains('éblouissement') ||
+            l.contains('eblouissement'));
     final isEvasive = l.contains('evasive') || l.contains('evitement');
+    final isAgility = l.contains('agility') || l.contains('agilité') || l.contains('agilite');
     final isTimeBomb1 = l.contains('time bomb 1') || l.contains('bombe à retardement 1');
     final isTimeBomb2 = l.contains('time bomb 2') || l.contains('bombe à retardement 2') || (l.contains('time bomb') && !isTimeBomb1);
-    final isDieRollToken = isBlind || isEvasive || isTimeBomb1 || isTimeBomb2;
+    final isBleed = l == 'bleed' || l == 'hémorragie' || l == 'hemorragie' || l == 'saignement';
+    final isSneakAttack = l.contains('sneak attack') || l.contains('attaque furtive');
+    final isWellspring = l.contains('wellspring') || l.contains('source');
+    final isDieRollToken = isBlind ||
+        isEvasive ||
+        isAgility ||
+        isTimeBomb1 ||
+        isTimeBomb2 ||
+        isBleed ||
+        isSneakAttack ||
+        isWellspring ||
+        isBlindingLight;
     final isFirstStrike = l.contains('first strike') ||
         l.contains('première frappe') ||
         l.contains('premiere frappe') ||
@@ -13914,20 +16458,30 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
     final isEntangle = l.contains('entangle') || l.contains('enchevetrement');
     final isHex = l.contains('hex') || l.contains('malefice');
     final isTargeted = l.contains('targeted') || l.contains('prispourcible');
-    final isInfoOnly = isFirstStrike || isEntangle || isHex || isTargeted;
+    final isBarbedVine = l.contains('barbed vine') ||
+        l.contains('barbedvine') ||
+        l.contains('ronces') ||
+        l.contains('ronce');
+    final isConstrict = l.contains('constrict') || l.contains('compression');
+    final isDecrepify = l.contains('decrepify') || l.contains('decrepitude') || l.contains('decrep-ify');
+    final isDiceCube = l.contains('dice cube') || l.contains('cube');
+    final isInfoOnly =
+        isFirstStrike || isEntangle || isHex || isTargeted || isBarbedVine || isConstrict || isDecrepify || isDiceCube;
 
     final hpDelta = _computeHpDelta(_count);
     final cpDelta = _computeCpDelta(_count);
 
     final hasHpChange = widget.currentHp != null && hpDelta != 0;
-    final hasCpChange = (widget.currentCp != null && cpDelta != 0) || (isConcussion && widget.currentCp != null);
+    final hasCpChange = (widget.currentCp != null && cpDelta != 0) ||
+        (isConcussion && widget.currentCp != null) ||
+        (isCoal && _count >= 4 && widget.currentCp != null);
 
     final oldHp = widget.currentHp;
     final newHp = oldHp != null ? (oldHp + hpDelta).clamp(0, 99) : null;
 
     final oldCp = widget.currentCp;
     final newCp = oldCp != null
-        ? (isConcussion ? oldCp : (oldCp + cpDelta).clamp(0, 99))
+        ? ((isConcussion || isCoal) ? oldCp : (oldCp + cpDelta).clamp(0, 99))
         : null;
 
     return AlertDialog(
@@ -13946,15 +16500,16 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            Positioned(
-              right: -6,
-              top: -6,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white70, size: 22),
-                onPressed: () => Navigator.of(context).pop(null),
-                tooltip: 'Cancel',
+            if (!isBleed && !isTimeBomb1 && !isTimeBomb2)
+              Positioned(
+                right: -6,
+                top: -6,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white70, size: 22),
+                  onPressed: () => Navigator.of(context).pop(null),
+                  tooltip: 'Cancel',
+                ),
               ),
-            ),
             SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -14061,8 +16616,14 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                       child: Column(
                         children: [
                           Text(
-                            isEvasive ? 'Evasive Roll (1 D6)' : 
+                            isBleed
+                                ? (_spentCount > 1 ? 'Bleed Roll 2 (1 D6)' : 'Bleed Roll (1 D6)')
+                                : isEvasive ? 'Evasive Roll (1 D6)' : 
+                            isAgility ? (_spentCount > 1 ? 'Agility Roll 2 (1 D6)' : 'Agility Roll (1 D6)') :
+                            isSneakAttack ? 'Sneak Attack Roll (1 D6)' :
                             isBlind ? 'Blind Roll (1 D6)' : 
+                            isWellspring ? 'Wellspring Roll (1 D6)' :
+                            isBlindingLight ? 'Blinding Light Roll (1 D6)' :
                             isTimeBomb1 ? 'Time Bomb 1 (1 D6)' : 'Time Bomb 2 (1 D6)',
                             style: const TextStyle(
                               fontSize: 15,
@@ -14176,29 +16737,79 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                 color: const Color(0xf2121212),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: (isTimeBomb1 || isTimeBomb2)
-                                      ? (_blindDieRoll! <= 5 ? Colors.redAccent : Colors.greenAccent)
-                                      : _blindDieRoll! <= 2
-                                          ? (isEvasive ? Colors.greenAccent : Colors.redAccent)
-                                          : (isEvasive ? Colors.redAccent : Colors.greenAccent),
+                                  color: isWellspring
+                                      ? Colors.greenAccent
+                                      : isBlindingLight
+                                          ? (_blindDieRoll == 1
+                                              ? Colors.redAccent
+                                              : (_blindDieRoll! <= 3 ? Colors.orangeAccent : Colors.greenAccent))
+                                          : isSneakAttack
+                                      ? Colors.greenAccent
+                                      : isBleed
+                                      ? ((_spentCount == 2 && _firstBleedRoll != null)
+                                          ? (((_firstBleedRoll! <= 4 ? 1 : 0) + (_blindDieRoll! <= 4 ? 1 : 0)) > 0
+                                              ? Colors.redAccent
+                                              : Colors.greenAccent)
+                                          : (_blindDieRoll! <= 4 ? Colors.redAccent : Colors.greenAccent))
+                                      : isAgility
+                                      ? ((_spentCount == 2 && _firstAgilityRoll != null)
+                                          ? (((_firstAgilityRoll! <= 3 ? 1 : 0) + (_blindDieRoll! <= 3 ? 1 : 0)) > 0
+                                              ? Colors.greenAccent
+                                              : Colors.redAccent)
+                                          : (_blindDieRoll! <= 3 ? Colors.greenAccent : Colors.redAccent))
+                                      : (isTimeBomb1 || isTimeBomb2)
+                                          ? (_blindDieRoll! <= 5 ? Colors.redAccent : Colors.greenAccent)
+                                          : _blindDieRoll! <= 2
+                                              ? (isEvasive ? Colors.greenAccent : Colors.redAccent)
+                                              : (isEvasive ? Colors.redAccent : Colors.greenAccent),
                                 ),
                               ),
                               child: Text(
-                                isEvasive
-                                    ? (_blindDieRoll! <= 2
-                                        ? 'Evasive roll: $_blindDieRoll -> Attack Avoided! (0 Damage taken)'
-                                        : 'Evasive roll: $_blindDieRoll -> Evasive Failed! (Normal damage applies)')
-                                    : isBlind
+                                isWellspring
+                                    ? 'Wellspring roll: $_blindDieRoll -> +${(_blindDieRoll! / 2.0).ceil()} Health restored!'
+                                    : isBlindingLight
+                                        ? (_blindDieRoll == 1
+                                            ? 'Blinding Light roll: 1 -> Attack fails to activate! (0 damage dealt)'
+                                            : (_blindDieRoll! <= 3
+                                                ? 'Blinding Light roll: $_blindDieRoll -> Attack damage reduced by 1/2 (rounded up)'
+                                                : 'Blinding Light roll: $_blindDieRoll -> Attack succeeds normally! (Full damage)'))
+                                        : isSneakAttack
+                                    ? 'Sneak Attack roll: $_blindDieRoll -> +${(_blindDieRoll! / 2).ceil()} Attack Modifier!'
+                                    : isBleed
+                                    ? ((_spentCount == 2 && _firstBleedRoll != null)
+                                        ? 'Bleed rolls: $_firstBleedRoll, $_blindDieRoll -> ${((_firstBleedRoll! <= 4 ? 1 : 0) + (_blindDieRoll! <= 4 ? 1 : 0))} Damage taken, ${((_firstBleedRoll! >= 5 ? 1 : 0) + (_blindDieRoll! >= 5 ? 1 : 0))} Token(s) removed'
+                                        : (_blindDieRoll! <= 4
+                                            ? 'Bleed roll: $_blindDieRoll -> Deals 1 Damage! Token remains.'
+                                            : 'Bleed roll: $_blindDieRoll -> Token Removed! (0 Damage)'))
+                                    : isAgility
+                                    ? ((_spentCount == 2 && _firstAgilityRoll != null)
+                                        ? (((_firstAgilityRoll! <= 3 ? 1 : 0) + (_blindDieRoll! <= 3 ? 1 : 0)) == 2
+                                            ? 'Agility rolls: $_firstAgilityRoll, $_blindDieRoll -> 2 Successes! Attack Avoided! (0 Damage taken)'
+                                            : ((_firstAgilityRoll! <= 3 ? 1 : 0) + (_blindDieRoll! <= 3 ? 1 : 0)) == 1
+                                                ? 'Agility rolls: $_firstAgilityRoll, $_blindDieRoll -> 1 Success! (1/2 damage prevented)'
+                                                : 'Agility rolls: $_firstAgilityRoll, $_blindDieRoll -> Failed! (0 damage prevented)')
+                                        : (_blindDieRoll! <= 3
+                                            ? 'Agility roll: $_blindDieRoll -> Success! (1/2 damage prevented)'
+                                            : (_spentCount < _count
+                                                ? 'Agility roll: $_blindDieRoll -> Failed. (${_count - _spentCount} token(s) remaining)'
+                                                : 'Agility roll: $_blindDieRoll -> Failed! (0 damage prevented)')))
+                                    : isEvasive
                                         ? (_blindDieRoll! <= 2
-                                            ? 'Blind roll: $_blindDieRoll -> Attack Fails! (0 Damage)'
-                                            : 'Blind roll: $_blindDieRoll -> Attack Touches! (Proceed with defense)')
-                                        : isTimeBomb1
-                                            ? (_blindDieRoll! <= 5
-                                                ? 'Time bomb roll: $_blindDieRoll -> Transforms into Time Bomb 2!'
-                                                : 'Time bomb roll: $_blindDieRoll -> Token removed!')
-                                            : (_blindDieRoll! <= 5
-                                                ? 'Time bomb roll: $_blindDieRoll -> Take 4 undefendable dmg!'
-                                                : 'Time bomb roll: $_blindDieRoll -> Token removed!'),
+                                            ? 'Evasive roll: $_blindDieRoll -> Attack Avoided! (0 Damage taken)'
+                                            : (_spentCount < _count
+                                                ? 'Evasive roll: $_blindDieRoll -> Failed. (${_count - _spentCount} token(s) remaining)'
+                                                : 'Evasive roll: $_blindDieRoll -> Evasive Failed! (Normal damage applies)'))
+                                        : isBlind
+                                            ? (_blindDieRoll! <= 2
+                                                ? 'Blind roll: $_blindDieRoll -> Attack Fails! (0 Damage)'
+                                                : 'Blind roll: $_blindDieRoll -> Attack Touches! (Proceed with defense)')
+                                            : isTimeBomb1
+                                                ? (_blindDieRoll! <= 5
+                                                    ? 'Time bomb roll: $_blindDieRoll -> Transforms into Time Bomb 2!'
+                                                    : 'Time bomb roll: 6 -> Transferred to opponent!')
+                                                : (_blindDieRoll! <= 5
+                                                    ? 'Time bomb roll: $_blindDieRoll -> Explodes! (4 undefendable dmg)'
+                                                    : 'Time bomb roll: 6 -> Transferred to opponent!'),
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -14212,7 +16823,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                       ),
                     ),
                   ],
-                  if (_editing && !isDieRollToken && !isInfoOnly) ...[
+                  if (_editing && !isDieRollToken && !isInfoOnly && rule.maxStack > 1) ...[
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -14262,13 +16873,17 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                             ),
                             InkWell(
                               borderRadius: BorderRadius.circular(20),
-                              onTap: () => setState(() => _count++),
-                              child: const Padding(
-                                padding: EdgeInsets.all(6),
+                              onTap: _count < widget.rule.maxStack
+                                  ? () => setState(() => _count++)
+                                  : null,
+                              child: Padding(
+                                padding: const EdgeInsets.all(6),
                                 child: Icon(
                                   Icons.add_circle_outline,
                                   size: 22,
-                                  color: Color(0xff8f43ff),
+                                  color: _count < widget.rule.maxStack
+                                      ? const Color(0xff8f43ff)
+                                      : Colors.grey,
                                 ),
                               ),
                             ),
@@ -14405,6 +17020,19 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                         ),
                                       ),
                                     ),
+                                  if (isCoal && _count >= 4)
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 2),
+                                      child: Text(
+                                        '(+1 CP upkeep reduced by 1 ➔ 0 CP gained)\nAll 4 Coal tokens removed',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white70,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),
@@ -14412,7 +17040,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                       ),
                     ),
                   ],
-                  if (rule.persistent) ...[
+                  if (rule.persistent && !isDieRollToken) ...[
                     const SizedBox(height: 6),
                     InkWell(
                       onTap: () => setState(() => _dontShowAgain = !_dontShowAgain),
@@ -14448,11 +17076,13 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                     ),
                   ],
                   const SizedBox(height: 18),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 10,
+                    runSpacing: 8,
                     children: [
-                      if (!isDieRollToken && !isInfoOnly) ...[
+                      if (!isDieRollToken && !isInfoOnly && rule.maxStack > 1)
                         OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.white,
@@ -14469,9 +17099,53 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                           icon: Icon(_editing ? Icons.check : Icons.edit, size: 16),
                           label: Text(_editing ? 'Hide' : 'Edit'),
                         ),
-                        const SizedBox(width: 10),
-                      ],
-                      if (!isDieRollToken || _blindDieRoll != null) ...[
+                      if (_blindDieRoll != null &&
+                          ((isEvasive && _blindDieRoll! > 2) || isAgility || isBleed || isTimeBomb1 || isTimeBomb2) &&
+                          _count > 1 &&
+                          (_count - _spentCount) > 0)
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Color(0xff8f43ff), width: 1.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _previousRolls.add(_blindDieRoll!);
+                              if (isAgility) {
+                                _firstAgilityRoll ??= _blindDieRoll;
+                              }
+                              if (isBleed) {
+                                _firstBleedRoll ??= _blindDieRoll;
+                              }
+                              _spentCount++;
+                              _blindRollTick++;
+                              _blindDieRoll = (isBleed || isTimeBomb1 || isTimeBomb2) ? null : (_random.nextInt(6) + 1);
+                              _manualEditBlind = false;
+                            });
+                          },
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: Text(
+                            (isBleed || isTimeBomb1 || isTimeBomb2)
+                                ? ((_count - _spentCount) > 1
+                                    ? 'Resolve next token (${_count - _spentCount})'
+                                    : 'Resolve next token')
+                                : ((_count - _spentCount) > 1
+                                    ? 'Use again (${_count - _spentCount})'
+                                    : 'Use again'),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      if (!isDieRollToken || _blindDieRoll != null)
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xff8f43ff),
@@ -14486,22 +17160,49 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                             elevation: 4,
                           ),
                           onPressed: () {
-                            if (isDieRollToken) {
-                              Navigator.of(context).pop(
-                                TokenAnimationResult(
-                                  count: _count,
-                                  dontShowAgain: _dontShowAgain,
-                                  dieRoll: _blindDieRoll,
-                                ),
-                              );
+                            final int? agilitySuccessCount;
+                            if (isAgility && _blindDieRoll != null) {
+                              if (_spentCount == 2 && _firstAgilityRoll != null) {
+                                agilitySuccessCount = (_firstAgilityRoll! <= 3 ? 1 : 0) +
+                                    (_blindDieRoll! <= 3 ? 1 : 0);
+                              } else {
+                                agilitySuccessCount = _blindDieRoll! <= 3 ? 1 : 0;
+                              }
                             } else {
-                              Navigator.of(context).pop(
-                                TokenAnimationResult(
-                                  count: _count,
-                                  dontShowAgain: _dontShowAgain,
-                                ),
-                              );
+                              agilitySuccessCount = null;
                             }
+                            final List<int>? allDiceRolls;
+                            if ((isBleed || isTimeBomb1 || isTimeBomb2) && _blindDieRoll != null) {
+                              allDiceRolls = [..._previousRolls, _blindDieRoll!];
+                            } else if (isAgility && _blindDieRoll != null) {
+                              if (_firstAgilityRoll != null) {
+                                allDiceRolls = [_firstAgilityRoll!, _blindDieRoll!];
+                              } else {
+                                allDiceRolls = [_blindDieRoll!];
+                              }
+                            } else {
+                              allDiceRolls = _blindDieRoll != null ? [_blindDieRoll!] : null;
+                            }
+                            var finalCount = _count;
+                            if (isBleed && allDiceRolls != null) {
+                              final removedCount = allDiceRolls.where((r) => r >= 5).length;
+                              finalCount = (_count - removedCount).clamp(0, widget.rule.maxStack);
+                            } else if (isCoal && _count >= 4) {
+                              finalCount = (_count - 4).clamp(0, widget.rule.maxStack);
+                            }
+                            Navigator.of(context).pop(
+                              TokenAnimationResult(
+                                count: finalCount,
+                                dontShowAgain: _dontShowAgain,
+                                dieRoll: _blindDieRoll,
+                                spentCount: _spentCount,
+                                agilitySuccessCount: agilitySuccessCount,
+                                allDiceRolls: allDiceRolls,
+                                sneakAttackBonus: isSneakAttack && _blindDieRoll != null
+                                    ? (_blindDieRoll! / 2).ceil()
+                                    : null,
+                              ),
+                            );
                           },
                           child: const Text(
                             'OK',
@@ -14511,7 +17212,6 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                             ),
                           ),
                         ),
-                      ],
                     ],
                   ),
                 ],

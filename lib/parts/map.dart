@@ -832,9 +832,9 @@ class _MapHeaderState extends State<MapHeader> {
                         ),
                         const Spacer(),
                         RoundIconButton(
-                          icon: Icons.add,
-                          tooltip: 'Add',
-                          onPressed: () => setState(() => _draftValue++),
+                          icon: Icons.remove,
+                          tooltip: 'Remove',
+                          onPressed: () => setState(() => _draftValue--),
                         ),
                         SizedBox(
                           width: 58,
@@ -848,9 +848,9 @@ class _MapHeaderState extends State<MapHeader> {
                           ),
                         ),
                         RoundIconButton(
-                          icon: Icons.remove,
-                          tooltip: 'Remove',
-                          onPressed: () => setState(() => _draftValue--),
+                          icon: Icons.add,
+                          tooltip: 'Add',
+                          onPressed: () => setState(() => _draftValue++),
                         ),
                       ],
                     ),
@@ -1529,7 +1529,7 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        '${enemy.maxHealth} HP',
+                                        '${enemy.initialHealth} HP',
                                         style: TextStyle(
                                           color: enemy.rank.color,
                                           fontWeight: FontWeight.w900,
