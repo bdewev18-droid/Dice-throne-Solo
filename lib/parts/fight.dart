@@ -141,7 +141,6 @@ class _FightPageState extends State<FightPage> {
   bool _specialAttackMode = false;
   final bool _aiMode = true;
   bool _showManualExtraDicePhase = false;
-  Set<int> _lockedDiceCubeIds = {};
   bool _developerMode = AppSettings.instance.developerMode;
   bool _reviewingLog = false;
   int _battleAttackValue = 0;
@@ -793,6 +792,7 @@ class _FightPageState extends State<FightPage> {
           die.reserved = false;
           die.settled = true;
           die.isHexed = false;
+          die.isLocked = false;
         }
       }
       final rollable = active
@@ -876,8 +876,7 @@ class _FightPageState extends State<FightPage> {
         
         for (int i = 0; i < min(lockCount, sortedDice.length); i++) {
           final d = sortedDice[i];
-          _lockedDiceCubeIds.add(d.id);
-          d.reserved = true; 
+          d.isLocked = true; 
         }
         widget.adventure.log('[TOKEN] Dice cube locked ${min(lockCount, sortedDice.length)} lowest die/dice.');
       }
@@ -1012,10 +1011,18 @@ class _FightPageState extends State<FightPage> {
   void _tapDie(GameDie die) {
     setState(() {
       if (_editMode) {
+        if (die.isLocked) {
+          widget.adventure.log('[TOKEN] Dice cube: Cannot alter locked die ${die.id + 1}.');
+          return;
+        }
         _editingDieId = die.id;
         return;
       }
       if (_rerollOneMode) {
+        if (die.isLocked) {
+          widget.adventure.log('[TOKEN] Dice cube: Cannot alter locked die ${die.id + 1}.');
+          return;
+        }
         die.value = _random.nextInt(6) + 1;
         die.settled = true;
         die.rollTick++;
@@ -1030,10 +1037,6 @@ class _FightPageState extends State<FightPage> {
         return;
       }
       if (_rollCount > 0) {
-        if (_lockedDiceCubeIds.contains(die.id)) {
-          widget.adventure.log('[TOKEN] Dice cube: Cannot alter die ${die.id + 1}.');
-          return;
-        }
         die.reserved = !die.reserved;
       }
     });
@@ -1041,10 +1044,19 @@ class _FightPageState extends State<FightPage> {
 
   void _selectFace(GameDie die, int face) {
     setState(() {
+      if (die.isLocked) {
+        widget.adventure.log('[TOKEN] Dice cube: Cannot alter locked die ${die.id + 1}.');
+        return;
+      }
       die.value = face;
       die.settled = true;
       die.isHexed =
           _phase == CombatPhase.minionAttack && _minionHexedThisAttack;
+      
+      if (_phase == CombatPhase.minionAttack && _aiMode) {
+        _applyMinionDiceStrategy();
+      }
+      
       _refreshBattleResolutionFromDice();
       widget.adventure.log('Die ${die.id + 1} changed to $face.');
       widget.onChanged();
@@ -1574,7 +1586,6 @@ class _FightPageState extends State<FightPage> {
 
   void _resetDice() {
     _rollCount = 0;
-    _lockedDiceCubeIds.clear();
     _diceAnimationPending = false;
     _editingDieId = null;
     _editMode = false;
@@ -1586,7 +1597,8 @@ class _FightPageState extends State<FightPage> {
         ..value = null
         ..settled = true
         ..reserved = false
-        ..isHexed = false;
+        ..isHexed = false
+        ..isLocked = false;
     }
   }
 
@@ -15342,6 +15354,7 @@ class GameDie {
   bool settled = true;
   int rollTick = 0;
   bool isHexed = false;
+  bool isLocked = false;
 
   int? get effectiveValue {
     if (isHexed && value == 6) {
@@ -15816,6 +15829,16 @@ class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
                 Icons.check_circle,
                 color: widget.highlightColor ?? heroAccent,
                 size: widget.compact ? 16 : 18,
+              ),
+            ),
+          if (widget.die.isLocked)
+            Positioned(
+              left: -4,
+              top: -5,
+              child: Icon(
+                Icons.lock,
+                color: Colors.redAccent,
+                size: widget.compact ? 14 : 16,
               ),
             ),
         ],
