@@ -1182,14 +1182,17 @@ class _FightPageState extends State<FightPage> {
   }
 
   Future<void> _applyHeroRollStart() async {
-    final enemyHasTargeted = enemy.alterations.any(
-      (t) =>
-          _normalizeTokenKey(t) == 'targeted' ||
-          _normalizeTokenKey(t) == 'prispourcible',
-    );
-    if (enemyHasTargeted) {
+    final tokensToRemind = <String>[];
+    if (enemy.alterations.any((t) => _normalizeTokenKey(t) == 'targeted' || _normalizeTokenKey(t) == 'prispourcible')) {
+      tokensToRemind.add('Targeted');
+    }
+    if (enemy.alterations.any(_isFocusFireToken)) {
+      tokensToRemind.add('Focus Fire');
+    }
+
+    if (tokensToRemind.isNotEmpty) {
       await _triggerTokenAnimationDialogs(
-        ['Targeted'],
+        tokensToRemind,
         targetName: enemy.label,
         currentHp: enemy.health,
         currentCp: enemy.combatPoints,
@@ -1241,14 +1244,17 @@ class _FightPageState extends State<FightPage> {
   }
 
   Future<void> _applyMinionRollStart() async {
-    final heroHasTargeted = widget.adventure.alterations.any(
-      (t) =>
-          _normalizeTokenKey(t) == 'targeted' ||
-          _normalizeTokenKey(t) == 'prispourcible',
-    );
-    if (heroHasTargeted) {
+    final tokensToRemind = <String>[];
+    if (widget.adventure.alterations.any((t) => _normalizeTokenKey(t) == 'targeted' || _normalizeTokenKey(t) == 'prispourcible')) {
+      tokensToRemind.add('Targeted');
+    }
+    if (widget.adventure.alterations.any(_isFocusFireToken)) {
+      tokensToRemind.add('Focus Fire');
+    }
+
+    if (tokensToRemind.isNotEmpty) {
       await _triggerTokenAnimationDialogs(
-        ['Targeted'],
+        tokensToRemind,
         targetName: widget.adventure.hero.label,
         currentHp: widget.adventure.health,
         currentCp: widget.adventure.combatPoints,
@@ -2160,7 +2166,8 @@ class _FightPageState extends State<FightPage> {
           ? 0
           : (_battleDefenseValue + _battleDefenseModifier);
       final targetedMod = enemy.alterations.any(_isTargetedToken) ? 2 : 0;
-      final currentDamage = max(0, (_battleAttackValue + targetedMod) - effectiveDefense);
+      final focusFireMod = enemy.alterations.any(_isFocusFireToken) ? 1 : 0;
+      final currentDamage = max(0, (_battleAttackValue + targetedMod + focusFireMod) - effectiveDefense);
       return currentDamage > 0;
     } else if (_phase == CombatPhase.minionAttack) {
       if (_minionSneakAttackActive) return false;
@@ -2173,7 +2180,8 @@ class _FightPageState extends State<FightPage> {
           ? 0
           : (_battleDefenseValue + _battleDefenseModifier);
       final targetedMod = widget.adventure.alterations.any(_isTargetedToken) ? 2 : 0;
-      final currentDamage = max(0, (_battleAttackValue + targetedMod) - effectiveDefense);
+      final focusFireMod = widget.adventure.alterations.any(_isFocusFireToken) ? 1 : 0;
+      final currentDamage = max(0, (_battleAttackValue + targetedMod + focusFireMod) - effectiveDefense);
       return currentDamage > 0;
     }
     return false;
@@ -2189,7 +2197,8 @@ class _FightPageState extends State<FightPage> {
           ? 0
           : (_battleDefenseValue + _battleDefenseModifier);
       final targetedMod = enemy.alterations.any(_isTargetedToken) ? 2 : 0;
-      final currentDamage = max(0, (_battleAttackValue + targetedMod) - effectiveDefense);
+      final focusFireMod = enemy.alterations.any(_isFocusFireToken) ? 1 : 0;
+      final currentDamage = max(0, (_battleAttackValue + targetedMod + focusFireMod) - effectiveDefense);
       return currentDamage > 0;
     } else if (_phase == CombatPhase.minionAttack) {
       if (_heroEvasiveAvoided) return false;
@@ -2199,7 +2208,8 @@ class _FightPageState extends State<FightPage> {
           ? 0
           : (_battleDefenseValue + _battleDefenseModifier);
       final targetedMod = widget.adventure.alterations.any(_isTargetedToken) ? 2 : 0;
-      final currentDamage = max(0, (_battleAttackValue + targetedMod) - effectiveDefense);
+      final focusFireMod = widget.adventure.alterations.any(_isFocusFireToken) ? 1 : 0;
+      final currentDamage = max(0, (_battleAttackValue + targetedMod + focusFireMod) - effectiveDefense);
       return currentDamage > 0;
     }
     return false;
@@ -2335,17 +2345,27 @@ class _FightPageState extends State<FightPage> {
     return k == 'targeted' || k == 'prispourcible';
   }
 
+  bool _isFocusFireToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'focus fire' || k == 'tir ciblé' || k == 'tir cible';
+  }
+
   int get _battleAttackModifier {
     if (_battleAttackValue <= 0) return 0;
     final defenderHasTargeted = _phase == CombatPhase.hero
         ? enemy.alterations.any(_isTargetedToken)
         : widget.adventure.alterations.any(_isTargetedToken);
+        
+    final defenderHasFocusFire = _phase == CombatPhase.hero
+        ? enemy.alterations.any(_isFocusFireToken)
+        : widget.adventure.alterations.any(_isFocusFireToken);
     
     final attackerHasDecrepify = _phase == CombatPhase.hero
         ? widget.adventure.alterations.any(_isDecrepifyToken)
         : enemy.alterations.any(_isDecrepifyToken);
 
     var mod = defenderHasTargeted ? 2 : 0;
+    if (defenderHasFocusFire) mod += 1;
     if (attackerHasDecrepify) mod -= 1;
 
     mod += _preyBonus;
@@ -8628,6 +8648,21 @@ class CombatAiChatDock extends StatelessWidget {
                     _normalizeTokenKey(t) == 'prispourcible',
               )
             : false);
+    final defenderHasFocusFire = phase == CombatPhase.hero
+        ? enemy.alterations.any(
+            (t) =>
+                _normalizeTokenKey(t) == 'focus fire' ||
+                _normalizeTokenKey(t) == 'tir ciblé' ||
+                _normalizeTokenKey(t) == 'tir cible',
+          )
+        : (phase == CombatPhase.minionAttack
+            ? adventure.alterations.any(
+                (t) =>
+                    _normalizeTokenKey(t) == 'focus fire' ||
+                    _normalizeTokenKey(t) == 'tir ciblé' ||
+                    _normalizeTokenKey(t) == 'tir cible',
+              )
+            : false);
     final bool showHeroEvasiveRow =
         phase == CombatPhase.minionAttack &&
         (heroEvasiveCount > 0 || heroEvasiveAvoided);
@@ -8915,6 +8950,101 @@ class CombatAiChatDock extends StatelessWidget {
                           Text(
                             attackValue > 0
                                 ? 'Actif (+2)'
+                                : 'Inactif (ATK = 0)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: attackValue > 0
+                                  ? Colors.greenAccent
+                                  : Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (defenderHasFocusFire) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: attackValue > 0
+                      ? const Color(0xff2a1b18)
+                      : const Color(0xff1a1722),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: attackValue > 0
+                        ? const Color(0xffff7675)
+                        : Colors.white24,
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/token/focus-fire.webp',
+                      width: 22,
+                      height: 22,
+                      errorBuilder: (ctx, err, stack) => const Icon(
+                        Icons.local_fire_department,
+                        color: Color(0xffff7675),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Focus Fire : ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Text(
+                      '+1 DMG',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                        color: Color(0xffff7675),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: attackValue > 0
+                            ? Colors.green.withValues(alpha: 0.2)
+                            : Colors.grey.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: attackValue > 0
+                              ? Colors.greenAccent
+                              : Colors.grey,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            attackValue > 0
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            size: 12,
+                            color: attackValue > 0
+                                ? Colors.greenAccent
+                                : Colors.grey,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            attackValue > 0
+                                ? 'Actif (+1)'
                                 : 'Inactif (ATK = 0)',
                             style: TextStyle(
                               fontSize: 11,
