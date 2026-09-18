@@ -2166,7 +2166,7 @@ class _FightPageState extends State<FightPage> {
           ? 0
           : (_battleDefenseValue + _battleDefenseModifier);
       final targetedMod = enemy.alterations.any(_isTargetedToken) ? 2 : 0;
-      final focusFireMod = enemy.alterations.any(_isFocusFireToken) ? 1 : 0;
+      final focusFireMod = enemy.alterations.where(_isFocusFireToken).length;
       final currentDamage = max(0, (_battleAttackValue + targetedMod + focusFireMod) - effectiveDefense);
       return currentDamage > 0;
     } else if (_phase == CombatPhase.minionAttack) {
@@ -2180,7 +2180,7 @@ class _FightPageState extends State<FightPage> {
           ? 0
           : (_battleDefenseValue + _battleDefenseModifier);
       final targetedMod = widget.adventure.alterations.any(_isTargetedToken) ? 2 : 0;
-      final focusFireMod = widget.adventure.alterations.any(_isFocusFireToken) ? 1 : 0;
+      final focusFireMod = widget.adventure.alterations.where(_isFocusFireToken).length;
       final currentDamage = max(0, (_battleAttackValue + targetedMod + focusFireMod) - effectiveDefense);
       return currentDamage > 0;
     }
@@ -2197,7 +2197,7 @@ class _FightPageState extends State<FightPage> {
           ? 0
           : (_battleDefenseValue + _battleDefenseModifier);
       final targetedMod = enemy.alterations.any(_isTargetedToken) ? 2 : 0;
-      final focusFireMod = enemy.alterations.any(_isFocusFireToken) ? 1 : 0;
+      final focusFireMod = enemy.alterations.where(_isFocusFireToken).length;
       final currentDamage = max(0, (_battleAttackValue + targetedMod + focusFireMod) - effectiveDefense);
       return currentDamage > 0;
     } else if (_phase == CombatPhase.minionAttack) {
@@ -2208,7 +2208,7 @@ class _FightPageState extends State<FightPage> {
           ? 0
           : (_battleDefenseValue + _battleDefenseModifier);
       final targetedMod = widget.adventure.alterations.any(_isTargetedToken) ? 2 : 0;
-      final focusFireMod = widget.adventure.alterations.any(_isFocusFireToken) ? 1 : 0;
+      final focusFireMod = widget.adventure.alterations.where(_isFocusFireToken).length;
       final currentDamage = max(0, (_battleAttackValue + targetedMod + focusFireMod) - effectiveDefense);
       return currentDamage > 0;
     }
@@ -2347,7 +2347,7 @@ class _FightPageState extends State<FightPage> {
 
   bool _isFocusFireToken(String t) {
     final k = _normalizeTokenKey(t);
-    return k == 'focus fire' || k == 'tir ciblé' || k == 'tir cible';
+    return k == 'focusfire' || k == 'tirciblé' || k == 'tircible';
   }
 
   int get _battleAttackModifier {
@@ -2356,16 +2356,16 @@ class _FightPageState extends State<FightPage> {
         ? enemy.alterations.any(_isTargetedToken)
         : widget.adventure.alterations.any(_isTargetedToken);
         
-    final defenderHasFocusFire = _phase == CombatPhase.hero
-        ? enemy.alterations.any(_isFocusFireToken)
-        : widget.adventure.alterations.any(_isFocusFireToken);
+    final defenderFocusFireCount = _phase == CombatPhase.hero
+        ? enemy.alterations.where(_isFocusFireToken).length
+        : widget.adventure.alterations.where(_isFocusFireToken).length;
     
     final attackerHasDecrepify = _phase == CombatPhase.hero
         ? widget.adventure.alterations.any(_isDecrepifyToken)
         : enemy.alterations.any(_isDecrepifyToken);
 
     var mod = defenderHasTargeted ? 2 : 0;
-    if (defenderHasFocusFire) mod += 1;
+    mod += defenderFocusFireCount;
     if (attackerHasDecrepify) mod -= 1;
 
     mod += _preyBonus;
@@ -8648,21 +8648,21 @@ class CombatAiChatDock extends StatelessWidget {
                     _normalizeTokenKey(t) == 'prispourcible',
               )
             : false);
-    final defenderHasFocusFire = phase == CombatPhase.hero
-        ? enemy.alterations.any(
+    final defenderFocusFireCount = phase == CombatPhase.hero
+        ? enemy.alterations.where(
             (t) =>
-                _normalizeTokenKey(t) == 'focus fire' ||
-                _normalizeTokenKey(t) == 'tir ciblé' ||
-                _normalizeTokenKey(t) == 'tir cible',
-          )
+                _normalizeTokenKey(t) == 'focusfire' ||
+                _normalizeTokenKey(t) == 'tirciblé' ||
+                _normalizeTokenKey(t) == 'tircible',
+          ).length
         : (phase == CombatPhase.minionAttack
-            ? adventure.alterations.any(
+            ? adventure.alterations.where(
                 (t) =>
-                    _normalizeTokenKey(t) == 'focus fire' ||
-                    _normalizeTokenKey(t) == 'tir ciblé' ||
-                    _normalizeTokenKey(t) == 'tir cible',
-              )
-            : false);
+                    _normalizeTokenKey(t) == 'focusfire' ||
+                    _normalizeTokenKey(t) == 'tirciblé' ||
+                    _normalizeTokenKey(t) == 'tircible',
+              ).length
+            : 0);
     final bool showHeroEvasiveRow =
         phase == CombatPhase.minionAttack &&
         (heroEvasiveCount > 0 || heroEvasiveAvoided);
@@ -8966,7 +8966,7 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
               ),
             ],
-            if (defenderHasFocusFire) ...[
+            if (defenderFocusFireCount > 0) ...[
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -9003,9 +9003,9 @@ class CombatAiChatDock extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-                    const Text(
-                      '+1 DMG',
-                      style: TextStyle(
+                    Text(
+                      '+$defenderFocusFireCount DMG',
+                      style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
                         color: Color(0xffff7675),
@@ -9044,7 +9044,7 @@ class CombatAiChatDock extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             attackValue > 0
-                                ? 'Actif (+1)'
+                                ? 'Actif (+$defenderFocusFireCount)'
                                 : 'Inactif (ATK = 0)',
                             style: TextStyle(
                               fontSize: 11,
