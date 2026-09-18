@@ -22,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.140';
+const String appVersionLabel = 'Version 1.3.167';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -112,6 +112,7 @@ enum HeroSegment {
   avengers('Avengers'),
   xmen('X-Men'),
   outcast('Outcasts'),
+  vanguard('Vanguard'),
   santaKrampus('Santa & Krampus'),
   other('Single');
 
@@ -214,7 +215,7 @@ enum HeroType {
     'assets/personnages/Druid.png',
     Alignment.center,
     Color(0xff7ac66a),
-    [HeroSegment.other],
+    [HeroSegment.vanguard],
     4,
   ),
   duelist(
@@ -222,7 +223,7 @@ enum HeroType {
     'assets/personnages/Duelist.png',
     Alignment.center,
     Color(0xffd6a052),
-    [HeroSegment.other],
+    [HeroSegment.vanguard],
     3,
   ),
   elfeLunaire(
@@ -238,7 +239,7 @@ enum HeroType {
     'assets/personnages/Forgemaster.png',
     Alignment.center,
     Color(0xfff09a43),
-    [HeroSegment.other],
+    [HeroSegment.vanguard],
     4,
   ),
   gambit(
@@ -446,7 +447,7 @@ enum HeroType {
     'assets/personnages/SunElf.png',
     Alignment.center,
     Color(0xffffc857),
-    [HeroSegment.other],
+    [HeroSegment.vanguard],
     3,
   ),
   tacticien(
@@ -687,6 +688,10 @@ class TokenCatalogRepository {
   static Map<String, List<String>> _heroTokens = const {};
 
   static Future<void> load() async {
+    GameEngine.isPositiveToken = (String t) {
+      final rule = byLabel(t);
+      return rule != null && rule.kind == StatusTokenKind.positive;
+    };
     final source = await rootBundle.loadString(
       'assets/data/token_catalog.json',
     );
@@ -1305,7 +1310,7 @@ class EnemyNode {
   int rewardChests;
   EnemyRank rewardRank;
   List<EnemyRank> rewardRanks;
-  final List<MinionPassive> passives;
+  List<MinionPassive> passives;
   List<DisplayRow> defenseDisplayRows;
   List<DisplayRow> passiveDisplayRows;
   final BranchSide? branch;
@@ -1374,6 +1379,7 @@ class EnemyNode {
       defense = restoredProfile.defense;
       defenseDice = restoredProfile.defenseDice;
       attackPlan = restoredProfile.attackPlan;
+      passives = restoredProfile.passives;
       defenseDisplayRows = restoredProfile.defenseDisplayRows;
       passiveDisplayRows = restoredProfile.passiveDisplayRows;
       cardAsset = restoredProfile.cardAsset;

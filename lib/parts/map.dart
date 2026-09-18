@@ -777,7 +777,7 @@ class _MapHeaderState extends State<MapHeader> {
                       final values = await showAlterationDialog(
                         context,
                         adventure.alterations,
-                        duelTokens: TokenCatalogRepository.heroTokens(adventure.hero),
+                        duelTokens: [...TokenCatalogRepository.heroTokens(adventure.hero), ...adventure.alterations],
                         isMapPage: true,
                       );
                       if (values != null) {
@@ -1944,7 +1944,7 @@ class HeroStatusBar extends StatelessWidget {
                   final values = await showAlterationDialog(
                     context,
                     adventure.alterations,
-                    duelTokens: TokenCatalogRepository.heroTokens(adventure.hero),
+                    duelTokens: [...TokenCatalogRepository.heroTokens(adventure.hero), ...adventure.alterations],
                     isMapPage: true,
                   );
                   if (values != null) {

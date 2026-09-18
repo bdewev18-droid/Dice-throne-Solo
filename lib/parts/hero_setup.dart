@@ -254,41 +254,77 @@ class HeroSegmentFilters extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FilterChip(
-          label: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('My heroes'),
-              SizedBox(width: 5),
-              Icon(Icons.bookmark, size: 16),
-            ],
-          ),
-          selected: myHeroesOnly,
-          onSelected: onMyHeroesChanged,
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilterChip(
+              label: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('My heroes'),
+                  SizedBox(width: 5),
+                  Icon(Icons.bookmark, size: 16),
+                ],
+              ),
+              selected: myHeroesOnly,
+              onSelected: onMyHeroesChanged,
+            ),
+            FilterChip(
+              label: const Text('All'),
+              selected: selectedSegments.isEmpty,
+              onSelected: (_) => onChanged(null, true),
+            ),
+            ...const [
+              HeroSegment.santaKrampus,
+            ].map(
+              (segment) => FilterChip(
+                label: Text(segment.label),
+                selected: selectedSegments.contains(segment),
+                onSelected: (selected) => onChanged(segment, selected),
+              ),
+            ),
+          ],
         ),
-        FilterChip(
-          label: const Text('All'),
-          selected: selectedSegments.isEmpty,
-          onSelected: (_) => onChanged(null, true),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ...const [
+              HeroSegment.season1,
+              HeroSegment.season2,
+              HeroSegment.avengers,
+            ].map(
+              (segment) => FilterChip(
+                label: Text(segment.label),
+                selected: selectedSegments.contains(segment),
+                onSelected: (selected) => onChanged(segment, selected),
+              ),
+            ),
+          ],
         ),
-        ...const [
-          HeroSegment.season1,
-          HeroSegment.season2,
-          HeroSegment.avengers,
-          HeroSegment.xmen,
-          HeroSegment.outcast,
-          HeroSegment.other,
-          HeroSegment.santaKrampus,
-        ].map(
-          (segment) => FilterChip(
-            label: Text(segment.label),
-            selected: selectedSegments.contains(segment),
-            onSelected: (selected) => onChanged(segment, selected),
-          ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ...const [
+              HeroSegment.xmen,
+              HeroSegment.outcast,
+              HeroSegment.vanguard,
+              HeroSegment.other,
+            ].map(
+              (segment) => FilterChip(
+                label: Text(segment.label),
+                selected: selectedSegments.contains(segment),
+                onSelected: (selected) => onChanged(segment, selected),
+              ),
+            ),
+          ],
         ),
       ],
     );

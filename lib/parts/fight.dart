@@ -137,6 +137,8 @@ class _FightPageState extends State<FightPage> {
   bool _heroUpkeepApplied = false;
   bool _heroCoalTriggered = false;
   bool _minionCoalTriggered = false;
+  bool _heroDisarmSkippedIncome = false;
+  bool _minionDisarmSkippedIncome = false;
   bool _specialAttackReady = false;
   bool _specialAttackMode = false;
   final bool _aiMode = true;
@@ -327,6 +329,8 @@ class _FightPageState extends State<FightPage> {
                           widget.onChanged();
                           setState(() {});
                         },
+                        onEditHeroTokens: _editHeroTokens,
+                        onEditEnemyTokens: _editEnemyTokens,
                       ),
                       const SizedBox(height: 12),
                       if (_isResolutionMode && !_reviewingLog)
@@ -565,6 +569,7 @@ class _FightPageState extends State<FightPage> {
                       );
                     }),
                     onApply: _applyBattleResolution,
+                    blockApply: _canUsePrey,
                     onFinish: null,
                     onChanged: () {
                       widget.onChanged();
@@ -577,6 +582,7 @@ class _FightPageState extends State<FightPage> {
                     showEvasiveAttackCover:
                         (_phase == CombatPhase.minionAttack && (_heroEvasiveAvoided || (_heroAgilityActive && _heroAgilitySuccesses >= 2))) ||
                         (_phase == CombatPhase.hero && (_minionEvasiveAvoided || _minionAgilityAvoided)),
+                    showParlayAttackCover: _hasActiveParlayOnAttacker,
                     heroEvasiveCount: _heroEvasiveCount,
                     heroEvasiveAvoided: _heroEvasiveAvoided,
                     onUseHeroEvasive: _triggerHeroEvasiveAttempt,
@@ -601,6 +607,10 @@ class _FightPageState extends State<FightPage> {
                     onUseAttackerSneakAttack: _phase == CombatPhase.hero
                         ? _triggerHeroSneakAttackAttempt
                         : _triggerMinionSneakAttackAttempt,
+                    defenderPreyCount: _defenderPreyCount,
+                    preyUsedCount: _preyUsedCount,
+                    canUsePrey: _canUsePrey,
+                    onUsePrey: _triggerPreyAttempt,
                     barbedVineActive: _phase == CombatPhase.hero
                         ? widget.adventure.alterations.any(_isBarbedVineToken)
                         : (_phase == CombatPhase.minionAttack
@@ -688,6 +698,38 @@ class _FightPageState extends State<FightPage> {
     return result.toList();
   }
 
+  Future<void> _handlePowderKegStacking(List<String> values, bool isHero) async {
+    final kegs = values.where((t) => _normalizeTokenKey(t) == 'powderkeg' || _normalizeTokenKey(t) == 'barildepoudre').toList();
+    if (kegs.length > 1) {
+      values.removeWhere((t) => _normalizeTokenKey(t) == 'powderkeg' || _normalizeTokenKey(t) == 'barildepoudre');
+      values.add(kegs.first); // Keep only one
+      
+      final damage = 3;
+      if (isHero) {
+        widget.adventure.setHeroHealth(widget.adventure.health - damage);
+        widget.adventure.log('[TOKEN] Powder Keg stacking limit! The first Keg immediately blows up. Hero takes $damage undefendable dmg.');
+      } else {
+        enemy.health = (enemy.health - damage).clamp(0, 99);
+        widget.adventure.log('[TOKEN] Powder Keg stacking limit! The first Keg immediately blows up. ${enemy.label} takes $damage undefendable dmg.');
+      }
+      
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Powder Keg Explosion!'),
+          content: Text('A second Powder Keg was applied!\n\nThe first Keg immediately blows up, dealing $damage undefendable damage to ${isHero ? 'the Hero' : enemy.label}.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   Future<void> _editHeroTokens() async {
     final values = await showAlterationDialog(
       context,
@@ -696,25 +738,27 @@ class _FightPageState extends State<FightPage> {
     );
     if (values != null) {
       final oldTokens = List<String>.from(widget.adventure.alterations);
+      await _handlePowderKegStacking(values, true);
       widget.adventure.setAlterations(values);
+      final defensiveTokens = ['Agility', 'Agilit\u00e9', 'Chi', 'Evasive', '\u00c9vitement', 'Flight', 'Vol', 'Force field', 'Champ de force', 'Protect', 'Protection', 'Shadow', 'Shadows', 'Ombre', 'Smoke bomb', 'Bombe fumig\u00e8ne', 'Wind shear', 'Cisaillement du vent'];
+      for (final def in defensiveTokens) {
+        final oldCount = oldTokens.where((t) => _normalizeTokenKey(t) == _normalizeTokenKey(def)).length;
+        final newCount = values.where((t) => _normalizeTokenKey(t) == _normalizeTokenKey(def)).length;
+        if (oldCount > newCount) {
+          _checkParasiteDefensiveTrigger(isHero: true, tokenUsed: def);
+        }
+      }
       final added = values.where((t) => !oldTokens.contains(t)).toList();
       final removed = oldTokens.where((t) => !values.contains(t)).toList();
       for (final t in added) {
-        widget.adventure.log('[TOKEN GAINED] Hero received token: $t');
+        widget.adventure.log(
+          '[TOKEN GAINED] Hero received token: $t',
+        );
       }
       for (final t in removed) {
-        widget.adventure.log('[TOKEN REMOVED] Hero lost token: $t');
-      }
-      if (added.any(_isShadowsToken)) {
-        if (_phase == CombatPhase.hero || _phase == CombatPhase.heroUpkeep) {
-          _shadowsGainedHeroTurnCount = _heroTurnCount;
-        }
-        if (_phase == CombatPhase.minionAttack) {
-          widget.adventure.log('[TOKEN] Hero gained Shadows on defense -> Activated!');
-        }
-      }
-      if (!values.any(_isShadowsToken)) {
-        _shadowsGainedHeroTurnCount = null;
+        widget.adventure.log(
+          '[TOKEN REMOVED] Hero lost token: $t',
+        );
       }
       widget.onChanged();
       setState(() {});
@@ -730,9 +774,18 @@ class _FightPageState extends State<FightPage> {
     );
     if (values != null) {
       final oldTokens = List<String>.from(enemy.alterations);
+      await _handlePowderKegStacking(values, false);
       enemy.alterations
         ..clear()
         ..addAll(values);
+      final defensiveTokens = ['Agility', 'Agilit\u00e9', 'Chi', 'Evasive', '\u00c9vitement', 'Flight', 'Vol', 'Force field', 'Champ de force', 'Protect', 'Protection', 'Shadow', 'Shadows', 'Ombre', 'Smoke bomb', 'Bombe fumig\u00e8ne', 'Wind shear', 'Cisaillement du vent'];
+      for (final def in defensiveTokens) {
+        final oldCount = oldTokens.where((t) => _normalizeTokenKey(t) == _normalizeTokenKey(def)).length;
+        final newCount = values.where((t) => _normalizeTokenKey(t) == _normalizeTokenKey(def)).length;
+        if (oldCount > newCount) {
+          _checkParasiteDefensiveTrigger(isHero: false, tokenUsed: def);
+        }
+      }
       final added = values.where((t) => !oldTokens.contains(t)).toList();
       final removed = oldTokens.where((t) => !values.contains(t)).toList();
       for (final t in added) {
@@ -1068,9 +1121,11 @@ class _FightPageState extends State<FightPage> {
       if (_phase != phase && phase != CombatPhase.heroUpkeep) {
         _heroUpkeepApplied = false;
         _heroCoalTriggered = false;
+        _heroDisarmSkippedIncome = false;
       }
       if (phase != CombatPhase.minionUpkeep) {
         _minionCoalTriggered = false;
+        _minionDisarmSkippedIncome = false;
       }
       if (phase == CombatPhase.hero) {
         _heroTurnCount++;
@@ -1668,6 +1723,15 @@ class _FightPageState extends State<FightPage> {
         t.toLowerCase() == 'blind' || t.toLowerCase() == 'éblouissement');
   }
 
+  bool get _hasActiveParlayOnAttacker {
+    final isMinionAttacker = _phase == CombatPhase.minionAttack;
+    final targetList = isMinionAttacker
+        ? enemy.alterations
+        : widget.adventure.alterations;
+    return targetList.any((t) =>
+        t.toLowerCase() == 'parlay' || t.toLowerCase() == 'pourparlers');
+  }
+
   bool get _showBlindExtraDicePhase => false;
 
   Future<void> _checkAndTriggerBlindPopin() async {
@@ -1827,6 +1891,45 @@ class _FightPageState extends State<FightPage> {
     return k == 'evasive' || k == 'evitement';
   }
 
+  bool _isParasiteToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'parasite';
+  }
+
+  void _checkParasiteDefensiveTrigger({required bool isHero, required String tokenUsed}) {
+    final hasParasite = isHero
+        ? widget.adventure.alterations.any(_isParasiteToken)
+        : enemy.alterations.any(_isParasiteToken);
+    
+    if (hasParasite) {
+      if (isHero) {
+        widget.adventure.alterations.removeWhere(_isParasiteToken);
+        widget.adventure.setHeroHealth(widget.adventure.health - 3);
+        widget.adventure.log('[TOKEN] $tokenUsed used defensively. Parasite detonates for 3 undefendable dmg on Hero.');
+      } else {
+        enemy.alterations.removeWhere(_isParasiteToken);
+        enemy.health = (enemy.health - 3).clamp(0, enemy.maxHealth);
+        widget.adventure.log('[TOKEN] $tokenUsed used defensively. Parasite detonates for 3 undefendable dmg on Minion.');
+      }
+      
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Parasite triggered', style: TextStyle(color: Colors.red)),
+          content: Text(
+            '${isHero ? widget.adventure.hero.label : enemy.label} spent a positive status effect ($tokenUsed) to prevent damage.\n\nParasite is removed and deals 3 undefendable damage.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   bool _isBleedToken(String t) {
     final k = _normalizeTokenKey(t);
     return k == 'bleed' || k == 'hemorragie' || k == 'saignement';
@@ -1854,6 +1957,9 @@ class _FightPageState extends State<FightPage> {
   bool _minionSneakAttackActive = false;
   int _minionSneakAttackBonus = 0;
 
+  int _preyUsedCount = 0;
+  int _preyBonus = 0;
+
   bool _isSneakAttackToken(String t) {
     final k = _normalizeTokenKey(t);
     return k == 'sneakattack' || k == 'attaquefurtive';
@@ -1864,6 +1970,16 @@ class _FightPageState extends State<FightPage> {
 
   int get _minionSneakAttackCount =>
       enemy.alterations.where(_isSneakAttackToken).length;
+
+  bool _isPreyToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'prey' || k == 'proie';
+  }
+
+  int get _defenderPreyCount {
+    final targetList = _phase == CombatPhase.hero ? enemy.alterations : widget.adventure.alterations;
+    return targetList.where(_isPreyToken).length;
+  }
 
   bool _isBarbedVineToken(String t) => _isBarbedVineAlteration(t);
 
@@ -2063,6 +2179,32 @@ class _FightPageState extends State<FightPage> {
     return false;
   }
 
+  bool get _canUsePrey {
+    if (_defenderPreyCount <= _preyUsedCount) return false;
+    if (_battleAttackValue <= 0) return false;
+    
+    if (_phase == CombatPhase.hero) {
+      if (_minionEvasiveAvoided || _minionAgilityAvoided) return false;
+      final effectiveDefense = (_isDefenderStunned || _battleAttackUndefendable)
+          ? 0
+          : (_battleDefenseValue + _battleDefenseModifier);
+      final targetedMod = enemy.alterations.any(_isTargetedToken) ? 2 : 0;
+      final currentDamage = max(0, (_battleAttackValue + targetedMod) - effectiveDefense);
+      return currentDamage > 0;
+    } else if (_phase == CombatPhase.minionAttack) {
+      if (_heroEvasiveAvoided) return false;
+      if (_shadowsActive) return false;
+      if (_heroAgilityActive && _heroAgilitySuccesses >= 2) return false;
+      final effectiveDefense = (_isDefenderStunned || _battleAttackUndefendable)
+          ? 0
+          : (_battleDefenseValue + _battleDefenseModifier);
+      final targetedMod = widget.adventure.alterations.any(_isTargetedToken) ? 2 : 0;
+      final currentDamage = max(0, (_battleAttackValue + targetedMod) - effectiveDefense);
+      return currentDamage > 0;
+    }
+    return false;
+  }
+
   Future<void> _triggerHeroSneakAttackAttempt() async {
     final rule = TokenCatalogRepository.byLabel('Sneak Attack') ??
         TokenCatalogRepository.byLabel('Attaque furtive');
@@ -2143,6 +2285,51 @@ class _FightPageState extends State<FightPage> {
     });
   }
 
+  Future<void> _triggerPreyAttempt() async {
+    final rule = TokenCatalogRepository.byLabel('Prey') ??
+        TokenCatalogRepository.byLabel('Proie');
+    if (rule == null) return;
+
+    final targetList = _phase == CombatPhase.hero ? enemy.alterations : widget.adventure.alterations;
+    final targetName = _phase == CombatPhase.hero ? enemy.label : widget.adventure.hero.label;
+    final currentHp = _phase == CombatPhase.hero ? enemy.health : widget.adventure.health;
+    final currentCp = _phase == CombatPhase.hero ? enemy.combatPoints : widget.adventure.combatPoints;
+
+    final result = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: targetList.where(_isPreyToken).length,
+      targetName: targetName,
+      currentHp: currentHp,
+      currentCp: currentCp,
+    );
+
+    if (!mounted || result == null) return;
+
+    final roll = result.dieRoll;
+    if (roll == null) return;
+
+    final bonus = result.preyBonus ?? 0;
+
+    if (roll == 1) {
+      final idx = targetList.indexWhere(_isPreyToken);
+      if (idx != -1) {
+        targetList.removeAt(idx);
+      }
+    }
+
+    setState(() {
+      _preyUsedCount++;
+      _preyBonus += bonus;
+      _extraDiceOutcomeMessage =
+          'Prey roll: $roll -> +$bonus Damage!';
+      widget.adventure.log(
+        '[TOKEN] Prey triggered on $targetName: rolled $roll -> +$bonus Damage.',
+      );
+      widget.onChanged();
+    });
+  }
+
   bool _isTargetedToken(String t) {
     final k = _normalizeTokenKey(t);
     return k == 'targeted' || k == 'prispourcible';
@@ -2160,6 +2347,8 @@ class _FightPageState extends State<FightPage> {
 
     var mod = defenderHasTargeted ? 2 : 0;
     if (attackerHasDecrepify) mod -= 1;
+
+    mod += _preyBonus;
 
     if (_phase == CombatPhase.hero && _heroSneakAttackActive) {
       mod += _heroSneakAttackBonus;
@@ -2226,6 +2415,7 @@ class _FightPageState extends State<FightPage> {
     if (roll <= 2) {
       setState(() {
         _heroEvasiveAvoided = true;
+        _checkParasiteDefensiveTrigger(isHero: true, tokenUsed: 'Evasive');
         _battleAttackValue = 0;
         _battleDefenseValue = 0;
         _extraDiceOutcomeMessage =
@@ -2303,6 +2493,7 @@ class _FightPageState extends State<FightPage> {
         _battleAttackValue = 0;
         _battleDefenseValue = 0;
         _minionEvasiveAvoided = true;
+        _checkParasiteDefensiveTrigger(isHero: false, tokenUsed: 'Evasive');
         _extraDiceOutcomeMessage =
             'Evasive roll: $roll (tentatives: $spent).\nAttack Avoided! 0 damage dealt to ${enemy.label}.';
         widget.adventure.log(
@@ -2393,6 +2584,7 @@ class _FightPageState extends State<FightPage> {
 
       if (_heroAgilitySuccesses >= 2) {
         _heroAgilityDamagePrevented = remainder;
+        _checkParasiteDefensiveTrigger(isHero: true, tokenUsed: 'Agility');
         _extraDiceOutcomeMessage =
             'Agility (2/2 réussis) :\nAttaque totalement annulée ! 0 dégât subi par ${widget.adventure.hero.label}.';
         widget.adventure.log(
@@ -2401,6 +2593,7 @@ class _FightPageState extends State<FightPage> {
       } else if (_heroAgilitySuccesses == 1) {
         final prevented = (remainder / 2).ceil();
         _heroAgilityDamagePrevented = prevented;
+        _checkParasiteDefensiveTrigger(isHero: true, tokenUsed: 'Agility');
         _extraDiceOutcomeMessage =
             'Agility (1/2 réussi) :\nDégâts divisés par 2 (-$prevented dégâts reçus).';
         widget.adventure.log(
@@ -2472,6 +2665,7 @@ class _FightPageState extends State<FightPage> {
         _battleAttackValue = 0;
         _battleDefenseValue = 0;
         _minionAgilityAvoided = true;
+        _checkParasiteDefensiveTrigger(isHero: false, tokenUsed: 'Agility');
         _extraDiceOutcomeMessage =
             'Agility (2/2 réussis) :\nAttaque totalement annulée ! 0 dégât infligé à ${enemy.label}.';
         widget.adventure.log(
@@ -2688,6 +2882,8 @@ class _FightPageState extends State<FightPage> {
     _heroSneakAttackBonus = 0;
     _minionSneakAttackActive = false;
     _minionSneakAttackBonus = 0;
+    _preyUsedCount = 0;
+    _preyBonus = 0;
     _blindingLightResolved = false;
     _blindingLightRoll = null;
     _blindingLightReducedDamage = 0;
@@ -3982,7 +4178,15 @@ class _FightPageState extends State<FightPage> {
     final wasDefenderStunned = _isDefenderStunned;
     late final CombatPhase nextPhase;
     setState(() {
-      final effectiveAttack = _battleAttackValue + _battleAttackModifier;
+      var effectiveAttack = _battleAttackValue + _battleAttackModifier;
+      if (_hasActiveParlayOnAttacker) {
+        effectiveAttack = 0;
+        final targetList = (_phase == CombatPhase.minionAttack)
+            ? enemy.alterations
+            : widget.adventure.alterations;
+        targetList.removeWhere((t) => t.toLowerCase() == 'parlay' || t.toLowerCase() == 'pourparlers');
+        widget.adventure.log('[TOKEN] Parlay negated all attack damage and was removed.');
+      }
       final effectiveDefense = wasDefenderStunned ? 0 : (_battleDefenseValue + _battleDefenseModifier);
       final rawDamage = max(0, effectiveAttack - effectiveDefense);
       final netDamage = (_phase == CombatPhase.minionAttack && _shadowsActive) ? 0 : rawDamage;
@@ -4216,6 +4420,7 @@ class _FightPageState extends State<FightPage> {
           widget.adventure.alterations.removeWhere(_isShadowsToken);
           _shadowsGainedHeroTurnCount = null;
           buffer.writeln('[TOKEN:Shadows] Hero Shadows consumed and removed.');
+          _checkParasiteDefensiveTrigger(isHero: true, tokenUsed: 'Shadows');
         }
 
         if (enemy.alterations.any(_isBarbedVineToken)) {
@@ -4504,6 +4709,13 @@ class _FightPageState extends State<FightPage> {
         continue;
       }
       final tokenKey = _normalizeTokenKey(rule.label);
+      if (tokenKey == 'parasite') {
+        final hasPositive = tokens.any((t) {
+          final r = TokenCatalogRepository.byLabel(t);
+          return r != null && r.kind == StatusTokenKind.positive;
+        });
+        if (!hasPositive) continue;
+      }
       final isUnitary = !isRollPhase;
       if (!isUnitary && processedLabels.contains(rule.label)) {
         continue;
@@ -4668,12 +4880,56 @@ class _FightPageState extends State<FightPage> {
         deltaHp = -initialCount;
       } else if (l.contains('brûlure') || l.contains('brulure') || l.contains('burn')) {
         deltaHp = initialCount > 0 ? -2 : 0;
+      } else if (l.contains('powder keg') || l.contains('baril de poudre')) {
+        final r = result?.dieRoll;
+        if (r != null && r <= 2) {
+          deltaHp = -3;
+        }
       } else if (isBleed) {
         final rolls = result?.allDiceRolls ?? (result?.dieRoll != null ? [result!.dieRoll!] : <int>[]);
         deltaHp = -rolls.where((r) => r <= 4).length;
       } else if (isTb2) {
         final rolls = result?.allDiceRolls ?? (result?.dieRoll != null ? [result!.dieRoll!] : <int>[]);
         deltaHp = -rolls.where((r) => r <= 5).length * 4;
+      } else if (l.contains('disruption') || l.contains('perturbation')) {
+        if (result?.customAction == 'lose_cp') {
+          deltaCp = -1;
+          setState(() {
+            if (targetName == widget.adventure.hero.label) {
+              widget.adventure.setHeroPc(max(0, widget.adventure.combatPoints - 1));
+            } else {
+              final EnemyNode targetEnemy = widget.adventure.enemies.firstWhere((e) => e.label == targetName, orElse: () => enemy);
+              targetEnemy.combatPoints = max(0, targetEnemy.combatPoints - 1);
+            }
+            widget.adventure.log('[TOKEN] $targetName lost 1 CP from Disruption.');
+            widget.onChanged();
+          });
+        } else if (result?.customAction == 'damage') {
+          deltaHp = -2;
+          setState(() {
+            if (targetName == widget.adventure.hero.label) {
+              widget.adventure.setHeroHealth(widget.adventure.health - 2, source: 'Disruption');
+            } else {
+              final EnemyNode targetEnemy = widget.adventure.enemies.firstWhere((e) => e.label == targetName, orElse: () => enemy);
+              targetEnemy.health = (targetEnemy.health - 2).clamp(0, 999);
+            }
+            widget.adventure.log('[TOKEN] $targetName took 2 dmg from Disruption.');
+            widget.onChanged();
+          });
+        }
+      } else if (l.contains('disarm') || l.contains('désarmement') || l.contains('desarmement')) {
+        if (result?.customAction == 'discard') {
+          widget.adventure.log('[TOKEN] $targetName discarded a card (Disarm).');
+        } else if (result?.customAction == 'skip_income') {
+          setState(() {
+            if (targetName == widget.adventure.hero.label) {
+              _heroDisarmSkippedIncome = true;
+            } else {
+              _minionDisarmSkippedIncome = true;
+            }
+          });
+          widget.adventure.log('[TOKEN] $targetName skips Income Phase (Disarm).');
+        }
       }
 
       if (l.contains('knockdown') || l.contains('terre')) {
@@ -4786,6 +5042,30 @@ class _FightPageState extends State<FightPage> {
             widget.onChanged();
           });
           continue;
+        } else if (l.contains('powder keg') || l.contains('baril de poudre')) {
+          if (roll == 6) {
+            setState(() {
+              final removeIdx = tokens.indexWhere((t) => _normalizeTokenKey(t) == 'powderkeg' || _normalizeTokenKey(t) == 'barildepoudre');
+              if (removeIdx >= 0) {
+                tokens.removeAt(removeIdx);
+              }
+              if (targetName == widget.adventure.hero.label) {
+                enemy.alterations.add('Powder Keg');
+                widget.adventure.log(
+                  '[TOKEN] $targetName rolled 6 for Powder Keg: transferred to ${enemy.label}.',
+                );
+                _handlePowderKegStacking(enemy.alterations, false);
+              } else {
+                widget.adventure.alterations.add('Powder Keg');
+                widget.adventure.log(
+                  '[TOKEN] $targetName rolled 6 for Powder Keg: transferred to ${widget.adventure.hero.label}.',
+                );
+                _handlePowderKegStacking(widget.adventure.alterations, true);
+              }
+              widget.onChanged();
+            });
+          }
+          continue;
         } else if (isBleed) {
           resolvedTokenKeys.add('bleed');
           final rolls = result.allDiceRolls ?? [roll];
@@ -4889,7 +5169,7 @@ class _FightPageState extends State<FightPage> {
         currentCp: widget.adventure.combatPoints,
         skipTokens: skip,
       );
-      final heroCpDelta = (resolvedInPopin.contains('coal') || _heroCoalTriggered)
+      final heroCpDelta = (resolvedInPopin.contains('coal') || _heroCoalTriggered || _heroDisarmSkippedIncome)
           ? 0
           : heroOutcome!.cpDelta;
       widget.adventure.setHeroPc(
@@ -4976,7 +5256,7 @@ class _FightPageState extends State<FightPage> {
         isNaxarus: _isNaraxus,
         skipTokens: skip,
       );
-      final hadCoal = resolvedInPopin.contains('coal') || outcome.coalActive || _minionCoalTriggered;
+      final hadCoal = resolvedInPopin.contains('coal') || outcome.coalActive || _minionCoalTriggered || _minionDisarmSkippedIncome;
       final naturalGain = (_isNaraxus || _enemyHasInfiniteCp(enemy) || hadCoal) ? 0 : 1;
       final cpDelta = _enemyHasInfiniteCp(enemy) ? 0 : outcome.cpDelta;
       enemy.combatPoints = (enemy.combatPoints + naturalGain + cpDelta).clamp(0, 99);
@@ -8155,6 +8435,7 @@ class CombatAiChatDock extends StatelessWidget {
     required this.onAttackChanged,
     required this.onDefenseChanged,
     required this.onApply,
+    this.blockApply = false,
     required this.onFinish,
     required this.onChanged,
     this.onEditHeroTokens,
@@ -8162,6 +8443,7 @@ class CombatAiChatDock extends StatelessWidget {
     this.showBlindButton = false,
     this.onBlindPressed,
     this.showEvasiveAttackCover = false,
+    this.showParlayAttackCover = false,
     this.heroEvasiveCount = 0,
     this.heroEvasiveAvoided = false,
     this.onUseHeroEvasive,
@@ -8179,6 +8461,10 @@ class CombatAiChatDock extends StatelessWidget {
     this.attackerSneakAttackBonus = 0,
     this.canUseAttackerSneakAttack = false,
     this.onUseAttackerSneakAttack,
+    this.defenderPreyCount = 0,
+    this.preyUsedCount = 0,
+    this.canUsePrey = false,
+    this.onUsePrey,
     this.barbedVineActive = false,
     this.barbedVineCount = 0,
     this.constrictActive = false,
@@ -8215,6 +8501,10 @@ class CombatAiChatDock extends StatelessWidget {
   final int attackerSneakAttackBonus;
   final bool canUseAttackerSneakAttack;
   final VoidCallback? onUseAttackerSneakAttack;
+  final int defenderPreyCount;
+  final int preyUsedCount;
+  final bool canUsePrey;
+  final VoidCallback? onUsePrey;
   final bool barbedVineActive;
   final int barbedVineCount;
   final bool constrictActive;
@@ -8252,6 +8542,7 @@ class CombatAiChatDock extends StatelessWidget {
   final ValueChanged<int> onAttackChanged;
   final ValueChanged<int> onDefenseChanged;
   final VoidCallback onApply;
+  final bool blockApply;
   final VoidCallback? onFinish;
   final VoidCallback onChanged;
   final VoidCallback? onEditHeroTokens;
@@ -8259,6 +8550,7 @@ class CombatAiChatDock extends StatelessWidget {
   final bool showBlindButton;
   final VoidCallback? onBlindPressed;
   final bool showEvasiveAttackCover;
+  final bool showParlayAttackCover;
   final int heroEvasiveCount;
   final bool heroEvasiveAvoided;
   final VoidCallback? onUseHeroEvasive;
@@ -9297,6 +9589,77 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
               ),
             ],
+            if (defenderPreyCount > 0 && preyUsedCount < defenderPreyCount) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: canUsePrey
+                      ? const Color(0xff132b1e)
+                      : const Color(0xff1f1a2e),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: canUsePrey
+                        ? Colors.greenAccent.withValues(alpha: 0.6)
+                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/token/Prey.png',
+                      width: 22,
+                      height: 22,
+                      errorBuilder: (ctx, err, stack) => const Icon(
+                        Icons.track_changes,
+                        color: Color(0xff8f43ff),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Prey ($preyUsedCount/$defenderPreyCount)',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: canUsePrey
+                            ? const Color(0xff8f43ff)
+                            : Colors.grey.shade700,
+                        foregroundColor: canUsePrey
+                            ? Colors.white
+                            : Colors.white38,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: canUsePrey
+                          ? onUsePrey
+                          : null,
+                      child: const Text(
+                        'Use',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               children: [
@@ -9334,12 +9697,12 @@ class CombatAiChatDock extends StatelessWidget {
                             ),
                           ),
                         )
-                      : (showShadowsAttackCover || showEvasiveAttackCover)
+                      : (showParlayAttackCover || showShadowsAttackCover || showEvasiveAttackCover)
                           ? SizedBox(
                               height: 52,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: attackColor,
+                                  color: showParlayAttackCover ? Colors.orange.shade800 : attackColor,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 alignment: Alignment.center,
@@ -9352,32 +9715,41 @@ class CombatAiChatDock extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Image.asset(
-                                      showShadowsAttackCover
-                                          ? 'assets/token/Shadows.png'
-                                          : (isAgilityAvoided
-                                              ? 'assets/token/Agility.webp'
-                                              : 'assets/token/Evasive.png'),
+                                      showParlayAttackCover
+                                          ? 'assets/token/Parlay.png'
+                                          : showShadowsAttackCover
+                                              ? 'assets/token/Shadows.png'
+                                              : (isAgilityAvoided
+                                                  ? 'assets/token/Agility.webp'
+                                                  : 'assets/token/Evasive.png'),
                                       width: 24,
                                       height: 24,
                                       errorBuilder: (ctx, err, stack) => Icon(
-                                        showShadowsAttackCover
-                                            ? Icons.shield_outlined
-                                            : (isAgilityAvoided ? Icons.speed : Icons.shield),
-                                        size: 20,
+                                        showParlayAttackCover
+                                            ? Icons.block
+                                            : showShadowsAttackCover
+                                                ? Icons.cloud
+                                                : Icons.air,
+                                        size: 24,
                                         color: Colors.white,
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      showShadowsAttackCover
-                                          ? 'Shadows (0 DMG)'
-                                          : (isAgilityAvoided
-                                              ? 'Agility (0 DMG)'
-                                              : 'Evasive (0 DMG)'),
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        showParlayAttackCover
+                                            ? 'PARLAY: NO DAMAGE DEALT'
+                                            : showShadowsAttackCover
+                                                ? 'ATTACK AVOIDED (SHADOWS)'
+                                                : (isAgilityAvoided
+                                                    ? 'ATTACK AVOIDED (AGILITY)'
+                                                    : 'ATTACK AVOIDED (EVASIVE)'),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
                                   ],
@@ -9509,7 +9881,7 @@ class CombatAiChatDock extends StatelessWidget {
                     width: 56,
                     height: 52,
                     child: FilledButton(
-                      onPressed: showBlindButton ? null : onApply,
+                      onPressed: (showBlindButton || blockApply) ? null : onApply,
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xff8f43ff),
                         disabledBackgroundColor: Colors.white10,
@@ -13808,6 +14180,8 @@ class FightStatusPanel extends StatefulWidget {
     required this.naraxusRollHistory,
     required this.onFinish,
     required this.onChanged,
+    required this.onEditHeroTokens,
+    required this.onEditEnemyTokens,
     super.key,
   });
 
@@ -13817,6 +14191,8 @@ class FightStatusPanel extends StatefulWidget {
   final List<String> naraxusRollHistory;
   final VoidCallback? onFinish;
   final VoidCallback onChanged;
+  final VoidCallback onEditHeroTokens;
+  final VoidCallback onEditEnemyTokens;
 
   @override
   State<FightStatusPanel> createState() => _FightStatusPanelState();
@@ -13846,8 +14222,8 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
                 _openEditor('heroCp', widget.adventure.combatPoints),
             onEnemyHp: () => _openEditor('enemyHp', widget.enemy.health),
             onEnemyCp: () => _openEditor('enemyCp', widget.enemy.combatPoints),
-            onEditHeroTokens: _editHeroTokens,
-            onEditEnemyTokens: _editEnemyTokens,
+            onEditHeroTokens: widget.onEditHeroTokens,
+            onEditEnemyTokens: widget.onEditEnemyTokens,
             onTokensChanged: _onTokensChanged,
           ),
           if (_editing.contains('heroHp') || _editing.contains('enemyHp')) ...[
@@ -14046,61 +14422,6 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
     widget.enemy.alterations.remove('Riposte');
     widget.adventure.setHeroHealth(widget.adventure.health - damage);
     widget.adventure.log('Riposte spent: D6 $roll, hero loses $damage HP.');
-  }
-
-  Future<void> _editHeroTokens() async {
-    final values = await showAlterationDialog(
-      context,
-      widget.adventure.alterations,
-      duelTokens: [
-        ...TokenCatalogRepository.heroTokens(widget.adventure.hero),
-        ...widget.adventure.alterations,
-        ...widget.enemy.alterations,
-      ],
-    );
-    if (values != null) {
-      final oldTokens = List<String>.from(widget.adventure.alterations);
-      widget.adventure.setAlterations(values);
-      final added = values.where((t) => !oldTokens.contains(t)).toList();
-      final removed = oldTokens.where((t) => !values.contains(t)).toList();
-      for (final t in added) {
-        widget.adventure.log('[TOKEN GAINED] Hero received token: $t');
-      }
-      for (final t in removed) {
-        widget.adventure.log('[TOKEN REMOVED] Hero lost token: $t');
-      }
-      widget.onChanged();
-      setState(() {});
-    }
-  }
-
-  Future<void> _editEnemyTokens() async {
-    final values = await showAlterationDialog(
-      context,
-      widget.enemy.alterations,
-      forMinion: true,
-      duelTokens: [
-        ...TokenCatalogRepository.heroTokens(widget.adventure.hero),
-        ...widget.adventure.alterations,
-        ...widget.enemy.alterations,
-      ],
-    );
-    if (values != null) {
-      final oldTokens = List<String>.from(widget.enemy.alterations);
-      widget.enemy.alterations
-        ..clear()
-        ..addAll(values);
-      final added = values.where((t) => !oldTokens.contains(t)).toList();
-      final removed = oldTokens.where((t) => !values.contains(t)).toList();
-      for (final t in added) {
-        widget.adventure.log('[TOKEN GAINED] ${widget.enemy.label} received token: $t');
-      }
-      for (final t in removed) {
-        widget.adventure.log('[TOKEN REMOVED] ${widget.enemy.label} lost token: $t');
-      }
-      widget.onChanged();
-      setState(() {});
-    }
   }
 
   void _onTokensChanged() {
@@ -16012,10 +16333,27 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
   void initState() {
     super.initState();
     _orderedRules = List<StatusTokenRule>.from(widget.rules);
+    _orderedRules.sort((a, b) {
+      final aFirst = _isFirstStrike(a.label);
+      final bFirst = _isFirstStrike(b.label);
+      if (aFirst && !bFirst) return -1;
+      if (!aFirst && bFirst) return 1;
+      return 0;
+    });
+  }
+
+  bool _isFirstStrike(String label) {
+    final l = label.toLowerCase();
+    return l.contains('first strike') ||
+        l.contains('première frappe') ||
+        l.contains('premiere frappe') ||
+        l.contains('1st frappe') ||
+        l.contains('1er frappe');
   }
 
   void _moveUp(int index) {
     if (index > 0) {
+      if (_isFirstStrike(_orderedRules[index - 1].label)) return;
       setState(() {
         final item = _orderedRules.removeAt(index);
         _orderedRules.insert(index - 1, item);
@@ -16025,6 +16363,7 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
 
   void _moveDown(int index) {
     if (index < _orderedRules.length - 1) {
+      if (_isFirstStrike(_orderedRules[index].label)) return;
       setState(() {
         final item = _orderedRules.removeAt(index);
         _orderedRules.insert(index + 1, item);
@@ -16254,8 +16593,12 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                               ),
                               IconButton(
                                 icon: const Icon(Icons.keyboard_arrow_up, size: 20),
-                                color: index > 0 ? Colors.white70 : Colors.white24,
-                                onPressed: index > 0 ? () => _moveUp(index) : null,
+                                color: (index > 0 && !_isFirstStrike(_orderedRules[index - 1].label)) 
+                                    ? Colors.white70 
+                                    : Colors.white24,
+                                onPressed: (index > 0 && !_isFirstStrike(_orderedRules[index - 1].label)) 
+                                    ? () => _moveUp(index) 
+                                    : null,
                                 visualDensity: VisualDensity.compact,
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(
@@ -16265,10 +16608,10 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                               ),
                               IconButton(
                                 icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-                                color: index < _orderedRules.length - 1
+                                color: (index < _orderedRules.length - 1 && !_isFirstStrike(rule.label))
                                     ? Colors.white70
                                     : Colors.white24,
-                                onPressed: index < _orderedRules.length - 1
+                                onPressed: (index < _orderedRules.length - 1 && !_isFirstStrike(rule.label))
                                     ? () => _moveDown(index)
                                     : null,
                                 visualDensity: VisualDensity.compact,
@@ -16323,6 +16666,8 @@ class TokenAnimationResult {
     this.agilitySuccessCount,
     this.allDiceRolls,
     this.sneakAttackBonus,
+    this.preyBonus,
+    this.customAction,
   });
 
   final int count;
@@ -16332,6 +16677,8 @@ class TokenAnimationResult {
   final int? agilitySuccessCount;
   final List<int>? allDiceRolls;
   final int? sneakAttackBonus;
+  final int? preyBonus;
+  final String? customAction;
 }
 
 class TokenAnimationDialog extends StatefulWidget {
@@ -16464,6 +16811,11 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
     final isBleed = l == 'bleed' || l == 'hémorragie' || l == 'hemorragie' || l == 'saignement';
     final isSneakAttack = l.contains('sneak attack') || l.contains('attaque furtive');
     final isWellspring = l.contains('wellspring') || l.contains('source');
+    final isPhoenixBurn = l.contains('phoenix burn');
+    final isPowderKeg = l.contains('powder keg') || l.contains('baril de poudre');
+    final isPrey = l.contains('prey') || l.contains('proie');
+    final isDisarm = l.contains('disarm') || l.contains('désarmement') || l.contains('desarmement');
+    final isDisruption = l.contains('disruption') || l.contains('perturbation');
     final isDieRollToken = isBlind ||
         isEvasive ||
         isAgility ||
@@ -16472,7 +16824,10 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
         isBleed ||
         isSneakAttack ||
         isWellspring ||
-        isBlindingLight;
+        isBlindingLight ||
+        isPhoenixBurn ||
+        isPowderKeg ||
+        isPrey;
     final isFirstStrike = l.contains('first strike') ||
         l.contains('première frappe') ||
         l.contains('premiere frappe') ||
@@ -16644,8 +16999,11 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                 : isEvasive ? 'Evasive Roll (1 D6)' : 
                             isAgility ? (_spentCount > 1 ? 'Agility Roll 2 (1 D6)' : 'Agility Roll (1 D6)') :
                             isSneakAttack ? 'Sneak Attack Roll (1 D6)' :
+                            isPrey ? 'Prey Roll (1 D6)' :
                             isBlind ? 'Blind Roll (1 D6)' : 
                             isWellspring ? 'Wellspring Roll (1 D6)' :
+                            isPhoenixBurn ? 'Phoenix Burn Roll (1 D6)' :
+                            isPowderKeg ? 'Powder Keg Roll (1 D6)' :
                             isBlindingLight ? 'Blinding Light Roll (1 D6)' :
                             isTimeBomb1 ? 'Time Bomb 1 (1 D6)' : 'Time Bomb 2 (1 D6)',
                             style: const TextStyle(
@@ -16790,6 +17148,10 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                               child: Text(
                                 isWellspring
                                     ? 'Wellspring roll: $_blindDieRoll -> +${(_blindDieRoll! / 2.0).ceil()} Health restored!'
+                                    : isPhoenixBurn
+                                        ? (_blindDieRoll! >= 5 ? 'Phoenix Burn roll: $_blindDieRoll -> Token removed!' : 'Phoenix Burn roll: $_blindDieRoll -> Token stays.')
+                                    : isPowderKeg
+                                        ? (_blindDieRoll! <= 2 ? 'Powder Keg roll: $_blindDieRoll -> Keg blows up! (3 undefendable dmg)' : (_blindDieRoll! == 6 ? 'Powder Keg roll: $_blindDieRoll -> Transfer to opponent!' : 'Powder Keg roll: $_blindDieRoll -> Nothing happens.'))
                                     : isBlindingLight
                                         ? (_blindDieRoll == 1
                                             ? 'Blinding Light roll: 1 -> Attack fails to activate! (0 damage dealt)'
@@ -16798,6 +17160,8 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                                 : 'Blinding Light roll: $_blindDieRoll -> Attack succeeds normally! (Full damage)'))
                                         : isSneakAttack
                                     ? 'Sneak Attack roll: $_blindDieRoll -> +${(_blindDieRoll! / 2).ceil()} Attack Modifier!'
+                                        : isPrey
+                                    ? (_blindDieRoll! == 1 ? 'Prey roll: 1 -> Token removed (0 damage)' : (_blindDieRoll! >= 6 ? 'Prey roll: $_blindDieRoll -> +2 Damage!' : 'Prey roll: $_blindDieRoll -> +1 Damage!'))
                                     : isBleed
                                     ? ((_spentCount == 2 && _firstBleedRoll != null)
                                         ? 'Bleed rolls: $_firstBleedRoll, $_blindDieRoll -> ${((_firstBleedRoll! <= 4 ? 1 : 0) + (_blindDieRoll! <= 4 ? 1 : 0))} Damage taken, ${((_firstBleedRoll! >= 5 ? 1 : 0) + (_blindDieRoll! >= 5 ? 1 : 0))} Token(s) removed'
@@ -17168,7 +17532,29 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                             ),
                           ),
                         ),
-                      if (!isDieRollToken || _blindDieRoll != null)
+                      if (isDisarm) ...[
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff8f43ff), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
+                          onPressed: () => Navigator.of(context).pop(TokenAnimationResult(count: (_count - 1).clamp(0, widget.rule.maxStack), dontShowAgain: _dontShowAgain, customAction: 'discard')),
+                          child: const Text('Discard a card', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff8f43ff), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
+                          onPressed: () => Navigator.of(context).pop(TokenAnimationResult(count: (_count - 1).clamp(0, widget.rule.maxStack), dontShowAgain: _dontShowAgain, customAction: 'skip_income')),
+                          child: const Text('Skip Income Phase', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        ),
+                      ] else if (isDisruption) ...[
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff8f43ff), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
+                          onPressed: () => Navigator.of(context).pop(TokenAnimationResult(count: (_count - 1).clamp(0, widget.rule.maxStack), dontShowAgain: _dontShowAgain, customAction: 'lose_cp')),
+                          child: const Text('Lose 1 CP', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff8f43ff), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
+                          onPressed: () => Navigator.of(context).pop(TokenAnimationResult(count: (_count - 1).clamp(0, widget.rule.maxStack), dontShowAgain: _dontShowAgain, customAction: 'damage')),
+                          child: const Text('Receive 2 undefendable damage', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14), textAlign: TextAlign.center),
+                        ),
+                      ] else if (!isDieRollToken || _blindDieRoll != null)
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xff8f43ff),
@@ -17212,6 +17598,18 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                               finalCount = (_count - removedCount).clamp(0, widget.rule.maxStack);
                             } else if (isCoal && _count >= 4) {
                               finalCount = (_count - 4).clamp(0, widget.rule.maxStack);
+                            } else if (isPhoenixBurn && _blindDieRoll != null) {
+                              if (_blindDieRoll! >= 5) {
+                                finalCount = (_count - 1).clamp(0, widget.rule.maxStack);
+                              }
+                            } else if (isPowderKeg && _blindDieRoll != null) {
+                              if (_blindDieRoll! <= 2 || _blindDieRoll! == 6) {
+                                finalCount = (_count - 1).clamp(0, widget.rule.maxStack);
+                              }
+                            } else if (isPrey && _blindDieRoll != null) {
+                              if (_blindDieRoll! == 1) {
+                                finalCount = (_count - 1).clamp(0, widget.rule.maxStack);
+                              }
                             }
                             Navigator.of(context).pop(
                               TokenAnimationResult(
@@ -17223,6 +17621,9 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                 allDiceRolls: allDiceRolls,
                                 sneakAttackBonus: isSneakAttack && _blindDieRoll != null
                                     ? (_blindDieRoll! / 2).ceil()
+                                    : null,
+                                preyBonus: isPrey && _blindDieRoll != null
+                                    ? (_blindDieRoll! == 1 ? 0 : (_blindDieRoll! >= 6 ? 2 : 1))
                                     : null,
                               ),
                             );

@@ -116,6 +116,8 @@ class _UpkeepContext {
 typedef _TokenHandler = void Function(_UpkeepContext ctx);
 
 class GameEngine {
+  static bool Function(String)? isPositiveToken;
+
   const GameEngine._();
 
   static final Map<String, _TokenHandler> _upkeepHandlers = {
@@ -135,6 +137,34 @@ class GameEngine {
     },
     'Brûlure': (ctx) => _upkeepHandlers['Burn']?.call(ctx),
     'Brulure': (ctx) => _upkeepHandlers['Burn']?.call(ctx),
+
+    // Nanite — roll 1 die per stack: on 6, remove that stack
+    'Nanite': (ctx) {
+      final n = ctx.count('Nanite') + ctx.count('Nanites');
+      if (n == 0) return;
+      var removed = 0;
+      for (var i = 0; i < n; i++) {
+        if (ctx.rollD6() == 6) {
+          ctx.remove('Nanite');
+          ctx.remove('Nanites'); // just in case
+          removed++;
+        }
+      }
+      if (removed > 0) {
+        ctx.logParts.add('Nanite:  removed (rolled 6)');
+      }
+    },
+    'Nanites': (ctx) => _upkeepHandlers['Nanite']?.call(ctx),
+
+    // Parasite — -1 HP if player has a positive token
+    'Parasite': (ctx) {
+      if (ctx.count('Parasite') == 0) return;
+      final isPositive = GameEngine.isPositiveToken;
+      if (isPositive != null && ctx.tokens.any((t) => t.toLowerCase() != 'parasite' && isPositive(t))) {
+        ctx.healthDelta -= 1;
+        ctx.logParts.add('Parasite: -1 HP (Positive token present)');
+      }
+    },
 
     // Knockdown / À terre — removes up to 2 CP before natural +1 CP gain, then removes token (Naxarus immune)
     'Knockdown': (ctx) {
@@ -251,14 +281,6 @@ class GameEngine {
       }
     },
 
-    // Delayed Poison — end-of-turn: remove all stacks + -3 HP each
-    'Delayed Poison': (ctx) {
-      final n = ctx.count('Delayed Poison');
-      if (n == 0) return;
-      ctx.healthDelta -= n * 3;
-      ctx.remove('Delayed Poison', times: n);
-      ctx.logParts.add('Delayed Poison: -${n * 3} HP, $n token${n > 1 ? 's' : ''} removed');
-    },
 
     // Concussion / Commotion - Prevents +1 CP gain during upkeep & removes itself (non-persistent)
     'Concussion': (ctx) {
@@ -389,10 +411,10 @@ class GameEngine {
 
   static RewardOutcome _rewardFromCode(String code) {
     return switch (code) {
-      '1d' => const RewardOutcome(label: 'Dégat Bonus 1', healthDelta: 0, cpDelta: 0, token: 'Dégat Bonus 1'),
-      '2d' => const RewardOutcome(label: 'Dégat Bonus 2', healthDelta: 0, cpDelta: 0, token: 'Dégat Bonus 2'),
-      '3d' => const RewardOutcome(label: 'Dégat Bonus 3', healthDelta: 0, cpDelta: 0, token: 'Dégat Bonus 3'),
-      '4d' => const RewardOutcome(label: 'Dégat Bonus 4', healthDelta: 0, cpDelta: 0, token: 'Dégat Bonus 4'),
+      '1d' => const RewardOutcome(label: 'Damage bonus 1', healthDelta: 0, cpDelta: 0, token: 'Damage bonus 1'),
+      '2d' => const RewardOutcome(label: 'Damage bonus 2', healthDelta: 0, cpDelta: 0, token: 'Damage bonus 2'),
+      '3d' => const RewardOutcome(label: 'Damage bonus 3', healthDelta: 0, cpDelta: 0, token: 'Damage bonus 3'),
+      '4d' => const RewardOutcome(label: 'Damage bonus 4', healthDelta: 0, cpDelta: 0, token: 'Damage bonus 4'),
       '1cp' => const RewardOutcome(label: '+1 CP', healthDelta: 0, cpDelta: 1),
       '2cp' => const RewardOutcome(label: '+2 CP', healthDelta: 0, cpDelta: 2),
       '3cp' => const RewardOutcome(label: '+3 CP', healthDelta: 0, cpDelta: 3),

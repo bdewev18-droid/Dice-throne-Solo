@@ -141,8 +141,29 @@ void main() {
       expect(saved.id, isNotNull); 
       expect(fakeSupabase.simulatedDb.length, equals(1));
     });
+
+    test('EnemyNode applyJson non-regression: passives are correctly updated', () async {
+      await EnemyProfileRepository.load();
+      final config = const SurvivalConfig(mode: SurvivalMode.free, targetScore: 100);
+      final state = AdventureState(hero: HeroType.barbare, config: config);
+      
+      // Inject a fake passive to the first enemy to simulate a reused instance
+      final enemy = state.enemies.first;
+      enemy.passives = const [MinionPassive(text: 'Leaked passive')];
+      
+      // Call applyJson simulating a restore to 'fee' which has NO passives
+      enemy.applyJson({
+        'id': enemy.id,
+        'profileKey': 'fee',
+      });
+      
+      // If the bug is present, this will fail because passives wasn't updated
+      expect(enemy.passives.isEmpty, isTrue, reason: 'Passives should be cleared when restoring to Fee');
+    });
+
   });
 }
+
 
 class FakeSupabaseService implements SupabaseService {
   AuthSession _session = const AuthSession(status: AuthStatus.signedOut);

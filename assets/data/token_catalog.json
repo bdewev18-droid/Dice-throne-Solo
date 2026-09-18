@@ -16,7 +16,7 @@
         "Commotion",
         "Concussion"
       ],
-      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (annule le gain de +1 CP et retrait du token Ã  la fin de l'upkeep, non persistant).",
+      "appDetails": "Géré automatiquement en phase Upkeep (annule le gain de +1 CP et retrait du token à la fin de l'upkeep, non persistant).",
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -32,9 +32,9 @@
       "description": "The next time a player afflicted with this token activates an Offensive Ability, they must remove it and roll 1 die. On 1-2, their Offensive Ability fails to activate and has no effect of any kind. If a player concludes their Offensive Roll Phase without activating an Offensive Ability, remove this token.",
       "aliases": [
         "Blind",
-        "Ã©blouissement"
+        "éblouissement"
       ],
-      "appDetails": "Jet de dÃ© 1-2 annulant l'attaque lors de la roll phase.",
+      "appDetails": "Jet de dé 1-2 annulant l'attaque lors de la roll phase.",
       "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
@@ -121,7 +121,7 @@
     },
     {
       "label": "Burn",
-      "frLabel": "BrÃ»lure",
+      "frLabel": "Brûlure",
       "kind": "negative",
       "maxStack": 1,
       "persistent": true,
@@ -130,10 +130,10 @@
       "imageAsset": "assets/token/burn.png",
       "description": "A player afflicted with this token is dealt 2 dmg during their Upkeep Phase. Persistent.",
       "aliases": [
-        "BrÃ»lure",
+        "Brûlure",
         "Burn"
       ],
-      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (-2 PV, persistant).",
+      "appDetails": "Géré automatiquement en phase Upkeep (-2 PV, persistant).",
       "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
@@ -154,7 +154,7 @@
         "Ã€ terre",
         "Knockdown"
       ],
-      "appDetails": "En phase Upkeep : dÃ©duit 2 PC (avant le gain de +1 PC). Non-persistant (retirÃ© lors de l'Upkeep). Naxarus est immunisÃ©.",
+      "appDetails": "En phase Upkeep : déduit 2 PC (avant le gain de +1 PC). Non-persistant (retiré lors de l'Upkeep). Naxarus est immunisé.",
       "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
@@ -174,7 +174,7 @@
         "Shadows",
         "ombre"
       ],
-      "appDetails": "Annulation complÃ¨te des dÃ©gÃ¢ts d'une attaque subie.",
+      "appDetails": "Annulation complète des dégâts d'une attaque subie.",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -216,7 +216,7 @@
         "Poison",
         "poison"
       ],
-      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (-1 PV par cumul de Poison, persistant).",
+      "appDetails": "Géré automatiquement en phase Upkeep (-1 PV par cumul de Poison, persistant).",
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -234,14 +234,14 @@
         "Cleanse",
         "Purification"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Accuracy",
-      "frLabel": "PrÃ©cision",
+      "frLabel": "Précision",
       "kind": "positive",
       "maxStack": 3,
       "persistent": true,
@@ -251,16 +251,16 @@
       "description": "A player with this token may spend it at the conclusion of their Offensive Roll Phase to make their Attack undefendable.",
       "aliases": [
         "Accuracy",
-        "PrÃ©cision"
+        "Précision"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Blessing of Divinity",
-      "frLabel": "BÃ©nÃ©diction divine",
+      "frLabel": "Bénédiction divine",
       "kind": "unique",
       "maxStack": 1,
       "persistent": true,
@@ -270,9 +270,9 @@
       "description": "The next time a player (or team) with this token would have their health reduced to 0, remove this token and set their health to 1 instead. This token may not be removed or transferred by any other means.",
       "aliases": [
         "Blessing of Divinity",
-        "BÃ©nÃ©diction divine"
+        "Bénédiction divine"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -291,7 +291,7 @@
         "Crit",
         "Critique"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -305,19 +305,19 @@
       "removable": true,
       "appSupported": false,
       "imageAsset": "assets/token/Protect.png",
-      "description": "A player with this token may spend it at any time to prevent Â½ incoming damage (rounded up).",
+      "description": "A player with this token may spend it at any time to prevent ½ incoming damage (rounded up).",
       "aliases": [
         "Protect",
         "Protection"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Retribution",
-      "frLabel": "RÃ©tribution",
+      "frLabel": "Rétribution",
       "kind": "positive",
       "maxStack": 1,
       "persistent": false,
@@ -327,9 +327,9 @@
       "description": "This token may be spent after being Attacked as a result of an opponentâ€™s Offensive Roll Phase to deal half of the incoming dmg (rounded up) back to the attacker.",
       "aliases": [
         "Retribution",
-        "RÃ©tribution"
+        "Rétribution"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -369,14 +369,14 @@
       "aliases": [
         "Ninjitsu"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Smoke Bomb",
-      "frLabel": "bombe fumigÃ¨ne",
+      "frLabel": "bombe fumigène",
       "kind": "positive",
       "maxStack": 1,
       "persistent": false,
@@ -386,9 +386,9 @@
       "description": "When a player with this token receives dmg, they may choose to spend it. If spent, roll 1 die. If the outcome is 1-3, no dmg is received (although other associated effects may still apply).",
       "aliases": [
         "Smoke Bomb",
-        "bombe fumigÃ¨ne"
+        "bombe fumigène"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -444,12 +444,12 @@
       "removable": true,
       "appSupported": false,
       "imageAsset": "assets/token/Reload.png",
-      "description": "If a player concludes their Offensive Roll Phase with an Attack, they may spend this token. If spent, roll 1 die and add Â½ the value as dmg (rounded up). Attack Modifier.",
+      "description": "If a player concludes their Offensive Roll Phase with an Attack, they may spend this token. If spent, roll 1 die and add ½ the value as dmg (rounded up). Attack Modifier.",
       "aliases": [
         "Recharge",
         "Reload"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -487,7 +487,7 @@
         "Honneur",
         "Honor"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -568,7 +568,7 @@
         "Cursed Doubloon",
         "Doublon maudit"
       ],
-      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (-1 PV par cumul, ignorÃ© pour le hÃ©ros Pirate).",
+      "appDetails": "Géré automatiquement en phase Upkeep (-1 PV par cumul, ignoré pour le héros Pirate).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -577,7 +577,7 @@
       "label": "Powder Keg",
       "frLabel": "Baril de poudre",
       "kind": "negative",
-      "maxStack": 1,
+      "maxStack": 2,
       "persistent": false,
       "removable": true,
       "appSupported": true,
@@ -587,8 +587,8 @@
         "Baril de poudre",
         "Powder Keg"
       ],
-      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (jet D6 : 1-2 = explosion -3 PV + retrait, 3-5 = rien, 6 = notification transfert).",
-      "appAnimation": false,
+      "appDetails": "Géré automatiquement en phase Upkeep (jet D6 : 1-2 = explosion -3 PV + retrait, 3-5 = rien, 6 = notification transfert).",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -613,7 +613,7 @@
     },
     {
       "label": "Wither",
-      "frLabel": "DÃ©pÃ©rissement",
+      "frLabel": "Dépérissement",
       "kind": "negative",
       "maxStack": 2,
       "persistent": true,
@@ -622,7 +622,7 @@
       "imageAsset": "assets/token/Wither.png",
       "description": "If a player with a Wither token would deal damage as a result of an Attack, reduce that dmg by 1 per Wither token. Attack Modifier. Persistent.",
       "aliases": [
-        "DÃ©pÃ©rissement",
+        "Dépérissement",
         "Wither"
       ],
       "appDetails": "Pris en compte dans l'application.",
@@ -643,8 +643,8 @@
       "aliases": [
         "Nanite"
       ],
-      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (jet 1D6 par Nanite, retirÃ© sur un 6).",
-      "appAnimation": false,
+      "appDetails": "Géré automatiquement en phase Upkeep (jet 1D6 par Nanite, retiré sur un 6).",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -685,14 +685,14 @@
         "Flight",
         "Vol"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Holy Presence",
-      "frLabel": "PrÃ©sence Divine",
+      "frLabel": "Présence Divine",
       "kind": "unique",
       "maxStack": 2,
       "persistent": true,
@@ -702,9 +702,9 @@
       "description": "During their Upkeep Phase, a player with this token deals 1 dmg to all opponents. This token may not be transferred by any means (but can be removed).",
       "aliases": [
         "Holy Presence",
-        "PrÃ©sence Divine"
+        "Présence Divine"
       ],
-      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (journal & notes : 1 dÃ©gÃ¢t sortant par cumul Ã  tous les adversaires).",
+      "appDetails": "Géré automatiquement en phase Upkeep (journal & notes : 1 dégât sortant par cumul à tous les adversaires).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -723,7 +723,7 @@
         "Hypnose",
         "Mesmerize"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -742,7 +742,7 @@
         "Cheer",
         "Joie"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -782,7 +782,7 @@
         "Cadeau",
         "Gift"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -800,7 +800,7 @@
       "aliases": [
         "Grim Pursuit"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -840,14 +840,14 @@
       "aliases": [
         "Prey"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Hex",
-      "frLabel": "MalÃ©fice",
+      "frLabel": "Maléfice",
       "kind": "unique",
       "maxStack": 1,
       "persistent": false,
@@ -857,11 +857,11 @@
       "description": "A player afflicted with this token must treat all of their die faces with a 6 as if those faces are completely blank instead. At the conclusion of their turn, remove this token. This token may not be transferred by any means (but can be removed).",
       "aliases": [
         "Hex",
-        "MalÃ©fice",
+        "Maléfice",
         "Malefice",
         "malefice"
       ],
-      "appDetails": "Tous les 6 lors des jets d'attaque deviennent des dÃ©s blancs sans effet ni symbole.",
+      "appDetails": "Tous les 6 lors des jets d'attaque deviennent des dés blancs sans effet ni symbole.",
       "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
@@ -879,7 +879,7 @@
       "aliases": [
         "Regenerate"
       ],
-      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (2+ cumuls = +2 PV et retrait d'un cumul ; 1 cumul = +1 PV et retrait).",
+      "appDetails": "Géré automatiquement en phase Upkeep (2+ cumuls = +2 PV et retrait d'un cumul ; 1 cumul = +1 PV et retrait).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -897,7 +897,7 @@
       "aliases": [
         "Wound"
       ],
-      "appDetails": "GÃ©rÃ© automatiquement en phase Upkeep (-1 PV par cumul, puis jet D6 >= 4 pour retirer la stack).",
+      "appDetails": "Géré automatiquement en phase Upkeep (-1 PV par cumul, puis jet D6 >= 4 pour retirer la stack).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -909,14 +909,13 @@
       "maxStack": 1,
       "persistent": false,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Disarm.png",
       "description": "During their Upkeep Phase, a player afflicted with this token may choose to discard 1 card . If they do not (or cannot), they must skip their Income Phase instead. Then remove this token.",
       "aliases": [
         "Disarm"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -933,7 +932,7 @@
       "aliases": [
         "Guard Break"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -951,7 +950,7 @@
       "aliases": [
         "Charged Gem"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -969,7 +968,7 @@
       "aliases": [
         "Sun-Marked"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -988,14 +987,14 @@
         "Cosmic flare",
         "Lueur cosmique"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Radiance",
-      "frLabel": "Ã©clat",
+      "frLabel": "éclat",
       "kind": "positive",
       "maxStack": 2,
       "persistent": true,
@@ -1005,9 +1004,9 @@
       "description": "A player with this token may spend it to change the value of any die rolled as a part of the Roll Attempt during their Defensive Roll Phase to a 6.",
       "aliases": [
         "Radiance",
-        "Ã©clat"
+        "éclat"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1077,8 +1076,8 @@
       "persistence": "persistent"
     },
     {
-      "label": "DÃ©jÃ  vue",
-      "frLabel": "dÃ©jÃ  vue",
+      "label": "Déjà vue",
+      "frLabel": "déjà vue",
       "kind": "positive",
       "maxStack": 1,
       "persistent": false,
@@ -1087,17 +1086,17 @@
       "imageAsset": "assets/token/deja-vu.webp",
       "description": "Instead of activating an Ability, a player with this token may spend it to conclude their current Offensive Roll Phase and then start a new Offensive Roll Phase.",
       "aliases": [
-        "DÃ©jÃ  vue",
-        "dÃ©jÃ  vue"
+        "Déjà vue",
+        "déjà vue"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Premonition",
-      "frLabel": "PrÃ©monition",
+      "frLabel": "Prémonition",
       "kind": "positive",
       "maxStack": 3,
       "persistent": true,
@@ -1107,9 +1106,9 @@
       "description": "A player with these tokens may spend them once per turn during their Income Phase to activate one of the following effects:\n1 token: draw 2 instead of 1.\n3 tokens: draw 3 instead of 1.\nWhen activated, one of the drawn cards must be placed on either the top or bottom of the deck.",
       "aliases": [
         "Premonition",
-        "PrÃ©monition"
+        "Prémonition"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1128,14 +1127,14 @@
         "Bandes pourpres",
         "Crimson bands"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Probability Manipulation",
-      "frLabel": "Manipulation des probabilitÃ©s",
+      "frLabel": "Manipulation des probabilités",
       "kind": "positive",
       "maxStack": 2,
       "persistent": true,
@@ -1144,17 +1143,17 @@
       "imageAsset": "assets/token/probability-manipulation.webp",
       "description": "Spend to change the value of any of your dice displaying an even number (2, 4, 6), up or down by a value of 1 (a value of 6 cannot be increased).",
       "aliases": [
-        "Manipulation des probabilitÃ©s",
+        "Manipulation des probabilités",
         "Probability Manipulation"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Reality Warp",
-      "frLabel": "Distorsion du rÃ©el",
+      "frLabel": "Distorsion du réel",
       "kind": "negative",
       "maxStack": 1,
       "persistent": false,
@@ -1163,10 +1162,10 @@
       "imageAsset": "assets/token/reality-warp.webp",
       "description": "If a player is inflicted with this token when they begin their Offensive Roll Phase, they must remove it and use one of Scarlet Witchâ€™s dice in place of one of their own until the end of the Offensive Roll Phase.",
       "aliases": [
-        "Distorsion du rÃ©el",
+        "Distorsion du réel",
         "Reality Warp"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1185,14 +1184,14 @@
         "Conjuration",
         "Conjure"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Crackle",
-      "frLabel": "CrÃ©pitement",
+      "frLabel": "Crépitement",
       "kind": "positive",
       "maxStack": 3,
       "persistent": true,
@@ -1202,16 +1201,16 @@
       "description": "If a player concludes their Offensive Roll Phase with an Attack, they may spend this token. If spent, add 1 dmg per Positive or Negative Status Effect on their Hero Board (excluding the Crackle Crackle that was just spent), up to a maximum of 3. Only two Crackle Crackle may be spent per turn. Attack Modifier.",
       "aliases": [
         "Crackle",
-        "CrÃ©pitement"
+        "Crépitement"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Bag of Tricks",
-      "frLabel": "Sac Ã  Malice",
+      "frLabel": "Sac à Malice",
       "kind": "positive",
       "maxStack": 2,
       "persistent": true,
@@ -1221,16 +1220,16 @@
       "description": "During their Upkeep Phase, a player with this token removes it and rolls 1 :\nOn 1, lose .\nOn 2â€“5, Loki chooses whether the player heals 2 , gains 1CP, or receives  2  undefendable dmg.\nOn 6, gain 2CP .",
       "aliases": [
         "Bag of Tricks",
-        "Sac Ã  Malice"
+        "Sac à Malice"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Webbed",
-      "frLabel": "EntoilÃ©",
+      "frLabel": "Entoilé",
       "kind": "negative",
       "maxStack": 1,
       "persistent": false,
@@ -1239,17 +1238,17 @@
       "imageAsset": "assets/token/Webbed.webp",
       "description": "When this token is inflicted deal  2 as an isolated source of undefendable dmg.\nThe next time a player afflicted with this token is Attacked with normal damage, the damage type becomes undefendable instead and this token is immediately removed.",
       "aliases": [
-        "EntoilÃ©",
+        "Entoilé",
         "Webbed"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "Electrokinesis",
-      "frLabel": "Ã©lectrokinÃ©sie",
+      "frLabel": "électrokinésie",
       "kind": "positive",
       "maxStack": 4,
       "persistent": true,
@@ -1259,9 +1258,9 @@
       "description": "Once per turn, a player may spend 4 Electrokinesis  during their Main Phase to draw 1 card .",
       "aliases": [
         "Electrokinesis",
-        "Ã©lectrokinÃ©sie"
+        "électrokinésie"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1279,7 +1278,7 @@
       "aliases": [
         "Battle plan"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1297,7 +1296,7 @@
       "aliases": [
         "Support"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1309,14 +1308,13 @@
       "maxStack": 2,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/focus-fire.webp",
       "description": "When a player with this token is Attacked by an opponent, the Attacker increases their damage by 1. Attack Modifier. Persistent.",
       "aliases": [
         "Focus Fire"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -1333,7 +1331,7 @@
       "aliases": [
         "Dissolution"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1345,14 +1343,13 @@
       "maxStack": 1,
       "persistent": false,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Disruption.webp",
       "description": "During their Upkeep Phase, a player afflicted with this token may choose to lose 1CP . If they do not (or cannot), they receive 2 undefendable dmg instead. Then remove this token.",
       "aliases": [
         "Disruption"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -1390,7 +1387,7 @@
       "aliases": [
         "Force Field"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1408,7 +1405,7 @@
       "aliases": [
         "Acuity"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1426,7 +1423,7 @@
       "aliases": [
         "Flame blast"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1438,14 +1435,14 @@
       "maxStack": 1,
       "persistent": false,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/phoenix-burn.webp",
-      "description": "A player afflicted with this token is dealt 2  undefendable dmg during their Upkeep Phase. Then roll 1 dice : on 5â€“6, remove this token.",
+      "description": "A player afflicted with this token is dealt 2  undefendable dmg during their Upkeep Phase. Then roll 1 dice : on 5-6, remove this token.",
       "aliases": [
         "Phoenix burn"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appDetails": "Géré automatiquement en phase Upkeep (-2 PV puis jet D6 : 5-6 = retrait).",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -1462,7 +1459,7 @@
       "aliases": [
         "Paralyse"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1480,7 +1477,7 @@
       "aliases": [
         "Infiltration"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1498,7 +1495,7 @@
       "aliases": [
         "Influence"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1516,7 +1513,7 @@
       "aliases": [
         "Ionic Energy"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1534,7 +1531,7 @@
       "aliases": [
         "Skyward"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1552,7 +1549,7 @@
       "aliases": [
         "Tornado"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1570,7 +1567,7 @@
       "aliases": [
         "Wind shear"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1588,7 +1585,7 @@
       "aliases": [
         "Rage"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1606,7 +1603,7 @@
       "aliases": [
         "Chaos"
       ],
-      "appDetails": "GÃ©rÃ© dans la logique IA / Boss (calcul des cumuls de Chaos pour dÃ©clencheurs et modificateurs).",
+      "appDetails": "Géré dans la logique IA / Boss (calcul des cumuls de Chaos pour déclencheurs et modificateurs).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1625,14 +1622,14 @@
         "King's Hand",
         "Main du roi"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
       "label": "First Strike",
-      "frLabel": "PremiÃ¨re Frappe",
+      "frLabel": "Première Frappe",
       "kind": "unique",
       "maxStack": 1,
       "persistent": false,
@@ -1642,11 +1639,11 @@
       "description": "This unit starts first.",
       "aliases": [
         "First Strike",
-        "PremiÃ¨re Frappe"
+        "Première Frappe"
       ],
       "minionAllowed": true,
       "editorVisible": true,
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": true
     },
     {
@@ -1663,7 +1660,7 @@
         "Salve",
         "Salvo"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1681,7 +1678,7 @@
       "aliases": [
         "Silence"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1700,13 +1697,13 @@
         "Hoarding"
       ],
       "editorVisible": false,
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true
     },
     {
-      "label": "DÃ©gat Bonus 1",
-      "frLabel": "DÃ©gat Bonus 1",
+      "label": "Damage bonus 1",
+      "frLabel": "Dégât bonus 1",
       "kind": "positive",
       "maxStack": 1,
       "persistent": true,
@@ -1716,16 +1713,16 @@
       "description": "Bonus damage token (+1 attack).",
       "aliases": [
         "Bonus Damage 1",
-        "DÃ©gat Bonus 1"
+        "Dégat Bonus 1"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
-      "label": "DÃ©gat Bonus 2",
-      "frLabel": "DÃ©gat Bonus 2",
+      "label": "Damage bonus 2",
+      "frLabel": "Dégât bonus 2",
       "kind": "positive",
       "maxStack": 1,
       "persistent": true,
@@ -1735,16 +1732,16 @@
       "description": "Bonus damage token (+2 attack).",
       "aliases": [
         "Bonus Damage 2",
-        "DÃ©gat Bonus 2"
+        "Dégat Bonus 2"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
-      "label": "DÃ©gat Bonus 3",
-      "frLabel": "DÃ©gat Bonus 3",
+      "label": "Damage bonus 3",
+      "frLabel": "Dégât bonus 3",
       "kind": "positive",
       "maxStack": 1,
       "persistent": true,
@@ -1754,16 +1751,16 @@
       "description": "Bonus damage token (+3 attack).",
       "aliases": [
         "Bonus Damage 3",
-        "DÃ©gat Bonus 3"
+        "Dégat Bonus 3"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
     {
-      "label": "DÃ©gat Bonus 4",
-      "frLabel": "DÃ©gat Bonus 4",
+      "label": "Damage bonus 4",
+      "frLabel": "Dégât bonus 4",
       "kind": "positive",
       "maxStack": 1,
       "persistent": true,
@@ -1773,9 +1770,9 @@
       "description": "Bonus damage token (+4 attack).",
       "aliases": [
         "Bonus Damage 4",
-        "DÃ©gat Bonus 4"
+        "Dégat Bonus 4"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1793,7 +1790,7 @@
       "aliases": [
         "Domination"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1805,14 +1802,14 @@
       "maxStack": 1,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Parasite.webp",
       "description": "Parasite token.",
       "aliases": [
         "Parasite"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -1830,7 +1827,7 @@
         "Bounty",
         "Prime"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1849,7 +1846,7 @@
         "Life Siphon",
         "Siphon vital"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1868,7 +1865,7 @@
         "Sort 6",
         "Spellbound"
       ],
-      "appDetails": "Non codÃ© automatiquement dans l'engine (gestion manuelle).",
+      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
@@ -1888,7 +1885,7 @@
         "Forme Ours"
       ],
       "editorVisible": false,
-      "appDetails": "GÃ©rÃ© dans la gestion des postures du combat.",
+      "appDetails": "Géré dans la gestion des postures du combat.",
       "appAnimation": false,
       "minionAllowed": true
     },
@@ -1907,7 +1904,7 @@
         "Forme Elan"
       ],
       "editorVisible": false,
-      "appDetails": "GÃ©rÃ© dans la gestion des postures du combat.",
+      "appDetails": "Géré dans la gestion des postures du combat.",
       "appAnimation": false,
       "minionAllowed": true
     }
@@ -2053,7 +2050,8 @@
     ],
     "Black Widow": [
       "Agility",
-      "Time bomb 1", "Time bomb 2"
+      "Time bomb 1",
+      "Time bomb 2"
     ],
     "Captain Marvel": [
       "Cosmic ray",
@@ -2061,7 +2059,7 @@
       "Radiance"
     ],
     "Doctor Strange": [
-      "DÃ©jÃ  vue",
+      "Déjà vue",
       "Premonition",
       "Crimson bands"
     ],
@@ -2117,4 +2115,3 @@
     ]
   }
 }
-
