@@ -145,8 +145,11 @@ class GameEngine {
       var removed = 0;
       for (var i = 0; i < n; i++) {
         if (ctx.rollD6() == 6) {
-          ctx.remove('Nanite');
-          ctx.remove('Nanites'); // just in case
+          if (ctx.count('Nanites') > 0) {
+            ctx.remove('Nanites');
+          } else {
+            ctx.remove('Nanite');
+          }
           removed++;
         }
       }

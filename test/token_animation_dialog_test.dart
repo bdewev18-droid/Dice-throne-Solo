@@ -1634,8 +1634,8 @@ void main() {
     expect(find.text('Use'), findsNothing);
     expect(find.text('Actif'), findsOneWidget);
 
-    // Attack counter is immediately covered by 'Shadows (0 DMG)'
-    expect(find.text('Shadows (0 DMG)'), findsOneWidget);
+    // Attack counter is immediately covered by 'ATTACK AVOIDED (SHADOWS)'
+    expect(find.text('ATTACK AVOIDED (SHADOWS)'), findsOneWidget);
     // Defense value 2 is STILL visible
     expect(find.text('2'), findsOneWidget);
   });

@@ -108,13 +108,13 @@
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Evasive.png",
-      "description": "When a player with this token has incoming damage (from any source), they may choose to spend it. If spent, roll 1 die. If the outcome is 1-2, no dmg is received (although other associated effects may still apply). Multiple tokens may be spent in an attempt to prevent the same source of damage.",
+      "description": "When a player with this token has incoming damage (from any source), they may choose to spend it. If spent, roll 1 die. If the outcome is 1-2, no dmg is received (although other associated effects may still apply). Multiple tokens may be spent in an attempt to prevent the same source of damage. Note: C'est l'IA qui déclenchera ce token au moment le plus propice.",
       "aliases": [
         "Evasive",
         "Évitement",
         "Evitement"
       ],
-      "appDetails": "Jet de dé 1-2 annulant tous les dégâts de l'attaque reçue.",
+      "appDetails": "Jet de dé 1-2 annulant tous les dégâts de l'attaque reçue. C'est l'IA qui déclenchera ce token au moment le plus propice.",
       "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
@@ -504,10 +504,12 @@
       "description": "When player afflicted with Shame concludes their Offensive Roll Phase with an Attack, remove this token and reduce that Attack dmg by 1. Attack Modifier.",
       "aliases": [
         "Honte",
-        "Shame"
+        "Shame",
+        "honte",
+        "shame"
       ],
-      "appDetails": "Pris en compte dans l'application.",
-      "appAnimation": false,
+      "appDetails": "Réduit de 1 les dégâts d'attaque. Consommé si attaque > 0.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -639,7 +641,7 @@
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Nanite.png",
-      "description": "When Detonated, remove all tokens and deal dmg based on the number of Nanites on each player: â€¢ 1 Nanite: receive 1 dmg. â€¢ 2 Nanites: receive 3 dmg. â€¢ 3 Nanites: receive 5 dmg. During Upkeep Phase, a player rolls 1 die per Nanite they are afflicted with: on 6, remove this token.",
+      "description": "When Detonated, remove all tokens and deal dmg based on the number of Nanites on each player: • 1 Nanite: receive 1 dmg. • 2 Nanites: receive 3 dmg. • 3 Nanites: receive 5 dmg. During Upkeep Phase, a player rolls 1 die per Nanite they are afflicted with: on 6, remove this token.",
       "aliases": [
         "Nanite"
       ],
@@ -667,6 +669,28 @@
         "lumiere aveuglante"
       ],
       "appDetails": "Couvre le bouton d'attaque. Sur 1: attaque échoue (0 dégât bloqué). Sur 2-3: dégâts réduits de moitié.",
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true
+    },
+    {
+      "label": "Reality Warp",
+      "frLabel": "Distorsion de la réalité",
+      "kind": "negative",
+      "maxStack": 1,
+      "persistent": false,
+      "persistence": "nonPersistent",
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/reality-warp.webp",
+      "description": "If a player is inflicted with this token when they begin their Offensive Roll Phase, they must remove it and use one of Scarlet Witch’s dice in place of one of their own until the end of the Offensive Roll Phase.",
+      "aliases": [
+        "Reality Warp",
+        "Distorsion de la réalité",
+        "Distorsion de la realite",
+        "reality warp"
+      ],
+      "appDetails": "Déclenché au début de la phase d'attaque : remplace 1 dé par le dé de Scarlet Witch jusqu'à la fin du tour. Retiré à la fin du tour.",
       "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
@@ -829,19 +853,21 @@
     },
     {
       "label": "Prey",
-      "frLabel": "",
+      "frLabel": "Proie",
       "kind": "negative",
       "maxStack": 2,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Prey.png",
-      "description": "When a player afflicted with this token is Attacked by an opponent, the Attacker may roll 1 die. On 1, remove this token. On 2â€“5, the Attacker increases their dmg by 1. On 6, the Attacker increases their dmg by 2. Attack Modifier.",
+      "description": "When a player afflicted with this token is Attacked by an opponent, the Attacker may roll 1 die. On 1, remove this token. On 2–5, the Attacker increases their dmg by 1. On 6, the Attacker increases their dmg by 2. Attack Modifier.",
       "aliases": [
-        "Prey"
+        "Prey",
+        "Proie",
+        "proie"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appDetails": "Jet de dé 1-6 modifiant les dégâts d'attaque ou retirant le jeton sur 1.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -1145,25 +1171,6 @@
       "aliases": [
         "Manipulation des probabilités",
         "Probability Manipulation"
-      ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
-      "minionAllowed": true,
-      "editorVisible": true
-    },
-    {
-      "label": "Reality Warp",
-      "frLabel": "Distorsion du réel",
-      "kind": "negative",
-      "maxStack": 1,
-      "persistent": false,
-      "removable": true,
-      "appSupported": false,
-      "imageAsset": "assets/token/reality-warp.webp",
-      "description": "If a player is inflicted with this token when they begin their Offensive Roll Phase, they must remove it and use one of Scarlet Witchâ€™s dice in place of one of their own until the end of the Offensive Roll Phase.",
-      "aliases": [
-        "Distorsion du réel",
-        "Reality Warp"
       ],
       "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
       "appAnimation": false,
@@ -1489,14 +1496,14 @@
       "maxStack": 3,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/influence.webp",
-      "description": "A player afflicted with these tokens must roll 1 Dice  at the start of their Offensive Roll Phase per token. For every 1â€“3 rolled, they get one fewer Roll Attempt. Then remove all of these tokens.",
+      "description": "A player afflicted with these tokens must roll 1 Dice  at the start of their Offensive Roll Phase per token. For every 1-3 rolled, they get one fewer Roll Attempt. Then remove all of these tokens.",
       "aliases": [
         "Influence"
       ],
       "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },

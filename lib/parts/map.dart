@@ -1263,6 +1263,9 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
     final rank = widget.rank ?? widget.enemy.rank;
     final lastIndex = _lastSelectedIndices[rank];
     if (lastIndex == null) {
+      if (rank == EnemyRank.green) {
+        return _profiles.firstWhere((p) => p.name.toLowerCase().contains('fée') || p.name.toLowerCase().contains('fee'), orElse: () => _profiles.first);
+      }
       return _profiles.first;
     } else {
       return _profiles[(lastIndex + 1) % _profiles.length];

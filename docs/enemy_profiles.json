@@ -527,10 +527,10 @@
               "count": 4
             },
             "effect": {
-              "heroTokens": [
+              "heroTokens": [],
+              "minionTokens": [
                 "Back Strike"
               ],
-              "minionTokens": [],
               "damage": null,
               "damageFormula": null,
               "undefendable": false,
@@ -8652,7 +8652,8 @@
               "text": "Si 3 chiffres identiques, gains Back Strike."
             },
             "effect": {
-              "heroTokens": [
+              "heroTokens": [],
+              "minionTokens": [
                 "Back Strike"
               ],
               "note": "Si 3 chiffres identiques, gains Back Strike."
