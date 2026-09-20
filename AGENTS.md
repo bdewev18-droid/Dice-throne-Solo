@@ -5,3 +5,7 @@ Pour le build web locale, si le port est occup√©, ouvrir un autre port.
 
 Chaque fois que tu fais un build local (web ou autre), tu DOIS OBLIGATOIREMENT incrementer la version du projet via `.\tool\set-version.ps1 -Version X -BuildNumber Y`.
 De plus, si tu as modifie les fichiers de l'admin web (`web/admin/*`), tu DOIS incrementer manuellement la version dans `web/admin/index.html` ET ajouter un parametre de cache buster aux appels CSS/JS (ex: `?v=1.5.6`) pour forcer le rafraichissement.
+
+
+## RËgles Recette
+¿ chaque version, mettre ‡ jour le cache-buster dans web/recette/index.html (ex: ?v=1.x.y) et l'historique dans recette_data.json.

@@ -119,6 +119,28 @@ http
       }
     }
 
+    // Serve web/recette directly so edits are immediate without rebuilding
+    if (relativePath.startsWith('recette/assets/')) {
+      const assetRel = relativePath.slice('recette/assets/'.length);
+      const liveAssetPath = path.resolve(__dirname, '..', 'assets', assetRel);
+      if (fs.existsSync(liveAssetPath) && !fs.statSync(liveAssetPath).isDirectory()) {
+        sendFile(response, liveAssetPath);
+        return;
+      }
+    }
+
+    if (relativePath.startsWith('recette/') || relativePath === 'recette') {
+      let recRel = relativePath === 'recette' ? 'index.html' : relativePath.slice('recette/'.length);
+      if (!recRel || recRel.endsWith('/')) {
+        recRel = path.join(recRel, 'index.html');
+      }
+      const liveRecPath = path.resolve(__dirname, '..', 'web', 'recette', recRel);
+      if (fs.existsSync(liveRecPath) && !fs.statSync(liveRecPath).isDirectory()) {
+        sendFile(response, liveRecPath);
+        return;
+      }
+    }
+
     // Serve web/simulation directly so edits are immediate without rebuilding
     if (relativePath.startsWith('simulation/assets/')) {
       const assetRel = relativePath.slice('simulation/assets/'.length);

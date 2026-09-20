@@ -628,7 +628,7 @@
         "Wither"
       ],
       "appDetails": "Pris en compte dans l'application.",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -1679,14 +1679,14 @@
       "maxStack": 1,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Silence.webp",
-      "description": "Silence token.",
+      "description": "A player with this token may not activate their Small Straight or Large Straight abilities. At the conclusion of their turn, remove this token.",
       "aliases": [
         "Silence"
       ],
       "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true
     },

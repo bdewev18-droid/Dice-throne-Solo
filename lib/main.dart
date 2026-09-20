@@ -22,7 +22,7 @@ part 'parts/fight.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.3.195';
+const String appVersionLabel = 'Version 1.3.205';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -521,14 +521,20 @@ class MinionDiceDecision {
 class MinionDiceEngine {
   const MinionDiceEngine._();
 
-  static MinionDiceDecision chooseSuiteHold(List<GameDie> dice) {
+  static MinionDiceDecision chooseSuiteHold(
+    List<GameDie> dice, {
+    bool limitTo3 = false,
+  }) {
     final values =
         dice.where((die) => die.value != null).map((die) => die.value!).toList()
           ..sort();
     final unique = values.toSet();
 
-    final complete = _bestCompleteSuite(unique);
+    var complete = _bestCompleteSuite(unique);
     if (complete.isNotEmpty) {
+      if (limitTo3 && complete.length > 3) {
+        complete = complete.sublist(0, 3);
+      }
       return MinionDiceDecision(
         values: complete,
         reason: '${complete.length}-value suite already validated.',
@@ -1449,8 +1455,10 @@ class AdventureState {
     int? startingHealth,
   }) : targetScore = config.targetScore,
        startedAt = DateTime.now(),
-       initialHealth = startingHealth ?? (config.mode == SurvivalMode.naraxus ? 50 : 30),
-       health = startingHealth ?? (config.mode == SurvivalMode.naraxus ? 50 : 30),
+       initialHealth =
+           startingHealth ?? (config.mode == SurvivalMode.naraxus ? 50 : 30),
+       health =
+           startingHealth ?? (config.mode == SurvivalMode.naraxus ? 50 : 30),
        enemies = _generateEnemies(config) {
     _refreshAvailability();
     log('Run created: ${config.label}, target $targetScore points.');
@@ -1462,7 +1470,8 @@ class AdventureState {
     required this.startedAt,
     int? initialHealth,
   }) : targetScore = config.targetScore,
-       initialHealth = initialHealth ?? (config.mode == SurvivalMode.naraxus ? 50 : 30),
+       initialHealth =
+           initialHealth ?? (config.mode == SurvivalMode.naraxus ? 50 : 30),
        enemies = _generateEnemies(config);
 
   final HeroType hero;
@@ -1517,7 +1526,8 @@ class AdventureState {
     final hero = _enumByName(HeroType.values, json['hero'] as String?);
     final configJson = json['config'] as Map?;
     final configMode = configJson?['mode']?.toString();
-    final initialHealth = (json['initialHealth'] as num?)?.toInt() ??
+    final initialHealth =
+        (json['initialHealth'] as num?)?.toInt() ??
         (configMode == 'naraxus' ? 50 : 30);
     final state = AdventureState._restored(
       hero: hero ?? HeroType.barbare,
@@ -1580,7 +1590,9 @@ class AdventureState {
     final oldHealth = health;
     health = value.clamp(0, maxHealth);
     if (oldHealth != health && source != 'silent') {
-      log('[HP] Hero HP: $oldHealth ➔ $health${source != null ? ' ($source)' : ' (Manual Adjustment)'}');
+      log(
+        '[HP] Hero HP: $oldHealth ➔ $health${source != null ? ' ($source)' : ' (Manual Adjustment)'}',
+      );
     }
     if (health == 0) {
       _endAdventure(false);
@@ -1591,7 +1603,9 @@ class AdventureState {
     final oldCp = combatPoints;
     combatPoints = value.clamp(0, 99);
     if (oldCp != combatPoints && source != 'silent') {
-      log('[CP] Hero CP: $oldCp ➔ $combatPoints${source != null ? ' ($source)' : ' (Manual Adjustment)'}');
+      log(
+        '[CP] Hero CP: $oldCp ➔ $combatPoints${source != null ? ' ($source)' : ' (Manual Adjustment)'}',
+      );
     }
   }
 
@@ -1619,7 +1633,7 @@ class AdventureState {
       enemy.defeated = true;
       score += enemy.rank.points;
       log('${enemy.label} defeated: +${enemy.rank.points} points.');
-      
+
       // Naraxus tie logic
       if (health <= 0 && enemy.profileKey == 'naraxus') {
         score += 50;
