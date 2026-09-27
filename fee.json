@@ -1,0 +1,150 @@
+{
+  "key": "fee",
+  "name": "F\u00c3\u00a9e",
+  "rank": "green",
+  "maxHealth": 9,
+  "cp": 2,
+  "cardAsset": "assets/vert/enemy_green_fairy.png",
+  "initialTokens": [
+    "First Strike"
+  ],
+  "rewardChests": 1,
+  "rewardRank": "green",
+  "attacks": [
+    "Agacement",
+    "Micro straight: deals 2 undefendable damage.",
+    "Small straight: deals 5 damage.",
+    "Large straight: steals 1 CP et deals 6 damage."
+  ],
+  "defenseDice": 4,
+  "defensePlan": {
+    "dice": 4,
+    "effects": [
+      {
+        "align": "left",
+        "condition": {
+          "type": "symbols",
+          "symbols": {
+            "white": 0,
+            "orange": 2,
+            "red": 0
+          }
+        },
+        "label": "",
+        "undefendable": false,
+        "stealHp": 0,
+        "stealCp": 0,
+        "heal": 0,
+        "drawCards": 0,
+        "discardCards": 0,
+        "tokens": [],
+        "formulas": [],
+        "notes": [],
+        "prevent": 3,
+        "returnDamage": 0
+      }
+    ],
+    "notes": [],
+    "displayRows": []
+  },
+  "attackPlan": {
+    "style": "suite",
+    "goals": [],
+    "name": "Agacement",
+    "actions": [
+      {
+        "align": "left",
+        "condition": {
+          "type": "suite",
+          "suite": "micro",
+          "length": 3
+        },
+        "label": "",
+        "damage": 2,
+        "undefendable": true,
+        "stealHp": 0,
+        "stealCp": 0,
+        "heal": 0,
+        "drawCards": 0,
+        "discardCards": 0,
+        "tokens": [],
+        "formulas": [],
+        "notes": [],
+        "topDeckToDiscard": 0,
+        "extraRoll": null
+      },
+      {
+        "align": "left",
+        "condition": {
+          "type": "suite",
+          "suite": "small",
+          "length": 4
+        },
+        "label": "",
+        "damage": 5,
+        "undefendable": false,
+        "stealHp": 0,
+        "stealCp": 0,
+        "heal": 0,
+        "drawCards": 0,
+        "discardCards": 0,
+        "tokens": [],
+        "formulas": [],
+        "notes": [],
+        "topDeckToDiscard": 0,
+        "extraRoll": null
+      },
+      {
+        "align": "left",
+        "condition": {
+          "type": "suite",
+          "suite": "large",
+          "length": 5
+        },
+        "label": "",
+        "damage": 6,
+        "undefendable": false,
+        "stealHp": 0,
+        "stealCp": 1,
+        "heal": 0,
+        "drawCards": 0,
+        "discardCards": 0,
+        "tokens": [],
+        "formulas": [],
+        "notes": [],
+        "topDeckToDiscard": 0,
+        "extraRoll": null
+      }
+    ],
+    "conditionalRules": [
+      {
+        "condition": {
+          "type": "suite",
+          "negate": false,
+          "and": [],
+          "minLength": 5
+        },
+        "effect": {
+          "heroTokens": [],
+          "minionTokens": [],
+          "damage": null,
+          "damageFormula": null,
+          "undefendable": false,
+          "lifeSteal": 0,
+          "cpSteal": 1,
+          "note": "Large suite: steal 1 CP."
+        },
+        "displayRows": [],
+        "exclusive": true,
+        "minRollCount": 0
+      }
+    ],
+    "passives": [],
+    "notes": [],
+    "displayRows": []
+  },
+  "defense": "",
+  "passives": [],
+  "passiveDisplayRows": [],
+  "validated": true
+}

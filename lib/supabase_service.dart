@@ -130,7 +130,7 @@ class SupabaseService {
         // Le serverClientId force Google à émettre un idToken dont
         // l'audience correspond au provider Google configuré dans Supabase.
         // Sans lui, signInWithIdToken échoue sur Android.
-        serverClientId: SupabaseConfig.googleWebClientId.isEmpty
+        serverClientId: kIsWeb || SupabaseConfig.googleWebClientId.isEmpty
             ? null
             : SupabaseConfig.googleWebClientId,
         forceCodeForRefreshToken: false,

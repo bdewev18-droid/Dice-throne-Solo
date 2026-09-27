@@ -1,6 +1,469 @@
 {
   "versions": [
     {
+      "version": "1.3.248",
+      "buildNumber": 285,
+      "commit": "local-dev",
+      "date": "2026-09-27",
+      "author": "Antigravity AI",
+      "title": "Build web locale avec preview",
+      "tags": [
+        "Build",
+        "Preview"
+      ],
+      "summary": "Build web locale avec preview comme demandé par l'utilisateur.",
+      "prompts": [
+        {
+          "id": "p-248-1",
+          "userPrompt": "build web locale avec preview comme dans nos instructions",
+          "aiResponse": "Mise à jour des numéros de version, génération du build web, et lancement du serveur de preview local.",
+          "items": [
+            {
+              "id": "item-248-1-1",
+              "title": "Build Web Local",
+              "description": "Génération du build web.",
+              "category": "Build"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.240",
+      "buildNumber": 275,
+      "commit": "local-dev",
+      "date": "2026-09-26",
+      "author": "Antigravity AI",
+      "title": "Application des dégâts du token Phoenix Burn",
+      "tags": [
+        "Logic",
+        "Combat",
+        "Tokens"
+      ],
+      "summary": "Ajout du traitement du token Phoenix Burn (Brûlure du phénix) lors de la phase d'entretien (upkeep) pour appliquer les 2 dégâts et afficher la ligne dans les logs.",
+      "prompts": [
+        {
+          "id": "p-240-1",
+          "userPrompt": "après recette, le token phonix brurn n'inglige pas les 2 dégats (avant le jet de dès) malgrès l'affichage de la diminution dans la popin. je veux une ligne dans les logs pour les dégats de ce token.",
+          "aiResponse": "Ajout de 'Phoenix burn' dans la méthode _upkeepHandlers de game_engine.dart pour appliquer 2 dégâts persistants et ajout des traductions dans les méthodes count() et remove().",
+          "items": [
+            {
+              "id": "item-240-1-1",
+              "title": "Dégâts Phoenix Burn",
+              "description": "2 dégâts subis lors de la phase d'entretien.",
+              "category": "Engine"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.225",
+      "buildNumber": 260,
+      "commit": "local-dev",
+      "date": "2026-09-25",
+      "author": "Antigravity AI",
+      "title": "Ajout Composant interactif pour Constrict",
+      "tags": [
+        "UI",
+        "Combat",
+        "Tokens"
+      ],
+      "summary": "Mise Ã  jour de Constrict pour utiliser le mÃªme comportement que Barbed Vine. Lors de la phase de lancer du hÃ©ros, il doit dÃ©sormais interagir avec le jeton Constrict pour dÃ©clarer son coÃ»t en CP avant de pouvoir valider l'Ã©tape.",
+      "prompts": [
+        {
+          "id": "p-225-1",
+          "userPrompt": "Constrict token est compatible avec le composant 13. donc lorsque c'est le minion on garde el composant 12. lorsque c'est le hero, on affiche le composant 13 (bouton OK dÃ©sactivÃ© en attendant que le select soit utilisÃ©) bref comme barded vine.",
+          "aiResponse": "IntÃ©gration du modÃ¨le MultiRollTokenActiveRow pour Constrict dans la phase offensive du dock, le rendant cliquable (composant 13) pour le joueur et informatif (composant 12) pour l'IA, avec retardement des pertes de CP Ã  la rÃ©solution de l'attaque.",
+          "items": [
+            {
+              "id": "item-225-1-1",
+              "title": "Interface interactive Constrict",
+              "description": "Validation dÃ©bloquÃ©e uniquement aprÃ¨s que le joueur a renseignÃ© le nombre de lancers pour soustraire ses CP, avec blocage de la sÃ©quence.",
+              "category": "UI"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.224",
+      "buildNumber": 259,
+      "commit": "local-dev",
+      "date": "2026-09-25",
+      "author": "Antigravity AI",
+      "title": "Ajout Composant 12 pour Blinding Light",
+      "tags": [
+        "UI",
+        "Combat"
+      ],
+      "summary": "Lorsque le jeton Blinding Light a Ã©tÃ© rÃ©solu via sa popin et qu'il est actif sur le lancer d'attaque, il affiche dÃ©sormais la barre d'Ã©tat (composant 12) avec le badge 'Actif' en vert dans le dock de combat.",
+      "prompts": [
+        {
+          "id": "p-224-1",
+          "userPrompt": "sur le token Blinding Light, lorsqu'il a Ã©tÃ© dÃ©clenchÃ© par la popin. Il faut ajouter le composant 12 pour indiquer qu'il est actif.",
+          "aiResponse": "Ajout de la condition d'affichage de la ligne de token dans le dock IA : dÃ¨s que le rÃ©sultat du dÃ© de Blinding Light est dÃ©fini et appliquÃ©, la ligne s'affiche avec le tag vert 'Actif'.",
+          "items": [
+            {
+              "id": "item-224-1-1",
+              "title": "Badge d'activation Blinding Light",
+              "description": "Le dock de combat indique visuellement (composant 12) que l'attaque est sous l'influence du jet de Blinding Light.",
+              "category": "UI"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.223",
+      "buildNumber": 258,
+      "commit": "local-dev",
+      "date": "2026-09-25",
+      "author": "Antigravity AI",
+      "title": "Ajustement UI v4 - Nettoyage icÃ´nes",
+      "tags": [
+        "UI",
+        "MAP",
+        "Ergonomie"
+      ],
+      "summary": "Suppression des icÃ´nes cÅ“ur et Ã©clair dans les puces compactes d'Ã©dition sur la map afin de libÃ©rer visuellement l'espace au profit des labels texte et des boutons de contrÃ´le.",
+      "prompts": [
+        {
+          "id": "p-223-1",
+          "userPrompt": "enlever picto coeur, et Ã©clair dans ce qu'on vient de mettre ca laissera plus de place pour Ã©galiser l'espace.",
+          "aiResponse": "Suppression des icÃ´nes dans le composant compact, ce qui rÃ©duit sa largeur de 24 pixels par composant, laissant ainsi plus de respiration pour l'ensemble.",
+          "items": [
+            {
+              "id": "item-223-1-1",
+              "title": "Retrait icÃ´nes superflues",
+              "description": "Les textes HP et CP suffisent, plus besoin des icÃ´nes pour ces contrÃ´les miniatures.",
+              "category": "UI"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.222",
+      "buildNumber": 257,
+      "commit": "local-dev",
+      "date": "2026-09-24",
+      "author": "Antigravity AI",
+      "title": "Ajustement UI v3 - Correction d'alignement et dÃ©bordement (Page MAP)",
+      "tags": [
+        "UI",
+        "MAP",
+        "Bugfix"
+      ],
+      "summary": "Sur de petits Ã©crans, les composants cÃ´te Ã  cÃ´te causaient un dÃ©bordement (les boutons + Ã©taient tronquÃ©s ou masquÃ©s). Le panel a Ã©tÃ© rendu auto-redimensionnable (FittedBox) et encore plus compact pour un affichage toujours parfait.",
+      "prompts": [
+        {
+          "id": "p-222-1",
+          "userPrompt": "PB d'alignement [capture d'Ã©cran oÃ¹ le bouton + disparaÃ®t]",
+          "aiResponse": "Mise en place d'un `FittedBox` couplÃ© Ã  un widget spÃ©cifique ultra-compact (retrait du Spacer dynamique et marges rÃ©duites) pour garantir que l'Ã©dition simultanÃ©e des HP et CP tienne intÃ©gralement sans effet de dÃ©bordement mÃªme sur les Ã©crans les plus Ã©troits.",
+          "items": [
+            {
+              "id": "item-222-1-1",
+              "title": "Scaling intelligent",
+              "description": "Le composant d'Ã©dition HP/CP sur la map scale dÃ©sormais automatiquement pour ne plus Ã©craser ses contrÃ´les sur mobile.",
+              "category": "UI"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.221",
+      "buildNumber": 256,
+      "commit": "local-dev",
+      "date": "2026-09-24",
+      "author": "Antigravity AI",
+      "title": "Ajustement UI v2 - Panneau d'Ã©dition MAP",
+      "tags": [
+        "UI",
+        "MAP",
+        "Ergonomie"
+      ],
+      "summary": "Le panneau d'Ã©dition des HP/CP de la MAP s'affiche dÃ©sormais sous forme de deux blocs compacts cÃ´te Ã  cÃ´te (identique Ã  la page Combat) et rÃ©agit en temps rÃ©el. Le gros bouton Save est remplacÃ© par un bouton de fermeture vert.",
+      "prompts": [
+        {
+          "id": "p-221-1",
+          "userPrompt": "c'est trop gros, trop disproportionnÃ©. Vs la page de combat, c'est pas proportionnel. ou diviser la taille en 2 sur la largeur, d'un cotÃ© les Hp et de l'autrecotÃ© les CP.",
+          "aiResponse": "Mise en page complÃ¨tement rÃ©visÃ©e en rÃ©utilisant le widget `StepperStat` existant. DÃ©sormais, un clic sur HP ou CP affiche directement les deux compteurs proportionnÃ©s cÃ´te Ã  cÃ´te, accompagnÃ©s d'un petit bouton pour fermer.",
+          "items": [
+            {
+              "id": "item-221-1-1",
+              "title": "Edition simultanÃ©e et compacte",
+              "description": "Les widgets HP et CP partagent horizontalement l'espace du menu Map, rendant l'interface moins invasive.",
+              "category": "UI"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.220",
+      "buildNumber": 255,
+      "commit": "local-dev",
+      "date": "2026-09-24",
+      "author": "Antigravity AI",
+      "title": "Ajustement UI - modification HP/CP (Page MAP)",
+      "tags": [
+        "UI",
+        "MAP"
+      ],
+      "summary": "Optimisation de l'espace dans la zone de modification HP/CP de la MAP : le gros bouton 'Save' a Ã©tÃ© remplacÃ© par un bouton de validation compact (avec un v vert) superposÃ© Ã  l'espace initial de l'icÃ´ne pour gagner un maximum de place.",
+      "prompts": [
+        {
+          "id": "p-220-1",
+          "userPrompt": "sur la page MAP, la modification des HP, et CP, le bouton est trop grand. Ajuste cela au mieux. [suite logic: 'soit faire en sorte que le bouton valider se superpose sur le coeur ou le mot CP ainsi une place pour 2 elements']",
+          "aiResponse": "Suppression du bouton `FilledButton('Save')` qui prenait 112px de large et du label dynamique (CÅ“ur / CP). Remplacement direct par un `IconButton` vert compact (bouton valider) alignÃ© Ã  gauche, libÃ©rant tout l'espace d'Ã©dition pour les mobiles.",
+          "items": [
+            {
+              "id": "item-220-1-1",
+              "title": "Optimisation widget Edition Stats",
+              "description": "Remplacement du bouton Save par une icÃ´ne de validation intÃ©grÃ©e Ã  gauche.",
+              "category": "UI"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.219",
+      "buildNumber": 254,
+      "commit": "local-dev",
+      "date": "2026-09-24",
+      "author": "Antigravity AI",
+      "title": "Application dÃ©fÃ©rÃ©e des dÃ©gÃ¢ts de Barbed Vine",
+      "tags": [
+        "Logique",
+        "Fight",
+        "Bugfix"
+      ],
+      "summary": "Les dÃ©gÃ¢ts du jeton Barbed Vine sont dÃ©sormais appliquÃ©s uniquement Ã  la fin de la phase (lors de la validation par le bouton OK) afin d'Ã©viter une mort immÃ©diate empÃªchant une Ã©galitÃ©. Un log dÃ©taillÃ© est ajoutÃ© dans la rÃ©solution.",
+      "prompts": [
+        {
+          "id": "p-219-1",
+          "userPrompt": "les dégats ne doivent pas se faire sur le bouton sélected, mais sur le bouton OK. Pourquoi , car les dégats en roll phase, se font touts en même temps (token et phase d'attaque); S'il reste que 2 points de vie aux 2 joueurs; Si le joueur qui a Barded vine subit 2 dégats avant même attaqué, il perd dans la version actuelle. Si il a le temps d'attaquer, il peut jouer l'égalité contre un boss ou autre. Donc on déclencher l'effet à la fin du tour de roll.(bouton ok) D'ailleurs, les dégats doivent être visibles via une ligne claire dans le log.",
+          "aiResponse": "Mise en mÃ©moire des dÃ©gÃ¢ts du Barbed Vine lors du clic sur 'Select'. Ces dÃ©gÃ¢ts sont maintenant dÃ©duits des HP et consignÃ©s dans le journal du combat lors du clic sur le bouton 'OK' (rÃ©solution gÃ©nÃ©rale de la phase de lancer).",
+          "items": [
+            {
+              "id": "item-219-1-1",
+              "title": "DÃ©lai des dÃ©gÃ¢ts Barbed Vine",
+              "description": "Stockage des dÃ©gÃ¢ts en attente au lieu d'une soustraction immÃ©diate.",
+              "category": "Logique"
+            },
+            {
+              "id": "item-219-1-2",
+              "title": "IntÃ©gration au journal",
+              "description": "Ajout d'une ligne dÃ©diÃ©e aux dÃ©gÃ¢ts Barbed Vine dans le rÃ©sumÃ© gÃ©nÃ©ral du log lors du clic sur OK.",
+              "category": "Fight"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.218",
+      "buildNumber": 253,
+      "commit": "local-dev",
+      "date": "2026-09-24",
+      "author": "Antigravity AI",
+      "title": "Barbed Vine (Minion vs Hero)",
+      "tags": [
+        "UI",
+        "Composants",
+        "Fight",
+        "Bugfix"
+      ],
+      "summary": "DiffÃ©renciation du composant Barbed Vine selon le joueur : vert classique (Composant 12) pour l'IA, violet avec sÃ©lection multi-rolls (Composant 13) pour le hÃ©ros.",
+      "prompts": [
+        {
+          "id": "p-218-1",
+          "userPrompt": "barded vine, lorsque c'est au joueur Minion de jouer, le composant reste le 12 avec la couleur verte. (actif en vert et jouer par l'IA) Lorsque c'est au joueur d'avoir ce token en phase de roll alors on a le composant 13 avec le fond violet.",
+          "aiResponse": "Ajout d'une condition `isHeroTurn` sur la propriÃ©tÃ© `color` de `_MultiRollTokenActiveRow` pour Barbed Vine. Si c'est l'IA, on passe du vert, ce qui active le style du composant 12 automatiquement (sans sÃ©lection et vert).",
+          "items": [
+            {
+              "id": "item-218-1-1",
+              "title": "Barbed Vine pour l'IA (Composant 12)",
+              "description": "RÃ©tablissement de la couleur verte et du style non-interactif pour l'IA.",
+              "category": "UI"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.217",
+      "buildNumber": 252,
+      "commit": "local-dev",
+      "date": "2026-09-24",
+      "author": "Antigravity AI",
+      "title": "Correctifs UI et logiques sur le Composant 13 (Barbed Vine)",
+      "tags": [
+        "UI",
+        "Composants",
+        "Fight",
+        "Bugfix"
+      ],
+      "summary": "Mise à jour du design du statut Selected (vert actif) et du libellé Rolls centré. Correction du calcul des dégâts : 1 dégât par relance après le premier lancer (dmg = max(0, rolls - 1)).",
+      "prompts": [
+        {
+          "id": "p-217-1",
+          "userPrompt": "au lieu de mettre gris sur le selected, mettre le vert d'actif sur selected. Rolls, le coler X1 (devant) centré à coté du x1. Attention barbed vine, c'est un damage après le 1er jet. Car là au 3eme, j'ai eu 3 dégats. Mais c'est après le 1er jet, donc au 2eme c'est 1, dégat et au 3eme c'est 2 dédgats",
+          "aiResponse": "Mise en place de l'état Selected en vert type 'Actif'. Déplacement du texte 'Rolls' juste devant les sélecteurs [x1] [x2] [x3]. Correction de la formule de dégâts pour ignorer le 1er jet.",
+          "items": [
+            {
+              "id": "item-217-1-1",
+              "title": "UI 'Selected' vert et label centré",
+              "description": "Le composant 13 affiche un badge vert similaire au composant 12 une fois validé. 'Rolls' est inséré avant les boutons x1 x2 x3.",
+              "category": "UI"
+            },
+            {
+              "id": "item-217-1-2",
+              "title": "Correction formule Barbed Vine",
+              "description": "Le hÃ©ros prend 1 dégât pour chaque jet après le 1er (dmg = (rolls - 1)).",
+              "category": "Logique"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.216",
+      "buildNumber": 251,
+      "commit": "local-dev",
+      "date": "2026-09-24",
+      "author": "Antigravity AI",
+      "title": "Ajustement du Composant 13 (Barbed Vine multi-rolls)",
+      "tags": [
+        "UI",
+        "Composants",
+        "Tokens",
+        "Fight"
+      ],
+      "summary": "Passage du composant 13 en violet (comme Prey). Ajout de 'Rolls' dans le label. Blocage de l'action 'OK' (validation d'attaque) tant que le bouton 'Select' n'a pas Ã©tÃ© cliquÃ© par le hÃ©ros.",
+      "prompts": [
+        {
+          "id": "p-216-1",
+          "userPrompt": "on va passer le composant en violet comme le composant 11. Il faut ajouter 'Rolls' ou 'Roll' entre le nom du tolke et le x1. On va dÃ©sactiver le bouton 'OK' ligen atk/def jusqu'Ã  temps que le bouton 'use' soit actionnÃ©. On peut remplacer 'use' par 'Select' ou 'selected'. Tu ajouter se composant dans la page recette. COmposant 13.",
+          "aiResponse": "Composant 13 ajustÃ© : fond violet, texte 'Rolls' ajoutÃ©, bouton renommÃ© 'Select' et passe Ã  l'Ã©tat sÃ©lectionnÃ© aprÃ¨s clic. Le bouton OK de la rÃ©solution d'attaque est dÃ©sormais bloquÃ© tant que l'action Barbed Vine n'a pas Ã©tÃ© rÃ©solue.",
+          "items": [
+            {
+              "id": "item-216-1-1",
+              "title": "Ajustements UI Barbed Vine",
+              "description": "Couleur violette, libellÃ© 'Rolls' et bouton 'Select' / 'Selected' intÃ©grÃ©s.",
+              "category": "UI"
+            },
+            {
+              "id": "item-216-1-2",
+              "title": "Blocage de rÃ©solution d'attaque",
+              "description": "Le bouton OK d'ATK/DEF est dÃ©sactivÃ© tant que le jeton Barbed Vine est en attente d'Ãªtre traitÃ© par le hÃ©ros.",
+              "category": "Logique"
+            },
+            {
+              "id": "item-216-1-3",
+              "title": "Galerie Composant 13",
+              "description": "Ajout du Composant 13 dans la galerie recette.",
+              "category": "Documentation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.215",
+      "buildNumber": 250,
+      "commit": "local-dev",
+      "date": "2026-09-24",
+      "author": "Antigravity AI",
+      "title": "Création du Composant 13 (Barbed Vine multi-rolls)",
+      "tags": [
+        "UI",
+        "Composants",
+        "Tokens"
+      ],
+      "summary": "Fusion du composant 11 et 12. Ajout d'un bandeau interactif permettant de choisir le nombre de lancers (x1, x2, x3) et d'appliquer directement les dégâts du jeton Barbed Vine lorsque c'est le tour du héros.",
+      "prompts": [
+        {
+          "id": "p-215-1",
+          "userPrompt": "on va créer un composant 13. Une fusion du 12 et 11. On part sur une base du 11. Mais je veux pourvoir activer plusieurs fois le token sur un même tour. comme barbed Vine, Coté AI s'il est sur le joueur IA, c'est lui qui décide quand arrêté (composant 12 est suffisant) Mais quand le token est sur le hero, alors c'est au hero de déclarer combien de roll il a fait. Il faut donc 'use' plusieurs fois ou indiquer le nb de roll. Rollx1 Rollx2 Rollx3...",
+          "aiResponse": "Création du widget `_MultiRollTokenActiveRow`. S'il s'agit du tour du minion, le badge 'Actif' s'affiche (Composant 12). S'il s'agit du tour du héros, une ligne de boutons [x1] [x2] [x3] avec un bouton 'Use' (Composant 13) s'affiche pour appliquer instantanément les dégâts des lancers.",
+          "items": [
+            {
+              "id": "item-215-1-1",
+              "title": "Composant 13: Barbed Vine Multi-Rolls",
+              "description": "Ajout de la sélection du nombre de lancers et d'un bouton Use pour appliquer les dégâts de contre du jeton Barbed Vine au héros.",
+              "category": "UI"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.214",
+      "buildNumber": 249,
+      "commit": "local-dev",
+      "date": "2026-09-24",
+      "author": "Antigravity AI",
+      "title": "Optimisation UI pour l'édition HP/CP",
+      "tags": [
+        "UI",
+        "UX"
+      ],
+      "summary": "Superposition du bouton Valider sur l'icône HP/CP lorsqu'il y a une modification pour libérer de la place et permettre une meilleure visibilité des nombres, particulièrement sur les petits écrans.",
+      "prompts": [
+        {
+          "id": "p-214-1",
+          "userPrompt": "Dans la zone de modification des HP et CP. On ne voit plus ou moins bien le chiffre des HP/CP surtout en dizaine car pas assez de place avec certain mobile; Je ne veux pas qu\"on agrandisse la place car on a la même zone juste à coté. Soit réduire les boutons, soit faire en sorte que le bouton valider se superpose sur le coeur ou le mot CP ainsi une place pour 2 éléments. On affiche le bouton valider que s'il y a une modification qui est enclenché.",
+          "aiResponse": "Fusion de l'icône et du bouton valider. L'icône s'affiche par défaut. S'il y a une modification, l'icône se transforme en un bouton vert Valider. On gagne l'espace du bouton de validation (environ 44 pixels).",
+          "items": [
+            {
+              "id": "item-214-1-1",
+              "title": "Merge Validate Button / Icon",
+              "description": "Le bouton de validation n'apparaît qu'en cas de différence avec la valeur d'origine, à la place de l'icône principale.",
+              "category": "UI"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version": "1.3.213",
+      "buildNumber": 248,
+      "commit": "local-dev",
+      "date": "2026-09-24",
+      "author": "Antigravity AI",
+      "title": "Nouveaux tokens et ajustements logiques",
+      "tags": [
+        "Feature",
+        "Tokens"
+      ],
+      "summary": "Ajout des tokens Reality Warp, Shame, Webbed, Wound, et Time Bomb 2. Ajustements sur l'UI des dégâts et la logique d'authentification Google.",
+      "prompts": [
+        {
+          "id": "p-213-1",
+          "userPrompt": "Mise à jour générale des tokens et de l'UI.",
+          "aiResponse": "Ajout des mécaniques pour Webbed, Wound, Reality Warp, Shame et Time Bomb 2. L'interface de combat (CombatAiChatDock et StatusTokenImage) a été adaptée pour refléter ces nouveaux états (notamment Webbed).",
+          "items": [
+            {
+              "id": "item-213-1-1",
+              "title": "Nouveaux Tokens",
+              "description": "Prise en charge de Reality Warp, Shame, Wound, Webbed et Time Bomb 2 dans TokenAnimationDialog.",
+              "category": "Feature"
+            },
+            {
+              "id": "item-213-1-2",
+              "title": "Ajustement de l'UI",
+              "description": "L'interface prend désormais en compte le style visuel spécifique pour le token Webbed (Entoilé).",
+              "category": "UI"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.3.206",
       "buildNumber": 241,
       "commit": "local-dev",
@@ -763,6 +1226,17 @@
             "activeText": "Actif"
           }
         ]
+      }
+    },
+    {
+      "id": "multi-roll-token-bar",
+      "category": "Modificateurs (Barres)",
+      "title": "Composant 13 : Bandeau Jeton Actif Multi-Rolls (Violet)",
+      "description": "Bandeau violet pour les tokens nÃ©cessitant la sÃ©lection du nombre de lancers (ex: Barbed Vine). Remplace le bouton OK tant que 'Select' n'est pas cliquÃ©.",
+      "data": {
+        "tokenName": "Barbed Vine Rolls",
+        "icon": "../assets/token/Barbed-Vine.png",
+        "btnText": "Select"
       }
     },
     {

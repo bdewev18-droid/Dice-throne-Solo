@@ -500,7 +500,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    Future<void>.delayed(const Duration(seconds: 3), () {
+    Future<void>.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         setState(() => _showActions = true);
       }
@@ -530,14 +530,15 @@ class _HomePageState extends State<HomePage> {
           ),
           DecoratedBox(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 1.2,
                 colors: [
-                  Colors.black.withValues(alpha: 0.05),
-                  Colors.black.withValues(alpha: 0.12),
-                  Colors.black.withValues(alpha: 0.78),
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.4),
+                  Colors.black.withValues(alpha: 0.9),
                 ],
+                stops: const [0.3, 0.7, 1.0],
               ),
             ),
           ),
@@ -630,56 +631,150 @@ class ActiveCampaignHomeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.62),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          FilledButton.icon(
-            onPressed: onResume,
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xff8f43ff),
-              foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(48),
-            ),
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('Resume current run'),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              HeroAvatar(hero: adventure.hero, size: 42),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  '${adventure.hero.label} - ${adventure.score}/${adventure.targetScore} pts\n'
-                  '${adventure.config.label} - ${_formatDateTime(adventure.startedAt)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 220,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/map-visual-2.webp',
+                    fit: BoxFit.cover,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          FilledButton.icon(
-            onPressed: onStop,
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xffd85a21),
-              foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(44),
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.1),
+                          Colors.black.withValues(alpha: 0.7),
+                          Colors.black.withValues(alpha: 0.95),
+                        ],
+                        stops: const [0.0, 0.6, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 16,
+                  top: 40,
+                  bottom: 40,
+                  width: 140,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: adventure.hero.color, width: 3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: adventure.hero.color.withValues(alpha: 0.5),
+                          blurRadius: 24,
+                          spreadRadius: 4,
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Transform.scale(
+                      scale: adventure.hero.imageScale,
+                      child: Image.asset(
+                        adventure.hero.asset,
+                        fit: BoxFit.cover,
+                        alignment: adventure.hero.imageAlignment,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  bottom: 16,
+                  right: 120,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        adventure.hero.label,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${adventure.score}/${adventure.targetScore} pts',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '${adventure.config.label} - ${_formatDateTime(adventure.startedAt)}',
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned.fill(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onResume,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: adventure.hero.color,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 48,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            icon: const Icon(Icons.stop_circle),
-            label: const Text('Stop campaign'),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+        Center(
+          child: OutlinedButton.icon(
+            onPressed: onStop,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.redAccent,
+              backgroundColor: Colors.black.withValues(alpha: 0.7),
+              side: const BorderSide(color: Colors.redAccent, width: 1.2),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            icon: const Icon(Icons.warning_rounded, size: 18),
+            label: const Text('Abandonner la quête', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -752,11 +847,9 @@ class ImageActionButton extends StatelessWidget {
               child: Ink(
                 height: 84,
                 decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
-                  image: const DecorationImage(
-                    image: AssetImage('assets/button_background.png'),
-                    fit: BoxFit.fill,
-                  ),
+                  border: Border.all(color: Colors.white24, width: 1.5),
                 ),
                 child: Opacity(
                   opacity: onPressed == null ? 0.42 : 1,

@@ -310,7 +310,7 @@ void main() {
       expect(agilityRule!.appSupported, isTrue);
       expect(agilityRule.appAnimation, isTrue);
       expect(agilityRule.maxStack, equals(2));
-      expect(agilityRule.persistent, isFalse);
+      expect(agilityRule.persistent, isTrue);
       expect(agilityRule.aliases, contains('Agilité'));
       expect(agilityRule.matches('Agility'), isTrue);
       expect(agilityRule.matches('Agilité'), isTrue);
@@ -350,9 +350,9 @@ void main() {
     test('Shadows token properties in TokenCatalogRepository', () {
       final shadowsRule = TokenCatalogRepository.byLabel('Shadows');
       expect(shadowsRule, isNotNull);
-      expect(shadowsRule!.persistence, equals(TokenPersistence.nonPersistent));
+      expect(shadowsRule!.persistence, equals(TokenPersistence.persistent));
       expect(shadowsRule.maxStack, equals(1));
-      expect(shadowsRule.persistent, isFalse);
+      expect(shadowsRule.persistent, isTrue);
       expect(shadowsRule.matches('Shadows'), isTrue);
       expect(shadowsRule.matches('ombre'), isTrue);
     });
@@ -360,9 +360,9 @@ void main() {
     test('Barbed Vine token properties in TokenCatalogRepository', () {
       final vineRule = TokenCatalogRepository.byLabel('Barbed Vine');
       expect(vineRule, isNotNull);
-      expect(vineRule!.persistence, equals(TokenPersistence.nonPersistent));
+      expect(vineRule!.persistence, equals(TokenPersistence.persistent));
       expect(vineRule.maxStack, equals(1));
-      expect(vineRule.persistent, isFalse);
+      expect(vineRule.persistent, isTrue);
       expect(vineRule.appSupported, isTrue);
       expect(vineRule.appAnimation, isTrue);
       expect(vineRule.matches('Barbed Vine'), isTrue);
@@ -444,7 +444,7 @@ void main() {
       final constrictRule = TokenCatalogRepository.byLabel('Constrict');
       expect(constrictRule, isNotNull);
       expect(constrictRule!.appAnimation, isTrue);
-      expect(constrictRule.persistent, isFalse);
+      expect(constrictRule.persistent, isTrue);
       expect(constrictRule.matches('Constrict'), isTrue);
       expect(constrictRule.matches('Compression'), isTrue);
       expect(constrictRule.matches('constrict'), isTrue);

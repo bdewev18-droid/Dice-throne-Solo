@@ -1,6 +1,8 @@
 import 'package:dice_throne_survie/main.dart';
 import 'package:dice_throne_survie/supabase_service.dart';
 import 'package:dice_throne_survie/history_repository.dart';
+import 'package:dice_throne_survie/data/enemy_profile_repository.dart';
+import 'package:dice_throne_survie/models/enemy_profile.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

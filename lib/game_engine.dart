@@ -75,7 +75,8 @@ class _UpkeepContext {
           (lower == 'coal' && tl == 'charbon') ||
           (lower == 'bleed' && (tl == 'hémorragie' || tl == 'hemorragie' || tl == 'saignement')) ||
           (lower == 'time bomb 1' && tl == 'bombe à retardement 1') ||
-          (lower == 'time bomb 2' && (tl == 'bombe à retardement 2' || tl == 'time bomb' || tl == 'bombe à retardement'));
+          (lower == 'time bomb 2' && (tl == 'bombe à retardement 2' || tl == 'time bomb' || tl == 'bombe à retardement')) ||
+          (lower == 'phoenix burn' && (tl == 'brûlure du phénix' || tl == 'brulure du phenix' || tl == 'phoenix burn'));
     }).length;
   }
 
@@ -93,6 +94,7 @@ class _UpkeepContext {
           (lower == 'bleed' && (tl == 'hémorragie' || tl == 'hemorragie' || tl == 'saignement')) ||
           (lower == 'time bomb 1' && tl == 'bombe à retardement 1') ||
           (lower == 'time bomb 2' && (tl == 'bombe à retardement 2' || tl == 'time bomb' || tl == 'bombe à retardement')) ||
+          (lower == 'phoenix burn' && (tl == 'brûlure du phénix' || tl == 'brulure du phenix' || tl == 'phoenix burn')) ||
           (lower == 'first strike' && (tl == 'première frappe' || tl == 'premiere frappe' || tl == '1st frappe'))) {
         removedTokens.add(t);
         n--;
@@ -137,6 +139,16 @@ class GameEngine {
     },
     'Brûlure': (ctx) => _upkeepHandlers['Burn']?.call(ctx),
     'Brulure': (ctx) => _upkeepHandlers['Burn']?.call(ctx),
+
+    // Phoenix Burn — 2 dmg
+    'Phoenix burn': (ctx) {
+      if (ctx.count('Phoenix burn') == 0) return;
+      ctx.healthDelta -= 2;
+      ctx.logParts.add('-2 HP from Phoenix Burn');
+    },
+    'Phoenix Burn': (ctx) => _upkeepHandlers['Phoenix burn']?.call(ctx),
+    'Brûlure du phénix': (ctx) => _upkeepHandlers['Phoenix burn']?.call(ctx),
+    'Brulure du phenix': (ctx) => _upkeepHandlers['Phoenix burn']?.call(ctx),
 
     // Nanite — roll 1 die per stack: on 6, remove that stack
     'Nanite': (ctx) {

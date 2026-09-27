@@ -565,6 +565,29 @@ document.addEventListener('DOMContentLoaded', () => {
             `).join('')}
           </div>
         `;
+      } else if (comp.id === 'multi-roll-token-bar') {
+        stageContent = `
+          <div style="width: 100%; display: flex; flex-direction: column; gap: 0.5rem; background: #0b0710; padding: 2rem; border-radius: 8px;">
+            <div style="display: flex; align-items: center; background: #1f1a2e; border: 1.5px solid rgba(143, 67, 255, 0.6); border-radius: 8px; padding: 0.5rem 0.75rem; color: white; font-family: 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; width: 100%;">
+              <div style="width: 26px; height: 26px; background: rgba(0,0,0,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 0.75rem; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+                <img src="${comp.data.icon}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.outerHTML='<span style=\'color:white; font-size: 14px; font-weight: 900;\'>+</span>'">
+              </div>
+              <span style="font-size: 1rem; font-weight: bold; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">Barbed Vine</span>
+              <div style="flex-grow: 1;"></div>
+              
+              <span style="font-size: 12px; font-weight: bold; color: rgba(255,255,255,0.7); margin-right: 6px;">Rolls</span>
+              <div style="display: flex; gap: 4px; margin-right: 8px;">
+                <div style="padding: 4px 6px; border: 1px solid #8f43ff; background: #8f43ff; border-radius: 4px; font-size: 12px; font-weight: bold; color: black; cursor: pointer;">x1</div>
+                <div style="padding: 4px 6px; border: 1px solid #8f43ff; background: transparent; border-radius: 4px; font-size: 12px; font-weight: bold; color: white; cursor: pointer;">x2</div>
+                <div style="padding: 4px 6px; border: 1px solid #8f43ff; background: transparent; border-radius: 4px; font-size: 12px; font-weight: bold; color: white; cursor: pointer;">x3</div>
+              </div>
+              
+              <button style="background: #8f43ff; color: white; border: none; border-radius: 6px; padding: 0.4rem 0.8rem; font-weight: 800; font-size: 0.85rem; cursor: pointer;" onclick="this.outerHTML='<div style=\\'padding: 0.4rem 0.8rem; background: rgba(74, 222, 128, 0.2); border: 1px solid #4ade80; border-radius: 6px; display: flex; align-items: center; gap: 4px;\\'><span style=\\'color: #4ade80; font-size: 14px;\\'>&#x2714;</span><span style=\\'color: #4ade80; font-weight: bold; font-size: 12px;\\'>Selected</span></div>'">
+                ${comp.data.btnText}
+              </button>
+            </div>
+          </div>
+        `;
             } else if (comp.id === 'wither-popin') {
         stageContent = `
           <div style="width: 100%; display: flex; justify-content: center; background: rgba(0,0,0,0.8); padding: 2rem 0; border-radius: 8px;">

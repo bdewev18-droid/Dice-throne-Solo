@@ -1,7 +1,12 @@
 part of '../main.dart';
 
 class RewardPanel extends StatefulWidget {
-  const RewardPanel({required this.adventure, required this.enemy, required this.onFinished, super.key});
+  const RewardPanel({
+    required this.adventure,
+    required this.enemy,
+    required this.onFinished,
+    super.key,
+  });
 
   final AdventureState adventure;
   final EnemyNode enemy;
@@ -25,101 +30,98 @@ class _RewardPanelState extends State<RewardPanel> {
         ? null
         : GameEngine.rewardForD20(d20, chest: currentRewardRank.rewardChestKey);
     return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                '${widget.enemy.label} defeated',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            '${widget.enemy.label} defeated',
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 12),
+          InfoCard(
+            child: Column(
+              children: [
+                const Text(
+                  'Reward D20',
+                  style: TextStyle(fontWeight: FontWeight.w900),
                 ),
-              ),
-              const SizedBox(height: 12),
-              InfoCard(
-                child: Column(
+                if (total > 1) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_confirmed + 1}/$total',
+                    style: TextStyle(
+                      color: currentRewardRank.color,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                Text(
+                  d20?.toString() ?? '-',
+                  style: const TextStyle(
+                    fontSize: 56,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                if (outcome == null)
+                  const Text(
+                    'Roll the die',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  )
+                else
+                  _RewardOutcomeDisplay(outcome: outcome),
+                const SizedBox(height: 12),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    const Text(
-                      'Reward D20',
-                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ImageActionButton(
+                      label: d20 == null ? 'Roll' : 'Reroll',
+                      icon: Icons.casino,
+                      onPressed: () =>
+                          setState(() => _d20 = _random.nextInt(20) + 1),
                     ),
-                    if (total > 1) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_confirmed + 1}/$total',
-                        style: TextStyle(
-                          color: currentRewardRank.color,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 10),
-                    Text(
-                      d20?.toString() ?? '-',
-                      style: const TextStyle(
-                        fontSize: 56,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    if (outcome == null)
-                      const Text(
-                        'Roll the die',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      )
-                    else
-                      _RewardOutcomeDisplay(outcome: outcome),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        ImageActionButton(
-                          label: d20 == null ? 'Roll' : 'Reroll',
-                          icon: Icons.casino,
-                          onPressed: () =>
-                              setState(() => _d20 = _random.nextInt(20) + 1),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: d20 == null ? null : _modifyD20,
-                          icon: const Icon(Icons.tune),
-                          label: const Text('Edit'),
-                        ),
-                      ],
+                    OutlinedButton.icon(
+                      onPressed: d20 == null ? null : _modifyD20,
+                      icon: const Icon(Icons.tune),
+                      label: const Text('Edit'),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 24),
-              FilledButton.icon(
-                onPressed: d20 == null
-                    ? null
-                    : () {
-                        widget.adventure.applyReward(d20, currentRewardRank);
-                        if (_confirmed + 1 >= total) {
-                          widget.onFinished();
-                        } else {
-                          setState(() {
-                            _confirmed++;
-                            _d20 = null;
-                          });
-                        }
-                      },
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xff8f43ff),
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.check),
-                label: Text(
-                  total > 1 && _confirmed + 1 < total
-                      ? 'Confirm and next'
-                      : 'Confirm reward',
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: d20 == null
+                ? null
+                : () {
+                    widget.adventure.applyReward(d20, currentRewardRank);
+                    if (_confirmed + 1 >= total) {
+                      widget.onFinished();
+                    } else {
+                      setState(() {
+                        _confirmed++;
+                        _d20 = null;
+                      });
+                    }
+                  },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xff8f43ff),
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.check),
+            label: Text(
+              total > 1 && _confirmed + 1 < total
+                  ? 'Confirm and next'
+                  : 'Confirm reward',
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -435,7 +437,11 @@ class RichLogText extends StatelessWidget {
             letterSpacing: 1.3,
             color: Colors.white,
             shadows: [
-              Shadow(color: Colors.black45, blurRadius: 3, offset: Offset(1, 1)),
+              Shadow(
+                color: Colors.black45,
+                blurRadius: 3,
+                offset: Offset(1, 1),
+              ),
             ],
           ),
         ),
@@ -461,10 +467,15 @@ class RichLogText extends StatelessWidget {
 
       if (tag != null) {
         if (RegExp(r'^\d{2}:\d{2}$').hasMatch(tag)) {
-          spans.add(TextSpan(
-            text: match.group(0),
-            style: const TextStyle(color: Colors.white60, fontWeight: FontWeight.normal),
-          ));
+          spans.add(
+            TextSpan(
+              text: match.group(0),
+              style: const TextStyle(
+                color: Colors.white60,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          );
           lastMatchEnd = match.end;
           continue;
         }
@@ -473,21 +484,49 @@ class RichLogText extends StatelessWidget {
         String? displayTagText;
 
         if (tag == 'HP') {
-          iconWidget = Image.asset('assets/illustration/soin.webp', width: 16, height: 16);
+          iconWidget = Image.asset(
+            'assets/illustration/soin.webp',
+            width: 16,
+            height: 16,
+          );
         } else if (tag == 'ATK') {
-          iconWidget = Image.asset('assets/illustration/degat.webp', width: 16, height: 16);
+          iconWidget = Image.asset(
+            'assets/illustration/degat.webp',
+            width: 16,
+            height: 16,
+          );
         } else if (tag == 'DEF') {
-          iconWidget = Image.asset('assets/illustration/bouclier.webp', width: 16, height: 16);
+          iconWidget = Image.asset(
+            'assets/illustration/bouclier.webp',
+            width: 16,
+            height: 16,
+          );
         } else if (tag == 'CP') {
           iconWidget = const Icon(Icons.star, color: Colors.amber, size: 16);
         } else if (tag == 'EXTRA DICE') {
-          iconWidget = const Icon(Icons.casino, color: Colors.amberAccent, size: 16);
+          iconWidget = const Icon(
+            Icons.casino,
+            color: Colors.amberAccent,
+            size: 16,
+          );
         } else if (tag == 'TOKEN GAINED') {
-          iconWidget = const Icon(Icons.add_circle, color: Colors.greenAccent, size: 16);
+          iconWidget = const Icon(
+            Icons.add_circle,
+            color: Colors.greenAccent,
+            size: 16,
+          );
         } else if (tag == 'TOKEN REMOVED') {
-          iconWidget = const Icon(Icons.remove_circle, color: Colors.redAccent, size: 16);
+          iconWidget = const Icon(
+            Icons.remove_circle,
+            color: Colors.redAccent,
+            size: 16,
+          );
         } else if (tag == 'TOKEN') {
-          iconWidget = const Icon(Icons.stars, color: Colors.purpleAccent, size: 16);
+          iconWidget = const Icon(
+            Icons.stars,
+            color: Colors.purpleAccent,
+            size: 16,
+          );
         } else if (tag.startsWith('TOKEN:')) {
           final tokenName = tag.substring(6).trim();
           final rule = TokenCatalogRepository.byLabel(tokenName);
@@ -497,37 +536,55 @@ class RichLogText extends StatelessWidget {
               asset,
               width: 18,
               height: 18,
-              errorBuilder: (c, e, s) => const Icon(Icons.stars, size: 16, color: Colors.purpleAccent),
+              errorBuilder: (c, e, s) =>
+                  const Icon(Icons.stars, size: 16, color: Colors.purpleAccent),
             );
           } else {
             displayTagText = tokenName;
-            iconWidget = const Icon(Icons.stars, size: 16, color: Colors.purpleAccent);
+            iconWidget = const Icon(
+              Icons.stars,
+              size: 16,
+              color: Colors.purpleAccent,
+            );
           }
         }
 
         if (iconWidget != null) {
-          spans.add(WidgetSpan(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: iconWidget,
+          spans.add(
+            WidgetSpan(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: iconWidget,
+              ),
+              alignment: PlaceholderAlignment.middle,
             ),
-            alignment: PlaceholderAlignment.middle,
-          ));
+          );
           if (displayTagText != null) {
-            spans.add(TextSpan(
-              text: ' $displayTagText ',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.purpleAccent),
-            ));
+            spans.add(
+              TextSpan(
+                text: ' $displayTagText ',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.purpleAccent,
+                ),
+              ),
+            );
           }
         } else {
-          spans.add(TextSpan(
-            text: match.group(0),
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amberAccent),
-          ));
+          spans.add(
+            TextSpan(
+              text: match.group(0),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.amberAccent,
+              ),
+            ),
+          );
         }
       } else if (entityName != null) {
         final lower = entityName.toLowerCase();
-        final isHero = lower == 'hero' ||
+        final isHero =
+            lower == 'hero' ||
             lower == 'héros' ||
             lower == 'benjamin' ||
             lower == 'paladin' ||
@@ -537,42 +594,45 @@ class RichLogText extends StatelessWidget {
             lower == 'moon elf' ||
             lower == 'shadow thief' ||
             lower == 'monk';
-        final color = isHero ? const Color(0xffffe22d) : const Color(0xffff6b6b);
-        spans.add(TextSpan(
-          text: entityName,
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            color: color,
+        final color = isHero
+            ? const Color(0xffffe22d)
+            : const Color(0xffff6b6b);
+        spans.add(
+          TextSpan(
+            text: entityName,
+            style: TextStyle(fontWeight: FontWeight.w900, color: color),
           ),
-        ));
+        );
       } else if (dieRoll != null) {
-        spans.add(WidgetSpan(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xff2c3e50),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: const Color(0xff8f43ff), width: 1),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.casino, size: 12, color: Colors.amberAccent),
-                const SizedBox(width: 3),
-                Text(
-                  dieRoll,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+        spans.add(
+          WidgetSpan(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xff2c3e50),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: const Color(0xff8f43ff), width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.casino, size: 12, color: Colors.amberAccent),
+                  const SizedBox(width: 3),
+                  Text(
+                    dieRoll,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            alignment: PlaceholderAlignment.middle,
           ),
-          alignment: PlaceholderAlignment.middle,
-        ));
+        );
       }
 
       lastMatchEnd = match.end;
@@ -781,11 +841,24 @@ Future<List<String>?> showAlterationDialog(
                               : () => setDialogState(
                                   () => counts[rule.label] = count - 1,
                                 ),
-                          onPlus: count >= rule.maxStack
-                              ? null
-                              : () => setDialogState(
-                                  () => counts[rule.label] = count + 1,
-                                ),
+                          onPlus: () {
+                            if (count >= rule.maxStack) return null;
+                            if (rule.label.toLowerCase().startsWith(
+                              'damage bonus',
+                            )) {
+                              final totalDb = counts.entries
+                                  .where(
+                                    (e) => e.key.toLowerCase().startsWith(
+                                      'damage bonus',
+                                    ),
+                                  )
+                                  .fold(0, (sum, e) => sum + e.value);
+                              if (totalDb >= 2) return null;
+                            }
+                            return () => setDialogState(
+                              () => counts[rule.label] = count + 1,
+                            );
+                          }(),
                         );
                       },
                     ),
@@ -883,13 +956,12 @@ void showTokenDetails(
                     RoundIconButton(
                       icon: Icons.remove,
                       tooltip: 'Remove',
-                      onPressed:
-                          (getCount() > 0 && onMinus != null)
-                              ? () {
-                                onMinus();
-                                setSheetState(() {});
-                              }
-                              : null,
+                      onPressed: (getCount() > 0 && onMinus != null)
+                          ? () {
+                              onMinus();
+                              setSheetState(() {});
+                            }
+                          : null,
                     ),
                     SizedBox(
                       width: 40,
@@ -905,13 +977,12 @@ void showTokenDetails(
                     RoundIconButton(
                       icon: Icons.add,
                       tooltip: 'Add',
-                      onPressed:
-                          (getCount() < rule.maxStack && onPlus != null)
-                              ? () {
-                                onPlus();
-                                setSheetState(() {});
-                              }
-                              : null,
+                      onPressed: (getCount() < rule.maxStack && onPlus != null)
+                          ? () {
+                              onPlus();
+                              setSheetState(() {});
+                            }
+                          : null,
                     ),
                   ],
                 ),
@@ -957,12 +1028,19 @@ class TokenPickerCard extends StatelessWidget {
               child: Stack(
                 children: [
                   Center(child: StatusTokenImage(rule: rule, size: 64)),
-                  Positioned(top: 0, right: 0, child: _TokenSupportDot(rule: rule)),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: _TokenSupportDot(rule: rule),
+                  ),
                   Positioned(
                     top: 0,
                     left: 0,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white24,
                         borderRadius: BorderRadius.circular(4),
@@ -1086,7 +1164,12 @@ class StatusTokenImage extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: rule.kind == StatusTokenKind.positive
+        color:
+            (rule.kind == StatusTokenKind.positive ||
+                rule.label.toLowerCase() == 'sun-marked' ||
+                rule.label.toLowerCase() == 'webbed' ||
+                rule.label.toLowerCase() == 'entoilé' ||
+                rule.label.toLowerCase() == 'entoile')
             ? const Color(0xff246b39)
             : const Color(0xff6d1f28),
         border: Border.all(color: Colors.white70),

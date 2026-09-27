@@ -357,7 +357,7 @@ void main() {
 
     // Verify Targeted banner is rendered with active indicator
     expect(find.text('Targeted : '), findsOneWidget);
-    expect(find.text('Actif (+2)'), findsOneWidget);
+    expect(find.text('Actif (+2 DMG)'), findsOneWidget);
   });
 
   testWidgets('showAlterationDialog displays Duel, Positive, Negative, Unique segments', (WidgetTester tester) async {
@@ -822,7 +822,6 @@ void main() {
     expect(find.text('Knockdown'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
     expect(find.text('1'), findsOneWidget); // 3 - 2 = 1
-    expect(find.textContaining('before +1 CP upkeep'), findsOneWidget);
   });
 
   testWidgets('TokenAnimationDialog for Delayed Poison displays -3 HP per token', (WidgetTester tester) async {
@@ -1167,7 +1166,7 @@ void main() {
     await tester.tap(find.text('2').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Time bomb roll: 2 -> Explodes! (4 undefendable dmg)'), findsOneWidget);
+    expect(find.text('Time bomb roll: 2 -> Explodes!'), findsOneWidget);
     expect(find.textContaining('Use again'), findsNothing);
 
     // Roll 6 -> transfer

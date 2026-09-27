@@ -129,8 +129,13 @@ http
       }
     }
 
-    if (relativePath.startsWith('recette/') || relativePath === 'recette') {
-      let recRel = relativePath === 'recette' ? 'index.html' : relativePath.slice('recette/'.length);
+    if (relativePath === 'recette') {
+      response.writeHead(301, { Location: `${basePath}/recette/` });
+      response.end();
+      return;
+    }
+    if (relativePath.startsWith('recette/')) {
+      let recRel = relativePath.slice('recette/'.length);
       if (!recRel || recRel.endsWith('/')) {
         recRel = path.join(recRel, 'index.html');
       }
@@ -151,8 +156,13 @@ http
       }
     }
 
-    if (relativePath.startsWith('simulation/') || relativePath === 'simulation') {
-      let simRel = relativePath === 'simulation' ? 'index.html' : relativePath.slice('simulation/'.length);
+    if (relativePath === 'simulation') {
+      response.writeHead(301, { Location: `${basePath}/simulation/` });
+      response.end();
+      return;
+    }
+    if (relativePath.startsWith('simulation/')) {
+      let simRel = relativePath.slice('simulation/'.length);
       if (!simRel || simRel.endsWith('/')) {
         simRel = path.join(simRel, 'index.html');
       }
