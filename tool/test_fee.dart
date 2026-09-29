@@ -1,8 +1,7 @@
 
 import 'dart:io';
 import 'dart:convert';
-import '../lib/models/enemy_profile.dart';
-import '../lib/data/enemy_profile_repository.dart';
+import 'package:dice_throne_survie/data/enemy_profile_repository.dart';
 
 void main() async {
   final source = File('docs/enemy_profiles.json').readAsStringSync();

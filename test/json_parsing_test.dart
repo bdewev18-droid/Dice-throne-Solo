@@ -21,9 +21,9 @@ void main() {
 
       for (var i = 0; i < list.length; i++) {
         final item = list[i] as Map<String, dynamic>;
-        expect(item['key'], isNotNull, reason: 'Item \ missing key');
-        expect(item['name'], isNotNull, reason: 'Item \ missing name');
-        expect(item['rank'], isNotNull, reason: 'Item \ missing rank');
+        expect(item['key'], isNotNull, reason: 'Item  missing key');
+        expect(item['name'], isNotNull, reason: 'Item  missing name');
+        expect(item['rank'], isNotNull, reason: 'Item  missing rank');
         
         final node = EnemyProfileJson.fromJson(list[i] as Map<String, dynamic>);
         expect(node.key, isNotEmpty);

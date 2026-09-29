@@ -76,7 +76,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         const Text('Mode', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70)),
                         const SizedBox(height: 4),
                         DropdownButtonFormField<RunDifficulty>(
-                          value: _difficulty,
+                          initialValue: _difficulty,
                           decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
                           items: RunDifficulty.values.map((d) => DropdownMenuItem(value: d, child: Text(d.label, style: const TextStyle(fontSize: 12)))).toList(),
                           onChanged: (val) {
@@ -95,7 +95,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           const Text('Route', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70)),
                           const SizedBox(height: 4),
                           DropdownButtonFormField<RandomFilter>(
-                            value: _randomFilter,
+                            initialValue: _randomFilter,
                             decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
                             items: RandomFilter.values.map((d) => DropdownMenuItem(value: d, child: Text(d.label, style: const TextStyle(fontSize: 12)))).toList(),
                             onChanged: (val) {
@@ -114,7 +114,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         const Text('Sort by', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70)),
                         const SizedBox(height: 4),
                         DropdownButtonFormField<HistorySort>(
-                          value: _sort,
+                          initialValue: _sort,
                           decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
                           items: HistorySort.values.map((d) => DropdownMenuItem(value: d, child: Text(d.label, style: const TextStyle(fontSize: 12)))).toList(),
                           onChanged: (val) {
@@ -443,7 +443,7 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget _buildFlatList(List<GameRecord> records) {
     return ListView.separated(
       itemCount: records.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final r = records[index];
         return Padding(
@@ -588,7 +588,6 @@ class _HistoryHeaderRow extends StatelessWidget {
   const _HistoryHeaderRow({
     required this.difficulty,
     required this.allRecords,
-    super.key,
   });
 
   final RunDifficulty difficulty;
@@ -705,15 +704,6 @@ class _HistoryHeaderRow extends StatelessWidget {
           // 1. NB
           Expanded(
             child: _HistoryHeaderItem(
-              child: const Text(
-                'NB',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xffffe22d),
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13,
-                ),
-              ),
               tooltip: 'Runs count',
               onTap: () => _openMultiStatSheet(
                 context,
@@ -742,18 +732,21 @@ class _HistoryHeaderRow extends StatelessWidget {
                   value: '$totalRunsCount runs',
                 ),
               ),
+              child: const Text(
+                'NB',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xffffe22d),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                ),
+              ),
             ),
           ),
           // 2. Enemies
           if (difficulty != RunDifficulty.naraxus)
             Expanded(
               child: _HistoryHeaderItem(
-                child: Image.asset(
-                  'assets/minion.webp',
-                  width: 20,
-                  height: 20,
-                  fit: BoxFit.contain,
-                ),
                 tooltip: 'Enemies defeated',
                 onTap: () => _openMultiStatSheet(
                   context,
@@ -785,12 +778,17 @@ class _HistoryHeaderRow extends StatelessWidget {
                     ),
                   ],
                 ),
+                child: Image.asset(
+                  'assets/minion.webp',
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           // 3. HP
           Expanded(
             child: _HistoryHeaderItem(
-              child: const Icon(Icons.favorite, size: 18, color: Color(0xffffe22d)),
               tooltip: 'Remaining HP',
               onTap: () => _openMultiStatSheet(
                 context,
@@ -809,13 +807,13 @@ class _HistoryHeaderRow extends StatelessWidget {
                   ),
                 ],
               ),
+              child: const Icon(Icons.favorite, size: 18, color: Color(0xffffe22d)),
             ),
           ),
           // 4. Time
           Expanded(
             flex: difficulty == RunDifficulty.naraxus ? 2 : 1,
             child: _HistoryHeaderItem(
-              child: const Icon(Icons.timer, size: 18, color: Color(0xffffe22d)),
               tooltip: 'Play time',
               onTap: () => _openMultiStatSheet(
                 context,
@@ -845,12 +843,12 @@ class _HistoryHeaderRow extends StatelessWidget {
                   value: _formatSmartDuration(totalTime),
                 ),
               ),
+              child: const Icon(Icons.timer, size: 18, color: Color(0xffffe22d)),
             ),
           ),
           // 5. Score
           Expanded(
             child: _HistoryHeaderItem(
-              child: const Icon(Icons.emoji_events, size: 18, color: Color(0xffffe22d)),
               tooltip: 'Score & Success',
               onTap: () => _openMultiStatSheet(
                 context,
@@ -893,6 +891,7 @@ class _HistoryHeaderRow extends StatelessWidget {
                   ),
                 ],
               ),
+              child: const Icon(Icons.emoji_events, size: 18, color: Color(0xffffe22d)),
             ),
           ),
         ],
@@ -1008,9 +1007,8 @@ class _StatLine extends StatelessWidget {
   const _StatLine({
     required this.label,
     required this.value,
-    this.isCurrent = false,
     this.isHighlight = false,
-  });
+  }) : isCurrent = false;
 
   final String label;
   final String value;
@@ -1046,7 +1044,7 @@ class _StatLine extends StatelessWidget {
 }
 
 class _HistoryMetricText extends StatelessWidget {
-  const _HistoryMetricText(this.value, {super.key});
+  const _HistoryMetricText(this.value);
 
   final String value;
 
@@ -1067,7 +1065,6 @@ class _RunDetailRow extends StatelessWidget {
     required this.selected,
     required this.onSelected,
     this.showHero = false,
-    super.key,
   });
 
   final GameRecord record;
@@ -1378,7 +1375,7 @@ class _PodiumWidget extends StatelessWidget {
             border: Border.all(color: color, width: 3),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.5),
+                color: color.withValues(alpha: 0.5),
                 blurRadius: 8,
               )
             ],
@@ -1394,11 +1391,11 @@ class _PodiumWidget extends StatelessWidget {
           width: rank == 1 ? 80 : 64,
           height: height,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.8),
+            color: color.withValues(alpha: 0.8),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.3),
+                color: color.withValues(alpha: 0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               )

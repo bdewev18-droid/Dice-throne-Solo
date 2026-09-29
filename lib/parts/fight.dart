@@ -579,7 +579,7 @@ class _FightPageState extends State<FightPage> {
                               'assets/token/A-terre.png',
                               width: 120,
                               height: 120,
-                              errorBuilder: (ctx, _, __) => const Icon(
+                              errorBuilder: (ctx, _, _) => const Icon(
                                 Icons.error,
                                 size: 64,
                                 color: Colors.red,
@@ -673,7 +673,6 @@ class _FightPageState extends State<FightPage> {
                     defenseModifier: _battleDefenseModifier,
                     showStunCover: _isDefenderStunned,
                     showOnlyCardsCover:
-                        _phase == CombatPhase.minionAttack &&
                         _isCurrentAttackUndefendable &&
                         !_defenseOnlyCardsUnlocked,
                     onOnlyCardsUnlock: () =>
@@ -787,11 +786,18 @@ class _FightPageState extends State<FightPage> {
                                     _heroAgilitySuccesses >= 2))) ||
                         (_phase == CombatPhase.hero &&
                             (_minionEvasiveAvoided || _minionAgilityAvoided)),
+                    showFlightAttackCover: _flightAvoided,
                     showParlayAttackCover: _hasActiveParlayOnAttacker,
                     showWebbedAttackCover: _battleAttackUndefendableFromWebbed,
                     heroEvasiveCount: _heroEvasiveCount,
                     heroEvasiveAvoided: _heroEvasiveAvoided,
                     onUseHeroEvasive: _triggerHeroEvasiveAttempt,
+                    heroFlightCount: _heroFlightCount,
+                    minionFlightCount: _minionFlightCount,
+                    flightAvoided: _flightAvoided,
+                    flightUndefendable: _flightUndefendable,
+                    onUseHeroFlight: _triggerHeroFlightAttempt,
+                    onUseMinionFlight: () => _checkAndTriggerFlightPopinOnEnemy(),
                     heroAgilityCount: _heroAgilityCount,
                     heroAgilityActive: _heroAgilityActive,
                     heroAgilitySuccesses: _heroAgilitySuccesses,
@@ -831,7 +837,7 @@ class _FightPageState extends State<FightPage> {
                         ? _triggerDamageBonusAttempt
                         : null,
                     honorCount: _availableHonorCount,
-                    honorDamageBonus: _honorDamageBonus,
+                    honorDamageBonus: _phase == CombatPhase.hero ? _honorDamageBonus : _minionAutoHonorBonus,
                     onUseHonor: _battleAttackValue > 0 ? _triggerHonorAttempt : null,
                     ninjitsuCount: _availableNinjitsuCount,
                     ninjitsuDamageBonus: _ninjitsuDamageBonus,
@@ -1565,6 +1571,8 @@ class _FightPageState extends State<FightPage> {
       _blindRollResolved = false;
       _evasivePopinTriggered = false;
       _evasiveRollResolved = false;
+      _flightPopinTriggered = false;
+      _flightRollResolved = false;
       if (phase == CombatPhase.minionUpkeep &&
           enemy.profileKey == 'vert-vert-014') {
         _druidFormRolledThisUpkeep = false;
@@ -1693,6 +1701,7 @@ class _FightPageState extends State<FightPage> {
           _normalizeTokenKey(t) == 'guardbreak' ||
           _normalizeTokenKey(t) == 'brisegarde',
     );
+    final hasAccuracy = widget.adventure.alterations.any(_isAccuracyToken);
     _heroHexedThisAttack = hasHex;
     if (hasEntangle ||
         hasHex ||
@@ -1708,6 +1717,7 @@ class _FightPageState extends State<FightPage> {
         hasParlay ||
         hasSilence ||
         hasGuardBreak ||
+        hasAccuracy ||
         hasCrit) {
       await _triggerTokenAnimationDialogs(
         widget.adventure.alterations,
@@ -1852,6 +1862,7 @@ class _FightPageState extends State<FightPage> {
           _normalizeTokenKey(t) == 'guardbreak' ||
           _normalizeTokenKey(t) == 'brisegarde',
     );
+    final hasAccuracy = enemy.alterations.any(_isAccuracyToken);
     if (hasEntangle ||
         hasHex ||
         hasBarbedVine ||
@@ -1866,6 +1877,7 @@ class _FightPageState extends State<FightPage> {
         hasParlay ||
         hasSilence ||
         hasGuardBreak ||
+        hasAccuracy ||
         hasCrit) {
       await _triggerTokenAnimationDialogs(
         enemy.alterations,
@@ -2544,9 +2556,162 @@ class _FightPageState extends State<FightPage> {
   bool _heroEvasiveAvoided = false;
   bool _minionEvasiveAvoided = false;
 
+  bool _flightPopinTriggered = false;
+  bool _flightRollResolved = false;
+  bool _flightAvoided = false;
+  bool _flightUndefendable = false;
+
   bool _isEvasiveToken(String t) {
     final k = _normalizeTokenKey(t);
     return k == 'evasive' || k == 'evitement';
+  }
+
+  bool _isFlightToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'flight' || k == 'vol';
+  }
+
+  int get _heroFlightCount =>
+      widget.adventure.alterations.where(_isFlightToken).length;
+
+  int get _minionFlightCount => enemy.alterations.where(_isFlightToken).length;
+
+  Future<void> _triggerHeroFlightAttempt() async {
+    final rule = TokenCatalogRepository.byLabel('Flight') ??
+        TokenCatalogRepository.byLabel('Vol');
+    if (rule == null) return;
+
+    final count = _heroFlightCount;
+    if (count <= 0) return;
+
+    final flightResult = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: count,
+      targetName: widget.adventure.hero.label,
+      currentHp: widget.adventure.health,
+      currentCp: widget.adventure.combatPoints,
+    );
+
+    if (!mounted || flightResult == null) return;
+
+    final success = flightResult.dieRoll == 6;
+    final spent = flightResult.spentCount.clamp(1, count);
+
+    for (var i = 0; i < spent; i++) {
+      final idx = widget.adventure.alterations.indexWhere(_isFlightToken);
+      if (idx != -1) widget.adventure.alterations.removeAt(idx);
+    }
+
+    if (success) {
+      setState(() {
+        if (_phase == CombatPhase.hero) {
+          _flightUndefendable = true;
+          _battleAttackUndefendable = true;
+        } else if (_phase == CombatPhase.minionAttack) {
+          _flightAvoided = true;
+          _checkParasiteDefensiveTrigger(isHero: true, tokenUsed: 'Flight');
+          _battleAttackValue = 0;
+          _battleDefenseValue = 0;
+        }
+        _extraDiceOutcomeMessage =
+            'Flight succeeded (tentatives: $spent).\n${_phase == CombatPhase.hero ? 'Attack becomes undefendable!' : 'Attack Avoided!'}';
+        widget.adventure.log(
+          '[TOKEN] ${widget.adventure.hero.label} spent $spent Flight: Success! -> ${_phase == CombatPhase.hero ? 'Undefendable attack' : 'Attack avoided'}.',
+        );
+        widget.onChanged();
+      });
+    } else {
+      setState(() {
+        _extraDiceOutcomeMessage =
+            'Flight failed (tentatives: $spent).\nNormal rules apply.';
+        widget.adventure.log(
+          '[TOKEN] ${widget.adventure.hero.label} spent $spent Flight: Failed.',
+        );
+        widget.onChanged();
+      });
+    }
+  }
+
+  Future<bool> _checkAndTriggerFlightPopinOnEnemy() async {
+    if (_flightPopinTriggered || _flightRollResolved || !mounted) return false;
+    if (_phase != CombatPhase.hero) return false;
+
+    final rule = TokenCatalogRepository.byLabel('Flight') ??
+        TokenCatalogRepository.byLabel('Vol');
+    if (rule == null) return false;
+
+    final currentFlightCount = _minionFlightCount;
+    if (currentFlightCount <= 0) return false;
+
+    final currentEffectiveAttack = _battleAttackValue + _battleAttackModifier;
+    final effectiveDefense = _isDefenderStunned ? 0 : _battleDefenseValue;
+    final netDamage = max(0, currentEffectiveAttack - effectiveDefense);
+    final willKill = (enemy.health - netDamage) <= 0;
+    final isMajorDamage = netDamage >= 6; // Naxarus logic heuristic
+    if (!willKill && !isMajorDamage) return false;
+    if (netDamage <= 0) return false;
+
+    _flightPopinTriggered = true;
+
+    final flightResult = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: currentFlightCount,
+      targetName: enemy.label,
+      currentHp: enemy.health,
+      currentCp: enemy.combatPoints,
+    );
+
+    if (!mounted || flightResult == null) {
+      if (mounted) {
+        setState(() {
+          _flightPopinTriggered = false;
+        });
+      }
+      return false;
+    }
+
+    final success = flightResult.dieRoll == 6;
+    final spent = flightResult.spentCount.clamp(1, currentFlightCount);
+
+    for (var i = 0; i < spent; i++) {
+      final idx = enemy.alterations.indexWhere(_isFlightToken);
+      if (idx != -1) enemy.alterations.removeAt(idx);
+    }
+
+    if (success) {
+      setState(() {
+        _battleAttackValue = 0;
+        _battleDefenseValue = 0;
+        _flightAvoided = true;
+        _checkParasiteDefensiveTrigger(isHero: false, tokenUsed: 'Flight');
+        _extraDiceOutcomeMessage =
+            'Flight succeeded (tentatives: $spent).\nAttack Avoided! 0 damage dealt to ${enemy.label}.';
+        widget.adventure.log(
+          '[TOKEN] ${enemy.label} spent $spent Flight: Success! -> Attack avoided.',
+        );
+        widget.onChanged();
+      });
+    } else {
+      setState(() {
+        _extraDiceOutcomeMessage =
+            'Flight failed (tentatives: $spent).\nNormal damage applies.';
+        widget.adventure.log(
+          '[TOKEN] ${enemy.label} spent $spent Flight: Failed.',
+        );
+        widget.onChanged();
+      });
+    }
+
+    if (mounted) {
+      setState(() {
+        _flightPopinTriggered = false;
+        _flightRollResolved = true;
+      });
+    }
+
+    return true;
   }
 
   bool _isParasiteToken(String t) {
@@ -2676,6 +2841,7 @@ class _FightPageState extends State<FightPage> {
   int _preyUsedCount = 0;
   int _preyBonus = 0;
   int _honorDamageBonus = 0;
+  int _honorTokensSpentThisTurn = 0;
   int _ninjitsuDamageBonus = 0;
   bool _ninjitsuUndefendable = false;
   bool _minionNinjitsuRolled = false;
@@ -2746,9 +2912,9 @@ class _FightPageState extends State<FightPage> {
     final tokens = <int>[];
     for (final t in targetList) {
       final k = _normalizeTokenKey(t);
-      if (k == 'damagebonus1' || k == 'degatbonus1')
+      if (k == 'damagebonus1' || k == 'degatbonus1') {
         tokens.add(1);
-      else if (k == 'damagebonus2' || k == 'degatbonus2')
+      } else if (k == 'damagebonus2' || k == 'degatbonus2')
         tokens.add(2);
       else if (k == 'damagebonus3' || k == 'degatbonus3')
         tokens.add(3);
@@ -3023,8 +3189,9 @@ class _FightPageState extends State<FightPage> {
     if (_attackerAccuracyCount == 0) return false;
     if (_battleAttackValue <= 0) return false;
     // Cannot use if already undefendable natively or from other sources
-    if (_battleAttackUndefendable || _battleAttackUndefendableFromWebbed)
+    if (_battleAttackUndefendable || _battleAttackUndefendableFromWebbed) {
       return false;
+    }
     return true;
   }
 
@@ -3332,31 +3499,89 @@ class _FightPageState extends State<FightPage> {
     final result = await showDialog<int>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xff1f1a2e),
-          title: const Text('Honor', style: TextStyle(color: Colors.white)),
-          content: const Text('How many Honor tokens do you want to spend?', style: TextStyle(color: Colors.white70)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(0),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+        return Dialog(
+          backgroundColor: const Color(0xff181424),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xff8f43ff), width: 2),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/token/honor.png',
+                      width: 48,
+                      height: 48,
+                      errorBuilder: (ctx, err, stack) => const Icon(Icons.warning, color: Colors.orange, size: 48),
+                    ),
+                    const SizedBox(width: 16),
+                    const Text(
+                      'Honor',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'How many Honor tokens do you want to spend?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.white70),
+                ),
+                const SizedBox(height: 32),
+                if (count >= 1) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff8f43ff),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(1),
+                      child: const Text('Spend 1 (+1 DMG)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (count >= 2) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff8f43ff),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(2),
+                      child: const Text('Spend 2 (+3 DMG)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(0),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.white54, fontSize: 16)),
+                ),
+              ],
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff8f43ff), foregroundColor: Colors.white),
-              onPressed: () => Navigator.of(context).pop(1),
-              child: const Text('Spend 1 (+1 DMG)'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: count >= 2 ? const Color(0xff8f43ff) : Colors.grey.shade700,
-                foregroundColor: count >= 2 ? Colors.white : Colors.white38,
-              ),
-              onPressed: count >= 2 ? () => Navigator.of(context).pop(2) : null,
-              child: const Text('Spend 2 (+3 DMG)'),
-            ),
-          ],
+          ),
         );
-      }
+      },
     );
 
     if (result != null && result > 0 && mounted) {
@@ -3370,12 +3595,14 @@ class _FightPageState extends State<FightPage> {
           }
           return false;
         });
-        _honorDamageBonus += (result == 1 ? 1 : 3);
+        _honorTokensSpentThisTurn += result;
+        _honorDamageBonus = _honorTokensSpentThisTurn >= 2 ? 3 : 1;
       });
       final targetName = _phase == CombatPhase.hero
           ? widget.adventure.hero.label
           : enemy.label;
-      widget.adventure.log('[TOKEN] $targetName spent $result Honor token(s) for +${result == 1 ? 1 : 3} damage.');
+      final addedBonus = _honorTokensSpentThisTurn >= 2 ? 3 : 1;
+      widget.adventure.log('[TOKEN] $targetName spent $result Honor token(s) (Total spent this turn: $_honorTokensSpentThisTurn for +$addedBonus damage).');
       widget.onChanged();
     }
   }
@@ -3547,6 +3774,12 @@ class _FightPageState extends State<FightPage> {
     return enemy.alterations.any((t) => _isEvasiveToken(t));
   }
 
+  bool get _hasActiveFlightOnMinionDefender {
+    if (_flightRollResolved) return false;
+    if (_phase != CombatPhase.hero) return false;
+    return enemy.alterations.any((t) => _isFlightToken(t));
+  }
+
   Future<void> _triggerHeroEvasiveAttempt() async {
     final rule =
         TokenCatalogRepository.byLabel('Evasive') ??
@@ -3606,8 +3839,9 @@ class _FightPageState extends State<FightPage> {
   }
 
   Future<bool> _checkAndTriggerEvasivePopin() async {
-    if (_evasivePopinTriggered || _evasiveRollResolved || !mounted)
+    if (_evasivePopinTriggered || _evasiveRollResolved || !mounted) {
       return false;
+    }
     if (_phase != CombatPhase.hero) return false;
 
     final rule =
@@ -3620,8 +3854,9 @@ class _FightPageState extends State<FightPage> {
         .length;
     if (currentEvasiveCount <= 0) return false;
 
+    final currentEffectiveAttack = _battleAttackValue + _battleAttackModifier;
     final effectiveDefense = _isDefenderStunned ? 0 : _battleDefenseValue;
-    final netDamage = max(0, _battleAttackValue - effectiveDefense);
+    final netDamage = max(0, currentEffectiveAttack - effectiveDefense);
     final willKill = (enemy.health - netDamage) <= 0;
     final isMajorDamage = netDamage >= 9;
     if (!willKill && !isMajorDamage) return false;
@@ -3791,8 +4026,9 @@ class _FightPageState extends State<FightPage> {
   }
 
   Future<bool> _checkAndTriggerAgilityPopinOnEnemy() async {
-    if (_agilityPopinTriggered || _agilityRollResolved || !mounted)
+    if (_agilityPopinTriggered || _agilityRollResolved || !mounted) {
       return false;
+    }
     if (_phase != CombatPhase.hero) return false;
 
     final rule =
@@ -3805,8 +4041,9 @@ class _FightPageState extends State<FightPage> {
         .length;
     if (currentAgilityCount <= 0) return false;
 
+    final currentEffectiveAttack = _battleAttackValue + _battleAttackModifier;
     final effectiveDefense = _isDefenderStunned ? 0 : _battleDefenseValue;
-    final netDamage = max(0, _battleAttackValue - effectiveDefense);
+    final netDamage = max(0, currentEffectiveAttack - effectiveDefense);
     if (netDamage <= 0) return false;
 
     _agilityPopinTriggered = true;
@@ -4064,6 +4301,10 @@ class _FightPageState extends State<FightPage> {
     _minionEvasiveAvoided = false;
     _evasivePopinTriggered = false;
     _evasiveRollResolved = false;
+    _flightAvoided = false;
+    _flightUndefendable = false;
+    _flightPopinTriggered = false;
+    _flightRollResolved = false;
     _heroAgilityActive = false;
     _heroAgilitySuccesses = 0;
     _heroAgilityDamagePrevented = 0;
@@ -4077,6 +4318,7 @@ class _FightPageState extends State<FightPage> {
     _preyUsedCount = 0;
     _preyBonus = 0;
     _honorDamageBonus = 0;
+    _honorTokensSpentThisTurn = 0;
     _ninjitsuDamageBonus = 0;
     _ninjitsuUndefendable = false;
     _minionNinjitsuRolled = false;
@@ -5353,11 +5595,15 @@ class _FightPageState extends State<FightPage> {
     if (!_isBattlePhase) {
       return;
     }
+    
+    // AI heuristics for auto-triggering defensive tokens
+    final currentEffectiveAttack = _battleAttackValue + _battleAttackModifier;
+    
     if (_phase == CombatPhase.hero &&
         !_isDefenderStunned &&
         _hasActiveEvasiveOnMinionDefender) {
       final effectiveDefense = _battleDefenseValue;
-      final netDamage = max(0, _battleAttackValue - effectiveDefense);
+      final netDamage = max(0, currentEffectiveAttack - effectiveDefense);
       final willKill = (enemy.health - netDamage) <= 0;
       final isMajorDamage = netDamage >= 9;
       if (willKill || isMajorDamage) {
@@ -5366,9 +5612,23 @@ class _FightPageState extends State<FightPage> {
     }
     if (_phase == CombatPhase.hero &&
         !_isDefenderStunned &&
+        !_minionEvasiveAvoided &&
+        _hasActiveFlightOnMinionDefender) {
+      final effectiveDefense = _battleDefenseValue;
+      final netDamage = max(0, currentEffectiveAttack - effectiveDefense);
+      final willKill = (enemy.health - netDamage) <= 0;
+      final isMajorDamage = netDamage >= 6;
+      if (willKill || isMajorDamage) {
+        await _checkAndTriggerFlightPopinOnEnemy();
+      }
+    }
+    if (_phase == CombatPhase.hero &&
+        !_isDefenderStunned &&
+        !_minionEvasiveAvoided &&
+        !_flightAvoided &&
         _hasActiveAgilityOnMinionDefender) {
       final effectiveDefense = _battleDefenseValue;
-      final netDamage = max(0, _battleAttackValue - effectiveDefense);
+      final netDamage = max(0, currentEffectiveAttack - effectiveDefense);
       if (netDamage > 0) {
         await _checkAndTriggerAgilityPopinOnEnemy();
       }
@@ -6276,7 +6536,7 @@ class _FightPageState extends State<FightPage> {
       }
       final l = rule.label.toLowerCase();
       final isCoal = l == 'coal' || l == 'charbon';
-      final isUnitary = !isRollPhase && !isCoal;
+      final isUnitary = !isRollPhase && !isCoal && !l.contains('cosmic flare') && !l.contains('lueur cosmique');
       if (!isUnitary && processedLabels.contains(rule.label)) {
         continue;
       }
@@ -6306,7 +6566,14 @@ class _FightPageState extends State<FightPage> {
           tokenLabel.toLowerCase() == 'agilite' ||
           tokenLabel.toLowerCase() == 'prey' ||
           tokenLabel.toLowerCase() == 'proie' ||
-          tokenLabel.toLowerCase() == 'riposte') {
+          tokenLabel.toLowerCase() == 'riposte' ||
+          l == 'flight' ||
+          l == 'vol' ||
+          l == 'honor' ||
+          l == 'honneur' ||
+          l.contains('guard break') ||
+          l.contains('brisegarde') ||
+          l.contains('brise garde')) {
         continue;
       }
       if (l.contains('delayed poison') ||
@@ -6363,6 +6630,10 @@ class _FightPageState extends State<FightPage> {
       final isInfluence = l == 'influence';
       final isRealityWarp = _isRealityWarpToken(l);
       final isShame = _isShameToken(l);
+      final isAccuracy =
+          l.contains('accuracy') ||
+          l.contains('précision') ||
+          l.contains('precision');
       final isWither =
           l.contains('wither') ||
           l.contains('flétrissement') ||
@@ -6388,6 +6659,7 @@ class _FightPageState extends State<FightPage> {
           isInfluence ||
           isRealityWarp ||
           isShame ||
+          isAccuracy ||
           isWither;
 
       if (!isRollPhase) {
@@ -6451,6 +6723,7 @@ class _FightPageState extends State<FightPage> {
           tokenKey == 'knockdown' ||
           tokenKey == 'aterre' ||
           tokenKey == 'àterre';
+      final isCosmicFlare = tokenKey == 'cosmicflare' || tokenKey == 'lueurcosmique';
 
       if (isBleed && unresolvedBleeds <= 0) {
         continue;
@@ -6480,7 +6753,7 @@ class _FightPageState extends State<FightPage> {
                 ? tokens
                       .where((t) => _normalizeTokenKey(t) == 'influence')
                       .length
-                : (isUnitary
+                : ((isUnitary && !isCosmicFlare)
                       ? 1
                       : (isBleed
                             ? unresolvedBleeds
@@ -6527,13 +6800,18 @@ class _FightPageState extends State<FightPage> {
         }
       }
 
+      int? displayHp = runningHp;
+      if (isCosmicFlare && !isRollPhase) {
+        displayHp = targetName == widget.adventure.hero.label ? enemy.health : widget.adventure.health;
+      }
+
       final result = await TokenAnimationDialog.show(
         context,
         rule: rule,
         initialCount: initialCount,
         targetName: targetName,
         isMinion: targetName != widget.adventure.hero.label,
-        currentHp: runningHp,
+        currentHp: displayHp,
         currentCp: runningCp,
         customMessage: customMessage,
         customMessageWidget: customMessageWidget,
@@ -6599,16 +6877,16 @@ class _FightPageState extends State<FightPage> {
       } else if (l.contains('cosmic flare') || l.contains('lueur cosmique')) {
         setState(() {
           if (targetName == widget.adventure.hero.label) {
-            enemy.health = max(0, enemy.health - initialCount);
+            enemy.health = max(0, enemy.health - (result?.spentCount ?? initialCount));
             widget.adventure.log(
-              '[TOKEN] Cosmic Flare: $targetName deals $initialCount damage to ${enemy.label}.',
+              '[TOKEN] Cosmic Flare: $targetName deals ${result?.spentCount ?? initialCount} damage to ${enemy.label}.',
             );
           } else {
             widget.adventure.setHeroHealth(
-              widget.adventure.health - initialCount,
+              widget.adventure.health - (result?.spentCount ?? initialCount),
             );
             widget.adventure.log(
-              '[TOKEN] Cosmic Flare: $targetName deals $initialCount damage to ${widget.adventure.hero.label}.',
+              '[TOKEN] Cosmic Flare: $targetName deals ${result?.spentCount ?? initialCount} damage to ${widget.adventure.hero.label}.',
             );
           }
           widget.onChanged();
@@ -6682,6 +6960,49 @@ class _FightPageState extends State<FightPage> {
           l.contains('sac à malice') ||
           l.contains('sac a malice')) {
         final r = result?.dieRoll;
+        String finalTarget = targetName;
+        if (result?.customAction == 'receive_2_undefendable') {
+          final chosen = await showDialog<String>(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return AlertDialog(
+                backgroundColor: const Color(0xff1f1a2e),
+                title: const Text('Choose Target', style: TextStyle(color: Colors.white)),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff8f43ff),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 40),
+                      ),
+                      onPressed: () => Navigator.of(context).pop(widget.adventure.hero.label),
+                      child: Text(widget.adventure.hero.label),
+                    ),
+                    const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade700,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 40),
+                          ),
+                          onPressed: () => Navigator.of(context).pop(enemy.label),
+                          child: Text(enemy.label),
+                        ),
+                      ),
+                    ],
+                ),
+              );
+            },
+          );
+          if (chosen != null) {
+            finalTarget = chosen;
+          }
+        }
         if (r != null || result?.customAction != null) {
           setState(() {
             if (r == 1) {
@@ -6758,17 +7079,17 @@ class _FightPageState extends State<FightPage> {
                 );
               } else if (result?.customAction == 'receive_2_undefendable') {
                 deltaHp = -2;
-                if (targetName == widget.adventure.hero.label) {
+                if (finalTarget == widget.adventure.hero.label) {
                   widget.adventure.setHeroHealth(widget.adventure.health - 2);
                 } else {
                   final targetEnemy = widget.adventure.enemies.firstWhere(
-                    (e) => e.label == targetName,
+                    (e) => e.label == finalTarget,
                     orElse: () => enemy,
                   );
                   targetEnemy.health = max(0, targetEnemy.health - 2);
                 }
                 widget.adventure.log(
-                  '[TOKEN] Loki chose to deal 2 undefendable damage to $targetName (Bag of Tricks).',
+                  '[TOKEN] Loki chose to deal 2 undefendable damage to $finalTarget (Bag of Tricks).',
                 );
               }
             }
@@ -10736,7 +11057,7 @@ class _MultiRollTokenActiveRowState extends State<_MultiRollTokenActiveRow> {
   @override
   Widget build(BuildContext context) {
     final canUse = widget.onUse != null;
-    final isPurple = widget.color.value == 0xff8f43ff;
+    final isPurple = widget.color.toARGB32() == 0xff8f43ff;
     final bgColor = isPurple
         ? const Color(0xff1f1a2e)
         : const Color(0xff132b1e);
@@ -10919,10 +11240,15 @@ class _MultiRollTokenActiveRowState extends State<_MultiRollTokenActiveRow> {
 }
 
 class _ActiveTokenBadge extends StatelessWidget {
-  const _ActiveTokenBadge({required this.tokenLabel, required this.tokenAsset});
+  const _ActiveTokenBadge({
+    required this.tokenLabel,
+    required this.tokenAsset,
+    this.activeText = 'Actif',
+  });
 
   final String tokenLabel;
   final String tokenAsset;
+  final String activeText;
 
   @override
   Widget build(BuildContext context) {
@@ -10954,18 +11280,18 @@ class _ActiveTokenBadge extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(color: Colors.greenAccent, width: 1),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.check_circle,
                       size: 12,
                       color: Colors.greenAccent,
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
-                      'Actif',
-                      style: TextStyle(
+                      activeText,
+                      style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: Colors.greenAccent,
@@ -11023,11 +11349,18 @@ class CombatAiChatDock extends StatelessWidget {
     this.showBlindButton = false,
     this.onBlindPressed,
     this.showEvasiveAttackCover = false,
+    this.showFlightAttackCover = false,
     this.showParlayAttackCover = false,
     this.showWebbedAttackCover = false,
     this.heroEvasiveCount = 0,
     this.heroEvasiveAvoided = false,
     this.onUseHeroEvasive,
+    this.heroFlightCount = 0,
+    this.minionFlightCount = 0,
+    this.flightAvoided = false,
+    this.flightUndefendable = false,
+    this.onUseHeroFlight,
+    this.onUseMinionFlight,
     this.heroAgilityCount = 0,
     this.heroAgilityActive = false,
     this.heroAgilitySuccesses = 0,
@@ -11206,11 +11539,18 @@ class CombatAiChatDock extends StatelessWidget {
   final bool showBlindButton;
   final VoidCallback? onBlindPressed;
   final bool showEvasiveAttackCover;
+  final bool showFlightAttackCover;
   final bool showParlayAttackCover;
   final bool showWebbedAttackCover;
   final int heroEvasiveCount;
   final bool heroEvasiveAvoided;
   final VoidCallback? onUseHeroEvasive;
+  final int heroFlightCount;
+  final int minionFlightCount;
+  final bool flightAvoided;
+  final bool flightUndefendable;
+  final VoidCallback? onUseHeroFlight;
+  final VoidCallback? onUseMinionFlight;
   final int heroAgilityCount;
   final bool heroAgilityActive;
   final int heroAgilitySuccesses;
@@ -11264,7 +11604,7 @@ class CombatAiChatDock extends StatelessWidget {
       if (cleanHeroTokens.isNotEmpty) 'Hero: ${cleanHeroTokens.join(', ')}',
       if (cleanMinionTokens.isNotEmpty)
         'Minion: ${cleanMinionTokens.join(', ')}',
-      if (blindingLightInterpretation != null) blindingLightInterpretation,
+      ?blindingLightInterpretation,
       if (returnDamage > 0)
         returnDamageUndefendable
             ? 'Returns $returnDamage undefendable damage'
@@ -11346,6 +11686,9 @@ class CombatAiChatDock extends StatelessWidget {
     final bool showHeroEvasiveRow =
         phase == CombatPhase.minionAttack &&
         (heroEvasiveCount > 0 || heroEvasiveAvoided);
+    final bool showHeroFlightRow =
+        (phase == CombatPhase.hero || phase == CombatPhase.minionAttack) &&
+        (heroFlightCount > 0) && !(flightAvoided || flightUndefendable);
     final bool showHeroAgilityRow =
         phase == CombatPhase.minionAttack &&
         (heroAgilityCount > 0 || heroAgilityActive);
@@ -11445,7 +11788,7 @@ class CombatAiChatDock extends StatelessWidget {
                         phase == CombatPhase.minionAttack) &&
                     influenceRollReduction > 0 &&
                     t.toLowerCase() == 'influence') {
-                  return '${t} (-$influenceRollReduction)_active';
+                  return '$t (-$influenceRollReduction)_active';
                 }
                 return t;
               }).toList(),
@@ -11462,7 +11805,7 @@ class CombatAiChatDock extends StatelessWidget {
                         phase == CombatPhase.minionAttack) &&
                     influenceRollReduction > 0 &&
                     t.toLowerCase() == 'influence') {
-                  return '${t} (-$influenceRollReduction)_active';
+                  return '$t (-$influenceRollReduction)_active';
                 }
                 return t;
               }).toList(),
@@ -12184,6 +12527,95 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
               ),
             ],
+            if (showHeroFlightRow) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: (flightAvoided || flightUndefendable)
+                      ? const Color(0xff132b1e)
+                      : const Color(0xff1f1a2e),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: (flightAvoided || flightUndefendable)
+                        ? Colors.greenAccent.withValues(alpha: 0.6)
+                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _ActionRowLabel(
+                      tokenLabel: 'Flight',
+                      tokenAsset: 'assets/token/Flight.png',
+                      text: 'Flight (x$heroFlightCount)',
+                    ),
+                    const SizedBox(width: 8),
+                    if (flightAvoided || flightUndefendable)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.greenAccent,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.check_circle,
+                              size: 12,
+                              color: Colors.greenAccent,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              flightAvoided ? 'Avoided (0 DMG)' : 'Undefendable',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.greenAccent,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xff8f43ff),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: onUseHeroFlight,
+                        child: const Text(
+                          'Use',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             if (showHeroAgilityRow) ...[
               const SizedBox(height: 8),
               Container(
@@ -12387,23 +12819,60 @@ class CombatAiChatDock extends StatelessWidget {
                 isUsed: constrictUsed,
               ),
             ],
-            if (realityWarpActive)
+            if (critUsed || (phase == CombatPhase.minionAttack && attackerCritCount > 0 && attackValue > 0))
+              const _ActiveTokenBadge(
+                tokenLabel: 'Crit',
+                tokenAsset: 'assets/token/crit.png',
+                activeText: 'Actif (+ 4 DMG)',
+              ),
+            for (final val in usedDamageBonus)
               _ActiveTokenBadge(
+                tokenLabel: 'Damage bonus $val',
+                tokenAsset: 'assets/token/bonus-atk-$val.webp',
+                activeText: 'Actif (+$val DMG)',
+              ),
+            if (phase == CombatPhase.minionAttack && attackValue > 0)
+              for (final val in availableDamageBonus)
+                _ActiveTokenBadge(
+                  tokenLabel: 'Damage bonus $val',
+                  tokenAsset: 'assets/token/bonus-atk-$val.webp',
+                  activeText: 'Actif (+$val DMG)',
+                ),
+            if (honorDamageBonus > 0)
+              _ActiveTokenBadge(
+                tokenLabel: 'Honor',
+                tokenAsset: 'assets/token/honor.png',
+                activeText: 'Actif (+$honorDamageBonus DMG)',
+              ),
+            if (ninjitsuDamageBonus > 0 || ninjitsuUndefendable)
+              _ActiveTokenBadge(
+                tokenLabel: 'Ninjitsu',
+                tokenAsset: 'assets/token/ninjitsu.png',
+                activeText: ninjitsuUndefendable ? 'Actif (Undefendable)' : 'Actif (+$ninjitsuDamageBonus DMG)',
+              ),
+            if (realityWarpActive)
+              const _ActiveTokenBadge(
                 tokenLabel: 'Reality Warp',
                 tokenAsset: 'assets/token/reality-warp.webp',
               ),
             if (silenceActive)
-              _ActiveTokenBadge(
+              const _ActiveTokenBadge(
                 tokenLabel: 'Silence',
                 tokenAsset: 'assets/token/Silence.webp',
               ),
             if (webbedActive)
-              _ActiveTokenBadge(
+              const _ActiveTokenBadge(
                 tokenLabel: 'Webbed',
                 tokenAsset: 'assets/token/Webbed.webp',
               ),
-            if (showBlindingLightRow)
+            if (flightAvoided || flightUndefendable)
               _ActiveTokenBadge(
+                tokenLabel: 'Flight',
+                tokenAsset: 'assets/token/Flight.png',
+                activeText: flightAvoided ? 'Actif (Avoided)' : 'Actif (Undefendable)',
+              ),
+            if (showBlindingLightRow)
+              const _ActiveTokenBadge(
                 tokenLabel: 'Blinding Light',
                 tokenAsset: 'assets/token/Blinding Light.webp',
               ),
@@ -12879,19 +13348,15 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
               ),
             ],
-            if (honorDamageBonus > 0 || (honorCount > 0 && phase == CombatPhase.hero)) ...[
+            if (honorCount > 0 && phase == CombatPhase.hero && honorDamageBonus == 0) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: honorDamageBonus > 0
-                      ? const Color(0xff132b1e)
-                      : const Color(0xff1f1a2e),
+                  color: const Color(0xff1f1a2e),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: honorDamageBonus > 0
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
-                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                    color: const Color(0xff8f43ff).withValues(alpha: 0.6),
                     width: 1.2,
                   ),
                 ),
@@ -12899,68 +13364,33 @@ class CombatAiChatDock extends StatelessWidget {
                   children: [
                     _ActionRowLabel(
                       tokenLabel: 'Honor',
-                      tokenAsset: 'assets/token/honor.webp',
-                      text: 'Honneur',
+                      tokenAsset: 'assets/token/honor.png',
+                      text: 'Honor',
                     ),
                     const Spacer(),
-                    if (honorDamageBonus > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.greenAccent,
-                            width: 1,
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: onUseHonor != null
+                              ? const Color(0xff8f43ff)
+                              : Colors.grey.shade700,
+                          foregroundColor: onUseHonor != null
+                              ? Colors.white
+                              : Colors.white38,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
+                          minimumSize: const Size(0, 32),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Colors.greenAccent,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Active (+$honorDamageBonus DMG)',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.greenAccent,
-                              ),
-                            ),
-                          ],
-                        ),
+                        onPressed: onUseHonor,
+                        child: const Text('Use', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
-                    if (honorCount > 0 && phase == CombatPhase.hero)
-                      Padding(
-                        padding: EdgeInsets.only(left: honorDamageBonus > 0 ? 8.0 : 0.0),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: onUseHonor != null
-                                ? const Color(0xff8f43ff)
-                                : Colors.grey.shade700,
-                            foregroundColor: onUseHonor != null
-                                ? Colors.white
-                                : Colors.white38,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            minimumSize: const Size(0, 32),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          onPressed: onUseHonor,
-                          child: const Text('Use', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
+                    ),
                   ],
                 ),
               ),
@@ -13177,7 +13607,7 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
               ),
             ],
-            if (attackerCritCount > 0) ...[
+            if (attackerCritCount > 0 && !(critUsed || (phase == CombatPhase.minionAttack && attackValue > 0))) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -13272,6 +13702,9 @@ class CombatAiChatDock extends StatelessWidget {
                 final unallocatedUsed = List.of(usedDamageBonus);
                 for (final val in availableDamageBonus) {
                   final isUsed = unallocatedUsed.remove(val);
+                  final isAutoApplied = phase == CombatPhase.minionAttack && attackValue > 0;
+                  if (isUsed || isAutoApplied) continue;
+                  
                   final canUseThis =
                       !isUsed &&
                       phase == CombatPhase.hero &&
@@ -13508,6 +13941,7 @@ class CombatAiChatDock extends StatelessWidget {
                         )
                       : (showParlayAttackCover ||
                             showShadowsAttackCover ||
+                            showFlightAttackCover ||
                             showEvasiveAttackCover)
                       ? SizedBox(
                           height: 52,
@@ -13532,6 +13966,8 @@ class CombatAiChatDock extends StatelessWidget {
                                       ? 'assets/token/Parlay.png'
                                       : showShadowsAttackCover
                                       ? 'assets/token/Shadows.png'
+                                      : showFlightAttackCover
+                                      ? 'assets/token/Flight.png'
                                       : (isAgilityAvoided
                                             ? 'assets/token/Agility.webp'
                                             : 'assets/token/Evasive.png'),
@@ -13542,6 +13978,8 @@ class CombatAiChatDock extends StatelessWidget {
                                         ? Icons.block
                                         : showShadowsAttackCover
                                         ? Icons.cloud
+                                        : showFlightAttackCover
+                                        ? Icons.air
                                         : Icons.air,
                                     size: 24,
                                     color: Colors.white,
@@ -13554,6 +13992,8 @@ class CombatAiChatDock extends StatelessWidget {
                                         ? 'PARLAY: NO DAMAGE DEALT'
                                         : showShadowsAttackCover
                                         ? 'ATTACK AVOIDED (SHADOWS)'
+                                        : showFlightAttackCover
+                                        ? 'ATTACK AVOIDED (FLIGHT)'
                                         : (isAgilityAvoided
                                               ? 'ATTACK AVOIDED (AGILITY)'
                                               : 'ATTACK AVOIDED (EVASIVE)'),
@@ -13594,8 +14034,8 @@ class CombatAiChatDock extends StatelessWidget {
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: defenseColor,
-                              disabledBackgroundColor: defenseColor.withOpacity(
-                                0.3,
+                              disabledBackgroundColor: defenseColor.withValues(
+                                alpha: 0.3,
                               ),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
@@ -13624,12 +14064,12 @@ class CombatAiChatDock extends StatelessWidget {
                             ),
                           ),
                         )
-                      : (showStunCover || showWebbedAttackCover)
+                      : (showStunCover || showWebbedAttackCover || flightUndefendable)
                       ? SizedBox(
                           height: 52,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: showWebbedAttackCover
+                              color: (showWebbedAttackCover || flightUndefendable)
                                   ? Colors.blue.shade900
                                   : defenseColor,
                               borderRadius: BorderRadius.circular(10),
@@ -13646,11 +14086,13 @@ class CombatAiChatDock extends StatelessWidget {
                                 Image.asset(
                                   showWebbedAttackCover
                                       ? 'assets/token/Webbed.webp'
-                                      : 'assets/token/stun.png',
+                                      : flightUndefendable
+                                          ? 'assets/token/Flight.png'
+                                          : 'assets/token/stun.png',
                                   width: 24,
                                   height: 24,
                                   errorBuilder: (ctx, err, stack) => Icon(
-                                    showWebbedAttackCover
+                                    (showWebbedAttackCover || flightUndefendable)
                                         ? Icons.pest_control
                                         : Icons.flash_on,
                                     size: 20,
@@ -13662,7 +14104,9 @@ class CombatAiChatDock extends StatelessWidget {
                                   child: Text(
                                     showWebbedAttackCover
                                         ? 'ATTACK UNDEFENDABLE (WEBBED)'
-                                        : 'Stun',
+                                        : flightUndefendable
+                                            ? 'ONLY CARDS'
+                                            : 'Stun',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
@@ -14159,12 +14603,10 @@ class _AiChatPortraitVitals extends StatelessWidget {
     this.tokens = const [],
     this.accent = const Color(0xff8f43ff),
     this.showTokens = false,
-    this.imageOnRight = false,
     this.onEditTokens,
     this.onTokensChanged,
     this.onTokenRemoved,
-    super.key,
-  });
+  }) : imageOnRight = false;
 
   final String asset;
   final Alignment alignment;
@@ -15205,7 +15647,7 @@ class MinionAiPanel extends StatelessWidget {
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: enemy.rank.color,
-                    disabledBackgroundColor: enemy.rank.color.withOpacity(0.3),
+                    disabledBackgroundColor: enemy.rank.color.withValues(alpha: 0.3),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -15759,7 +16201,7 @@ String _minionAttackAiMessage(
         '$parlayPrefix'
         '$blPrefix'
         '${hasBarbedVine ? 'Afflicted by Barbed Vine: I will stop rolling as soon as an attack is validated to avoid counter damage.\n' : ''}'
-        '${constrictPrefix}'
+        '$constrictPrefix'
         'First target: ${hasParlay ? 'an attack with status tokens (positive/negative).' : 'the smallest valid symbol attack.'}';
   }
 
@@ -16458,7 +16900,7 @@ class _ExtraRollAttackSummary extends StatelessWidget {
       ExtraRollFace.red => DieSymbol.red,
       ExtraRollFace.any => DieSymbol.white,
     };
-    return _ResultLine(symbol: symbol, children: badges, align: align);
+    return _ResultLine(symbol: symbol, align: align, children: badges);
   }
 }
 
@@ -18559,7 +19001,6 @@ class _CombatantVersusHalf extends StatelessWidget {
     this.portraitScale = 1,
     this.imageOnRight = false,
     this.infiniteCp = false,
-    super.key,
   });
 
   final String title;
@@ -20441,7 +20882,7 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xff8f43ff).withOpacity(0.2),
+                      color: const Color(0xff8f43ff).withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -20483,7 +20924,7 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.04),
+                  color: Colors.white.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.white12),
                 ),
@@ -20510,7 +20951,7 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                             color: const Color(0xff2a2240),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: const Color(0xff8f43ff).withOpacity(0.6),
+                              color: const Color(0xff8f43ff).withValues(alpha: 0.6),
                             ),
                           ),
                           child: Row(
@@ -20586,7 +21027,7 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                             color: const Color(0xff251d38),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: const Color(0xff8f43ff).withOpacity(0.3),
+                              color: const Color(0xff8f43ff).withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -20615,7 +21056,7 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                                   width: 28,
                                   height: 28,
                                   fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) => const Icon(
+                                  errorBuilder: (_, _, _) => const Icon(
                                     Icons.stars,
                                     size: 24,
                                     color: Color(0xff8f43ff),
@@ -20807,6 +21248,8 @@ class TokenAnimationDialog extends StatefulWidget {
     );
   }
 
+  static int computeCosmicFlareDamage(int count) => count;
+
   @override
   State<TokenAnimationDialog> createState() => _TokenAnimationDialogState();
 }
@@ -20817,6 +21260,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
   bool _editing = false;
   bool _dontShowAgain = false;
   int? _blindDieRoll;
+  int? _secondDieRoll;
   int? _firstAgilityRoll;
   int? _firstBleedRoll;
   final List<int> _previousRolls = [];
@@ -20838,7 +21282,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
         l.contains('poison différé')) {
       return -count * 3;
     }
-    if (l.contains('poison')) {
+    if (l.contains('poison') || l.contains('cosmic flare') || l.contains('lueur cosmique')) {
       return -count;
     }
     if (l == 'parasite') {
@@ -20877,8 +21321,9 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
       if (_blindDieRoll != null && _blindDieRoll! <= 3) return -3;
       if (_blindDieRoll == null &&
           widget.customMessage != null &&
-          widget.customMessage!.contains('blows up'))
+          widget.customMessage!.contains('blows up')) {
         return -3;
+      }
     }
     return 0;
   }
@@ -20918,6 +21363,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
             l.contains('éblouissement') ||
             l.contains('eblouissement'));
     final isEvasive = l.contains('evasive') || l.contains('evitement');
+    final isFlight = l.contains('flight') || l.contains('vol');
     final isAgility =
         l.contains('agility') || l.contains('agilité') || l.contains('agilite');
     final isTimeBomb1 =
@@ -20962,6 +21408,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
     final isDieRollToken =
         (widget.customMessage == null) &&
         (isBlind ||
+            isFlight ||
             isEvasive ||
             isAgility ||
             isTimeBomb1 ||
@@ -21069,7 +21516,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                         color: const Color(0xff2a2240),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xff8f43ff).withOpacity(0.5),
+                            color: const Color(0xff8f43ff).withValues(alpha: 0.5),
                             blurRadius: 24,
                             spreadRadius: 4,
                           ),
@@ -21095,7 +21542,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                         color: const Color(0xff2a2240),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xff8f43ff).withOpacity(0.5),
+                            color: const Color(0xff8f43ff).withValues(alpha: 0.5),
                             blurRadius: 24,
                             spreadRadius: 4,
                           ),
@@ -21124,7 +21571,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xff8f43ff).withOpacity(0.9),
+                        color: const Color(0xff8f43ff).withValues(alpha: 0.9),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -21134,7 +21581,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
+                      color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -21160,7 +21607,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                         color: const Color(0xff251d38),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: const Color(0xff8f43ff).withOpacity(0.5),
+                          color: const Color(0xff8f43ff).withValues(alpha: 0.5),
                         ),
                       ),
                       child: Column(
@@ -21206,6 +21653,8 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                 ? 'Wound Roll (1 D6)'
                                 : isTimeBomb1
                                 ? 'Time Bomb 1 (1 D6)'
+                                : isFlight
+                                ? 'Flight Roll (2 D6)'
                                 : 'Time Bomb 2 (1 D6)',
                             style: const TextStyle(
                               fontSize: 15,
@@ -21214,19 +21663,53 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          DieTile(
-                            die: GameDie(id: 99)
-                              ..rollTick = _blindRollTick
-                              ..settled = true
-                              ..value = _blindDieRoll,
-                            onTap: () {
-                              setState(() {
-                                _blindRollTick++;
-                                _blindDieRoll = _random.nextInt(6) + 1;
-                                _manualEditBlind = false;
-                              });
-                            },
-                          ),
+                          if (isFlight)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                DieTile(
+                                  die: GameDie(id: 99)
+                                    ..rollTick = _blindRollTick
+                                    ..settled = true
+                                    ..value = _blindDieRoll,
+                                  onTap: () {
+                                    setState(() {
+                                      _blindRollTick++;
+                                      _blindDieRoll = _random.nextInt(6) + 1;
+                                      _manualEditBlind = false;
+                                    });
+                                  },
+                                ),
+                                const SizedBox(width: 16),
+                                DieTile(
+                                  die: GameDie(id: 100)
+                                    ..rollTick = _blindRollTick
+                                    ..settled = true
+                                    ..value = _secondDieRoll,
+                                  onTap: () {
+                                    setState(() {
+                                      _blindRollTick++;
+                                      _secondDieRoll = _random.nextInt(6) + 1;
+                                      _manualEditBlind = false;
+                                    });
+                                  },
+                                ),
+                              ],
+                            )
+                          else
+                            DieTile(
+                              die: GameDie(id: 99)
+                                ..rollTick = _blindRollTick
+                                ..settled = true
+                                ..value = _blindDieRoll,
+                              onTap: () {
+                                setState(() {
+                                  _blindRollTick++;
+                                  _blindDieRoll = _random.nextInt(6) + 1;
+                                  _manualEditBlind = false;
+                                });
+                              },
+                            ),
                           const SizedBox(height: 8),
                           Wrap(
                             alignment: WrapAlignment.center,
@@ -21247,6 +21730,9 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                     setState(() {
                                       _blindRollTick++;
                                       _blindDieRoll = _random.nextInt(6) + 1;
+                                      if (isFlight) {
+                                        _secondDieRoll = _random.nextInt(6) + 1;
+                                      }
                                       _manualEditBlind = false;
                                     });
                                   },
@@ -21273,6 +21759,9 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                     setState(() {
                                       _blindRollTick++;
                                       _blindDieRoll = _random.nextInt(6) + 1;
+                                      if (isFlight) {
+                                        _secondDieRoll = _random.nextInt(6) + 1;
+                                      }
                                       _manualEditBlind = false;
                                     });
                                   },
@@ -21545,6 +22034,10 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                     ? (_blindDieRoll! <= 3
                                           ? 'Wound roll: $_blindDieRoll -> Failed! (Token remains)'
                                           : 'Wound roll: $_blindDieRoll -> Success! (Token removed)')
+                                    : isFlight
+                                    ? ((_blindDieRoll == 6 || _secondDieRoll == 6)
+                                          ? 'Flight roll: [$_blindDieRoll, $_secondDieRoll] -> Success!'
+                                          : 'Flight roll: [$_blindDieRoll, $_secondDieRoll] -> Failed.')
                                     : isTimeBomb1
                                     ? (_blindDieRoll! <= 5
                                           ? 'Time bomb roll: $_blindDieRoll -> Transforms into Time Bomb 2!'
@@ -21656,7 +22149,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                         color: const Color(0xff251d38),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: const Color(0xff8f43ff).withOpacity(0.4),
+                          color: const Color(0xff8f43ff).withValues(alpha: 0.4),
                         ),
                       ),
                       child: Column(
@@ -22281,7 +22774,6 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                 finalCount = 0;
                               }
                             } else if (isBagOfTricks ||
-                                isChargedGem ||
                                 isGuardBreak ||
                                 isCosmicFlare) {
                               finalCount = (_count - 1).clamp(
@@ -22293,8 +22785,8 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                               TokenAnimationResult(
                                 count: finalCount,
                                 dontShowAgain: _dontShowAgain,
-                                dieRoll: _blindDieRoll,
-                                spentCount: _spentCount,
+                                dieRoll: isFlight ? ((_blindDieRoll == 6 || _secondDieRoll == 6) ? 6 : 0) : _blindDieRoll,
+                                spentCount: isCosmicFlare ? _count : _spentCount,
                                 agilitySuccessCount: agilitySuccessCount,
                                 allDiceRolls: allDiceRolls,
                                 sneakAttackBonus:
@@ -22413,7 +22905,7 @@ class _NanobotDetonationDialogState extends State<_NanobotDetonationDialog> {
                 color: const Color(0xff251d38),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xff8f43ff).withOpacity(0.4),
+                  color: const Color(0xff8f43ff).withValues(alpha: 0.4),
                 ),
               ),
               child: Row(
@@ -22532,3 +23024,4 @@ class _NanobotDetonationDialogState extends State<_NanobotDetonationDialog> {
     );
   }
 }
+
