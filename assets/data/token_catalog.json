@@ -937,9 +937,28 @@
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Regenerate.png",
-      "description": "When you gain this token, place it on the side up. During their Upkeep Phase, a player with this token does the following based on which side is face-up: â€¢ Regenerate : Heal 2 and flip it to the side. â€¢ Regenerate : Heal 1 and remove this token. Additionally, if a player gains Regenerate while at Stack Limit, they may flip a [1 token] to the [2 token] side instead.",
+      "description": "When you gain this token, place it on the side up. During their Upkeep Phase, a player with this token does the following based on which side is face-up: • Regenerate : Heal 2 and flip it to the side. • Regenerate : Heal 1 and remove this token. Additionally, if a player gains Regenerate while at Stack Limit, they may flip a [1 token] to the [2 token] side instead.",
       "aliases": [
         "Regenerate"
+      ],
+      "appDetails": "Géré automatiquement en phase Upkeep (2+ cumuls = +2 PV et retrait d'un cumul ; 1 cumul = +1 PV et retrait).",
+      "appAnimation": false,
+      "minionAllowed": true,
+      "editorVisible": true,
+      "persistence": "persistent"
+    },
+    {
+      "label": "Regenerate 2",
+      "frLabel": "Régénération 2",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/regenerate_2.webp",
+      "description": "When you gain this token, place it on the side up. During their Upkeep Phase, a player with this token does the following based on which side is face-up: • Regenerate : Heal 2 and flip it to the side. • Regenerate : Heal 1 and remove this token. Additionally, if a player gains Regenerate while at Stack Limit, they may flip a [1 token] to the [2 token] side instead.",
+      "aliases": [
+        "Regenerate 2"
       ],
       "appDetails": "Géré automatiquement en phase Upkeep (2+ cumuls = +2 PV et retrait d'un cumul ; 1 cumul = +1 PV et retrait).",
       "appAnimation": false,
@@ -1694,13 +1713,13 @@
     {
       "label": "Main du roi",
       "frLabel": "Main du roi",
-      "kind": "positive",
+      "kind": "unique",
       "maxStack": 99,
       "persistent": true,
       "removable": true,
       "appSupported": false,
-      "imageAsset": "assets/token/Gift.png",
-      "description": "Special support token.",
+      "imageAsset": "assets/token/main_du_roi.webp",
+      "description": "If a player rolls an Ultimate, the spent token allows the rolling of 1 d6. The value for success depends on which scenario is being played. A successful roll means that the player must re-roll one of the dice of their Ultimate.\nIf the character with one of these tokens fails to have a successful Offensive Roll Phase, it spends the token and rolls 1 d6. The value for success depends on which scenario is being played. A successful roll means that the character has an additional Offensive Roll Phase.",
       "aliases": [
         "King's Hand",
         "Main du roi"
