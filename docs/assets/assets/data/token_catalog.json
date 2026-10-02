@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 1,
   "tokens": [
     {
@@ -439,7 +439,7 @@
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Wellspring.png",
-      "description": "A player with this token may spend it during their Upkeep or Roll Phase & roll 1 die: gain ½ the value as Health (rounded up).",
+      "description": "A player with this token may spend it during their Upkeep or Roll Phase & roll 1 die: gain 1/2 the value as Health (rounded up).",
       "aliases": [
         "Source",
         "Wellspring",
@@ -460,7 +460,7 @@
       "removable": true,
       "appSupported": false,
       "imageAsset": "assets/token/Reload.png",
-      "description": "If a player concludes their Offensive Roll Phase with an Attack, they may spend this token. If spent, roll 1 die and add ½ the value as dmg (rounded up). Attack Modifier.",
+      "description": "If a player concludes their Offensive Roll Phase with an Attack, they may spend this token. If spent, roll 1 die and add 1/2 the value as dmg (rounded up). Attack Modifier.",
       "aliases": [
         "Recharge",
         "Reload"
@@ -480,7 +480,7 @@
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Back-Strike.png",
-      "description": "When a player with Back Strike has incoming damage as a result of an opponentâ€™s Offensive Roll Phase, they may choose to spend this token. If spent, roll 1 die. Then deal Â½ the value as dmg (rounded up) to that opponent.",
+      "description": "When a player with Back Strike has incoming damage as a result of an opponent's Offensive Roll Phase, they may choose to spend this token. If spent, roll 1 die. Then deal 1/2 the value as dmg (rounded up) to that opponent.",
       "aliases": [
         "Back Strike",
         "Riposte"
@@ -686,7 +686,7 @@
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Blinding-Light.png",
-      "description": "The next time a player afflicted with this token activates an Offensive Ability, they must remove this token and roll 1 die: On 1, their Offensive Ability fails to activate and has no effect of any kind. On 2–3, any dmg they would deal for the remainder of the Roll Phase is reduced by ½ (rounded up).",
+      "description": "The next time a player afflicted with this token activates an Offensive Ability, they must remove this token and roll 1 die: On 1, their Offensive Ability fails to activate and has no effect of any kind. On 2–3, any dmg they would deal for the remainder of the Roll Phase is reduced by 1/2 (rounded up).",
       "aliases": [
         "Blinding Light",
         "Lumière aveuglante",

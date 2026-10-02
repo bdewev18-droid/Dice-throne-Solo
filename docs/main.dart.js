@@ -54057,7 +54057,7 @@ r.push(new A.nK("Naraxus Battle",B.oH,i.a.x,h,h))
 r=A.b1y(A.Px(A.ix(A.aV(r,B.a4,B.i,B.n),!n,h),B.af,B.Qj,m),B.a14)
 n=$.ft().b
 m=n?" - Dev mode":""
-return A.qG(h,A.dp(B.aI,A.b([f,g,s,A.fk(!0,new A.ah(B.i4,A.aV(A.b([new A.dw(B.mB,h,h,new A.Pl(q,p,o,h),h),B.c3,r,B.Gv,new A.Yi("Version 1.3.265"+m,n,new A.aN4(),h)],l),B.k,B.i,B.n),h),B.U,!0)],l),B.L,B.ey,h),h,!0)}}
+return A.qG(h,A.dp(B.aI,A.b([f,g,s,A.fk(!0,new A.ah(B.i4,A.aV(A.b([new A.dw(B.mB,h,h,new A.Pl(q,p,o,h),h),B.c3,r,B.Gv,new A.Yi("Version 1.3.266"+m,n,new A.aN4(),h)],l),B.k,B.i,B.n),h),B.U,!0)],l),B.L,B.ey,h),h,!0)}}
 A.aN6.prototype={
 $0(){var s=this.a
 if(s.c!=null)s.I(new A.aN5(s))},
@@ -56476,73 +56476,83 @@ case 22:f2=e4?null:e9.c
 if(f2!=null&&f2<=2)d3.b=-3
 s=23
 break
-case 24:s=d5?25:27
+case 24:s=c==="regenerate 2"||c==="r\xe9g\xe9n\xe9ration 2"?25:27
 break
-case 25:f4=e4?null:e9.f
+case 25:d3.b=e3*2
+s=26
+break
+case 27:s=c==="regenerate"||c==="r\xe9g\xe9n\xe9ration"?28:30
+break
+case 28:d3.b=e3
+s=29
+break
+case 30:s=d5?31:33
+break
+case 31:f4=e4?null:e9.f
 if(f4==null)if((e4?null:e9.c)!=null){d8=e9.c
 d8.toString
 d8=A.b([d8],c7)
 f4=d8}else{d8=A.b([],c7)
 f4=d8}d3.b=-new A.t(f4,new A.aJ9(),A.z(f4).h("t<1>")).gq(0)
-s=26
-break
-case 27:s=d8&&k?28:30
-break
-case 28:d3.b=-1
-s=29
-break
-case 30:s=e1?31:33
-break
-case 31:d3.b=-e3
 s=32
 break
-case 33:s=d7?34:36
+case 33:s=d8&&k?34:36
 break
-case 34:f4=e4?null:e9.f
+case 34:d3.b=-1
+s=35
+break
+case 36:s=e1?37:39
+break
+case 37:d3.b=-e3
+s=38
+break
+case 39:s=d7?40:42
+break
+case 40:f4=e4?null:e9.f
 if(f4==null)if((e4?null:e9.c)!=null){d8=e9.c
 d8.toString
 d8=A.b([d8],c7)
 f4=d8}else{d8=A.b([],c7)
 f4=d8}d3.b=-new A.t(f4,new A.aJa(),A.z(f4).h("t<1>")).gq(0)*4
-s=35
+s=41
 break
-case 36:if(!A.aU(c,"cosmic flare",0))d8=A.aU(c,"lueur cosmique",0)
+case 42:if(!A.aU(c,"cosmic flare",0))d8=A.aU(c,"lueur cosmique",0)
 else d8=!0
-s=d8?37:39
-break
-case 37:new A.aJb(p,g6,e9,e3).$0()
-p.c.bN()
-s=38
-break
-case 39:d8=!0
-if(!A.aU(c,"charged gem",0))if(!A.aU(c,"gemme charg\xe9e",0))d8=A.aU(c,"gemme chargee",0)
-s=d8?40:42
-break
-case 40:f2=e4?null:e9.c
-if(f2!=null){new A.aJc(d3,p,f2,g6).$0()
-p.c.bN()}s=41
-break
-case 42:d8=!0
-if(!A.aU(c,"bag of tricks",0))if(!A.aU(c,"sac \xe0 malice",0))d8=A.aU(c,"sac a malice",0)
 s=d8?43:45
 break
-case 43:d8={}
+case 43:new A.aJb(p,g6,e9,e3).$0()
+p.c.bN()
+s=44
+break
+case 45:d8=!0
+if(!A.aU(c,"charged gem",0))if(!A.aU(c,"gemme charg\xe9e",0))d8=A.aU(c,"gemme chargee",0)
+s=d8?46:48
+break
+case 46:f2=e4?null:e9.c
+if(f2!=null){new A.aJc(d3,p,f2,g6).$0()
+p.c.bN()}s=47
+break
+case 48:d8=!0
+if(!A.aU(c,"bag of tricks",0))if(!A.aU(c,"sac \xe0 malice",0))d8=A.aU(c,"sac a malice",0)
+s=d8?49:51
+break
+case 49:d8={}
 f2=e4?null:e9.c
 d8.a=g6
-s=(e4?null:e9.x)==="receive_2_undefendable"?46:47
+s=(e4?null:e9.x)==="receive_2_undefendable"?52:53
 break
-case 46:f1=p.c
+case 52:f1=p.c
 f1.toString
-s=48
+s=54
 return A.q(A.h2(!1,new A.aJd(p),f1,f8),$async$mZ)
-case 48:f5=g8
+case 54:f5=g8
 if(f5!=null)d8.a=f5
-case 47:if(f2==null)f1=(e4?null:e9.x)!=null
+case 53:if(f2==null)f1=(e4?null:e9.x)!=null
 else f1=!0
 if(f1){new A.aJe(d3,d8,p,f2,g6,e9).$0()
-p.c.bN()}s=44
+p.c.bN()}s=50
 break
-case 45:if(!A.aU(c,"disruption",0))d8=A.aU(c,"perturbation",0)
+case 51:if(!A.aU(c,"disruption",0))d8=A.aU(c,"perturbation",0)
 else d8=!0
 if(d8){if((e4?null:e9.x)==="lose_cp"){d3.a=-1
 new A.aJf(p,g6).$0()
@@ -56556,7 +56566,7 @@ B.b.cR(d8.e,0,"["+(B.c.bU(B.d.j(A.fe(f1)),2,"0")+":"+B.c.bU(B.d.j(A.ff(f1)),2,"0
 p.c.bN()
 d8=p.a.c
 f1=new A.bU(Date.now(),0,!1)
-B.b.cR(d8.e,0,"["+(B.c.bU(B.d.j(A.fe(f1)),2,"0")+":"+B.c.bU(B.d.j(A.ff(f1)),2,"0"))+"] "+e)}}case 44:case 41:case 38:case 35:case 32:case 29:case 26:case 23:case 20:case 17:case 14:case 11:if(a1){if((e4?null:e9.x)==="spend_2_cp"){d3.a=-2
+B.b.cR(d8.e,0,"["+(B.c.bU(B.d.j(A.fe(f1)),2,"0")+":"+B.c.bU(B.d.j(A.ff(f1)),2,"0"))+"] "+e)}}case 50:case 47:case 44:case 41:case 38:case 35:case 32:case 29:case 26:case 23:case 20:case 17:case 14:case 11:if(a1){if((e4?null:e9.x)==="spend_2_cp"){d3.a=-2
 d8=p.a.c
 f1=new A.bU(Date.now(),0,!1)
 B.b.cR(d8.e,0,"["+(B.c.bU(B.d.j(A.fe(f1)),2,"0")+":"+B.c.bU(B.d.j(A.ff(f1)),2,"0"))+"] "+i)}else if((e4?null:e9.x)==="skip_roll"){new A.aJj(p,g6).$0()
@@ -59297,7 +59307,7 @@ s=m.a.f
 r=A.aA(s?B.dr:B.aK,1)
 q=A.a_(8)
 p=s?" - Developer mode":""
-r=A.b([A.bc(A.ha(o,A.ae(B.m,A.a0("Version 1.3.265"+p,o,o,o,A.bH(o,o,s?B.dr:B.T,o,o,o,o,o,o,o,o,o,o,o,B.z,o,o,!0,o,o,o,o,o,o,o,o),B.X,o),B.j,o,o,new A.a5(o,o,r,q,o,o,B.q),o,o,o,o,B.Qy,o,o,o),B.am,!1,o,o,o,o,o,o,o,new A.aE5(a,b),o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,!1,B.bw),1)],n)
+r=A.b([A.bc(A.ha(o,A.ae(B.m,A.a0("Version 1.3.266"+p,o,o,o,A.bH(o,o,s?B.dr:B.T,o,o,o,o,o,o,o,o,o,o,o,B.z,o,o,!0,o,o,o,o,o,o,o,o),B.X,o),B.j,o,o,new A.a5(o,o,r,q,o,o,B.q),o,o,o,o,B.Qy,o,o,o),B.am,!1,o,o,o,o,o,o,o,new A.aE5(a,b),o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,!1,B.bw),1)],n)
 if(m.a.f)B.b.E(r,A.b([B.R,A.EJ(B.TC,new A.aE6(m,a),A.jb(o,B.ax,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o),o)],n))
 l.push(A.ab(r,B.k,B.i,B.n,0))
 return A.fk(!0,new A.ah(B.QX,A.aV(l,B.a4,B.i,B.y),o),B.U,!0)},

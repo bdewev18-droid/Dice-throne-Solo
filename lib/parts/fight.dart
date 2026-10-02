@@ -1,4 +1,4 @@
-part of '../main.dart';
+﻿part of '../main.dart';
 
 int combatDiceAnimationSeconds = 0;
 
@@ -6887,6 +6887,10 @@ class _FightPageState extends State<FightPage> {
         if (r != null && r <= 2) {
           deltaHp = -3;
         }
+      } else if (l == 'regenerate 2' || l == 'régénération 2') {
+        deltaHp = initialCount * 2;
+      } else if (l == 'regenerate' || l == 'régénération') {
+        deltaHp = initialCount * 1;
       } else if (isBleed) {
         final rolls =
             result?.allDiceRolls ??
@@ -11630,7 +11634,7 @@ class CombatAiChatDock extends StatelessWidget {
         }
       } else if (showBlindingLightAttackCover) {
         blindingLightInterpretation =
-            'Blinding Light is active on $attackerName: Roll 1 D6 on attack (1 = fails, 2-3 = ½ damage, 4-6 = full damage).';
+            'Blinding Light is active on $attackerName: Roll 1 D6 on attack (1 = fails, 2-3 = 1/2 damage, 4-6 = full damage).';
       }
     }
     final tokenText = [
@@ -16043,7 +16047,7 @@ String _heroBattleAiMessage(
           _normalizeTokenKey(t) == 'blindinglight' ||
           _normalizeTokenKey(t) == 'lumiereaveuglante',
     ))
-      'Blinding Light is active: ${adventure.hero.label} must roll 1 D6 on attack (1 = fails, 2-3 = ½ damage, 4-6 = full damage).',
+      'Blinding Light is active: ${adventure.hero.label} must roll 1 D6 on attack (1 = fails, 2-3 = 1/2 damage, 4-6 = full damage).',
   ].join('\n');
 }
 
@@ -16208,7 +16212,7 @@ String _minionAttackAiMessage(
     }
   } else if (hasBlindingLight) {
     blindingLightNote =
-        'Afflicted by Blinding Light: must roll 1 D6 on attack (1 = fails, 2-3 = ½ damage, 4-6 = full damage).';
+        'Afflicted by Blinding Light: must roll 1 D6 on attack (1 = fails, 2-3 = 1/2 damage, 4-6 = full damage).';
   }
 
   final parlayPrefix = hasParlay
