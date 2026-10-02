@@ -806,6 +806,9 @@ class _FightPageState extends State<FightPage> {
                     minionAgilityAvoided: _minionAgilityAvoided,
                     heroShadowsCount: _heroShadowsCount,
                     onUseHeroShadows: _triggerHeroShadowsAttempt,
+                    minionShadowsCount: _minionShadowsCount,
+                    minionShadowsActive: _minionShadowsActive,
+                    onUseMinionShadows: _triggerMinionShadowsAttempt,
                     attackerSneakAttackCount: _phase == CombatPhase.hero
                         ? _heroSneakAttackCount
                         : _minionSneakAttackCount,
@@ -2519,8 +2522,14 @@ class _FightPageState extends State<FightPage> {
   int get _heroShadowsCount =>
       widget.adventure.alterations.where(_isShadowsToken).length;
 
+  int get _minionShadowsCount =>
+      enemy.alterations.where(_isShadowsToken).length;
+
   bool get _shadowsActive =>
-      _phase == CombatPhase.minionAttack && _heroShadowsCount > 0;
+      _phase == CombatPhase.minionAttack && _heroShadowsCount > 0 && !_heroShadowsUsed;
+
+  bool get _minionShadowsActive =>
+      _phase == CombatPhase.hero && _minionShadowsCount > 0 && !_minionShadowsUsed;
 
   bool get _hasActiveShadowsOnHeroDefender {
     if (_phase != CombatPhase.minionAttack) return false;
@@ -2528,6 +2537,10 @@ class _FightPageState extends State<FightPage> {
   }
 
   void _triggerHeroShadowsAttempt() {
+    // Shadows is automatic and non-persistent.
+  }
+
+  void _triggerMinionShadowsAttempt() {
     // Shadows is automatic and non-persistent.
   }
 
@@ -2832,6 +2845,9 @@ class _FightPageState extends State<FightPage> {
   bool _isTimeBombToken(String t) {
     return _isTimeBomb1(t) || _isTimeBomb2(t);
   }
+
+  bool _heroShadowsUsed = false;
+  bool _minionShadowsUsed = false;
 
   bool _heroSneakAttackActive = false;
   int _heroSneakAttackBonus = 0;
@@ -3264,7 +3280,7 @@ class _FightPageState extends State<FightPage> {
     final roll = result.dieRoll;
     if (roll == null) return;
 
-    final bonus = (roll / 2).ceil();
+    final bonus = roll;
 
     final idx = widget.adventure.alterations.indexWhere(_isSneakAttackToken);
     if (idx != -1) {
@@ -3305,7 +3321,7 @@ class _FightPageState extends State<FightPage> {
     final roll = result.dieRoll;
     if (roll == null) return;
 
-    final bonus = (roll / 2).ceil();
+    final bonus = roll;
 
     final idx = enemy.alterations.indexWhere(_isSneakAttackToken);
     if (idx != -1) {
@@ -5755,7 +5771,8 @@ class _FightPageState extends State<FightPage> {
           ? 0
           : (_battleDefenseValue + _battleDefenseModifier);
       final rawDamage = max(0, effectiveAttack - effectiveDefense);
-      final netDamage = (_phase == CombatPhase.minionAttack && _shadowsActive)
+      final netDamage = ((_phase == CombatPhase.minionAttack && _shadowsActive) ||
+                         (_phase == CombatPhase.hero && _minionShadowsActive))
           ? 0
           : rawDamage;
       riposteDamage = netDamage;
@@ -5770,6 +5787,11 @@ class _FightPageState extends State<FightPage> {
           buffer.writeln(
             '[TOKEN] Sneak Attack modifier: +$_heroSneakAttackBonus',
           );
+        }
+        if (_minionShadowsActive) {
+          _minionShadowsUsed = true;
+          buffer.writeln('[TOKEN:Shadows] Minion Shadows consumed (remains until end of turn).');
+          _checkParasiteDefensiveTrigger(isHero: false, tokenUsed: 'Shadows');
         }
         if (wasDefenderStunned) {
           buffer.writeln('DEF blocked: 0 (Enemy was stunned)');
@@ -6089,9 +6111,8 @@ class _FightPageState extends State<FightPage> {
 
         final shadowsWasActive = _shadowsActive;
         if (shadowsWasActive) {
-          widget.adventure.alterations.removeWhere(_isShadowsToken);
-          _shadowsGainedHeroTurnCount = null;
-          buffer.writeln('[TOKEN:Shadows] Hero Shadows consumed and removed.');
+          _heroShadowsUsed = true;
+          buffer.writeln('[TOKEN:Shadows] Hero Shadows consumed (remains until end of turn).');
           _checkParasiteDefensiveTrigger(isHero: true, tokenUsed: 'Shadows');
         }
 
@@ -6210,6 +6231,12 @@ class _FightPageState extends State<FightPage> {
         _battleAttackUndefendableFromWebbed = false;
         _minionRealityWarpThisAttack = false;
         _minionSilenceThisAttack = false;
+        
+        if (_minionShadowsCount > 0) {
+          enemy.alterations.removeWhere(_isShadowsToken);
+          buffer.writeln('[TOKEN:Shadows] Minion Shadows expired at end of turn.');
+        }
+        _minionShadowsUsed = false;
         for (final die in _dice) {
           die.isHexed = false;
           die.isScarletWitch = false;
@@ -11370,6 +11397,9 @@ class CombatAiChatDock extends StatelessWidget {
     this.shadowsActive = false,
     this.heroShadowsCount = 0,
     this.onUseHeroShadows,
+    this.minionShadowsCount = 0,
+    this.minionShadowsActive = false,
+    this.onUseMinionShadows,
     this.attackerSneakAttackCount = 0,
     this.attackerSneakAttackActive = false,
     this.attackerSneakAttackBonus = 0,
@@ -11447,6 +11477,9 @@ class CombatAiChatDock extends StatelessWidget {
   final bool shadowsActive;
   final int heroShadowsCount;
   final VoidCallback? onUseHeroShadows;
+  final int minionShadowsCount;
+  final bool minionShadowsActive;
+  final VoidCallback? onUseMinionShadows;
   final int attackerSneakAttackCount;
   final bool attackerSneakAttackActive;
   final int attackerSneakAttackBonus;
@@ -21970,7 +22003,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                                 ? 'Influence roll: $_blindDieRoll -> Success! (-1 Roll attempt)'
                                                 : 'Influence roll: $_blindDieRoll -> Failed!'))
                                     : isSneakAttack
-                                    ? 'Sneak Attack roll: $_blindDieRoll -> +${(_blindDieRoll! / 2).ceil()} Attack Modifier!'
+                                    ? 'Sneak Attack roll: $_blindDieRoll -> +$_blindDieRoll Attack Modifier!'
                                     : isChargedGem
                                     ? (_blindDieRoll! <= 2
                                           ? 'Charged Gem roll: $_blindDieRoll -> Gain 1 CP'
@@ -22797,7 +22830,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                 allDiceRolls: allDiceRolls,
                                 sneakAttackBonus:
                                     isSneakAttack && _blindDieRoll != null
-                                    ? (_blindDieRoll! / 2).ceil()
+                                    ? _blindDieRoll!
                                     : null,
                                 preyBonus: isPrey && _blindDieRoll != null
                                     ? (_blindDieRoll! == 1

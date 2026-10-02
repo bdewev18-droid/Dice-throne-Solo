@@ -196,15 +196,15 @@
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Sneak-Attack.png",
-      "description": "After Attacking, a player with this token may spend it and roll 1 die to add half the value of the die (rounded up) to their damage total. Attack Modifier.",
+      "description": "After Attacking, a player with this token may spend it and roll 1 die to add the value of the die to their damage total. Attack Modifier.",
       "aliases": [
         "Attaque furtive",
         "Sneak Attack",
         "attaque furtive",
         "sneak attack"
       ],
-      "appDetails": "Modificateur d'attaque : lance 1 dé et ajoute la moitié arrondie au supérieur en dégâts d'attaque.",
-      "appAnimation": true,
+      "appDetails": "Modificateur d'attaque : lance 1 dé et ajoute la valeur en dégâts d'attaque.",
+      "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },

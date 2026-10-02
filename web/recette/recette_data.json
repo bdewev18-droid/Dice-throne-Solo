@@ -1,4 +1,4 @@
-{
+ï»¿{
     "versions":  [
                      {
                          "buildNumber":  299,
@@ -19,7 +19,7 @@
 
                                                        ],
                                              "id":  "p-259-1",
-                                             "userPrompt":  "Token flight, sur le minion, le token ne s\u0027est pas déclenché en défense alors que les points de vie était bas et tué le minion. Token guard breck se déclenche en upkeep (popin)",
+                                             "userPrompt":  "Token flight, sur le minion, le token ne s\u0027est pas dï¿½clenchï¿½ en dï¿½fense alors que les points de vie ï¿½tait bas et tuï¿½ le minion. Token guard breck se dï¿½clenche en upkeep (popin)",
                                              "aiResponse":  "Fixed Minion AI netDamage calculation to include _battleAttackModifier. Added Guard break to the TokenAnimationDialog skip list."
                                          }
                                      ]
@@ -43,7 +43,7 @@
 
                                                        ],
                                              "id":  "p-258-1",
-                                             "userPrompt":  "La popin se déclenche en upkeep alors qu\u0027il n\u0027y a pas eu de clic sur use du composant 11",
+                                             "userPrompt":  "La popin se dï¿½clenche en upkeep alors qu\u0027il n\u0027y a pas eu de clic sur use du composant 11",
                                              "aiResponse":  "Fixed token trigger in _applyUpkeep. Honor and Flight are now correctly skipped during automatic animations."
                                          }
                                      ]
