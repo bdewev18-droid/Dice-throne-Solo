@@ -281,15 +281,22 @@ class GameEngine {
       ctx.logParts.add('Holy Presence: $n outgoing dmg (apply to opponents)');
     },
 
-    // Regenerate — 2+ stacks: heal 2 + remove 1; 1 stack: heal 1 + remove
+    // Regenerate 2 — heal 2 + replaced by Regenerate
+    'Regenerate 2': (ctx) {
+      final n = ctx.count('Regenerate 2');
+      if (n == 0) return;
+      for (int i = 0; i < n; i++) {
+        ctx.healthDelta += 2;
+        ctx.remove('Regenerate 2');
+        ctx.addedTokens.add('Regenerate');
+        ctx.logParts.add('Regenerate 2: +2 HP, flipped to Regenerate');
+      }
+    },
+    // Regenerate 1 (labeled Regenerate) — heal 1 + remove
     'Regenerate': (ctx) {
       final n = ctx.count('Regenerate');
       if (n == 0) return;
-      if (n >= 2) {
-        ctx.healthDelta += 2;
-        ctx.remove('Regenerate');
-        ctx.logParts.add('Regenerate: +2 HP, flipped (1 token remains)');
-      } else {
+      for (int i = 0; i < n; i++) {
         ctx.healthDelta += 1;
         ctx.remove('Regenerate');
         ctx.logParts.add('Regenerate: +1 HP, token removed');
