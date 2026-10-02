@@ -942,7 +942,7 @@
         "Regenerate"
       ],
       "appDetails": "Géré automatiquement en phase Upkeep (2+ cumuls = +2 PV et retrait d'un cumul ; 1 cumul = +1 PV et retrait).",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
       "persistence": "persistent"
@@ -961,7 +961,7 @@
         "Regenerate 2"
       ],
       "appDetails": "Géré automatiquement en phase Upkeep (2+ cumuls = +2 PV et retrait d'un cumul ; 1 cumul = +1 PV et retrait).",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
       "persistence": "persistent"

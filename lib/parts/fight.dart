@@ -21276,6 +21276,12 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
 
   int _computeHpDelta(int count) {
     final l = widget.rule.label.toLowerCase();
+    if (l == 'regenerate 2' || l == 'régénération 2') {
+      return count * 2;
+    }
+    if (l == 'regenerate' || l == 'régénération') {
+      return count * 1;
+    }
     if (l.contains('delayed poison') ||
         l.contains('poison latent') ||
         l.contains('poison retardé') ||
