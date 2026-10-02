@@ -196,15 +196,15 @@
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Sneak-Attack.png",
-      "description": "After Attacking, a player with this token may spend it and roll 1 die to add half the value of the die (rounded up) to their damage total. Attack Modifier.",
+      "description": "After Attacking, a player with this token may spend it and roll 1 die to add the value of the die to their damage total. Attack Modifier.",
       "aliases": [
         "Attaque furtive",
         "Sneak Attack",
         "attaque furtive",
         "sneak attack"
       ],
-      "appDetails": "Modificateur d'attaque : lance 1 dé et ajoute la moitié arrondie au supérieur en dégâts d'attaque.",
-      "appAnimation": true,
+      "appDetails": "Modificateur d'attaque : lance 1 dé et ajoute la valeur en dégâts d'attaque.",
+      "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true
     },
@@ -252,18 +252,18 @@
       "label": "Accuracy",
       "frLabel": "Précision",
       "kind": "positive",
-      "maxStack": 3,
+      "maxStack": 1,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Accuracy.png",
       "description": "A player with this token may spend it at the conclusion of their Offensive Roll Phase to make their Attack undefendable.",
       "aliases": [
         "Accuracy",
         "Précision"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appDetails": "Rend l'attaque imparable. Activé manuellement par le joueur ou automatiquement par l'IA si l'attaque n'est pas déjà imparable.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
       "persistence": "persistent"
@@ -295,7 +295,7 @@
       "maxStack": 1,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/crit.png",
       "description": "If a player with this token is dealing at least dmg as a result of their Offensive Roll Phase, this token may be spent to add 4 dmg. Attack Modifier.",
       "aliases": [
@@ -303,7 +303,7 @@
         "Critique"
       ],
       "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
       "persistence": "persistent"
@@ -315,9 +315,9 @@
       "maxStack": 1,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Protect.png",
-      "description": "A player with this token may spend it at any time to prevent ½ incoming damage (rounded up).",
+      "description": "A player with this token may spend it at any time to prevent 1/2 incoming damage (rounded up).",
       "aliases": [
         "Protect",
         "Protection"
@@ -335,7 +335,7 @@
       "maxStack": 1,
       "persistent": false,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Retribution.png",
       "description": "This token may be spent after being Attacked as a result of an opponentâ€™s Offensive Roll Phase to deal half of the incoming dmg (rounded up) back to the attacker.",
       "aliases": [
@@ -377,14 +377,14 @@
       "maxStack": 3,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Ninjutsu.webp",
-      "description": "After Attacking, a player with this token may spend it and roll 1 die: â€¢ On 1-3, add 1 dmg. â€¢ On 4-5, add 2 dmg. â€¢ On 6, choose to either add 2 dmg, inflict Delayed Poison, or make your Attack undefendable. Attack Modifier.",
+      "description": "After Attacking, a player with this token may spend it and roll 1 die: • On 1-3, add 1 dmg. • On 4-5, add 2 dmg. • On 6, choose to either add 2 dmg, inflict Delayed Poison, or make your Attack undefendable. Attack Modifier.",
       "aliases": [
         "Ninjitsu"
       ],
       "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
       "persistence": "persistent"
@@ -498,7 +498,7 @@
       "maxStack": 2,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/honor.png",
       "description": "Spend to increase your Attack dmg by 1, or spend 2 Honor to increase your Attack dmg by 3. Attack Modifier.",
       "aliases": [
@@ -506,7 +506,7 @@
         "Honor"
       ],
       "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
       "persistence": "persistent"
@@ -632,7 +632,7 @@
         "Pourparlers"
       ],
       "appDetails": "Pris en compte dans l'application.",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
       "persistence": "non_persistent"
@@ -728,15 +728,15 @@
       "maxStack": 3,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Flight.png",
-      "description": "A player with this token may spend it at any time during the Roll Phase. Once spent, roll 2 dice. If a 6 was rolled, Activate this token. If Activated during the Offensive Roll Phase, this playerâ€™s Attack becomes undefendable. If Activated during the Defensive Roll Phase, ignore all incoming damage.",
+      "description": "A player with this token may spend it at any time during the Roll Phase. Once spent, roll 2 dice. If a 6 was rolled, Activate this token. If Activated during the Offensive Roll Phase, this player's Attack becomes undefendable. If Activated during the Defensive Roll Phase, ignore all incoming damage.",
       "aliases": [
         "Flight",
         "Vol"
       ],
       "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
       "persistence": "persistent"
@@ -937,12 +937,31 @@
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Regenerate.png",
-      "description": "When you gain this token, place it on the side up. During their Upkeep Phase, a player with this token does the following based on which side is face-up: â€¢ Regenerate : Heal 2 and flip it to the side. â€¢ Regenerate : Heal 1 and remove this token. Additionally, if a player gains Regenerate while at Stack Limit, they may flip a [1 token] to the [2 token] side instead.",
+      "description": "When you gain this token, place it on the side up. During their Upkeep Phase, a player with this token does the following based on which side is face-up: • Regenerate : Heal 2 and flip it to the side. • Regenerate : Heal 1 and remove this token. Additionally, if a player gains Regenerate while at Stack Limit, they may flip a [1 token] to the [2 token] side instead.",
       "aliases": [
         "Regenerate"
       ],
       "appDetails": "Géré automatiquement en phase Upkeep (2+ cumuls = +2 PV et retrait d'un cumul ; 1 cumul = +1 PV et retrait).",
-      "appAnimation": false,
+      "appAnimation": true,
+      "minionAllowed": true,
+      "editorVisible": true,
+      "persistence": "persistent"
+    },
+    {
+      "label": "Regenerate 2",
+      "frLabel": "Régénération 2",
+      "kind": "positive",
+      "maxStack": 2,
+      "persistent": true,
+      "removable": true,
+      "appSupported": true,
+      "imageAsset": "assets/token/regenerate_2.webp",
+      "description": "When you gain this token, place it on the side up. During their Upkeep Phase, a player with this token does the following based on which side is face-up: • Regenerate : Heal 2 and flip it to the side. • Regenerate : Heal 1 and remove this token. Additionally, if a player gains Regenerate while at Stack Limit, they may flip a [1 token] to the [2 token] side instead.",
+      "aliases": [
+        "Regenerate 2"
+      ],
+      "appDetails": "Géré automatiquement en phase Upkeep (2+ cumuls = +2 PV et retrait d'un cumul ; 1 cumul = +1 PV et retrait).",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
       "persistence": "persistent"
@@ -992,36 +1011,37 @@
       "maxStack": 2,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Guard-Break.png",
       "description": "If a player concludes their Offensive Roll Phase with an Attack, they may spend this token and roll 1 die. If the outcome is 4-5, the Attack becomes undefendable",
       "aliases": [
         "Guard Break"
       ],
       "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
       "persistence": "persistent"
     },
     {
       "label": "Charged Gem",
-      "frLabel": "",
+      "frLabel": "Gemme Chargée",
       "kind": "positive",
       "maxStack": 1,
-      "persistent": false,
+      "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Charged-Gem.png",
-      "description": "A player with this token may spend it during their Main Phase and roll 1 die: â€¢ On 1-2, gain 1CP. â€¢ On 3-4, deal 2 as an isolated source of undefendable dmg to a chosen opponent. â€¢ On 5-6, gain 1CP and deal 2 as an isolated source of undefendable dmg to a chosen opponent.",
+      "description": "During their Upkeep Phase, a player with this token may spend it and roll 1 :\nOn 1-2, gain 1 CP.\nOn 3-4, deal 2 undefendable dmg to the opponent.\nOn 5-6, gain 1 CP and deal 2 undefendable dmg to the opponent.",
       "aliases": [
-        "Charged Gem"
+        "Charged Gem",
+        "Gemme Chargée"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appDetails": "Phase d'upkeep : le joueur choisit de le consommer ou non. S'il l'active, lance 1 dé. 1-2 : gagne 1 CP. 3-4 : inflige 2 dégâts imparables à l'adversaire. 5-6 : gagne 1 CP et inflige 2 dégâts imparables.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
-      "persistence": "non_persistent"
+      "persistence": "persistent"
     },
     {
       "label": "Sun-Marked",
@@ -1049,15 +1069,15 @@
       "maxStack": 3,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/cosmic-flare.webp",
-      "description": "During their Upkeep Phase, a player with this token deals 1 dmg per Cosmic Flare Cosmic Flare to all opponents. Then remove 1 of these tokens.",
+      "description": "During their Upkeep Phase, a player with this token deals 1 dmg per Cosmic Flare token to all opponents. Then remove 1 of these tokens.",
       "aliases": [
         "Cosmic flare",
         "Lueur cosmique"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appDetails": "Phase d'upkeep : le joueur inflige autant de dégâts que de jetons Cosmic Flare qu'il possède, puis perd 1 jeton.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
       "persistence": "persistent"
@@ -1271,26 +1291,26 @@
       "frLabel": "Sac à Malice",
       "kind": "positive",
       "maxStack": 2,
-      "persistent": true,
+      "persistent": false,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/Sac_a_malice.webp",
-      "description": "During their Upkeep Phase, a player with this token removes it and rolls 1 :\nOn 1, lose .\nOn 2â€“5, Loki chooses whether the player heals 2 , gains 1CP, or receives  2  undefendable dmg.\nOn 6, gain 2CP .",
+      "description": "During their Upkeep Phase, a player with this token removes it and rolls 1 :\nOn 1, lose 1 CP.\nOn 2-5, Loki chooses whether the player heals 2, gains 1 CP, or receives 2 undefendable dmg.\nOn 6, gain 2 CP.",
       "aliases": [
         "Bag of Tricks",
         "Sac à Malice"
       ],
-      "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": false,
+      "appDetails": "Phase d'upkeep : le token est consommé. Lance 1 dé. Sur 1: perd 1 CP. Sur 2-5: le joueur (Loki) choisit si la cible soigne 2 PV, gagne 1 CP ou subit 2 dégâts imparables. Sur 6: gagne 2 CP.",
+      "appAnimation": true,
       "minionAllowed": true,
       "editorVisible": true,
-      "persistence": "persistent"
+      "persistence": "consumed"
     },
     {
       "label": "Webbed",
       "frLabel": "Entoilé",
       "kind": "negative",
-      "maxStack": 1,
+      "maxStack": 2,
       "persistent": false,
       "removable": true,
       "appSupported": true,
@@ -1693,13 +1713,13 @@
     {
       "label": "Main du roi",
       "frLabel": "Main du roi",
-      "kind": "positive",
+      "kind": "unique",
       "maxStack": 99,
       "persistent": true,
       "removable": true,
       "appSupported": false,
-      "imageAsset": "assets/token/Gift.png",
-      "description": "Special support token.",
+      "imageAsset": "assets/token/main_du_roi.webp",
+      "description": "If a player rolls an Ultimate, the spent token allows the rolling of 1 d6. The value for success depends on which scenario is being played. A successful roll means that the player must re-roll one of the dice of their Ultimate.\nIf the character with one of these tokens fails to have a successful Offensive Roll Phase, it spends the token and rolls 1 d6. The value for success depends on which scenario is being played. A successful roll means that the character has an additional Offensive Roll Phase.",
       "aliases": [
         "King's Hand",
         "Main du roi"
@@ -1792,10 +1812,10 @@
       "label": "Damage bonus 1",
       "frLabel": "Dégât bonus 1",
       "kind": "positive",
-      "maxStack": 1,
+      "maxStack": 2,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/bonus-atk-1.webp",
       "description": "Bonus damage token (+1 attack).",
       "aliases": [
@@ -1812,10 +1832,10 @@
       "label": "Damage bonus 2",
       "frLabel": "Dégât bonus 2",
       "kind": "positive",
-      "maxStack": 1,
+      "maxStack": 2,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/bonus-atk-2.webp",
       "description": "Bonus damage token (+2 attack).",
       "aliases": [
@@ -1832,10 +1852,10 @@
       "label": "Damage bonus 3",
       "frLabel": "Dégât bonus 3",
       "kind": "positive",
-      "maxStack": 1,
+      "maxStack": 2,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/bonus-atk-3.webp",
       "description": "Bonus damage token (+3 attack).",
       "aliases": [
@@ -1852,10 +1872,10 @@
       "label": "Damage bonus 4",
       "frLabel": "Dégât bonus 4",
       "kind": "positive",
-      "maxStack": 1,
+      "maxStack": 2,
       "persistent": true,
       "removable": true,
-      "appSupported": false,
+      "appSupported": true,
       "imageAsset": "assets/token/bonus-atk-4.webp",
       "description": "Bonus damage token (+4 attack).",
       "aliases": [
@@ -1896,7 +1916,7 @@
       "removable": true,
       "appSupported": true,
       "imageAsset": "assets/token/Parasite.webp",
-      "description": "Parasite token.",
+      "description": "During their Upkeep Phase, if a player with this token has a Positive Status Effect, they receive 1 dmg. Additionally, if they spend a Positive Status Effect to successfully prevent or avoid dmg, remove Parasite and they receive 3 as an isolated source of undefendable dmg.",
       "aliases": [
         "Parasite"
       ],

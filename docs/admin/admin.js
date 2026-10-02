@@ -3,8 +3,16 @@ const SUPABASE_URL = 'https://rqxfjffwzdfefinfcxjo.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_3EuoFYUzqUvNX7IPrhZKpQ_mkW-Gl97';
 let supabaseClient = null;
 
+// Global event listener for token inputs (Event Delegation)
+document.addEventListener('click', (e) => {
+  if (e.target && e.target.matches && e.target.matches('input.token-input')) {
+    openTokenModal(e.target);
+  }
+});
+
 async function initAuth() {
   if (!window.supabase) {
+    $('authError').textContent = 'Supabase non chargé.';
     $('mainAppShell').style.display = 'grid';
     $('authOverlay').style.display = 'none';
     return;
@@ -14,26 +22,26 @@ async function initAuth() {
   $('googleLoginBtn').onclick = async (e) => {
     e.preventDefault();
     try {
-      $('authError').textContent = 'Tentative de connexion...';
+      $('authError').textContent = 'Connexion en cours...';
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin + window.location.pathname
         }
       });
-      if (error) {
-        $('authError').textContent = 'Erreur: ' + error.message;
-      } else {
-        $('authError').textContent = 'Redirection vers Google...';
-      }
+      if (error) $('authError').textContent = error.message;
     } catch (err) {
-      $('authError').textContent = 'Exception JS: ' + err.message;
+      $('authError').textContent = 'Erreur JS: ' + err.message;
       console.error(err);
     }
   };
   
   $('logoutBtn').onclick = async () => {
-    await supabaseClient.auth.signOut();
+    try {
+      await supabaseClient.auth.signOut();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   try {
@@ -41,12 +49,20 @@ async function initAuth() {
     checkSession(session);
   } catch (err) {
     console.error("Auth init error:", err);
+    // Clear corrupted token if present
+    try {
+      localStorage.removeItem('sb-rqxfjffwzdfefinfcxjo-auth-token');
+    } catch(e) {}
     checkSession(null);
   }
   
-  supabaseClient.auth.onAuthStateChange((event, session) => {
-    checkSession(session);
-  });
+  try {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      checkSession(session);
+    });
+  } catch (err) {
+    console.error("AuthStateChange error:", err);
+  }
 }
 
 function checkSession(session) {
@@ -140,31 +156,57 @@ async function loadTokenCatalog() {
 }
 
 function ensureTokenDatalist() {
-  let list = document.getElementById('tokenOptions');
-  if (!list) {
-    list = document.createElement('datalist');
-    list.id = 'tokenOptions';
-    document.body.appendChild(list);
-  }
-  const options = tokenCatalog.map(t => {
-      const fr = (t.frLabel && t.frLabel !== t.label) ? ` (${t.frLabel})` : '';
-      return `<option value="${escapeAttr(t.label)}">${escapeAttr(t.label)}${fr}</option>`;
-    }).sort();
-    list.innerHTML = options.join('');
   tokenDatalistReady = true;
-  document.querySelectorAll('input.token-input').forEach((input) => input.setAttribute('list', 'tokenOptions'));
 }
 
-function attachTokenList(root = document) {
-  root.querySelectorAll('input.token-input').forEach((input) => {
-    input.setAttribute('list', 'tokenOptions');
-    input.placeholder ||= 'Poison, Blind, Bleed';
-    
-    validateTokenInput(input);
-    input.removeEventListener('input', onTokenInputChanged);
-    input.addEventListener('input', onTokenInputChanged);
+let activeTokenInput = null;
+
+
+
+function openTokenModal(input) {
+  activeTokenInput = input;
+  const currentTokens = input.value.split(',').map(t => t.trim()).filter(Boolean);
+  const container = $('tokenCheckboxes');
+  container.innerHTML = '';
+
+  tokenCatalog.forEach(token => {
+    const label = document.createElement('label');
+    label.style.display = 'flex';
+    label.style.alignItems = 'center';
+    label.style.gap = '10px';
+    label.style.padding = '6px 8px';
+    label.style.borderRadius = '4px';
+    label.style.cursor = 'pointer';
+    label.style.transition = 'background 0.15s ease';
+
+    label.onmouseenter = () => label.style.background = 'rgba(255,255,255,0.08)';
+    label.onmouseleave = () => label.style.background = 'transparent';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = token.label;
+    cb.checked = currentTokens.includes(token.label);
+    cb.style.margin = '0';
+    cb.style.width = '16px';
+    cb.style.height = '16px';
+    cb.style.flexShrink = '0';
+    cb.style.cursor = 'pointer';
+
+    const textSpan = document.createElement('span');
+    textSpan.style.fontSize = '14px';
+    textSpan.style.color = '#e0e0e0';
+
+    let displayTxt = token.label;
+    if (token.frLabel) {
+      displayTxt += ` (${token.frLabel})`;
+    }
+    textSpan.textContent = displayTxt;
+
+    label.appendChild(cb);
+    label.appendChild(textSpan);
+    container.appendChild(label);
   });
-  if (!tokenDatalistReady) ensureTokenDatalist();
+  $('tokenModal').style.display = 'flex';
 }
 
 function onTokenInputChanged(e) {
@@ -177,9 +219,7 @@ function validateTokenInput(inputEl) {
     inputEl.style.backgroundColor = '';
     return;
   }
-  const list = document.getElementById('tokenOptions');
-  if (!list) return;
-  const validTokens = Array.from(list.options).map(o => o.value);
+  const validTokens = tokenCatalog.map(t => t.label);
   const tokens = val.split(',').map(t => t.trim()).filter(Boolean);
   const allValid = tokens.length > 0 && tokens.every(t => validTokens.includes(t));
   if (allValid) {
@@ -316,6 +356,10 @@ async function openLocalJson() {
 async function saveLocalFile() {
   if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
     collectCurrent();
+    if (originalSelectedProfile && selectedProfile) {
+      computeDiffAndLog(originalSelectedProfile, selectedProfile);
+      originalSelectedProfile = clone(selectedProfile);
+    }
     try {
       const response = await fetch('/api/save-enemy', {
         method: 'POST',
@@ -334,6 +378,10 @@ async function saveLocalFile() {
 
   if (!fileHandle || !sourceData) return;
   collectCurrent();
+  if (originalSelectedProfile && selectedProfile) {
+    computeDiffAndLog(originalSelectedProfile, selectedProfile);
+    originalSelectedProfile = clone(selectedProfile);
+  }
   const writable = await fileHandle.createWritable();
   await writable.write(JSON.stringify(sourceData, null, 2) + '\n');
   await writable.close();
@@ -353,6 +401,10 @@ function download(name, text) {
 function exportJson() {
   if (!sourceData) return;
   collectCurrent();
+  if (originalSelectedProfile && selectedProfile) {
+    computeDiffAndLog(originalSelectedProfile, selectedProfile);
+    originalSelectedProfile = clone(selectedProfile);
+  }
   download('enemy_profiles.json', JSON.stringify(sourceData, null, 2) + '\n');
   setDirty('enemy', false);
 }
@@ -431,13 +483,107 @@ function selectFirst() {
   if (index >= 0) selectProfile(index);
 }
 
+let originalSelectedProfile = null;
+
 function selectProfile(index) {
   collectCurrent();
+  if (originalSelectedProfile && selectedProfile) {
+    computeDiffAndLog(originalSelectedProfile, selectedProfile);
+  }
   selectedIndex = index;
   selectedProfile = clone(sourceData.profiles[index]);
+  originalSelectedProfile = clone(selectedProfile);
   renderLists();
   renderEditor();
 }
+
+function computeDiffAndLog(original, current) {
+  if (!original || !current) return;
+  if (original.key !== current.key && !current.name) return; // safeguard
+
+  const changes = [];
+  const addChange = (field, oldVal, newVal) => {
+    if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+      changes.push(`${field} de ${JSON.stringify(oldVal)} vers ${JSON.stringify(newVal)}`);
+    }
+  };
+
+  addChange('hp', original.maxHealth, current.maxHealth);
+  addChange('cp', original.cp, current.cp);
+  addChange('defenseDice', original.defenseDice, current.defenseDice);
+  addChange('rewardChests', original.rewardChests, current.rewardChests);
+  addChange('rewardRank', original.rewardRank, current.rewardRank);
+  addChange('cardAsset', original.cardAsset, current.cardAsset);
+  addChange('initialTokens', original.initialTokens, current.initialTokens);
+
+  if (JSON.stringify(original.attackPlan) !== JSON.stringify(current.attackPlan)) {
+    changes.push(`attaque modifiée`);
+  }
+  if (JSON.stringify(original.defensePlan) !== JSON.stringify(current.defensePlan)) {
+    changes.push(`défense modifiée`);
+  }
+  if (JSON.stringify(original.passives) !== JSON.stringify(current.passives)) {
+    changes.push(`passifs modifiés`);
+  }
+  if (JSON.stringify(original.attacks) !== JSON.stringify(current.attacks)) {
+    changes.push(`titre d'attaque modifié`);
+  }
+  if (original.defense !== current.defense) {
+    changes.push(`titre de défense modifié`);
+  }
+  if (original.name !== current.name) {
+    changes.push(`name de "${original.name}" vers "${current.name}"`);
+  }
+
+  if (changes.length > 0) {
+    const logEntry = {
+      date: new Date().toISOString(),
+      minion: current.name || current.key,
+      changes: changes
+    };
+    saveLogEntry(logEntry);
+  }
+}
+
+function saveLogEntry(entry) {
+  let logs = [];
+  try {
+    logs = JSON.parse(localStorage.getItem('admin_logs') || '[]');
+  } catch(e) {}
+  logs.unshift(entry);
+  if (logs.length > 500) logs = logs.slice(0, 500);
+  localStorage.setItem('admin_logs', JSON.stringify(logs));
+  renderLogs();
+}
+
+function renderLogs() {
+  const container = $('adminLogList');
+  if (!container) return;
+  let logs = [];
+  try {
+    logs = JSON.parse(localStorage.getItem('admin_logs') || '[]');
+  } catch(e) {}
+  if (logs.length === 0) {
+    container.innerHTML = '<p>Aucun log.</p>';
+    return;
+  }
+  container.innerHTML = logs.map(l => {
+    const d = new Date(l.date);
+    const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const changesHtml = l.changes.map(c => `<li>${escapeAttr(c)}</li>`).join('');
+    return `<div class="action-card" style="padding: 8px;">
+      <div style="font-weight: bold; color: #888; font-size: 12px;">${dateStr} - Minion "${escapeAttr(l.minion)}"</div>
+      <ul style="margin: 4px 0 0 20px; font-size: 13px;">${changesHtml}</ul>
+    </div>`;
+  }).join('');
+}
+
+$('clearLogsBtn')?.addEventListener('click', () => {
+  if (confirm('Vider le journal de bord ?')) {
+    localStorage.removeItem('admin_logs');
+    renderLogs();
+  }
+});
 
 function renderMeta() {
   if (!selectedProfile) return;
@@ -484,9 +630,7 @@ function renderEditor() {
   setValue('cardAssetInput', selectedProfile.cardAsset || '');
   setValue('initialTokensInput', (selectedProfile.initialTokens || []).join(', '));
   $('initialTokensInput').classList.add('token-input');
-  $('initialTokensInput').setAttribute('list', 'tokenOptions');
-  attachTokenList(document);
-
+  
   selectedProfile.attackPlan ||= {
     style: 'symbols',
     goals: [],
@@ -518,6 +662,7 @@ function renderEditor() {
   renderTokenAdmin();
   updateTabDots();
   validateTokens();
+  updateRewardWarnings();
 }
 
 function collectCurrent() {
@@ -580,8 +725,8 @@ function textarea(label, className, value = '', rows = 2) {
 function input(label, className, value = '', type = 'text') {
   const isToken = className.includes('tokens') || className.includes('token');
   const tokenClass = isToken ? ' token-input' : '';
-  const tokenList = isToken ? ' list="tokenOptions" placeholder="Poison, Blind, Bleed"' : '';
-  return `<label>${label}<input class="${className}${tokenClass}" type="${type}" value="${escapeAttr(value)}"${tokenList} /></label>`;
+  const readOnlyAttr = isToken ? ' readonly style="cursor:pointer;" placeholder="Select tokens..."' : '';
+  return `<label>${label}<input class="${className}${tokenClass}" type="${type}" value="${escapeAttr(value)}"${readOnlyAttr} /></label>`;
 }
 function select(label, className, value, options) {
   return `<label>${label}<select class="${className}">${options.map((option) => `<option value="${option}" ${option === value ? 'selected' : ''}>${option}</option>`).join('')}</select></label>`;
@@ -630,8 +775,8 @@ function conditionalRuleCard(data, index) {
       input('White', 'cond-white', condition.white ?? 0, 'number') +
       input('Orange', 'cond-orange', condition.orange ?? condition.yellow ?? 0, 'number') +
       input('Red', 'cond-red', condition.red ?? 0, 'number') +
-      input('Present tokens', 'cond-present', (condition.present || []).join(', ')) +
-      input('Absent tokens', 'cond-absent', (condition.absent || []).join(', ')) +
+      input('Present tokens', 'cond-present-tokens', (condition.present || []).join(', ')) +
+      input('Absent tokens', 'cond-absent-tokens', (condition.absent || []).join(', ')) +
       check('Negate', 'cond-negate', !!condition.negate) +
       '<label class="checkline">Inner (JSON)<textarea class="cond-inner" rows="3" placeholder=\'{ "type": "sameValue", "count": 3 }\'>' + escapeText(JSON.stringify(condition.inner ?? null, null, 2)) + '</textarea></label>' +
       '<label class="checkline">And (JSON array)<textarea class="cond-and" rows="3" placeholder=\'[]\'>' + escapeText(JSON.stringify(condition.and ?? [], null, 2)) + '</textarea></label>' +
@@ -670,21 +815,18 @@ function conditionalRuleCard(data, index) {
       renderPreview();
     };
     node.querySelector('.remove-conditional').onclick = () => { node.remove(); collectCurrent(); setDirty('enemy'); renderPreview(); renderDisplayRowsPreviews(); };
-  attachTokenList(node);
+
   node.addEventListener('input', () => { collectCurrent(); setDirty('enemy'); renderPreview(); renderDisplayRowsPreviews(); });
   node.addEventListener('change', () => { collectCurrent(); setDirty('enemy'); renderPreview(); renderDisplayRowsPreviews(); });
   return node;
 }
 function readConditionalRuleCard(card) {
   const type = card.querySelector('.cond-type').value;
-  const innerRaw = card.querySelector('.cond-inner').value.trim();
-  let inner = null;
-  if (innerRaw) { try { inner = JSON.parse(innerRaw); } catch {} }
   const andRaw = card.querySelector('.cond-and').value.trim();
   let and = [];
   if (andRaw) { try { const parsed = JSON.parse(andRaw); if (Array.isArray(parsed)) and = parsed; } catch {} }
   const condition = { type, negate: card.querySelector('.cond-negate').checked, and };
-  if (inner) condition.inner = inner;
+  
   if (type === 'sameValue' || type === 'sameSymbol') condition.count = intVal(card.querySelector('.cond-count').value);
   if (type === 'suite') condition.minLength = intVal(card.querySelector('.cond-minlength').value);
   if (type === 'symbols' || type === 'attackSucceededAnd') {
@@ -693,9 +835,12 @@ function readConditionalRuleCard(card) {
     condition.red = intVal(card.querySelector('.cond-red').value);
   }
   if (type === 'alteration') {
-    condition.present = csv(card.querySelector('.cond-present').value);
-    condition.absent = csv(card.querySelector('.cond-absent').value);
+    condition.present = csv(card.querySelector('.cond-present-tokens').value);
+    condition.absent = csv(card.querySelector('.cond-absent-tokens').value);
   }
+  const innerRaw = card.querySelector('.cond-inner').value.trim();
+  if (innerRaw) { try { condition.inner = JSON.parse(innerRaw); } catch {} }
+  
   const damageRaw = card.querySelector('.eff-damage').value.trim();
   const damageFormula = card.querySelector('.eff-damageformula').value;
   const effect = {
@@ -721,6 +866,15 @@ function actionCard(data, index, isDefense) {
   node.dataset.kind = isDefense ? 'defense' : 'attack';
   node.querySelector('.action-title').textContent = `${isDefense ? 'Defense effect' : 'Attack action'} ${index + 1}`;
   node.querySelector('.remove-action').onclick = () => { node.remove(); collectCurrent(); setDirty('enemy'); renderPreview(); renderFormulaList(); };
+  
+  if (selectedProfile?.name === 'Rat de la Rue') {
+    node.querySelector('.rat-labels').style.display = 'flex';
+  }
+  const label2Input = node.querySelector('.action-label2');
+  if(label2Input) label2Input.value = data.label2 || '';
+  const label3Input = node.querySelector('.action-label3');
+  if(label3Input) label3Input.value = data.label3 || '';
+
   const condition = data.condition || {};
   const type = condition.type || 'symbols';
   const symbols = condition.symbols || {};
@@ -753,7 +907,7 @@ function actionCard(data, index, isDefense) {
   renderExtra(node.querySelector('.extra-roll-body'), data.extraRoll || null);
   node.querySelector('details').open = !!data.extraRoll;
   node.querySelector('.notes-field').value = (data.notes || []).join('\n');
-  attachTokenList(node);
+
   node.addEventListener('input', () => { collectCurrent(); setDirty('enemy'); renderPreview(); renderFormulaList(); });
   node.addEventListener('change', () => { collectCurrent(); setDirty('enemy'); renderPreview(); renderFormulaList(); });
   return node;
@@ -790,7 +944,7 @@ function outcomeRow(outcome) {
     </div>
     <label class="wide-label">Label<input class="out-label" type="text" value="${escapeAttr(outcome.label || '')}" /></label>
   `;
-  attachTokenList(row);
+
   row.querySelector('button').onclick = () => { row.remove(); collectCurrent(); setDirty('enemy'); renderPreview(); };
   return row;
 }
@@ -832,6 +986,10 @@ function readCommon(card) {
 }
 function readActionCard(card) {
   const data = readCommon(card);
+  const label2 = card.querySelector('.action-label2')?.value?.trim();
+  if (label2) data.label2 = label2;
+  const label3 = card.querySelector('.action-label3')?.value?.trim();
+  if (label3) data.label3 = label3;
   data.topDeckToDiscard = intVal(card.querySelector('.effect-topdeck').value);
   data.extraRoll = readExtra(card);
   return data;
@@ -919,6 +1077,8 @@ function actionToDisplayRows(action = {}) {
   const first = [...condition];
   if (action.label) first.push(action.label);
   if (effect.length) first.push('=', ...effect);
+  if (action.label2) first.push(action.label2);
+  if (action.label3) first.push(action.label3);
   if (first.length) rows.push({ align: 'left', items: first });
   if (action.extraRoll?.displayRows?.length) {
     rows.push(...action.extraRoll.displayRows);
@@ -1122,7 +1282,7 @@ function effectHtml(effect = {}) {
   if (effect.prevent) bits.push(`<span class="badge prevent">${effect.prevent}</span>`);
   if (effect.returnDamage) bits.push(`<span class="badge ${effect.undefendable ? 'undef' : 'damage'}">↩${effect.returnDamage}</span>`);
   if (effect.stealHp) bits.push(`<span class="badge heal">S${effect.stealHp}</span>`);
-  if (effect.stealCp) bits.push(`<span class="token-chip">Steal ${effect.stealCp} CP</span>`);
+  if (effect.stealCp && !effect.label2) bits.push(`<span class="token-chip">Steal ${effect.stealCp} CP</span>`);
   if (effect.heal) bits.push(`<span class="badge heal">+${effect.heal}</span>`);
   if (effect.drawCards) bits.push(`<span class="token-chip">Draw ${effect.drawCards}</span>`);
   if (effect.discardCards) bits.push(`<span class="token-chip">Discard ${effect.discardCards}</span>`);
@@ -1137,7 +1297,9 @@ function effectHtml(effect = {}) {
   return bits.join(' ') || '<span class="token-chip">No effect</span>';
 }
 function actionPreview(action) {
-  return `<div class="preview-row"><div>${conditionHtml(action.condition)}<strong>${action.label || ''}</strong></div><div>${effectHtml(action)}</div></div>`;
+  let label2Html = action.label2 ? `<div class="token-chip" style="margin-left: 4px;">${action.label2}</div>` : '';
+  let label3Html = action.label3 ? `<div class="token-chip" style="margin-left: 4px;">${action.label3}</div>` : '';
+  return `<div class="preview-row"><div>${conditionHtml(action.condition)}<strong>${action.label || ''}</strong></div><div>${effectHtml(action)}${label2Html}${label3Html}</div></div>`;
 }
 function defensePreview(effect) {
   return `<div class="preview-row"><div>${conditionHtml(effect.condition)}</div><div>${effectHtml(effect)}</div></div>`;
@@ -1218,14 +1380,14 @@ function renderPassiveRules() {
 }
 
 function validateTokens() {
-  const tokenCatalogTokens = Object.keys(tokenSourceData?.catalog || {});
+  const tokenLabels = (tokenCatalog || []).map(t => t.label);
   document.querySelectorAll('.token-input').forEach(input => {
     const vals = csv(input.value);
     if (vals.length === 0) {
       input.classList.remove('valid', 'invalid');
       return;
     }
-    const allValid = vals.every(v => tokenCatalogTokens.includes(v));
+    const allValid = vals.every(v => tokenLabels.includes(v));
     input.classList.toggle('valid', allValid);
     input.classList.toggle('invalid', !allValid);
   });
@@ -1288,21 +1450,25 @@ function renderTokenAdmin() {
     });
   root.innerHTML = rows.map(({ token, index }) => {
     const refs = tokenRefs(token.label);
+    const persistence = token.persistence || (token.persistent === false ? 'non_persistent' : 'persistent');
     return '<article class="token-admin-card" data-token-index="' + index + '">' +
       '<div class="token-admin-head"><img src="' + assetUrl(token.imageAsset) + '" alt="' + escapeAttr(token.label) + '" /><div><strong>' + escapeText(token.label || 'Token') + '</strong><div class="hint">' + escapeText(token.kind || '') + '<div class="token-highlight" style="font-size:12px; margin-top:4px;">{token:' + escapeText(token.label) + '}</div>' + '</div></div></div>' +
       '<div class="token-admin-grid">' +
       '<label>UK title<input class="tok-label" value="' + escapeAttr(token.label || '') + '" /></label>' +
       '<label>FR title<input class="tok-fr" value="' + escapeAttr(token.frLabel || '') + '" /></label>' +
       '<label>Kind<select class="tok-kind"><option value="positive" ' + (token.kind === 'positive' ? 'selected' : '') + '>positive</option><option value="negative" ' + (token.kind === 'negative' ? 'selected' : '') + '>negative</option><option value="unique" ' + (token.kind === 'unique' ? 'selected' : '') + '>unique</option></select></label>' +
+      '<label>Persistence<select class="tok-persistence"><option value="persistent" ' + (persistence === 'persistent' ? 'selected' : '') + '>Persistent</option><option value="semi_persistent" ' + (persistence === 'semi_persistent' ? 'selected' : '') + '>Semi-persistent</option><option value="non_persistent" ' + (persistence === 'non_persistent' ? 'selected' : '') + '>Non-persistent</option></select></label>' +
       '<label>Max stack<input class="tok-max" type="number" value="' + escapeAttr(token.maxStack ?? 1) + '" /></label>' +
       '<label>Image asset<input class="tok-asset" value="' + escapeAttr(token.imageAsset || '') + '" /></label>' +
       '<label>Aliases<input class="tok-aliases" value="' + escapeAttr((token.aliases || []).join(', ')) + '" /></label>' +
       '<label class="checkline"><input class="tok-supported" type="checkbox" ' + (token.appSupported ? 'checked' : '') + ' />App enabled</label>' +
+      '<label class="checkline"><input class="tok-animation" type="checkbox" ' + (token.appAnimation ? 'checked' : '') + ' />App animation</label>' +
       '<label class="checkline"><input class="tok-removable" type="checkbox" ' + (token.removable !== false ? 'checked' : '') + ' />Removable</label>' +
       '<label class="checkline"><input class="tok-minion" type="checkbox" ' + (token.minionAllowed !== false ? 'checked' : '') + ' />Can affect enemies</label>' +
       '<label class="checkline"><input class="tok-visible" type="checkbox" ' + (token.editorVisible !== false ? 'checked' : '') + ' />Visible in token list</label>' +
       '</div>' +
-      '<label class="wide-label">Description<textarea class="tok-desc" rows="4">' + escapeText(token.description || '') + '</textarea></label>' +
+      '<label class="wide-label">Description<textarea class="tok-desc" rows="3">' + escapeText(token.description || '') + '</textarea></label>' +
+      '<label class="wide-label">Code / App Details (Ce qui a été codé dans l\'application)<textarea class="tok-app-details" rows="2" placeholder="Ex: Géré automatiquement lors de la phase d\'upkeep...">' + escapeText(token.appDetails || '') + '</textarea></label>' +
       '<div class="token-refs"><span><strong>Heroes:</strong> ' + escapeText(refs.heroes.join(', ') || '-') + '</span><span><strong>Minions:</strong> ' + escapeText(refs.minions.join(', ') || '-') + '</span></div>' +
       '</article>';
   }).join('') || '<em>No token found.</em>';
@@ -1320,25 +1486,62 @@ function collectTokensFromAdmin() {
     token.label = card.querySelector('.tok-label').value.trim();
     token.frLabel = card.querySelector('.tok-fr').value.trim();
     token.kind = card.querySelector('.tok-kind').value;
+    const persVal = card.querySelector('.tok-persistence').value;
+    token.persistence = persVal;
+    token.persistent = persVal !== 'non_persistent';
     token.maxStack = intVal(card.querySelector('.tok-max').value, 1);
     token.imageAsset = card.querySelector('.tok-asset').value.trim() || null;
     token.aliases = csv(card.querySelector('.tok-aliases').value);
     token.appSupported = card.querySelector('.tok-supported').checked;
+    token.appAnimation = card.querySelector('.tok-animation').checked;
     token.removable = card.querySelector('.tok-removable').checked;
     token.minionAllowed = card.querySelector('.tok-minion').checked;
     token.editorVisible = card.querySelector('.tok-visible').checked;
     token.description = card.querySelector('.tok-desc').value.trim();
+    token.appDetails = card.querySelector('.tok-app-details').value.trim();
   });
 }
-// renderDevNotes removed
+function updateRewardWarnings() {
+  const chests = parseInt($('rewardChestsInput').value, 10);
+  const rank = $('rewardRankInput').value.trim();
+  if (!chests || chests === 0) {
+    $('rewardChestsInput').classList.add('invalid-warning');
+  } else {
+    $('rewardChestsInput').classList.remove('invalid-warning');
+  }
+  if (!rank) {
+    $('rewardRankInput').classList.add('invalid-warning');
+  } else {
+    $('rewardRankInput').classList.remove('invalid-warning');
+  }
+}
+
 function bindBasics() {
   ['nameInput','keyInput','rankInput','hpInput','cpInput','defenseDiceInput','rewardChestsInput','rewardRankInput','cardAssetInput','initialTokensInput','attackStyleInput','attackNameInput','attacksTextInput','defenseTextInput','passivesTextInput','attacksDisplayRowsInput','defenseDisplayRowsInput','passivesDisplayRowsInput'].forEach((id) => {
-    $(id).addEventListener('input', () => { collectCurrent(); setDirty('enemy'); renderLists(); renderPreview(); renderDisplayRowsPreviews(); renderMeta(); });
+    $(id).addEventListener('input', () => { collectCurrent(); setDirty('enemy'); renderLists(); renderPreview(); renderDisplayRowsPreviews(); renderMeta(); updateRewardWarnings(); });
   });
 }
 document.addEventListener('DOMContentLoaded', () => {
   initAuth();
   setupUIEnhancements();
+  renderLogs();
+
+  $('cancelTokenModalBtn')?.addEventListener('click', () => {
+    $('tokenModal').style.display = 'none';
+    activeTokenInput = null;
+  });
+
+  $('confirmTokenModalBtn')?.addEventListener('click', () => {
+    if (activeTokenInput) {
+      const checkboxes = $('tokenCheckboxes').querySelectorAll('input[type="checkbox"]:checked');
+      const selected = Array.from(checkboxes).map(cb => cb.value);
+      activeTokenInput.value = selected.join(', ');
+      activeTokenInput.dispatchEvent(new Event('change'));
+      activeTokenInput.dispatchEvent(new Event('input'));
+    }
+    $('tokenModal').style.display = 'none';
+    activeTokenInput = null;
+  });
 
   loadTokenCatalog();
   $('loadDefaultBtn').onclick = loadDefault;
