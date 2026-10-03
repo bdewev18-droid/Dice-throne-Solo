@@ -19,7 +19,7 @@
 
                                                        ],
                                              "id":  "p-259-1",
-                                             "userPrompt":  "Token flight, sur le minion, le token ne s\u0027est pas d�clench� en d�fense alors que les points de vie �tait bas et tu� le minion. Token guard breck se d�clenche en upkeep (popin)",
+                                             "userPrompt":  "Token flight, sur le minion, le token ne s\u0027est pas d?clench? en d?fense alors que les points de vie ?tait bas et tu? le minion. Token guard breck se d?clenche en upkeep (popin)",
                                              "aiResponse":  "Fixed Minion AI netDamage calculation to include _battleAttackModifier. Added Guard break to the TokenAnimationDialog skip list."
                                          }
                                      ]
@@ -43,7 +43,7 @@
 
                                                        ],
                                              "id":  "p-258-1",
-                                             "userPrompt":  "La popin se d�clenche en upkeep alors qu\u0027il n\u0027y a pas eu de clic sur use du composant 11",
+                                             "userPrompt":  "La popin se d?clenche en upkeep alors qu\u0027il n\u0027y a pas eu de clic sur use du composant 11",
                                              "aiResponse":  "Fixed token trigger in _applyUpkeep. Honor and Flight are now correctly skipped during automatic animations."
                                          }
                                      ]
@@ -1255,7 +1255,7 @@
                                         "title":  "Delayed Poison",
                                         "subtitle":  "Triggered on Benjamin",
                                         "descriptionText":  "A player afflicted with this token removes it at the conclusion of their turn and then receives 3 undefendable dmg per token (max 2).",
-                                        "resultText":  "❤️ HP: 27 ➔ 24",
+                                        "resultText":  "?? HP: 27 ? 24",
                                         "btnEditText":  "Edit",
                                         "btnOkText":  "OK"
                                     }

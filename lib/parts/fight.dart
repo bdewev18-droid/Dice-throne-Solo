@@ -13449,7 +13449,7 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
               ),
             ],
-            if (attackerAccuracyCount > 0) ...[
+            if (attackerAccuracyCount > 0 || accuracyUsed) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -13470,7 +13470,9 @@ class CombatAiChatDock extends StatelessWidget {
                     _ActionRowLabel(
                       tokenLabel: 'Accuracy',
                       tokenAsset: 'assets/token/Accuracy.png',
-                      text: 'Accuracy',
+                      text: attackerAccuracyCount > 1
+                          ? 'Accuracy (x$attackerAccuracyCount)'
+                          : 'Accuracy',
                     ),
                     const Spacer(),
                     if (accuracyUsed)
@@ -14345,19 +14347,14 @@ class CombatAiChatDock extends StatelessWidget {
                         ),
                 ),
                 const SizedBox(width: 8),
-                Visibility(
-                  visible: !showBlindingLightAttackCover,
-                  maintainSize: true,
-                  maintainAnimation: true,
-                  maintainState: true,
-                  child: SizedBox(
-                    width: 56,
-                    height: 52,
-                    child: FilledButton(
-                      onPressed:
-                          ((showBlindButton && attackValue > 0) || blockApply)
-                          ? null
-                          : onApply,
+                SizedBox(
+                  width: 56,
+                  height: 52,
+                  child: FilledButton(
+                    onPressed:
+                        (((showBlindButton || showBlindingLightAttackCover) && attackValue > 0) || blockApply)
+                        ? null
+                        : onApply,
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xff8f43ff),
                         disabledBackgroundColor: Colors.white10,
@@ -14371,7 +14368,6 @@ class CombatAiChatDock extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ],
