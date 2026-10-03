@@ -1,4 +1,4 @@
-﻿part of '../main.dart';
+part of '../main.dart';
 
 int combatDiceAnimationSeconds = 0;
 
@@ -13198,7 +13198,7 @@ class CombatAiChatDock extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Actif (+$attackerSneakAttackBonus)',
+                              'Actif (+$attackerSneakAttackBonus DMG)',
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,

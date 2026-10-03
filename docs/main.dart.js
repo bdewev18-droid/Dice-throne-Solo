@@ -9509,7 +9509,7 @@ else{o=i===2||i===3
 n="Blinding Light (D6: "+A.l(i)
 s=s.c
 if(o)q.push(n+"): "+s+"'s attack damage is reduced by half (-"+h+"). Net attack: "+B.d.a9(g-h,0,99)+".")
-else q.push(n+"): "+s+"'s attack applies at full strength ("+g+" damage).")}else if(B.b.Z(o,new A.aXK()))q.push("Blinding Light is active: "+s.c+" must roll 1 D6 on attack (1 = fails, 2-3 = \xbd damage, 4-6 = full damage).")
+else q.push(n+"): "+s+"'s attack applies at full strength ("+g+" damage).")}else if(B.b.Z(o,new A.aXK()))q.push("Blinding Light is active: "+s.c+" must roll 1 D6 on attack (1 = fails, 2-3 = 1/2 damage, 4-6 = full damage).")
 return B.b.aF(q,"\n")},
 bbe(a,b,c,d){var s,r,q,p,o,n,m,l,k,j,i,h,g
 if(d.length===0)return""
@@ -9563,7 +9563,7 @@ if(b0.db<=0)return b0.b+" was defeated by Barbed Vine counter damage!"
 if(b7!=null)if(o)n="Blinding Light (D6: 1): Offensive Ability fails to activate! 0 damage dealt."
 else{a8=b7===2||b7===3
 m="Blinding Light (D6: "+A.l(b7)
-n=a8?m+"): Attack damage is reduced by half (-"+b6+"). Net attack: "+B.d.a9(b5-b6,0,99)+".":m+"): Attack applies at full strength ("+b5+" damage)."}else n=p?"Afflicted by Blinding Light: must roll 1 D6 on attack (1 = fails, 2-3 = \xbd damage, 4-6 = full damage).":null
+n=a8?m+"): Attack damage is reduced by half (-"+b6+"). Net attack: "+B.d.a9(b5-b6,0,99)+".":m+"): Attack applies at full strength ("+b5+" damage)."}else n=p?"Afflicted by Blinding Light: must roll 1 D6 on attack (1 = fails, 2-3 = 1/2 damage, 4-6 = full damage).":null
 l=q?"Afflicted by Parlay: All attack damage is negated (0 dmg). Do NOT aim for damage! Aim for an attack that grants a positive status token to the minion or inflicts a status token on the hero!\n":""
 if(b2===0||a9.length===0){k=n!=null?n+"\n":""
 j=r?"Afflicted by Constrict: each reroll beyond the first costs 1 CP. I stop if I reach 0 CP or max damage.\n":""
@@ -54057,7 +54057,7 @@ r.push(new A.nK("Naraxus Battle",B.oH,i.a.x,h,h))
 r=A.b1y(A.Px(A.ix(A.aV(r,B.a4,B.i,B.n),!n,h),B.af,B.Qj,m),B.a14)
 n=$.ft().b
 m=n?" - Dev mode":""
-return A.qG(h,A.dp(B.aI,A.b([f,g,s,A.fk(!0,new A.ah(B.i4,A.aV(A.b([new A.dw(B.mB,h,h,new A.Pl(q,p,o,h),h),B.c3,r,B.Gv,new A.Yi("Version 1.3.266"+m,n,new A.aN4(),h)],l),B.k,B.i,B.n),h),B.U,!0)],l),B.L,B.ey,h),h,!0)}}
+return A.qG(h,A.dp(B.aI,A.b([f,g,s,A.fk(!0,new A.ah(B.i4,A.aV(A.b([new A.dw(B.mB,h,h,new A.Pl(q,p,o,h),h),B.c3,r,B.Gv,new A.Yi("Version 1.3.267"+m,n,new A.aN4(),h)],l),B.k,B.i,B.n),h),B.U,!0)],l),B.L,B.ey,h),h,!0)}}
 A.aN6.prototype={
 $0(){var s=this.a
 if(s.c!=null)s.I(new A.aN5(s))},
@@ -59307,7 +59307,7 @@ s=m.a.f
 r=A.aA(s?B.dr:B.aK,1)
 q=A.a_(8)
 p=s?" - Developer mode":""
-r=A.b([A.bc(A.ha(o,A.ae(B.m,A.a0("Version 1.3.266"+p,o,o,o,A.bH(o,o,s?B.dr:B.T,o,o,o,o,o,o,o,o,o,o,o,B.z,o,o,!0,o,o,o,o,o,o,o,o),B.X,o),B.j,o,o,new A.a5(o,o,r,q,o,o,B.q),o,o,o,o,B.Qy,o,o,o),B.am,!1,o,o,o,o,o,o,o,new A.aE5(a,b),o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,!1,B.bw),1)],n)
+r=A.b([A.bc(A.ha(o,A.ae(B.m,A.a0("Version 1.3.267"+p,o,o,o,A.bH(o,o,s?B.dr:B.T,o,o,o,o,o,o,o,o,o,o,o,B.z,o,o,!0,o,o,o,o,o,o,o,o),B.X,o),B.j,o,o,new A.a5(o,o,r,q,o,o,B.q),o,o,o,o,B.Qy,o,o,o),B.am,!1,o,o,o,o,o,o,o,new A.aE5(a,b),o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,!1,B.bw),1)],n)
 if(m.a.f)B.b.E(r,A.b([B.R,A.EJ(B.TC,new A.aE6(m,a),A.jb(o,B.ax,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o),o)],n))
 l.push(A.ab(r,B.k,B.i,B.n,0))
 return A.fk(!0,new A.ah(B.QX,A.aV(l,B.a4,B.i,B.y),o),B.U,!0)},
@@ -59719,7 +59719,7 @@ else{n=s===2||s===3
 m=c5.cF
 s="Blinding Light (D6: "+A.l(s)
 if(n){n=c5.cX
-o=s+") on "+p+": Attack damage is reduced by half (-"+n+"). Net attack: "+B.d.a9(m-n,0,99)+"."}else o=s+") on "+p+": Attack applies at full strength ("+m+" damage)."}else o=c5.aw?"Blinding Light is active on "+p+": Roll 1 D6 on attack (1 = fails, 2-3 = \xbd damage, 4-6 = full damage).":c6}else o=c6
+o=s+") on "+p+": Attack damage is reduced by half (-"+n+"). Net attack: "+B.d.a9(m-n,0,99)+"."}else o=s+") on "+p+": Attack applies at full strength ("+m+" damage)."}else o=c5.aw?"Blinding Light is active on "+p+": Roll 1 D6 on attack (1 = fails, 2-3 = 1/2 damage, 4-6 = full damage).":c6}else o=c6
 s=t.s
 n=A.b([],s)
 if(r.length!==0)n.push("Hero: "+B.b.aF(r,", "))
@@ -59962,7 +59962,7 @@ c0=A.b([new A.eB(e0,"assets/token/Sneak-Attack.png",c0>1?"Sneak Attack (x"+c0+")
 if(b6){b6=B.b4.a7(0.2)
 c1=A.a_(10)
 c2=A.aA(B.F,1)
-c0.push(A.ae(c6,A.ab(A.b([B.bV,B.a9,A.a0("Actif (+"+c5.cy+")",c6,c6,c6,B.c5,c6,c6)],e2),B.k,B.i,B.y,0),B.j,c6,c6,new A.a5(b6,c6,c2,c1,c6,c6,B.q),c6,c6,c6,c6,B.bU,c6,c6,c6))}else{b6=c5.db
+c0.push(A.ae(c6,A.ab(A.b([B.bV,B.a9,A.a0("Actif (+"+c5.cy+" DMG)",c6,c6,c6,B.c5,c6,c6)],e2),B.k,B.i,B.y,0),B.j,c6,c6,new A.a5(b6,c6,c2,c1,c6,c6,B.q),c6,c6,c6,c6,B.bU,c6,c6,c6))}else{b6=c5.db
 c1=b6?B.u:B.bS
 c2=b6?B.h:B.bD
 c2=A.cS(c6,c6,c1,c6,c6,c6,c6,c6,c6,c2,c6,B.M,B.dN,c6,new A.bk(A.a_(8),B.r),c6,c6,B.cI,c6,c6)
