@@ -1,4 +1,4 @@
-﻿{
+{
   "version": 1,
   "tokens": [
     {
@@ -1018,7 +1018,7 @@
         "Guard Break"
       ],
       "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-      "appAnimation": true,
+      "appAnimation": false,
       "minionAllowed": true,
       "editorVisible": true,
       "persistence": "persistent"

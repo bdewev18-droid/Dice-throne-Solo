@@ -854,6 +854,13 @@ class _FightPageState extends State<FightPage> {
                     retributionUsed: _retributionUsed,
                     minionAutoRetribution: _minionAutoRetribution,
                     onUseRetribution: (_battleAttackValue - _battleDefenseValue) > 0 ? _triggerRetributionAttempt : null,
+                    attackerGuardBreakCount: _phase == CombatPhase.hero
+                        ? _heroGuardBreakCount
+                        : _minionGuardBreakCount,
+                    canUseAttackerGuardBreak: _canUseAttackerGuardBreak,
+                    onUseAttackerGuardBreak: _phase == CombatPhase.hero
+                        ? _triggerHeroGuardBreakAttempt
+                        : _triggerMinionGuardBreakAttempt,
                     guardBreakSuccess: _guardBreakSuccess,
                     barbedVineActive: _phase == CombatPhase.hero
                         ? widget.adventure.alterations.any(_isBarbedVineToken)
@@ -2963,6 +2970,17 @@ class _FightPageState extends State<FightPage> {
   int get _minionSneakAttackCount =>
       enemy.alterations.where(_isSneakAttackToken).length;
 
+  bool _isGuardBreakToken(String t) {
+    final k = _normalizeTokenKey(t);
+    return k == 'guardbreak' || k == 'brisegarde';
+  }
+
+  int get _heroGuardBreakCount =>
+      widget.adventure.alterations.where(_isGuardBreakToken).length;
+
+  int get _minionGuardBreakCount =>
+      enemy.alterations.where(_isGuardBreakToken).length;
+
   bool _isPreyToken(String t) {
     final k = _normalizeTokenKey(t);
     return k == 'prey' || k == 'proie';
@@ -3157,6 +3175,21 @@ class _FightPageState extends State<FightPage> {
     return false;
   }
 
+  bool get _canUseAttackerGuardBreak {
+    if (_phase == CombatPhase.hero) {
+      if (_guardBreakUsed) return false;
+      if (_heroGuardBreakCount <= 0) return false;
+      if (_battleAttackValue <= 0) return false;
+      return true;
+    } else if (_phase == CombatPhase.minionAttack) {
+      if (_guardBreakUsed) return false;
+      if (_minionGuardBreakCount <= 0) return false;
+      if (_battleAttackValue <= 0) return false;
+      return true;
+    }
+    return false;
+  }
+
   bool get _canUseAttackerSneakAttack {
     if (_phase == CombatPhase.hero) {
       if (_heroSneakAttackActive) return false;
@@ -3335,6 +3368,93 @@ class _FightPageState extends State<FightPage> {
           'Sneak Attack roll: $roll -> +$bonus Attack Modifier!';
       widget.adventure.log(
         '[TOKEN] ${enemy.label} spent Sneak Attack: rolled $roll -> +$bonus Attack Modifier.',
+      );
+      widget.onChanged();
+    });
+  }
+
+  Future<void> _triggerHeroGuardBreakAttempt() async {
+    final rule = TokenCatalogRepository.byLabel('Guard Break') ??
+        TokenCatalogRepository.byLabel('Brise garde') ??
+        TokenCatalogRepository.byLabel('Brisegarde');
+    if (rule == null) return;
+    final count = _heroGuardBreakCount;
+    if (count <= 0) return;
+
+    final result = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: count,
+      targetName: widget.adventure.hero.label,
+      currentHp: widget.adventure.health,
+      currentCp: widget.adventure.combatPoints,
+    );
+
+    if (!mounted || result == null) return;
+
+    final roll = result.dieRoll;
+    if (roll == null) return;
+
+    final idx = widget.adventure.alterations.indexWhere(_isGuardBreakToken);
+    if (idx != -1) {
+      widget.adventure.alterations.removeAt(idx);
+    }
+
+    final success = (roll == 4 || roll == 5);
+
+    setState(() {
+      _guardBreakResolved = true;
+      _guardBreakUsed = true;
+      _guardBreakSuccess = success;
+      _extraDiceOutcomeMessage = success
+          ? 'Guard Break roll: $roll -> Success! Attack becomes undefendable.'
+          : 'Guard Break roll: $roll -> Failed.';
+      widget.adventure.log(
+        '[TOKEN] ${widget.adventure.hero.label} spent Guard Break: rolled $roll -> ${success ? "Success" : "Failed"}.',
+      );
+      widget.onChanged();
+    });
+  }
+
+  Future<void> _triggerMinionGuardBreakAttempt() async {
+    final rule = TokenCatalogRepository.byLabel('Guard Break') ??
+        TokenCatalogRepository.byLabel('Brise garde') ??
+        TokenCatalogRepository.byLabel('Brisegarde');
+    if (rule == null) return;
+    final count = _minionGuardBreakCount;
+    if (count <= 0) return;
+
+    final result = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: count,
+      targetName: enemy.label,
+      isMinion: true,
+      currentHp: enemy.health,
+      currentCp: enemy.combatPoints,
+    );
+
+    if (!mounted || result == null) return;
+
+    final roll = result.dieRoll;
+    if (roll == null) return;
+
+    final idx = enemy.alterations.indexWhere(_isGuardBreakToken);
+    if (idx != -1) {
+      enemy.alterations.removeAt(idx);
+    }
+
+    final success = (roll == 4 || roll == 5);
+
+    setState(() {
+      _guardBreakResolved = true;
+      _guardBreakUsed = true;
+      _guardBreakSuccess = success;
+      _extraDiceOutcomeMessage = success
+          ? 'Guard Break roll: $roll -> Success! Attack becomes undefendable.'
+          : 'Guard Break roll: $roll -> Failed.';
+      widget.adventure.log(
+        '[TOKEN] ${enemy.label} spent Guard Break: rolled $roll -> ${success ? "Success" : "Failed"}.',
       );
       widget.onChanged();
     });
@@ -6863,25 +6983,6 @@ class _FightPageState extends State<FightPage> {
           l.contains('brulure') ||
           l.contains('burn')) {
         deltaHp = initialCount > 0 ? -2 : 0;
-      } else if (l.contains('guard break') ||
-          l.contains('brisegarde') ||
-          l.contains('brise garde')) {
-        final r = result?.dieRoll;
-        if (r != null) {
-          setState(() {
-            _guardBreakResolved = true;
-            _guardBreakUsed = true;
-            _guardBreakSuccess = (r == 4 || r == 5);
-          });
-          widget.adventure.log(
-            '[TOKEN] $targetName used Guard Break: rolled $r -> ${_guardBreakSuccess ? "Success! Attack is undefendable." : "Failed."}',
-          );
-        } else {
-          setState(() {
-            _guardBreakResolved = true;
-            _guardBreakUsed = false;
-          });
-        }
       } else if (l.contains('powder keg') || l.contains('baril de poudre')) {
         final r = result?.dieRoll;
         if (r != null && r <= 2) {
@@ -11409,6 +11510,9 @@ class CombatAiChatDock extends StatelessWidget {
     this.attackerSneakAttackBonus = 0,
     this.canUseAttackerSneakAttack = false,
     this.onUseAttackerSneakAttack,
+    this.attackerGuardBreakCount = 0,
+    this.canUseAttackerGuardBreak = false,
+    this.onUseAttackerGuardBreak,
     this.defenderPreyCount = 0,
     this.preyUsedCount = 0,
     this.canUsePrey = false,
@@ -11489,6 +11593,9 @@ class CombatAiChatDock extends StatelessWidget {
   final int attackerSneakAttackBonus;
   final bool canUseAttackerSneakAttack;
   final VoidCallback? onUseAttackerSneakAttack;
+  final int attackerGuardBreakCount;
+  final bool canUseAttackerGuardBreak;
+  final VoidCallback? onUseAttackerGuardBreak;
   final int defenderPreyCount;
   final int preyUsedCount;
   final bool canUsePrey;
@@ -11756,6 +11863,9 @@ class CombatAiChatDock extends StatelessWidget {
     final bool showSneakAttackRow =
         (phase == CombatPhase.hero || phase == CombatPhase.minionAttack) &&
         (attackerSneakAttackCount > 0 || attackerSneakAttackActive);
+    final bool showGuardBreakRow =
+        (phase == CombatPhase.hero || phase == CombatPhase.minionAttack) &&
+        (attackerGuardBreakCount > 0 || guardBreakSuccess);
     final bool showShadowsAttackCover =
         phase == CombatPhase.minionAttack && shadowsActive;
     final bool isAgilityAvoided =
@@ -13242,6 +13352,103 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
               ),
             ],
+            if (showGuardBreakRow) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: guardBreakSuccess
+                      ? const Color(0xff132b1e)
+                      : const Color(0xff1f1a2e),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: guardBreakSuccess
+                        ? Colors.greenAccent.withValues(alpha: 0.6)
+                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    _ActionRowLabel(
+                      tokenLabel: 'Guard break',
+                      tokenAsset: 'assets/token/brisegarde.webp',
+                      text: attackerGuardBreakCount > 1
+                          ? 'Brise garde (x$attackerGuardBreakCount)'
+                          : 'Brise garde',
+                    ),
+                    const SizedBox(width: 8),
+                    if (guardBreakSuccess)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.greenAccent,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.check_circle,
+                              size: 12,
+                              color: Colors.greenAccent,
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'Actif (Undefendable)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.greenAccent,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: canUseAttackerGuardBreak
+                              ? const Color(0xff8f43ff)
+                              : Colors.grey.shade700,
+                          foregroundColor: canUseAttackerGuardBreak
+                              ? Colors.white
+                              : Colors.white38,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: canUseAttackerGuardBreak
+                            ? onUseAttackerGuardBreak
+                            : null,
+                        child: const Text(
+                          'Use',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             if (attackerAccuracyCount > 0) ...[
               const SizedBox(height: 8),
               Container(
@@ -13327,60 +13534,6 @@ class CombatAiChatDock extends StatelessWidget {
                           ),
                         ),
                       ),
-                  ],
-                ),
-              ),
-            ],
-            if (guardBreakSuccess) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xff132b1e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.greenAccent.withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    _ActionRowLabel(
-                      tokenLabel: 'Guard break',
-                      tokenAsset: 'assets/token/brisegarde.webp',
-                      text: 'Brise garde',
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.greenAccent, width: 1),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.check_circle,
-                            size: 12,
-                            color: Colors.greenAccent,
-                          ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            'Active (Undefendable)',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.greenAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
