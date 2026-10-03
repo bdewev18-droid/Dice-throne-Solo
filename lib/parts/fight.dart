@@ -161,6 +161,71 @@ class _FightPageState extends State<FightPage> {
   bool _battleAttackUndefendable = false;
 
   bool _battleAttackUndefendableFromWebbed = false;
+  bool _smokeBombSuccess = false;
+  bool _smokeBombUsed = false;
+
+  bool _windShearActive = false;
+
+  int get _availableWindShearCount {
+    final targetList = _phase == CombatPhase.hero
+        ? enemy.alterations
+        : widget.adventure.alterations;
+    return targetList
+        .where((t) => _normalizeTokenKey(t).contains('windshear'))
+        .length;
+  }
+
+  bool get _canUseWindShear {
+    if (_windShearActive) return false;
+    if (_availableWindShearCount <= 0) return false;
+    if (_battleAttackValue <= 0) return false;
+    return true;
+  }
+
+  void _triggerWindShearAttempt() {
+    final targetList = _phase == CombatPhase.hero
+        ? enemy.alterations
+        : widget.adventure.alterations;
+    final idx = targetList.indexWhere(
+      (t) => _normalizeTokenKey(t).contains('windshear'),
+    );
+    if (idx == -1) return;
+
+    setState(() {
+      targetList.removeAt(idx);
+      _windShearActive = true;
+      _battleDefenseValue = (_battleDefenseValue + 2).clamp(0, 99);
+      _battleReturnDamage += 2;
+      _battleReturnDamageUndefendable = true;
+    });
+    widget.adventure.log(
+      '[TOKEN] Wind Shear activated: +2 DEF and returns 2 undefendable damage.',
+    );
+    widget.onChanged();
+  }
+
+  void _checkAndTriggerWindShearOnEnemy() {
+    if (_windShearActive || !mounted) return;
+    if (_phase != CombatPhase.hero) return;
+    if (_battleAttackValue <= 0) return;
+    final idx = enemy.alterations.indexWhere(
+      (t) => _normalizeTokenKey(t).contains('windshear'),
+    );
+    if (idx == -1) return;
+
+    setState(() {
+      enemy.alterations.removeAt(idx);
+      _windShearActive = true;
+      _battleDefenseValue = (_battleDefenseValue + 2).clamp(0, 99);
+      _battleReturnDamage += 2;
+      _battleReturnDamageUndefendable = true;
+    });
+    widget.adventure.log(
+      '[TOKEN] Minion auto-used Wind Shear: +2 DEF and returns 2 undefendable damage.',
+    );
+    widget.onChanged();
+  }
+
   bool _heroWebbedConsumedThisPhase = false;
   bool _enemyWebbedConsumedThisPhase = false;
 
@@ -797,7 +862,8 @@ class _FightPageState extends State<FightPage> {
                     flightAvoided: _flightAvoided,
                     flightUndefendable: _flightUndefendable,
                     onUseHeroFlight: _triggerHeroFlightAttempt,
-                    onUseMinionFlight: () => _checkAndTriggerFlightPopinOnEnemy(),
+                    onUseMinionFlight: () =>
+                        _checkAndTriggerFlightPopinOnEnemy(),
                     heroAgilityCount: _heroAgilityCount,
                     heroAgilityActive: _heroAgilityActive,
                     heroAgilitySuccesses: _heroAgilitySuccesses,
@@ -826,6 +892,10 @@ class _FightPageState extends State<FightPage> {
                     preyUsedCount: _preyUsedCount,
                     canUsePrey: _canUsePrey,
                     onUsePrey: _triggerPreyAttempt,
+                    windShearCount: _availableWindShearCount,
+                    windShearActive: _windShearActive,
+                    canUseWindShear: _canUseWindShear,
+                    onUseWindShear: _triggerWindShearAttempt,
                     attackerAccuracyCount: _attackerAccuracyCount,
                     accuracyUsed: _accuracyUsed || _minionAutoAccuracy,
                     canUseAccuracy: _canUseAccuracy,
@@ -839,21 +909,39 @@ class _FightPageState extends State<FightPage> {
                     onUseDamageBonus: _battleAttackValue > 0
                         ? _triggerDamageBonusAttempt
                         : null,
+                    salveCount: _availableSalveCount,
+                    onUseSalve: _triggerSalveAttempt,
+                    smokeBombCount: _availableSmokeBombCount,
+                    onUseSmokeBomb: _canUseSmokeBomb
+                        ? _triggerSmokeBombAttempt
+                        : null,
+                    smokeBombSuccess: _smokeBombSuccess,
                     honorCount: _availableHonorCount,
-                    honorDamageBonus: _phase == CombatPhase.hero ? _honorDamageBonus : _minionAutoHonorBonus,
-                    onUseHonor: _battleAttackValue > 0 ? _triggerHonorAttempt : null,
+                    honorDamageBonus: _phase == CombatPhase.hero
+                        ? _honorDamageBonus
+                        : _minionAutoHonorBonus,
+                    onUseHonor: _battleAttackValue > 0
+                        ? _triggerHonorAttempt
+                        : null,
                     ninjitsuCount: _availableNinjitsuCount,
                     ninjitsuDamageBonus: _ninjitsuDamageBonus,
                     ninjitsuUndefendable: _ninjitsuUndefendable,
-                    onUseNinjitsu: _battleAttackValue > 0 ? _triggerNinjitsuAttempt : null,
+                    onUseNinjitsu: _battleAttackValue > 0
+                        ? _triggerNinjitsuAttempt
+                        : null,
                     protectCount: _availableProtectCount,
                     protectUsed: _protectUsed,
                     minionAutoProtect: _minionAutoProtect,
-                    onUseProtect: _battleAttackValue > 0 ? _triggerProtectAttempt : null,
+                    onUseProtect: _battleAttackValue > 0
+                        ? _triggerProtectAttempt
+                        : null,
                     retributionCount: _availableRetributionCount,
                     retributionUsed: _retributionUsed,
                     minionAutoRetribution: _minionAutoRetribution,
-                    onUseRetribution: (_battleAttackValue - _battleDefenseValue) > 0 ? _triggerRetributionAttempt : null,
+                    onUseRetribution:
+                        (_battleAttackValue - _battleDefenseValue) > 0
+                        ? _triggerRetributionAttempt
+                        : null,
                     attackerGuardBreakCount: _phase == CombatPhase.hero
                         ? _heroGuardBreakCount
                         : _minionGuardBreakCount,
@@ -990,8 +1078,46 @@ class _FightPageState extends State<FightPage> {
       // If a 2nd Webbed is applied, it resets the consumed flag so it stays for the NEXT attack.
       if (isSecond) {
         if (isHero) {
+          if (_smokeBombUsed &&
+              widget.adventure.alterations.any(
+                (t) =>
+                    _normalizeTokenKey(t).contains('smoke') ||
+                    _normalizeTokenKey(t).contains('fumig'),
+              )) {
+            widget.adventure.alterations.removeWhere(
+              (t) =>
+                  _normalizeTokenKey(t).contains('smoke') ||
+                  _normalizeTokenKey(t).contains('fumig'),
+            );
+            widget.adventure.log(
+              '[TOKEN] Smoke Bomb expired at end of offensive turn.',
+            );
+            widget.onChanged();
+          }
+          _smokeBombSuccess = false;
+          _smokeBombUsed = false;
+          _windShearActive = false;
           _heroWebbedConsumedThisPhase = false;
         } else {
+          if (_smokeBombUsed &&
+              enemy.alterations.any(
+                (t) =>
+                    _normalizeTokenKey(t).contains('smoke') ||
+                    _normalizeTokenKey(t).contains('fumig'),
+              )) {
+            enemy.alterations.removeWhere(
+              (t) =>
+                  _normalizeTokenKey(t).contains('smoke') ||
+                  _normalizeTokenKey(t).contains('fumig'),
+            );
+            widget.adventure.log(
+              '[TOKEN] Smoke Bomb expired at end of offensive turn.',
+            );
+            widget.onChanged();
+          }
+          _smokeBombSuccess = false;
+          _smokeBombUsed = false;
+          _windShearActive = false;
           _enemyWebbedConsumedThisPhase = false;
         }
       }
@@ -1375,12 +1501,12 @@ class _FightPageState extends State<FightPage> {
         }
       }
     }
-    
-    if (_phase == CombatPhase.minionAttack && 
-        _battleAttackValue > 0 && 
-        _availableNinjitsuCount > 0 && 
-        !_minionNinjitsuRolled && 
-        _rollCount >= 1 && 
+
+    if (_phase == CombatPhase.minionAttack &&
+        _battleAttackValue > 0 &&
+        _availableNinjitsuCount > 0 &&
+        !_minionNinjitsuRolled &&
+        _rollCount >= 1 &&
         (_rollCount == _maxRolls || _currentAttackGoalMet())) {
       _minionNinjitsuRolled = true;
       Future.delayed(const Duration(milliseconds: 600), () {
@@ -1572,7 +1698,45 @@ class _FightPageState extends State<FightPage> {
         _heroWebbedConsumedThisPhase = _battleAttackUndefendableFromWebbed;
       } else {
         _battleAttackUndefendableFromWebbed = false;
+        if (_smokeBombUsed &&
+            enemy.alterations.any(
+              (t) =>
+                  _normalizeTokenKey(t).contains('smoke') ||
+                  _normalizeTokenKey(t).contains('fumig'),
+            )) {
+          enemy.alterations.removeWhere(
+            (t) =>
+                _normalizeTokenKey(t).contains('smoke') ||
+                _normalizeTokenKey(t).contains('fumig'),
+          );
+          widget.adventure.log(
+            '[TOKEN] Smoke Bomb expired at end of offensive turn.',
+          );
+          widget.onChanged();
+        }
+        _smokeBombSuccess = false;
+        _smokeBombUsed = false;
+        _windShearActive = false;
         _enemyWebbedConsumedThisPhase = false;
+        if (_smokeBombUsed &&
+            widget.adventure.alterations.any(
+              (t) =>
+                  _normalizeTokenKey(t).contains('smoke') ||
+                  _normalizeTokenKey(t).contains('fumig'),
+            )) {
+          widget.adventure.alterations.removeWhere(
+            (t) =>
+                _normalizeTokenKey(t).contains('smoke') ||
+                _normalizeTokenKey(t).contains('fumig'),
+          );
+          widget.adventure.log(
+            '[TOKEN] Smoke Bomb expired at end of offensive turn.',
+          );
+          widget.onChanged();
+        }
+        _smokeBombSuccess = false;
+        _smokeBombUsed = false;
+        _windShearActive = false;
         _heroWebbedConsumedThisPhase = false;
       }
       _phase = phase;
@@ -1646,6 +1810,13 @@ class _FightPageState extends State<FightPage> {
           _normalizeTokenKey(t) == 'sunmarked',
     )) {
       tokensToRemind.add('Sun-Marked');
+    }
+    if (widget.adventure.alterations.any(
+      (t) =>
+          _normalizeTokenKey(t) == 'ninjitsu' ||
+          _normalizeTokenKey(t) == 'ninjutsu',
+    )) {
+      tokensToRemind.add('Ninjitsu');
     }
 
     if (tokensToRemind.isNotEmpty) {
@@ -1802,6 +1973,13 @@ class _FightPageState extends State<FightPage> {
           _normalizeTokenKey(t) == 'sunmarked',
     )) {
       tokensToRemind.add('Sun-Marked');
+    }
+    if (enemy.alterations.any(
+      (t) =>
+          _normalizeTokenKey(t) == 'ninjitsu' ||
+          _normalizeTokenKey(t) == 'ninjutsu',
+    )) {
+      tokensToRemind.add('Ninjitsu');
     }
 
     if (tokensToRemind.isNotEmpty) {
@@ -2032,6 +2210,25 @@ class _FightPageState extends State<FightPage> {
         );
         widget.onChanged();
       }
+      if (_smokeBombUsed &&
+          enemy.alterations.any(
+            (t) =>
+                _normalizeTokenKey(t).contains('smoke') ||
+                _normalizeTokenKey(t).contains('fumig'),
+          )) {
+        enemy.alterations.removeWhere(
+          (t) =>
+              _normalizeTokenKey(t).contains('smoke') ||
+              _normalizeTokenKey(t).contains('fumig'),
+        );
+        widget.adventure.log(
+          '[TOKEN] Smoke Bomb expired at end of offensive turn.',
+        );
+        widget.onChanged();
+      }
+      _smokeBombSuccess = false;
+      _smokeBombUsed = false;
+      _windShearActive = false;
       _enemyWebbedConsumedThisPhase = false;
       _battleAttackUndefendableFromWebbed = false;
       _heroHexedThisAttack = false;
@@ -2075,6 +2272,25 @@ class _FightPageState extends State<FightPage> {
         );
         widget.onChanged();
       }
+      if (_smokeBombUsed &&
+          widget.adventure.alterations.any(
+            (t) =>
+                _normalizeTokenKey(t).contains('smoke') ||
+                _normalizeTokenKey(t).contains('fumig'),
+          )) {
+        widget.adventure.alterations.removeWhere(
+          (t) =>
+              _normalizeTokenKey(t).contains('smoke') ||
+              _normalizeTokenKey(t).contains('fumig'),
+        );
+        widget.adventure.log(
+          '[TOKEN] Smoke Bomb expired at end of offensive turn.',
+        );
+        widget.onChanged();
+      }
+      _smokeBombSuccess = false;
+      _smokeBombUsed = false;
+      _windShearActive = false;
       _heroWebbedConsumedThisPhase = false;
       _battleAttackUndefendableFromWebbed = false;
       _minionHexedThisAttack = false;
@@ -2533,10 +2749,14 @@ class _FightPageState extends State<FightPage> {
       enemy.alterations.where(_isShadowsToken).length;
 
   bool get _shadowsActive =>
-      _phase == CombatPhase.minionAttack && _heroShadowsCount > 0 && !_heroShadowsUsed;
+      _phase == CombatPhase.minionAttack &&
+      _heroShadowsCount > 0 &&
+      !_heroShadowsUsed;
 
   bool get _minionShadowsActive =>
-      _phase == CombatPhase.hero && _minionShadowsCount > 0 && !_minionShadowsUsed;
+      _phase == CombatPhase.hero &&
+      _minionShadowsCount > 0 &&
+      !_minionShadowsUsed;
 
   bool get _hasActiveShadowsOnHeroDefender {
     if (_phase != CombatPhase.minionAttack) return false;
@@ -2597,7 +2817,8 @@ class _FightPageState extends State<FightPage> {
   int get _minionFlightCount => enemy.alterations.where(_isFlightToken).length;
 
   Future<void> _triggerHeroFlightAttempt() async {
-    final rule = TokenCatalogRepository.byLabel('Flight') ??
+    final rule =
+        TokenCatalogRepository.byLabel('Flight') ??
         TokenCatalogRepository.byLabel('Vol');
     if (rule == null) return;
 
@@ -2657,7 +2878,8 @@ class _FightPageState extends State<FightPage> {
     if (_flightPopinTriggered || _flightRollResolved || !mounted) return false;
     if (_phase != CombatPhase.hero) return false;
 
-    final rule = TokenCatalogRepository.byLabel('Flight') ??
+    final rule =
+        TokenCatalogRepository.byLabel('Flight') ??
         TokenCatalogRepository.byLabel('Vol');
     if (rule == null) return false;
 
@@ -2879,37 +3101,71 @@ class _FightPageState extends State<FightPage> {
   List<int> _usedDamageBonusTokens = [];
 
   int get _availableProtectCount {
-    final targetList = _phase == CombatPhase.hero ? enemy.alterations : widget.adventure.alterations;
+    final targetList = _phase == CombatPhase.hero
+        ? enemy.alterations
+        : widget.adventure.alterations;
     return targetList.where((t) => _normalizeTokenKey(t) == 'protect').length;
   }
 
   int get _availableRetributionCount {
-    final targetList = _phase == CombatPhase.hero ? enemy.alterations : widget.adventure.alterations;
-    return targetList.where((t) => _normalizeTokenKey(t) == 'retribution').length;
+    final targetList = _phase == CombatPhase.hero
+        ? enemy.alterations
+        : widget.adventure.alterations;
+    return targetList
+        .where((t) => _normalizeTokenKey(t) == 'retribution')
+        .length;
   }
 
   bool get _minionAutoProtect {
-    return _phase == CombatPhase.hero && _battleAttackValue > 0 && _availableProtectCount > 0;
+    return _phase == CombatPhase.hero &&
+        _battleAttackValue > 0 &&
+        _availableProtectCount > 0;
   }
 
   bool get _minionAutoRetribution {
     int def = _battleDefenseValue;
     if (_minionAutoProtect) def += (_battleAttackValue / 2.0).ceil();
-    return _phase == CombatPhase.hero && (_battleAttackValue - def) > 0 && _availableRetributionCount > 0;
+    return _phase == CombatPhase.hero &&
+        (_battleAttackValue - def) > 0 &&
+        _availableRetributionCount > 0;
+  }
+
+  int get _availableSalveCount {
+    if (_phase == CombatPhase.heroUpkeep)
+      return widget.adventure.alterations
+          .where((t) => _normalizeTokenKey(t) == 'salve')
+          .length;
+    if (_phase == CombatPhase.minionUpkeep)
+      return enemy.alterations
+          .where((t) => _normalizeTokenKey(t) == 'salve')
+          .length;
+    return 0;
   }
 
   int get _availableNinjitsuCount {
     final targetList = _phase == CombatPhase.hero
         ? widget.adventure.alterations
         : enemy.alterations;
-    return targetList.where((t) => _normalizeTokenKey(t) == 'ninjitsu').length;
+    return targetList
+        .where(
+          (t) =>
+              _normalizeTokenKey(t) == 'ninjitsu' ||
+              _normalizeTokenKey(t) == 'ninjutsu',
+        )
+        .length;
   }
 
   int get _availableHonorCount {
     final targetList = _phase == CombatPhase.hero
         ? widget.adventure.alterations
         : enemy.alterations;
-    return targetList.where((t) => _normalizeTokenKey(t) == 'honor' || _normalizeTokenKey(t) == 'honneur').length;
+    return targetList
+        .where(
+          (t) =>
+              _normalizeTokenKey(t) == 'honor' ||
+              _normalizeTokenKey(t) == 'honneur',
+        )
+        .length;
   }
 
   int get _minionAutoHonorBonus {
@@ -3176,13 +3432,12 @@ class _FightPageState extends State<FightPage> {
   }
 
   bool get _canUseAttackerGuardBreak {
+    if (_guardBreakSuccess) return false;
     if (_phase == CombatPhase.hero) {
-      if (_guardBreakUsed) return false;
       if (_heroGuardBreakCount <= 0) return false;
       if (_battleAttackValue <= 0) return false;
       return true;
     } else if (_phase == CombatPhase.minionAttack) {
-      if (_guardBreakUsed) return false;
       if (_minionGuardBreakCount <= 0) return false;
       if (_battleAttackValue <= 0) return false;
       return true;
@@ -3374,7 +3629,8 @@ class _FightPageState extends State<FightPage> {
   }
 
   Future<void> _triggerHeroGuardBreakAttempt() async {
-    final rule = TokenCatalogRepository.byLabel('Guard Break') ??
+    final rule =
+        TokenCatalogRepository.byLabel('Guard Break') ??
         TokenCatalogRepository.byLabel('Brise garde') ??
         TokenCatalogRepository.byLabel('Brisegarde');
     if (rule == null) return;
@@ -3417,7 +3673,8 @@ class _FightPageState extends State<FightPage> {
   }
 
   Future<void> _triggerMinionGuardBreakAttempt() async {
-    final rule = TokenCatalogRepository.byLabel('Guard Break') ??
+    final rule =
+        TokenCatalogRepository.byLabel('Guard Break') ??
         TokenCatalogRepository.byLabel('Brise garde') ??
         TokenCatalogRepository.byLabel('Brisegarde');
     if (rule == null) return;
@@ -3524,53 +3781,85 @@ class _FightPageState extends State<FightPage> {
   }
 
   Future<int> _promptNinjitsuChoice() async {
-    return await showDialog<int>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xff1f1a2e),
-          title: const Text('Ninjitsu (Roll: 6)', style: TextStyle(color: Colors.white)),
-          content: const Text('Choose your reward:', style: TextStyle(color: Colors.white70)),
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff8f43ff), foregroundColor: Colors.white),
-              onPressed: () => Navigator.of(context).pop(1),
-              child: const Text('+2 DMG'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff8f43ff), foregroundColor: Colors.white),
-              onPressed: () => Navigator.of(context).pop(2),
-              child: const Text('Delayed Poison'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff8f43ff), foregroundColor: Colors.white),
-              onPressed: () => Navigator.of(context).pop(3),
-              child: const Text('Undefendable'),
-            ),
-          ],
-        );
+    if (_phase == CombatPhase.minionAttack) {
+      if (!_ninjitsuUndefendable && !_battleAttackUndefendable) {
+        return 3; // Make undefendable
       }
-    ) ?? 1;
+      return 1; // +2 DMG
+    }
+    return await showDialog<int>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            return AlertDialog(
+              backgroundColor: const Color(0xff1f1a2e),
+              title: const Text(
+                'Ninjitsu (Roll: 6)',
+                style: TextStyle(color: Colors.white),
+              ),
+              content: const Text(
+                'Choose your reward:',
+                style: TextStyle(color: Colors.white70),
+              ),
+              actions: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff8f43ff),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(1),
+                  child: const Text('+2 DMG'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff8f43ff),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(2),
+                  child: const Text('Delayed Poison'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff8f43ff),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(3),
+                  child: const Text('Undefendable'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        1;
   }
 
   void _triggerProtectAttempt() {
-    final targetList = _phase == CombatPhase.hero ? enemy.alterations : widget.adventure.alterations;
-    final idx = targetList.indexWhere((t) => _normalizeTokenKey(t) == 'protect');
+    final targetList = _phase == CombatPhase.hero
+        ? enemy.alterations
+        : widget.adventure.alterations;
+    final idx = targetList.indexWhere(
+      (t) => _normalizeTokenKey(t) == 'protect',
+    );
     if (idx == -1) return;
 
     setState(() {
       targetList.removeAt(idx);
       _protectUsed = true;
       _battleDefenseValue += (_battleAttackValue / 2.0).ceil();
-      widget.adventure.log('[TOKEN] Protect used: Gained ${(_battleAttackValue / 2.0).ceil()} defense.');
+      widget.adventure.log(
+        '[TOKEN] Protect used: Gained ${(_battleAttackValue / 2.0).ceil()} defense.',
+      );
     });
     widget.onChanged();
   }
 
   void _triggerRetributionAttempt() {
-    final targetList = _phase == CombatPhase.hero ? enemy.alterations : widget.adventure.alterations;
-    final idx = targetList.indexWhere((t) => _normalizeTokenKey(t) == 'retribution');
+    final targetList = _phase == CombatPhase.hero
+        ? enemy.alterations
+        : widget.adventure.alterations;
+    final idx = targetList.indexWhere(
+      (t) => _normalizeTokenKey(t) == 'retribution',
+    );
     if (idx == -1) return;
 
     setState(() {
@@ -3585,51 +3874,177 @@ class _FightPageState extends State<FightPage> {
     final targetList = _phase == CombatPhase.hero
         ? widget.adventure.alterations
         : enemy.alterations;
-    final idx = targetList.indexWhere((t) => _normalizeTokenKey(t) == 'ninjitsu');
+    final idx = targetList.indexWhere(
+      (t) =>
+          _normalizeTokenKey(t) == 'ninjitsu' ||
+          _normalizeTokenKey(t) == 'ninjutsu',
+    );
     if (idx == -1) return;
-    final rule = TokenCatalogRepository.byLabel('Ninjitsu') ??
+    final rule =
+        TokenCatalogRepository.byLabel('Ninjitsu') ??
         TokenCatalogRepository.byLabel('Ninjutsu');
     if (rule == null) return;
-    
+
     final result = await TokenAnimationDialog.show(
       context,
       rule: rule,
       initialCount: 1,
-      targetName: _phase == CombatPhase.hero ? widget.adventure.hero.label : enemy.label,
+      targetName: _phase == CombatPhase.hero
+          ? widget.adventure.hero.label
+          : enemy.label,
     );
 
     if (result != null && result.dieRoll != null && mounted) {
       targetList.removeAt(idx);
       final r = result.dieRoll!;
       if (r <= 3) {
-        setState(() { _ninjitsuDamageBonus += 1; });
+        setState(() {
+          _ninjitsuDamageBonus += 1;
+        });
         widget.adventure.log('[TOKEN] Ninjitsu rolled $r: +1 DMG.');
       } else if (r <= 5) {
-        setState(() { _ninjitsuDamageBonus += 2; });
+        setState(() {
+          _ninjitsuDamageBonus += 2;
+        });
         widget.adventure.log('[TOKEN] Ninjitsu rolled $r: +2 DMG.');
       } else {
         final choice = await _promptNinjitsuChoice();
         if (choice == 1) {
-          setState(() { _ninjitsuDamageBonus += 2; });
+          setState(() {
+            _ninjitsuDamageBonus += 2;
+          });
           widget.adventure.log('[TOKEN] Ninjitsu rolled 6: Chose +2 DMG.');
         } else if (choice == 2) {
-          final def = _phase == CombatPhase.hero ? enemy.alterations : widget.adventure.alterations;
+          final def = _phase == CombatPhase.hero
+              ? enemy.alterations
+              : widget.adventure.alterations;
           def.add('Delayed Poison');
-          widget.adventure.log('[TOKEN] Ninjitsu rolled 6: Chose Delayed Poison.');
+          widget.adventure.log(
+            '[TOKEN] Ninjitsu rolled 6: Chose Delayed Poison.',
+          );
         } else if (choice == 3) {
-          setState(() { _ninjitsuUndefendable = true; });
-          widget.adventure.log('[TOKEN] Ninjitsu rolled 6: Chose Undefendable.');
+          setState(() {
+            _ninjitsuUndefendable = true;
+          });
+          widget.adventure.log(
+            '[TOKEN] Ninjitsu rolled 6: Chose Undefendable.',
+          );
         }
       }
       widget.onChanged();
     }
   }
 
+  int get _availableSmokeBombCount {
+    final targetList = _phase == CombatPhase.hero
+        ? enemy.alterations
+        : widget.adventure.alterations;
+    return targetList
+        .where(
+          (t) =>
+              _normalizeTokenKey(t).contains('smoke') ||
+              _normalizeTokenKey(t).contains('fumig'),
+        )
+        .length;
+  }
+
+  bool get _canUseSmokeBomb {
+    if (_smokeBombUsed && _smokeBombSuccess) return false;
+    if (_phase == CombatPhase.hero) {
+      if (_availableSmokeBombCount <= 0) return false;
+      if (_battleAttackValue <= 0) return false;
+      if (_battleAttackUndefendable) return false;
+      return true;
+    } else if (_phase == CombatPhase.minionAttack) {
+      if (_availableSmokeBombCount <= 0) return false;
+      if (_battleAttackValue <= 0) return false;
+      if (_battleAttackUndefendable) return false;
+      if (_battleAttackUndefendableFromWebbed) return false;
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _triggerSmokeBombAttempt() async {
+    final targetList = _phase == CombatPhase.hero
+        ? enemy.alterations
+        : widget.adventure.alterations;
+    final idx = targetList.indexWhere(
+      (t) =>
+          _normalizeTokenKey(t).contains('smoke') ||
+          _normalizeTokenKey(t).contains('fumig'),
+    );
+    if (idx == -1) return;
+    final rule =
+        TokenCatalogRepository.byLabel('Smoke Bomb') ??
+        TokenCatalogRepository.byLabel('Bombe fumigène') ??
+        TokenCatalogRepository.byLabel('Bombe fumigene');
+    if (rule == null) return;
+
+    final result = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: 1,
+      targetName: _phase == CombatPhase.hero
+          ? enemy.label
+          : widget.adventure.hero.label,
+    );
+
+    if (result != null && result.dieRoll != null && mounted) {
+      final r = result.dieRoll!;
+      if (r <= 3) {
+        setState(() {
+          _smokeBombSuccess = true;
+          _smokeBombUsed = true;
+        });
+        widget.adventure.log(
+          '[TOKEN] Smoke Bomb rolled $r: Success! Damage cancelled.',
+        );
+      } else {
+        targetList.removeAt(idx);
+        setState(() {
+          _smokeBombUsed = true;
+        });
+        widget.adventure.log('[TOKEN] Smoke Bomb rolled $r: Failed.');
+      }
+      widget.onChanged();
+    }
+  }
+
+  Future<void> _triggerSalveAttempt() async {
+    final targetList = _phase == CombatPhase.hero
+        ? widget.adventure.alterations
+        : enemy.alterations;
+    final idx = targetList.indexWhere((t) => _normalizeTokenKey(t) == 'salve');
+    if (idx == -1) return;
+
+    targetList.removeAt(idx);
+
+    if (_phase == CombatPhase.hero) {
+      widget.adventure.setHeroHealth(
+        (widget.adventure.health + 6).clamp(0, 999),
+        source: 'Salve',
+      );
+      widget.adventure.log('[TOKEN] Hero used Salve: +6 HP.');
+    } else {
+      enemy.health = (enemy.health + 6).clamp(0, 999);
+      widget.adventure.log('[TOKEN] Enemy used Salve: +6 HP.');
+    }
+    setState(() {});
+    widget.onChanged();
+  }
+
   Future<void> _triggerHonorAttempt() async {
     final targetList = _phase == CombatPhase.hero
         ? widget.adventure.alterations
         : enemy.alterations;
-    final count = targetList.where((t) => _normalizeTokenKey(t) == 'honor' || _normalizeTokenKey(t) == 'honneur').length;
+    final count = targetList
+        .where(
+          (t) =>
+              _normalizeTokenKey(t) == 'honor' ||
+              _normalizeTokenKey(t) == 'honneur',
+        )
+        .length;
     if (count == 0) return;
 
     final result = await showDialog<int>(
@@ -3653,7 +4068,11 @@ class _FightPageState extends State<FightPage> {
                       'assets/token/honor.png',
                       width: 48,
                       height: 48,
-                      errorBuilder: (ctx, err, stack) => const Icon(Icons.warning, color: Colors.orange, size: 48),
+                      errorBuilder: (ctx, err, stack) => const Icon(
+                        Icons.warning,
+                        color: Colors.orange,
+                        size: 48,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     const Text(
@@ -3686,7 +4105,13 @@ class _FightPageState extends State<FightPage> {
                         ),
                       ),
                       onPressed: () => Navigator.of(context).pop(1),
-                      child: const Text('Spend 1 (+1 DMG)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Spend 1 (+1 DMG)',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -3704,14 +4129,23 @@ class _FightPageState extends State<FightPage> {
                         ),
                       ),
                       onPressed: () => Navigator.of(context).pop(2),
-                      child: const Text('Spend 2 (+3 DMG)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Spend 2 (+3 DMG)',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
                 ],
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(0),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.white54, fontSize: 16)),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white54, fontSize: 16),
+                  ),
                 ),
               ],
             ),
@@ -3725,7 +4159,8 @@ class _FightPageState extends State<FightPage> {
         int removed = 0;
         targetList.removeWhere((t) {
           if (removed >= result) return false;
-          if (_normalizeTokenKey(t) == 'honor' || _normalizeTokenKey(t) == 'honneur') {
+          if (_normalizeTokenKey(t) == 'honor' ||
+              _normalizeTokenKey(t) == 'honneur') {
             removed++;
             return true;
           }
@@ -3738,7 +4173,9 @@ class _FightPageState extends State<FightPage> {
           ? widget.adventure.hero.label
           : enemy.label;
       final addedBonus = _honorTokensSpentThisTurn >= 2 ? 3 : 1;
-      widget.adventure.log('[TOKEN] $targetName spent $result Honor token(s) (Total spent this turn: $_honorTokensSpentThisTurn for +$addedBonus damage).');
+      widget.adventure.log(
+        '[TOKEN] $targetName spent $result Honor token(s) (Total spent this turn: $_honorTokensSpentThisTurn for +$addedBonus damage).',
+      );
       widget.onChanged();
     }
   }
@@ -3856,25 +4293,29 @@ class _FightPageState extends State<FightPage> {
         ? widget.adventure.alterations.any(_isShameToken)
         : enemy.alterations.any(_isShameToken);
 
-    final attackerHasWither = _phase == CombatPhase.hero
-        ? widget.adventure.alterations.any(
-            (t) =>
-                _normalizeTokenKey(t).contains('wither') ||
-                _normalizeTokenKey(t).contains('flétrissement') ||
-                _normalizeTokenKey(t).contains('fletrissement'),
-          )
-        : enemy.alterations.any(
-            (t) =>
-                _normalizeTokenKey(t).contains('wither') ||
-                _normalizeTokenKey(t).contains('flétrissement') ||
-                _normalizeTokenKey(t).contains('fletrissement'),
-          );
+    final attackerWitherCount = _phase == CombatPhase.hero
+        ? widget.adventure.alterations
+              .where(
+                (t) =>
+                    _normalizeTokenKey(t).contains('wither') ||
+                    _normalizeTokenKey(t).contains('flétrissement') ||
+                    _normalizeTokenKey(t).contains('fletrissement'),
+              )
+              .length
+        : enemy.alterations
+              .where(
+                (t) =>
+                    _normalizeTokenKey(t).contains('wither') ||
+                    _normalizeTokenKey(t).contains('flétrissement') ||
+                    _normalizeTokenKey(t).contains('fletrissement'),
+              )
+              .length;
 
     mod += defenderHasTargeted ? 2 : 0;
     mod += defenderFocusFireCount;
     if (attackerHasDecrepify) mod -= 1;
     if (attackerHasShame) mod -= 1;
-    if (attackerHasWither) mod -= 1;
+    mod -= attackerWitherCount;
 
     mod += _preyBonus;
 
@@ -4159,6 +4600,54 @@ class _FightPageState extends State<FightPage> {
       }
       widget.onChanged();
     });
+  }
+
+  Future<bool> _checkAndTriggerSmokeBombPopinOnEnemy() async {
+    if (_smokeBombUsed || !mounted) return false;
+    if (_phase != CombatPhase.hero) return false;
+    if (_battleAttackUndefendable) return false;
+
+    final idx = enemy.alterations.indexWhere(
+      (t) =>
+          _normalizeTokenKey(t).contains('smoke') ||
+          _normalizeTokenKey(t).contains('fumig'),
+    );
+    if (idx == -1) return false;
+
+    final rule =
+        TokenCatalogRepository.byLabel('Smoke Bomb') ??
+        TokenCatalogRepository.byLabel('Bombe fumigène') ??
+        TokenCatalogRepository.byLabel('Bombe fumigene');
+    if (rule == null) return false;
+
+    final result = await TokenAnimationDialog.show(
+      context,
+      rule: rule,
+      initialCount: 1,
+      targetName: enemy.label,
+    );
+
+    if (result != null && result.dieRoll != null && mounted) {
+      final r = result.dieRoll!;
+      if (r <= 3) {
+        setState(() {
+          _smokeBombSuccess = true;
+          _smokeBombUsed = true;
+        });
+        widget.adventure.log(
+          '[TOKEN] Minion Smoke Bomb rolled $r: Success! Damage cancelled.',
+        );
+      } else {
+        enemy.alterations.removeAt(idx);
+        setState(() {
+          _smokeBombUsed = true;
+        });
+        widget.adventure.log('[TOKEN] Minion Smoke Bomb rolled $r: Failed.');
+      }
+      widget.onChanged();
+      return true;
+    }
+    return false;
   }
 
   Future<bool> _checkAndTriggerAgilityPopinOnEnemy() async {
@@ -5731,10 +6220,10 @@ class _FightPageState extends State<FightPage> {
     if (!_isBattlePhase) {
       return;
     }
-    
+
     // AI heuristics for auto-triggering defensive tokens
     final currentEffectiveAttack = _battleAttackValue + _battleAttackModifier;
-    
+
     if (_phase == CombatPhase.hero &&
         !_isDefenderStunned &&
         _hasActiveEvasiveOnMinionDefender) {
@@ -5761,12 +6250,17 @@ class _FightPageState extends State<FightPage> {
     if (_phase == CombatPhase.hero &&
         !_isDefenderStunned &&
         !_minionEvasiveAvoided &&
-        !_flightAvoided &&
-        _hasActiveAgilityOnMinionDefender) {
-      final effectiveDefense = _battleDefenseValue;
-      final netDamage = max(0, currentEffectiveAttack - effectiveDefense);
-      if (netDamage > 0) {
-        await _checkAndTriggerAgilityPopinOnEnemy();
+        !_flightAvoided) {
+      _checkAndTriggerWindShearOnEnemy();
+      if (_hasActiveAgilityOnMinionDefender) {
+        final effectiveDefense = _battleDefenseValue;
+        final netDamage = max(0, currentEffectiveAttack - effectiveDefense);
+        if (netDamage > 0) {
+          final smokeTriggered = await _checkAndTriggerSmokeBombPopinOnEnemy();
+          if (!smokeTriggered && _hasActiveAgilityOnMinionDefender) {
+            await _checkAndTriggerAgilityPopinOnEnemy();
+          }
+        }
       }
     }
     if (_phase == CombatPhase.minionAttack && _shadowsActive) {
@@ -5809,13 +6303,16 @@ class _FightPageState extends State<FightPage> {
           int removed = 0;
           enemy.alterations.removeWhere((t) {
             if (removed >= toSpend) return false;
-            if (_normalizeTokenKey(t) == 'honor' || _normalizeTokenKey(t) == 'honneur') {
+            if (_normalizeTokenKey(t) == 'honor' ||
+                _normalizeTokenKey(t) == 'honneur') {
               removed++;
               return true;
             }
             return false;
           });
-          widget.adventure.log('[TOKEN] Minion spent $toSpend Honor token(s) for +$_minionAutoHonorBonus damage.');
+          widget.adventure.log(
+            '[TOKEN] Minion spent $toSpend Honor token(s) for +$_minionAutoHonorBonus damage.',
+          );
         }
       }
       final usedDb = _phase == CombatPhase.hero
@@ -5868,22 +6365,30 @@ class _FightPageState extends State<FightPage> {
       }
 
       if (_minionAutoProtect) {
-        final idx = enemy.alterations.indexWhere((t) => _normalizeTokenKey(t) == 'protect');
+        final idx = enemy.alterations.indexWhere(
+          (t) => _normalizeTokenKey(t) == 'protect',
+        );
         if (idx != -1) {
           enemy.alterations.removeAt(idx);
           _battleDefenseValue += (effectiveAttack / 2.0).ceil();
-          widget.adventure.log('[TOKEN] Minion Protect auto-triggered: gained ${(effectiveAttack / 2.0).ceil()} defense.');
+          widget.adventure.log(
+            '[TOKEN] Minion Protect auto-triggered: gained ${(effectiveAttack / 2.0).ceil()} defense.',
+          );
         }
       }
 
       if (_retributionUsed) {
         _battleReturnDamage += (effectiveAttack / 2.0).ceil();
       } else if (_minionAutoRetribution) {
-        final idx = enemy.alterations.indexWhere((t) => _normalizeTokenKey(t) == 'retribution');
+        final idx = enemy.alterations.indexWhere(
+          (t) => _normalizeTokenKey(t) == 'retribution',
+        );
         if (idx != -1) {
           enemy.alterations.removeAt(idx);
           _battleReturnDamage += (effectiveAttack / 2.0).ceil();
-          widget.adventure.log('[TOKEN] Minion Retribution auto-triggered: will return ${(effectiveAttack / 2.0).ceil()} damage.');
+          widget.adventure.log(
+            '[TOKEN] Minion Retribution auto-triggered: will return ${(effectiveAttack / 2.0).ceil()} damage.',
+          );
         }
       }
 
@@ -5891,8 +6396,10 @@ class _FightPageState extends State<FightPage> {
           ? 0
           : (_battleDefenseValue + _battleDefenseModifier);
       final rawDamage = max(0, effectiveAttack - effectiveDefense);
-      final netDamage = ((_phase == CombatPhase.minionAttack && _shadowsActive) ||
-                         (_phase == CombatPhase.hero && _minionShadowsActive))
+      final netDamage =
+          ((_phase == CombatPhase.minionAttack && _shadowsActive) ||
+              (_phase == CombatPhase.hero && _minionShadowsActive) ||
+              _smokeBombSuccess)
           ? 0
           : rawDamage;
       riposteDamage = netDamage;
@@ -5910,7 +6417,9 @@ class _FightPageState extends State<FightPage> {
         }
         if (_minionShadowsActive) {
           _minionShadowsUsed = true;
-          buffer.writeln('[TOKEN:Shadows] Minion Shadows consumed (remains until end of turn).');
+          buffer.writeln(
+            '[TOKEN:Shadows] Minion Shadows consumed (remains until end of turn).',
+          );
           _checkParasiteDefensiveTrigger(isHero: false, tokenUsed: 'Shadows');
         }
         if (wasDefenderStunned) {
@@ -6035,6 +6544,13 @@ class _FightPageState extends State<FightPage> {
         }
         _heroHexedThisAttack = false;
 
+        if (widget.adventure.alterations.any(_isEntangleAlteration)) {
+          widget.adventure.alterations.removeWhere(_isEntangleAlteration);
+          widget.adventure.log(
+            '[TOKEN] Hero Entangle removed at end of offensive turn.',
+          );
+          widget.onChanged();
+        }
         if (_enemyWebbedConsumedThisPhase &&
             enemy.alterations.any(_isWebbedToken)) {
           enemy.alterations.removeWhere(_isWebbedToken);
@@ -6042,6 +6558,25 @@ class _FightPageState extends State<FightPage> {
             '[TOKEN] Webbed removed from ${enemy.label} at end of offensive turn.',
           );
         }
+        if (_smokeBombUsed &&
+            enemy.alterations.any(
+              (t) =>
+                  _normalizeTokenKey(t).contains('smoke') ||
+                  _normalizeTokenKey(t).contains('fumig'),
+            )) {
+          enemy.alterations.removeWhere(
+            (t) =>
+                _normalizeTokenKey(t).contains('smoke') ||
+                _normalizeTokenKey(t).contains('fumig'),
+          );
+          widget.adventure.log(
+            '[TOKEN] Smoke Bomb expired at end of offensive turn.',
+          );
+          widget.onChanged();
+        }
+        _smokeBombSuccess = false;
+        _smokeBombUsed = false;
+        _windShearActive = false;
         _enemyWebbedConsumedThisPhase = false;
         _battleAttackUndefendableFromWebbed = false;
         _heroRealityWarpThisAttack = false;
@@ -6232,7 +6767,9 @@ class _FightPageState extends State<FightPage> {
         final shadowsWasActive = _shadowsActive;
         if (shadowsWasActive) {
           _heroShadowsUsed = true;
-          buffer.writeln('[TOKEN:Shadows] Hero Shadows consumed (remains until end of turn).');
+          buffer.writeln(
+            '[TOKEN:Shadows] Hero Shadows consumed (remains until end of turn).',
+          );
           _checkParasiteDefensiveTrigger(isHero: true, tokenUsed: 'Shadows');
         }
 
@@ -6340,6 +6877,13 @@ class _FightPageState extends State<FightPage> {
         }
         _minionHexedThisAttack = false;
         _minionEntangledThisAttack = false;
+        if (enemy.alterations.any(_isEntangleAlteration)) {
+          enemy.alterations.removeWhere(_isEntangleAlteration);
+          widget.adventure.log(
+            '[TOKEN] ${enemy.label} Entangle removed at end of offensive turn.',
+          );
+          widget.onChanged();
+        }
         if (_heroWebbedConsumedThisPhase &&
             widget.adventure.alterations.any(_isWebbedToken)) {
           widget.adventure.alterations.removeWhere(_isWebbedToken);
@@ -6347,14 +6891,35 @@ class _FightPageState extends State<FightPage> {
             '[TOKEN] Webbed removed from Hero at end of offensive turn.',
           );
         }
+        if (_smokeBombUsed &&
+            widget.adventure.alterations.any(
+              (t) =>
+                  _normalizeTokenKey(t).contains('smoke') ||
+                  _normalizeTokenKey(t).contains('fumig'),
+            )) {
+          widget.adventure.alterations.removeWhere(
+            (t) =>
+                _normalizeTokenKey(t).contains('smoke') ||
+                _normalizeTokenKey(t).contains('fumig'),
+          );
+          widget.adventure.log(
+            '[TOKEN] Smoke Bomb expired at end of offensive turn.',
+          );
+          widget.onChanged();
+        }
+        _smokeBombSuccess = false;
+        _smokeBombUsed = false;
+        _windShearActive = false;
         _heroWebbedConsumedThisPhase = false;
         _battleAttackUndefendableFromWebbed = false;
         _minionRealityWarpThisAttack = false;
         _minionSilenceThisAttack = false;
-        
+
         if (_minionShadowsCount > 0) {
           enemy.alterations.removeWhere(_isShadowsToken);
-          buffer.writeln('[TOKEN:Shadows] Minion Shadows expired at end of turn.');
+          buffer.writeln(
+            '[TOKEN:Shadows] Minion Shadows expired at end of turn.',
+          );
         }
         _minionShadowsUsed = false;
         for (final die in _dice) {
@@ -6683,7 +7248,11 @@ class _FightPageState extends State<FightPage> {
       }
       final l = rule.label.toLowerCase();
       final isCoal = l == 'coal' || l == 'charbon';
-      final isUnitary = !isRollPhase && !isCoal && !l.contains('cosmic flare') && !l.contains('lueur cosmique');
+      final isUnitary =
+          !isRollPhase &&
+          !isCoal &&
+          !l.contains('cosmic flare') &&
+          !l.contains('lueur cosmique');
       if (!isUnitary && processedLabels.contains(rule.label)) {
         continue;
       }
@@ -6870,7 +7439,8 @@ class _FightPageState extends State<FightPage> {
           tokenKey == 'knockdown' ||
           tokenKey == 'aterre' ||
           tokenKey == 'àterre';
-      final isCosmicFlare = tokenKey == 'cosmicflare' || tokenKey == 'lueurcosmique';
+      final isCosmicFlare =
+          tokenKey == 'cosmicflare' || tokenKey == 'lueurcosmique';
 
       if (isBleed && unresolvedBleeds <= 0) {
         continue;
@@ -6949,7 +7519,9 @@ class _FightPageState extends State<FightPage> {
 
       int? displayHp = runningHp;
       if (isCosmicFlare && !isRollPhase) {
-        displayHp = targetName == widget.adventure.hero.label ? enemy.health : widget.adventure.health;
+        displayHp = targetName == widget.adventure.hero.label
+            ? enemy.health
+            : widget.adventure.health;
       }
 
       final result = await TokenAnimationDialog.show(
@@ -7009,7 +7581,10 @@ class _FightPageState extends State<FightPage> {
       } else if (l.contains('cosmic flare') || l.contains('lueur cosmique')) {
         setState(() {
           if (targetName == widget.adventure.hero.label) {
-            enemy.health = max(0, enemy.health - (result?.spentCount ?? initialCount));
+            enemy.health = max(
+              0,
+              enemy.health - (result?.spentCount ?? initialCount),
+            );
             widget.adventure.log(
               '[TOKEN] Cosmic Flare: $targetName deals ${result?.spentCount ?? initialCount} damage to ${enemy.label}.',
             );
@@ -7100,7 +7675,10 @@ class _FightPageState extends State<FightPage> {
             builder: (context) {
               return AlertDialog(
                 backgroundColor: const Color(0xff1f1a2e),
-                title: const Text('Choose Target', style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  'Choose Target',
+                  style: TextStyle(color: Colors.white),
+                ),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -7110,23 +7688,25 @@ class _FightPageState extends State<FightPage> {
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 40),
                       ),
-                      onPressed: () => Navigator.of(context).pop(widget.adventure.hero.label),
+                      onPressed: () => Navigator.of(
+                        context,
+                      ).pop(widget.adventure.hero.label),
                       child: Text(widget.adventure.hero.label),
                     ),
                     const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.shade700,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(double.infinity, 40),
-                          ),
-                          onPressed: () => Navigator.of(context).pop(enemy.label),
-                          child: Text(enemy.label),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade700,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 40),
                         ),
+                        onPressed: () => Navigator.of(context).pop(enemy.label),
+                        child: Text(enemy.label),
                       ),
-                    ],
+                    ),
+                  ],
                 ),
               );
             },
@@ -7229,6 +7809,7 @@ class _FightPageState extends State<FightPage> {
           });
         }
       } else if (l.contains('disruption') || l.contains('perturbation')) {
+        resolvedTokenKeys.add('disruption');
         if (result?.customAction == 'lose_cp') {
           deltaCp = -1;
           setState(() {
@@ -7293,6 +7874,19 @@ class _FightPageState extends State<FightPage> {
       if (isKnockdown) {
         if (result?.customAction == 'spend_2_cp') {
           deltaCp = -2;
+          setState(() {
+            if (targetName == widget.adventure.hero.label) {
+              widget.adventure.setHeroPc(
+                max(0, widget.adventure.combatPoints - 2),
+              );
+            } else {
+              final targetEnemy = widget.adventure.enemies.firstWhere(
+                (e) => e.label == targetName,
+                orElse: () => enemy,
+              );
+              targetEnemy.combatPoints = max(0, targetEnemy.combatPoints - 2);
+            }
+          });
           widget.adventure.log(
             '[TOKEN] $targetName spent 2 CP to remove Knockdown.',
           );
@@ -7431,7 +8025,27 @@ class _FightPageState extends State<FightPage> {
           });
           continue;
         } else if (l.contains('powder keg') || l.contains('baril de poudre')) {
-          if (roll == 6) {
+          resolvedTokenKeys.add('powderkeg');
+          if (roll <= 2) {
+            setState(() {
+              if (targetName == widget.adventure.hero.label) {
+                widget.adventure.setHeroHealth(
+                  widget.adventure.health - 3,
+                  source: 'Powder Keg',
+                );
+              } else {
+                final targetEnemy = widget.adventure.enemies.firstWhere(
+                  (e) => e.label == targetName,
+                  orElse: () => enemy,
+                );
+                targetEnemy.health = (targetEnemy.health - 3).clamp(0, 999);
+              }
+              widget.adventure.log(
+                '[TOKEN] Powder Keg exploded! 3 undefendable damage to $targetName.',
+              );
+              widget.onChanged();
+            });
+          } else if (roll == 6) {
             setState(() {
               final removeIdx = tokens.indexWhere(
                 (t) =>
@@ -7457,6 +8071,29 @@ class _FightPageState extends State<FightPage> {
               widget.onChanged();
             });
           }
+          continue;
+        } else if (tokenKey == 'phoenixburn' ||
+            tokenKey == 'brûlureduphénix' ||
+            tokenKey == 'brulureduphenix') {
+          resolvedTokenKeys.add('phoenixburn');
+          setState(() {
+            if (targetName == widget.adventure.hero.label) {
+              widget.adventure.setHeroHealth(
+                widget.adventure.health - 2,
+                source: 'Phoenix Burn',
+              );
+            } else {
+              final targetEnemy = widget.adventure.enemies.firstWhere(
+                (e) => e.label == targetName,
+                orElse: () => enemy,
+              );
+              targetEnemy.health = (targetEnemy.health - 2).clamp(0, 999);
+            }
+            widget.adventure.log(
+              '[TOKEN] Phoenix Burn dealt 2 undefendable damage to $targetName.',
+            );
+            widget.onChanged();
+          });
           continue;
         } else if (isBleed) {
           resolvedTokenKeys.add('bleed');
@@ -7725,6 +8362,17 @@ class _FightPageState extends State<FightPage> {
       if (resolvedInPopin.contains('wound')) {
         skip.addAll({'Wound', 'wound', 'Blessure', 'blessure'});
       }
+      if (resolvedInPopin.contains('phoenixburn')) {
+        skip.addAll({
+          'Phoenix Burn',
+          'Phoenix burn',
+          'Brûlure du phénix',
+          'Brulure du phenix',
+        });
+      }
+      if (resolvedInPopin.contains('powderkeg')) {
+        skip.addAll({'Powder Keg', 'Baril de poudre'});
+      }
       skip.addAll({'Knockdown', 'A terre', 'À terre', 'aterre', 'àterre'});
       heroOutcome = GameEngine.heroUpkeep(
         tokens: widget.adventure.alterations,
@@ -7835,6 +8483,17 @@ class _FightPageState extends State<FightPage> {
       }
       if (resolvedInPopin.contains('wound')) {
         skip.addAll({'Wound', 'wound', 'Blessure', 'blessure'});
+      }
+      if (resolvedInPopin.contains('phoenixburn')) {
+        skip.addAll({
+          'Phoenix Burn',
+          'Phoenix burn',
+          'Brûlure du phénix',
+          'Brulure du phenix',
+        });
+      }
+      if (resolvedInPopin.contains('powderkeg')) {
+        skip.addAll({'Powder Keg', 'Baril de poudre'});
       }
       skip.addAll({'Knockdown', 'A terre', 'À terre', 'aterre', 'àterre'});
       final outcome = GameEngine.minionUpkeep(
@@ -11295,7 +11954,7 @@ class _MultiRollTokenActiveRowState extends State<_MultiRollTokenActiveRow> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.green.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.greenAccent, width: 1),
                 ),
                 child: const Row(
@@ -11371,11 +12030,112 @@ class _MultiRollTokenActiveRowState extends State<_MultiRollTokenActiveRow> {
   }
 }
 
+class _TokenActionRow extends StatelessWidget {
+  const _TokenActionRow({
+    required this.tokenLabel,
+    required this.tokenAsset,
+    required this.text,
+    this.isActive = false,
+    this.activeText = 'Active',
+    required this.showUseButton,
+    required this.canUse,
+    required this.onUse,
+  });
+
+  final String tokenLabel;
+  final String tokenAsset;
+  final String text;
+  final bool isActive;
+  final String activeText;
+  final bool showUseButton;
+  final bool canUse;
+  final VoidCallback? onUse;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xff132b1e) : const Color(0xff1f1a2e),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isActive
+              ? Colors.greenAccent.withValues(alpha: 0.6)
+              : const Color(0xff8f43ff).withValues(alpha: 0.6),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        children: [
+          _ActionRowLabel(
+            tokenLabel: tokenLabel,
+            tokenAsset: tokenAsset,
+            text: text,
+          ),
+          const SizedBox(width: 8),
+          if (isActive)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.greenAccent, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.check_circle,
+                    size: 12,
+                    color: Colors.greenAccent,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    activeText,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.greenAccent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (isActive && showUseButton) const SizedBox(width: 8),
+          if (showUseButton)
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: canUse
+                    ? const Color(0xff8f43ff)
+                    : Colors.grey.shade700,
+                foregroundColor: canUse ? Colors.white : Colors.white38,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 0,
+                ),
+                minimumSize: const Size(0, 26),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              onPressed: canUse ? onUse : null,
+              child: const Text(
+                'Use',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ActiveTokenBadge extends StatelessWidget {
   const _ActiveTokenBadge({
     required this.tokenLabel,
     required this.tokenAsset,
-    this.activeText = 'Actif',
+    this.activeText = 'Active',
   });
 
   final String tokenLabel;
@@ -11409,7 +12169,7 @@ class _ActiveTokenBadge extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.greenAccent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.greenAccent, width: 1),
                 ),
                 child: Row(
@@ -11517,6 +12277,10 @@ class CombatAiChatDock extends StatelessWidget {
     this.preyUsedCount = 0,
     this.canUsePrey = false,
     this.onUsePrey,
+    this.windShearCount = 0,
+    this.windShearActive = false,
+    this.canUseWindShear = false,
+    this.onUseWindShear,
     this.attackerAccuracyCount = 0,
     this.accuracyUsed = false,
     this.canUseAccuracy = false,
@@ -11529,6 +12293,11 @@ class CombatAiChatDock extends StatelessWidget {
     this.usedDamageBonus = const [],
     this.onUseDamageBonus,
     this.honorCount = 0,
+    this.salveCount = 0,
+    this.onUseSalve,
+    this.smokeBombCount = 0,
+    this.onUseSmokeBomb,
+    this.smokeBombSuccess = false,
     this.honorDamageBonus = 0,
     this.onUseHonor,
     this.ninjitsuCount = 0,
@@ -11600,6 +12369,10 @@ class CombatAiChatDock extends StatelessWidget {
   final int preyUsedCount;
   final bool canUsePrey;
   final VoidCallback? onUsePrey;
+  final int windShearCount;
+  final bool windShearActive;
+  final bool canUseWindShear;
+  final VoidCallback? onUseWindShear;
   final int attackerAccuracyCount;
   final bool accuracyUsed;
   final bool canUseAccuracy;
@@ -11612,6 +12385,11 @@ class CombatAiChatDock extends StatelessWidget {
   final List<int> usedDamageBonus;
   final ValueChanged<int>? onUseDamageBonus;
   final int honorCount;
+  final int salveCount;
+  final VoidCallback? onUseSalve;
+  final int smokeBombCount;
+  final VoidCallback? onUseSmokeBomb;
+  final bool smokeBombSuccess;
   final int honorDamageBonus;
   final VoidCallback? onUseHonor;
   final int ninjitsuCount;
@@ -11797,21 +12575,25 @@ class CombatAiChatDock extends StatelessWidget {
         : (phase == CombatPhase.minionAttack
               ? enemy.alterations.any(_isShameToken)
               : false);
-    final attackerHasWither = phase == CombatPhase.hero
-        ? adventure.alterations.any(
-            (t) =>
-                _normalizeTokenKey(t).contains('wither') ||
-                _normalizeTokenKey(t).contains('flétrissement') ||
-                _normalizeTokenKey(t).contains('fletrissement'),
-          )
+    final attackerWitherCount = phase == CombatPhase.hero
+        ? adventure.alterations
+              .where(
+                (t) =>
+                    _normalizeTokenKey(t).contains('wither') ||
+                    _normalizeTokenKey(t).contains('flétrissement') ||
+                    _normalizeTokenKey(t).contains('fletrissement'),
+              )
+              .length
         : (phase == CombatPhase.minionAttack
-              ? enemy.alterations.any(
-                  (t) =>
-                      _normalizeTokenKey(t).contains('wither') ||
-                      _normalizeTokenKey(t).contains('flétrissement') ||
-                      _normalizeTokenKey(t).contains('fletrissement'),
-                )
-              : false);
+              ? enemy.alterations
+                    .where(
+                      (t) =>
+                          _normalizeTokenKey(t).contains('wither') ||
+                          _normalizeTokenKey(t).contains('flétrissement') ||
+                          _normalizeTokenKey(t).contains('fletrissement'),
+                    )
+                    .length
+              : 0);
     final defenderHasSunMarked = phase == CombatPhase.hero
         ? enemy.alterations.any(
             (t) =>
@@ -11832,7 +12614,8 @@ class CombatAiChatDock extends StatelessWidget {
         (heroEvasiveCount > 0 || heroEvasiveAvoided);
     final bool showHeroFlightRow =
         (phase == CombatPhase.hero || phase == CombatPhase.minionAttack) &&
-        (heroFlightCount > 0) && !(flightAvoided || flightUndefendable);
+        (heroFlightCount > 0) &&
+        !(flightAvoided || flightUndefendable);
     final bool showHeroAgilityRow =
         phase == CombatPhase.minionAttack &&
         (heroAgilityCount > 0 || heroAgilityActive);
@@ -12059,224 +12842,22 @@ class CombatAiChatDock extends StatelessWidget {
             ),
           ],
           if (showResolution) ...[
-            if (defenderHasTargeted) ...[
-              const SizedBox(height: 6),
-              InkWell(
-                onTap: () {
-                  final rule = TokenCatalogRepository.byLabel('Targeted');
-                  if (rule != null) showTokenDetails(context, rule);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: attackValue > 0
-                        ? const Color(0xff271830)
-                        : const Color(0xff1a1722),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: attackValue > 0
-                          ? const Color(0xff8f43ff)
-                          : Colors.white24,
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'assets/token/Targeted.png',
-                        width: 22,
-                        height: 22,
-                        errorBuilder: (ctx, err, stack) => const Icon(
-                          Icons.gps_fixed,
-                          color: Color(0xff8f43ff),
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Targeted : ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Image.asset(
-                        'assets/token/bonus-atk-2.webp',
-                        height: 24,
-                        fit: BoxFit.contain,
-                        errorBuilder: (ctx, err, stack) => const Text(
-                          '+2 DMG',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                            color: Color(0xff8f43ff),
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: attackValue > 0
-                              ? const Color(0xff8f43ff).withValues(alpha: 0.2)
-                              : Colors.grey.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: attackValue > 0
-                                ? const Color(0xff8f43ff)
-                                : Colors.grey,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              attackValue > 0
-                                  ? Icons.check_circle
-                                  : Icons.radio_button_unchecked,
-                              size: 12,
-                              color: attackValue > 0
-                                  ? const Color(0xff8f43ff)
-                                  : Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              attackValue > 0
-                                  ? 'Actif (+2 DMG)'
-                                  : 'Pending (ATK = 0)',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: attackValue > 0
-                                    ? Colors.white
-                                    : Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            if (defenderHasTargeted)
+              _ActiveTokenBadge(
+                tokenLabel: 'Targeted',
+                tokenAsset: 'assets/token/Targeted.png',
+                activeText: attackValue > 0
+                    ? 'Active (+2 DMG)'
+                    : 'Pending (ATK = 0)',
               ),
-            ],
-            if (defenderFocusFireCount > 0) ...[
-              const SizedBox(height: 6),
-              InkWell(
-                onTap: () {
-                  final rule = TokenCatalogRepository.byLabel('Focus Fire');
-                  if (rule != null) showTokenDetails(context, rule);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: attackValue > 0
-                        ? const Color(0xff2a1b18)
-                        : const Color(0xff1a1722),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: attackValue > 0
-                          ? const Color(0xff8f43ff)
-                          : Colors.white24,
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'assets/token/focus-fire.webp',
-                        width: 22,
-                        height: 22,
-                        errorBuilder: (ctx, err, stack) => const Icon(
-                          Icons.local_fire_department,
-                          color: Color(0xff8f43ff),
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Focus Fire : ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Image.asset(
-                        'assets/token/bonus-atk-$defenderFocusFireCount.webp',
-                        height: 24,
-                        fit: BoxFit.contain,
-                        errorBuilder: (ctx, err, stack) => Text(
-                          '+$defenderFocusFireCount DMG',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                            color: Color(0xff8f43ff),
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: attackValue > 0
-                              ? const Color(0xff8f43ff).withValues(alpha: 0.2)
-                              : Colors.grey.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: attackValue > 0
-                                ? const Color(0xff8f43ff)
-                                : Colors.grey,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              attackValue > 0
-                                  ? Icons.check_circle
-                                  : Icons.radio_button_unchecked,
-                              size: 12,
-                              color: attackValue > 0
-                                  ? const Color(0xff8f43ff)
-                                  : Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              attackValue > 0
-                                  ? 'Actif (+$defenderFocusFireCount DMG)'
-                                  : 'Pending (ATK = 0)',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: attackValue > 0
-                                    ? Colors.white
-                                    : Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            if (defenderFocusFireCount > 0)
+              _ActiveTokenBadge(
+                tokenLabel: 'Focus Fire',
+                tokenAsset: 'assets/token/focus-fire.webp',
+                activeText: attackValue > 0
+                    ? 'Active (+$defenderFocusFireCount DMG)'
+                    : 'Pending (ATK = 0)',
               ),
-            ],
             if (attackerHasShame) ...[
               const SizedBox(height: 6),
               InkWell(
@@ -12363,110 +12944,6 @@ class CombatAiChatDock extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               attackValue > 0
-                                  ? 'Actif (-1 DMG)'
-                                  : 'Pending (ATK = 0)',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: attackValue > 0
-                                    ? Colors.white
-                                    : Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-            if (attackerHasWither) ...[
-              const SizedBox(height: 6),
-              InkWell(
-                onTap: () {
-                  final rule = TokenCatalogRepository.byLabel('Wither');
-                  if (rule != null) showTokenDetails(context, rule);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: attackValue > 0
-                        ? const Color(0xff2a1b18)
-                        : const Color(0xff1a1722),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: attackValue > 0
-                          ? const Color(0xff8f43ff)
-                          : Colors.white24,
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'assets/token/wither.png',
-                        width: 22,
-                        height: 22,
-                        errorBuilder: (ctx, err, stack) => const Icon(
-                          Icons.sick,
-                          color: Color(0xff8f43ff),
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Wither : ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Text(
-                        '-1 DMG',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 13,
-                          color: Color(0xff8f43ff),
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: attackValue > 0
-                              ? const Color(0xff8f43ff).withValues(alpha: 0.2)
-                              : Colors.grey.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: attackValue > 0
-                                ? const Color(0xff8f43ff)
-                                : Colors.grey,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              attackValue > 0
-                                  ? Icons.check_circle
-                                  : Icons.radio_button_unchecked,
-                              size: 12,
-                              color: attackValue > 0
-                                  ? const Color(0xff8f43ff)
-                                  : Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              attackValue > 0
                                   ? 'Active (-1 DMG)'
                                   : 'Pending (ATK = 0)',
                               style: TextStyle(
@@ -12485,106 +12962,16 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
               ),
             ],
-            if (defenderHasSunMarked) ...[
-              const SizedBox(height: 6),
-              InkWell(
-                onTap: () {
-                  final rule = TokenCatalogRepository.byLabel('Sun-Marked');
-                  if (rule != null) showTokenDetails(context, rule);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: attackValue > 0
-                        ? const Color(0xff182a1b)
-                        : const Color(0xff1a1722),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: attackValue > 0 ? Colors.green : Colors.white24,
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Image.asset(
-                        'assets/token/sun-marked.png',
-                        width: 22,
-                        height: 22,
-                        errorBuilder: (ctx, err, stack) => const Icon(
-                          Icons.wb_sunny,
-                          color: Colors.green,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Sun-Marked : ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Text(
-                        'Heals 2 HP',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 13,
-                          color: Colors.green,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: attackValue > 0
-                              ? Colors.green.withValues(alpha: 0.2)
-                              : Colors.grey.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: attackValue > 0 ? Colors.green : Colors.grey,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              attackValue > 0
-                                  ? Icons.check_circle
-                                  : Icons.radio_button_unchecked,
-                              size: 12,
-                              color: attackValue > 0
-                                  ? Colors.green
-                                  : Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              attackValue > 0
-                                  ? 'Active (Heal 2)'
-                                  : 'Pending (ATK = 0)',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: attackValue > 0
-                                    ? Colors.white
-                                    : Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            if (attackerWitherCount > 0)
+              _ActiveTokenBadge(
+                tokenLabel: attackerWitherCount > 1
+                    ? 'Wither (x$attackerWitherCount)'
+                    : 'Wither',
+                tokenAsset: 'assets/token/Wither.png',
+                activeText: attackValue > 0
+                    ? 'Active (-$attackerWitherCount DMG)'
+                    : 'Pending (ATK = 0)',
               ),
-            ],
             if (showHeroEvasiveRow) ...[
               const SizedBox(height: 6),
               Container(
@@ -12620,7 +13007,7 @@ class CombatAiChatDock extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: Colors.greenAccent,
                             width: 1,
@@ -12709,7 +13096,7 @@ class CombatAiChatDock extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: Colors.greenAccent,
                             width: 1,
@@ -12725,7 +13112,9 @@ class CombatAiChatDock extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              flightAvoided ? 'Avoided (0 DMG)' : 'Undefendable',
+                              flightAvoided
+                                  ? 'Avoided (0 DMG)'
+                                  : 'Undefendable',
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
@@ -12797,7 +13186,7 @@ class CombatAiChatDock extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: Colors.greenAccent,
                             width: 1,
@@ -12913,7 +13302,7 @@ class CombatAiChatDock extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.green.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.greenAccent, width: 1),
                       ),
                       child: const Row(
@@ -12966,36 +13355,41 @@ class CombatAiChatDock extends StatelessWidget {
                 isUsed: constrictUsed,
               ),
             ],
-            if (critUsed || (phase == CombatPhase.minionAttack && attackerCritCount > 0 && attackValue > 0))
+            if (critUsed ||
+                (phase == CombatPhase.minionAttack &&
+                    attackerCritCount > 0 &&
+                    attackValue > 0))
               const _ActiveTokenBadge(
                 tokenLabel: 'Crit',
                 tokenAsset: 'assets/token/crit.png',
-                activeText: 'Actif (+ 4 DMG)',
+                activeText: 'Active (+ 4 DMG)',
               ),
             for (final val in usedDamageBonus)
               _ActiveTokenBadge(
                 tokenLabel: 'Damage bonus $val',
                 tokenAsset: 'assets/token/bonus-atk-$val.webp',
-                activeText: 'Actif (+$val DMG)',
+                activeText: 'Active (+$val DMG)',
               ),
             if (phase == CombatPhase.minionAttack && attackValue > 0)
               for (final val in availableDamageBonus)
                 _ActiveTokenBadge(
                   tokenLabel: 'Damage bonus $val',
                   tokenAsset: 'assets/token/bonus-atk-$val.webp',
-                  activeText: 'Actif (+$val DMG)',
+                  activeText: 'Active (+$val DMG)',
                 ),
             if (honorDamageBonus > 0)
               _ActiveTokenBadge(
                 tokenLabel: 'Honor',
                 tokenAsset: 'assets/token/honor.png',
-                activeText: 'Actif (+$honorDamageBonus DMG)',
+                activeText: 'Active (+$honorDamageBonus DMG)',
               ),
             if (ninjitsuDamageBonus > 0 || ninjitsuUndefendable)
               _ActiveTokenBadge(
                 tokenLabel: 'Ninjitsu',
                 tokenAsset: 'assets/token/ninjitsu.png',
-                activeText: ninjitsuUndefendable ? 'Actif (Undefendable)' : 'Actif (+$ninjitsuDamageBonus DMG)',
+                activeText: ninjitsuUndefendable
+                    ? 'Active (Undefendable)'
+                    : 'Active (+$ninjitsuDamageBonus DMG)',
               ),
             if (realityWarpActive)
               const _ActiveTokenBadge(
@@ -13016,7 +13410,9 @@ class CombatAiChatDock extends StatelessWidget {
               _ActiveTokenBadge(
                 tokenLabel: 'Flight',
                 tokenAsset: 'assets/token/Flight.png',
-                activeText: flightAvoided ? 'Actif (Avoided)' : 'Actif (Undefendable)',
+                activeText: flightAvoided
+                    ? 'Active (Avoided)'
+                    : 'Active (Undefendable)',
               ),
             if (showBlindingLightRow)
               const _ActiveTokenBadge(
@@ -13158,7 +13554,7 @@ class CombatAiChatDock extends StatelessWidget {
                   children: [
                     _ActionRowLabel(
                       tokenLabel: 'Entangle',
-                      tokenAsset: 'assets/token/Entangle.webp',
+                      tokenAsset: 'assets/token/Entangle.png',
                       text: entangleCount > 1
                           ? 'Entangle (x$entangleCount) (-1 Roll)'
                           : 'Entangle (-1 Roll)',
@@ -13241,7 +13637,7 @@ class CombatAiChatDock extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Actif (-$influenceRollReduction roll attempt${influenceRollReduction > 1 ? 's' : ''})',
+                            'Active (-$influenceRollReduction roll attempt${influenceRollReduction > 1 ? 's' : ''})',
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -13292,7 +13688,7 @@ class CombatAiChatDock extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: Colors.greenAccent,
                             width: 1,
@@ -13308,7 +13704,7 @@ class CombatAiChatDock extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Actif (+$attackerSneakAttackBonus DMG)',
+                              'Active (+$attackerSneakAttackBonus DMG)',
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
@@ -13352,328 +13748,117 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
               ),
             ],
-            if (showGuardBreakRow) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: guardBreakSuccess
-                      ? const Color(0xff132b1e)
-                      : const Color(0xff1f1a2e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: guardBreakSuccess
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
-                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    _ActionRowLabel(
-                      tokenLabel: 'Guard break',
-                      tokenAsset: 'assets/token/brisegarde.webp',
-                      text: attackerGuardBreakCount > 1
-                          ? 'Brise garde (x$attackerGuardBreakCount)'
-                          : 'Brise garde',
-                    ),
-                    const SizedBox(width: 8),
-                    if (guardBreakSuccess)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: Colors.greenAccent,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Colors.greenAccent,
-                            ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              'Actif (Undefendable)',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.greenAccent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: canUseAttackerGuardBreak
-                              ? const Color(0xff8f43ff)
-                              : Colors.grey.shade700,
-                          foregroundColor: canUseAttackerGuardBreak
-                              ? Colors.white
-                              : Colors.white38,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: canUseAttackerGuardBreak
-                            ? onUseAttackerGuardBreak
-                            : null,
-                        child: const Text(
-                          'Use',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+
+            if (showGuardBreakRow)
+              _TokenActionRow(
+                tokenLabel: 'Guard Break',
+                tokenAsset: 'assets/token/Guard-Break.png',
+                text: attackerGuardBreakCount > 1
+                    ? 'Guard Break (x)'
+                    : 'Guard Break',
+                isActive: guardBreakSuccess,
+                activeText: 'Active (Undefendable)',
+                showUseButton: !guardBreakSuccess,
+                canUse: canUseAttackerGuardBreak,
+                onUse: onUseAttackerGuardBreak,
               ),
-            ],
-            if (attackerAccuracyCount > 0 || accuracyUsed) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: accuracyUsed
-                      ? const Color(0xff132b1e)
-                      : const Color(0xff1f1a2e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: accuracyUsed
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
-                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    _ActionRowLabel(
-                      tokenLabel: 'Accuracy',
-                      tokenAsset: 'assets/token/Accuracy.png',
-                      text: attackerAccuracyCount > 1
-                          ? 'Accuracy (x$attackerAccuracyCount)'
-                          : 'Accuracy',
-                    ),
-                    const Spacer(),
-                    if (accuracyUsed)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.greenAccent,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Colors.greenAccent,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Active',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.greenAccent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    if (!accuracyUsed && phase == CombatPhase.hero)
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: canUseAccuracy
-                              ? const Color(0xff8f43ff)
-                              : Colors.grey.shade700,
-                          foregroundColor: canUseAccuracy
-                              ? Colors.white
-                              : Colors.white38,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          minimumSize: const Size(0, 32),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                        onPressed: canUseAccuracy ? onUseAccuracy : null,
-                        child: const Text(
-                          'Use',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+            if (windShearCount > 0 || windShearActive)
+              _TokenActionRow(
+                tokenLabel: 'Wind Shear',
+                tokenAsset: 'assets/token/wind-shear.webp',
+                text: windShearCount > 1 ? 'Wind Shear (x)' : 'Wind Shear',
+                isActive: windShearActive,
+                activeText: '+2 DEF / 2 DMG imparables',
+                showUseButton: !windShearActive,
+                canUse: canUseWindShear,
+                onUse: onUseWindShear,
               ),
-            ],
-            if (honorCount > 0 && phase == CombatPhase.hero && honorDamageBonus == 0) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xff1f1a2e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: const Color(0xff8f43ff).withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    _ActionRowLabel(
-                      tokenLabel: 'Honor',
-                      tokenAsset: 'assets/token/honor.png',
-                      text: 'Honor',
-                    ),
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: onUseHonor != null
-                              ? const Color(0xff8f43ff)
-                              : Colors.grey.shade700,
-                          foregroundColor: onUseHonor != null
-                              ? Colors.white
-                              : Colors.white38,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          minimumSize: const Size(0, 32),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        onPressed: onUseHonor,
-                        child: const Text('Use', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
+            if (defenderPreyCount > 0)
+              _TokenActionRow(
+                tokenLabel: 'Prey',
+                tokenAsset: 'assets/token/Prey.png',
+                text: preyUsedCount > 0 ? 'Prey (Used /)' : 'Prey (/)',
+                isActive: preyUsedCount > 0,
+                activeText: 'Active',
+                showUseButton: preyUsedCount < defenderPreyCount,
+                canUse: canUsePrey,
+                onUse: onUsePrey,
               ),
-            ],
-            if (ninjitsuDamageBonus > 0 || ninjitsuUndefendable || (ninjitsuCount > 0 && phase == CombatPhase.hero)) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: (ninjitsuDamageBonus > 0 || ninjitsuUndefendable)
-                      ? const Color(0xff132b1e)
-                      : const Color(0xff1f1a2e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: (ninjitsuDamageBonus > 0 || ninjitsuUndefendable)
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
-                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    _ActionRowLabel(
-                      tokenLabel: 'Ninjitsu',
-                      tokenAsset: 'assets/token/Ninjutsu.webp',
-                      text: 'Ninjitsu',
-                    ),
-                    const Spacer(),
-                    if (ninjitsuDamageBonus > 0 || ninjitsuUndefendable)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.greenAccent,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Colors.greenAccent,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              ninjitsuUndefendable ? 'Active (Undefendable)' : 'Active (+$ninjitsuDamageBonus DMG)',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.greenAccent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    if (ninjitsuCount > 0 && phase == CombatPhase.hero)
-                      Padding(
-                        padding: EdgeInsets.only(left: (ninjitsuDamageBonus > 0 || ninjitsuUndefendable) ? 8.0 : 0.0),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: onUseNinjitsu != null
-                                ? const Color(0xff8f43ff)
-                                : Colors.grey.shade700,
-                            foregroundColor: onUseNinjitsu != null
-                                ? Colors.white
-                                : Colors.white38,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            minimumSize: const Size(0, 32),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          onPressed: onUseNinjitsu,
-                          child: const Text('Use', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                  ],
-                ),
+            if (attackerCritCount > 0 || critUsed)
+              _TokenActionRow(
+                tokenLabel: 'Crit',
+                tokenAsset: 'assets/token/Crit.png',
+                text: attackerCritCount > 1 ? 'Crit (x)' : 'Crit',
+                isActive: critUsed,
+                activeText: 'Active (Auto-crit)',
+                showUseButton: !critUsed,
+                canUse: canUseCrit,
+                onUse: onUseCrit,
               ),
-            ],
-            if (protectUsed || minionAutoProtect || (protectCount > 0 && phase == CombatPhase.minionAttack)) ...[
+            if (attackerAccuracyCount > 0 || accuracyUsed)
+              _TokenActionRow(
+                tokenLabel: 'Accuracy',
+                tokenAsset: 'assets/token/Accuracy.png',
+                text: attackerAccuracyCount > 1 ? 'Accuracy (x)' : 'Accuracy',
+                isActive: accuracyUsed,
+                activeText: 'Active (Undefendable)',
+                showUseButton: !accuracyUsed,
+                canUse: canUseAccuracy,
+                onUse: onUseAccuracy,
+              ),
+            if (honorCount > 0 &&
+                phase == CombatPhase.hero &&
+                honorDamageBonus == 0)
+              _TokenActionRow(
+                tokenLabel: 'Honor',
+                tokenAsset: 'assets/token/honor.png',
+                text: honorCount > 1 ? 'Honor (x)' : 'Honor',
+                isActive: false,
+                activeText: '',
+                showUseButton: true,
+                canUse: onUseHonor != null,
+                onUse: onUseHonor,
+              ),
+            if (ninjitsuDamageBonus > 0 ||
+                ninjitsuUndefendable ||
+                (ninjitsuCount > 0 && phase == CombatPhase.hero))
+              _TokenActionRow(
+                tokenLabel: 'Ninjitsu',
+                tokenAsset: 'assets/token/Ninjutsu.webp',
+                text: ninjitsuCount > 1 ? 'Ninjitsu (x)' : 'Ninjitsu',
+                isActive: ninjitsuDamageBonus > 0 || ninjitsuUndefendable,
+                activeText: ninjitsuUndefendable
+                    ? 'Active (Undefendable)'
+                    : 'Active (+ DMG)',
+                showUseButton: ninjitsuCount > 0,
+                canUse: onUseNinjitsu != null,
+                onUse: onUseNinjitsu,
+              ),
+            if (salveCount > 0)
+              _TokenActionRow(
+                tokenLabel: 'Salve',
+                tokenAsset: 'assets/token/Salve.png',
+                text: salveCount > 1 ? 'Salve (x)' : 'Salve',
+                isActive: false,
+                activeText: '',
+                showUseButton: true,
+                canUse: onUseSalve != null,
+                onUse: onUseSalve,
+              ),
+            if (smokeBombCount > 0 || smokeBombSuccess)
+              _TokenActionRow(
+                tokenLabel: 'Smoke Bomb',
+                tokenAsset: 'assets/token/bombe-fumigene.png',
+                text: smokeBombCount > 1 ? 'Smoke Bomb (x)' : 'Smoke Bomb',
+                isActive: smokeBombSuccess,
+                activeText: 'Active (Avoids DMG)',
+                showUseButton: !smokeBombSuccess,
+                canUse: onUseSmokeBomb != null,
+                onUse: onUseSmokeBomb,
+              ),
+            if (protectUsed ||
+                minionAutoProtect ||
+                (protectCount > 0 && phase == CombatPhase.minionAttack)) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -13696,47 +13881,81 @@ class CombatAiChatDock extends StatelessWidget {
                       tokenAsset: 'assets/token/Protect.png',
                       text: 'Protection',
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     if (protectUsed || minionAutoProtect)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.greenAccent, width: 1),
+                          border: Border.all(
+                            color: Colors.greenAccent,
+                            width: 1,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.check_circle, size: 12, color: Colors.greenAccent),
+                            const Icon(
+                              Icons.check_circle,
+                              size: 12,
+                              color: Colors.greenAccent,
+                            ),
                             const SizedBox(width: 4),
                             const Text(
                               'Active',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.greenAccent),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.greenAccent,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    if (protectCount > 0 && phase == CombatPhase.minionAttack && !protectUsed)
+                    if (protectCount > 0 &&
+                        phase == CombatPhase.minionAttack &&
+                        !protectUsed)
                       Padding(
                         padding: const EdgeInsets.only(left: 8.0),
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: onUseProtect != null ? const Color(0xff8f43ff) : Colors.grey.shade700,
-                            foregroundColor: onUseProtect != null ? Colors.white : Colors.white38,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            backgroundColor: onUseProtect != null
+                                ? const Color(0xff8f43ff)
+                                : Colors.grey.shade700,
+                            foregroundColor: onUseProtect != null
+                                ? Colors.white
+                                : Colors.white38,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
                             minimumSize: const Size(0, 32),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
                           onPressed: onUseProtect,
-                          child: const Text('Use', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          child: const Text(
+                            'Use',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                   ],
                 ),
               ),
             ],
-            if (retributionUsed || minionAutoRetribution || (retributionCount > 0 && phase == CombatPhase.minionAttack)) ...[
+            if (retributionUsed ||
+                minionAutoRetribution ||
+                (retributionCount > 0 &&
+                    phase == CombatPhase.minionAttack)) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -13759,47 +13978,81 @@ class CombatAiChatDock extends StatelessWidget {
                       tokenAsset: 'assets/token/Retribution.png',
                       text: 'Rétribution',
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     if (retributionUsed || minionAutoRetribution)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.greenAccent, width: 1),
+                          border: Border.all(
+                            color: Colors.greenAccent,
+                            width: 1,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.check_circle, size: 12, color: Colors.greenAccent),
+                            const Icon(
+                              Icons.check_circle,
+                              size: 12,
+                              color: Colors.greenAccent,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'Active (+${(attackValue / 2.0).ceil()} DMG)',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.greenAccent),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.greenAccent,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    if (retributionCount > 0 && phase == CombatPhase.minionAttack && !retributionUsed)
+                    if (retributionCount > 0 &&
+                        phase == CombatPhase.minionAttack &&
+                        !retributionUsed)
                       Padding(
                         padding: const EdgeInsets.only(left: 8.0),
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: onUseRetribution != null ? const Color(0xff8f43ff) : Colors.grey.shade700,
-                            foregroundColor: onUseRetribution != null ? Colors.white : Colors.white38,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            backgroundColor: onUseRetribution != null
+                                ? const Color(0xff8f43ff)
+                                : Colors.grey.shade700,
+                            foregroundColor: onUseRetribution != null
+                                ? Colors.white
+                                : Colors.white38,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
                             minimumSize: const Size(0, 32),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
                           onPressed: onUseRetribution,
-                          child: const Text('Use', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          child: const Text(
+                            'Use',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                   ],
                 ),
               ),
             ],
-            if (attackerCritCount > 0 && !(critUsed || (phase == CombatPhase.minionAttack && attackValue > 0))) ...[
+            if (attackerCritCount > 0 &&
+                !(critUsed ||
+                    (phase == CombatPhase.minionAttack &&
+                        attackValue > 0))) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -13820,9 +14073,9 @@ class CombatAiChatDock extends StatelessWidget {
                     _ActionRowLabel(
                       tokenLabel: 'Crit',
                       tokenAsset: 'assets/token/crit.png',
-                      text: 'Critique',
+                      text: 'Crit',
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     if (critUsed)
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -13894,9 +14147,10 @@ class CombatAiChatDock extends StatelessWidget {
                 final unallocatedUsed = List.of(usedDamageBonus);
                 for (final val in availableDamageBonus) {
                   final isUsed = unallocatedUsed.remove(val);
-                  final isAutoApplied = phase == CombatPhase.minionAttack && attackValue > 0;
+                  final isAutoApplied =
+                      phase == CombatPhase.minionAttack && attackValue > 0;
                   if (isUsed || isAutoApplied) continue;
-                  
+
                   final canUseThis =
                       !isUsed &&
                       phase == CombatPhase.hero &&
@@ -13927,7 +14181,7 @@ class CombatAiChatDock extends StatelessWidget {
                               tokenAsset: 'assets/token/bonus-atk-$val.webp',
                               text: 'Dégât bonus $val',
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 8),
                             if (isUsed)
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -14000,17 +14254,65 @@ class CombatAiChatDock extends StatelessWidget {
                 return Column(children: rows);
               },
             ),
+            if (windShearCount > 0 || windShearActive) ...[
+              const SizedBox(height: 8),
+              if (windShearActive)
+                const _ActiveTokenBadge(
+                  tokenLabel: 'Wind Shear',
+                  tokenAsset: 'assets/token/wind-shear.webp',
+                  activeText: '+2 DEF / Counter 2 DMG',
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff1f1a2e),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xff3b315b)),
+                  ),
+                  child: Row(
+                    children: [
+                      _ActionRowLabel(
+                        tokenLabel: 'Wind Shear',
+                        tokenAsset: 'assets/token/wind-shear.webp',
+                        text: 'Wind Shear (' + windShearCount.toString() + ')',
+                      ),
+                      const Spacer(),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xff3b315b),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: canUseWindShear ? onUseWindShear : null,
+                        child: const Text(
+                          'Use',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
             if (defenderPreyCount > 0) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: canUsePrey
+                  color: preyUsedCount > 0
                       ? const Color(0xff132b1e)
                       : const Color(0xff1f1a2e),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: canUsePrey
+                    color: preyUsedCount > 0
                         ? Colors.greenAccent.withValues(alpha: 0.6)
                         : const Color(0xff8f43ff).withValues(alpha: 0.6),
                     width: 1.2,
@@ -14034,7 +14336,7 @@ class CombatAiChatDock extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: Colors.greenAccent,
                             width: 1,
@@ -14132,6 +14434,7 @@ class CombatAiChatDock extends StatelessWidget {
                           ),
                         )
                       : (showParlayAttackCover ||
+                            smokeBombSuccess ||
                             showShadowsAttackCover ||
                             showFlightAttackCover ||
                             showEvasiveAttackCover)
@@ -14168,6 +14471,8 @@ class CombatAiChatDock extends StatelessWidget {
                                   errorBuilder: (ctx, err, stack) => Icon(
                                     showParlayAttackCover
                                         ? Icons.block
+                                        : smokeBombSuccess
+                                        ? Icons.cloud_off
                                         : showShadowsAttackCover
                                         ? Icons.cloud
                                         : showFlightAttackCover
@@ -14256,12 +14561,15 @@ class CombatAiChatDock extends StatelessWidget {
                             ),
                           ),
                         )
-                      : (showStunCover || showWebbedAttackCover || flightUndefendable)
+                      : (showStunCover ||
+                            showWebbedAttackCover ||
+                            flightUndefendable)
                       ? SizedBox(
                           height: 52,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: (showWebbedAttackCover || flightUndefendable)
+                              color:
+                                  (showWebbedAttackCover || flightUndefendable)
                                   ? Colors.blue.shade900
                                   : defenseColor,
                               borderRadius: BorderRadius.circular(10),
@@ -14279,12 +14587,13 @@ class CombatAiChatDock extends StatelessWidget {
                                   showWebbedAttackCover
                                       ? 'assets/token/Webbed.webp'
                                       : flightUndefendable
-                                          ? 'assets/token/Flight.png'
-                                          : 'assets/token/stun.png',
+                                      ? 'assets/token/Flight.png'
+                                      : 'assets/token/stun.png',
                                   width: 24,
                                   height: 24,
                                   errorBuilder: (ctx, err, stack) => Icon(
-                                    (showWebbedAttackCover || flightUndefendable)
+                                    (showWebbedAttackCover ||
+                                            flightUndefendable)
                                         ? Icons.pest_control
                                         : Icons.flash_on,
                                     size: 20,
@@ -14297,8 +14606,8 @@ class CombatAiChatDock extends StatelessWidget {
                                     showWebbedAttackCover
                                         ? 'ATTACK UNDEFENDABLE (WEBBED)'
                                         : flightUndefendable
-                                            ? 'ONLY CARDS'
-                                            : 'Stun',
+                                        ? 'ONLY CARDS'
+                                        : 'Stun',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
@@ -14352,22 +14661,24 @@ class CombatAiChatDock extends StatelessWidget {
                   height: 52,
                   child: FilledButton(
                     onPressed:
-                        (((showBlindButton || showBlindingLightAttackCover) && attackValue > 0) || blockApply)
+                        (((showBlindButton || showBlindingLightAttackCover) &&
+                                attackValue > 0) ||
+                            blockApply)
                         ? null
                         : onApply,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xff8f43ff),
-                        disabledBackgroundColor: Colors.white10,
-                        disabledForegroundColor: Colors.white38,
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: const Text(
-                        'OK',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xff8f43ff),
+                      disabledBackgroundColor: Colors.white10,
+                      disabledForegroundColor: Colors.white38,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.zero,
+                    ),
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(fontWeight: FontWeight.w900),
                     ),
                   ),
+                ),
               ],
             ),
           ],
@@ -15833,7 +16144,9 @@ class MinionAiPanel extends StatelessWidget {
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: enemy.rank.color,
-                    disabledBackgroundColor: enemy.rank.color.withValues(alpha: 0.3),
+                    disabledBackgroundColor: enemy.rank.color.withValues(
+                      alpha: 0.3,
+                    ),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -21137,7 +21450,9 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                             color: const Color(0xff2a2240),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: const Color(0xff8f43ff).withValues(alpha: 0.6),
+                              color: const Color(
+                                0xff8f43ff,
+                              ).withValues(alpha: 0.6),
                             ),
                           ),
                           child: Row(
@@ -21213,7 +21528,9 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                             color: const Color(0xff251d38),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: const Color(0xff8f43ff).withValues(alpha: 0.3),
+                              color: const Color(
+                                0xff8f43ff,
+                              ).withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -21474,7 +21791,9 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
         l.contains('poison différé')) {
       return -count * 3;
     }
-    if (l.contains('poison') || l.contains('cosmic flare') || l.contains('lueur cosmique')) {
+    if (l.contains('poison') ||
+        l.contains('cosmic flare') ||
+        l.contains('lueur cosmique')) {
       return -count;
     }
     if (l == 'parasite') {
@@ -21510,7 +21829,7 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
       return 0;
     }
     if (l.contains('powder keg') || l.contains('baril de poudre')) {
-      if (_blindDieRoll != null && _blindDieRoll! <= 3) return -3;
+      if (_blindDieRoll != null && _blindDieRoll! <= 2) return -3;
       if (_blindDieRoll == null &&
           widget.customMessage != null &&
           widget.customMessage!.contains('blows up')) {
@@ -21597,6 +21916,11 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
         l.contains('désarmement') ||
         l.contains('desarmement');
     final isDisruption = l.contains('disruption') || l.contains('perturbation');
+    final isNinjitsu = l.contains('ninjitsu') || l.contains('ninjutsu');
+    final isSmokeBomb =
+        l.contains('smoke bomb') ||
+        l.contains('bombe fumigene') ||
+        l.contains('bombe fumigène');
     final isDieRollToken =
         (widget.customMessage == null) &&
         (isBlind ||
@@ -21620,7 +21944,9 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
             l == 'influence' ||
             l.contains('guard break') ||
             l.contains('brisegarde') ||
-            l.contains('brise garde'));
+            l.contains('brise garde') ||
+            isNinjitsu ||
+            isSmokeBomb);
     final isGuardBreak =
         l.contains('guard break') ||
         l.contains('brisegarde') ||
@@ -21708,7 +22034,9 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                         color: const Color(0xff2a2240),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xff8f43ff).withValues(alpha: 0.5),
+                            color: const Color(
+                              0xff8f43ff,
+                            ).withValues(alpha: 0.5),
                             blurRadius: 24,
                             spreadRadius: 4,
                           ),
@@ -21734,7 +22062,9 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                         color: const Color(0xff2a2240),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xff8f43ff).withValues(alpha: 0.5),
+                            color: const Color(
+                              0xff8f43ff,
+                            ).withValues(alpha: 0.5),
                             blurRadius: 24,
                             spreadRadius: 4,
                           ),
@@ -22227,7 +22557,8 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                           ? 'Wound roll: $_blindDieRoll -> Failed! (Token remains)'
                                           : 'Wound roll: $_blindDieRoll -> Success! (Token removed)')
                                     : isFlight
-                                    ? ((_blindDieRoll == 6 || _secondDieRoll == 6)
+                                    ? ((_blindDieRoll == 6 ||
+                                              _secondDieRoll == 6)
                                           ? 'Flight roll: [$_blindDieRoll, $_secondDieRoll] -> Success!'
                                           : 'Flight roll: [$_blindDieRoll, $_secondDieRoll] -> Failed.')
                                     : isTimeBomb1
@@ -22977,8 +23308,15 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                               TokenAnimationResult(
                                 count: finalCount,
                                 dontShowAgain: _dontShowAgain,
-                                dieRoll: isFlight ? ((_blindDieRoll == 6 || _secondDieRoll == 6) ? 6 : 0) : _blindDieRoll,
-                                spentCount: isCosmicFlare ? _count : _spentCount,
+                                dieRoll: isFlight
+                                    ? ((_blindDieRoll == 6 ||
+                                              _secondDieRoll == 6)
+                                          ? 6
+                                          : 0)
+                                    : _blindDieRoll,
+                                spentCount: isCosmicFlare
+                                    ? _count
+                                    : _spentCount,
                                 agilitySuccessCount: agilitySuccessCount,
                                 allDiceRolls: allDiceRolls,
                                 sneakAttackBonus:
@@ -23216,4 +23554,3 @@ class _NanobotDetonationDialogState extends State<_NanobotDetonationDialog> {
     );
   }
 }
-
