@@ -417,6 +417,13 @@ class _FightPageState extends State<FightPage> {
           child: SafeArea(
             child: Column(
               children: [
+                EnemyFightHeader(
+                  enemy: enemy,
+                  developerMode: _developerMode,
+                  showUndo: _stepUndo != null,
+                  onUndo: _undoStep,
+                  onOpenSettings: () => _openSettings(context),
+                ),
                 CombatBottomDock(
                   phase: _phase,
                   adventure: widget.adventure,
@@ -431,80 +438,154 @@ class _FightPageState extends State<FightPage> {
                   onApplyUpkeep: () => _applyUpkeep(),
                   onApplyHeroUpkeep: () => _applyHeroUpkeep(),
                 ),
+                if (_phase == CombatPhase.hero || _phase == CombatPhase.minionAttack)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: FightStatusPanel(
+                          adventure: widget.adventure,
+                          enemy: enemy,
+                          phase: _phase,
+                          naraxusRollHistory: _naraxusRollHistory,
+                          onFinish: null,
+                          onChanged: () {
+                            widget.onChanged();
+                            setState(() {});
+                          },
+                          onEditHeroTokens: _editHeroTokens,
+                          onEditEnemyTokens: _editEnemyTokens,
+                          onHeroTokenRemoved: (token) {
+                            final defensiveTokens = [
+                              'agility',
+                              'agilitÃ©',
+                              'chi',
+                              'evasive',
+                              'Ã©vitement',
+                              'flight',
+                              'vol',
+                              'force field',
+                              'champ de force',
+                              'protect',
+                              'protection',
+                              'shadow',
+                              'shadows',
+                              'ombre',
+                              'smoke bomb',
+                              'bombe fumigÃ¨ne',
+                              'wind shear',
+                              'cisaillement du vent',
+                            ];
+                            if (defensiveTokens.contains(token.toLowerCase())) {
+                              _checkParasiteDefensiveTrigger(
+                                isHero: true,
+                                tokenUsed: token,
+                              );
+                            }
+                          },
+                          onEnemyTokenRemoved: (token) {
+                            final defensiveTokens = [
+                              'agility',
+                              'agilitÃ©',
+                              'chi',
+                              'evasive',
+                              'Ã©vitement',
+                              'flight',
+                              'vol',
+                              'force field',
+                              'champ de force',
+                              'protect',
+                              'protection',
+                              'shadow',
+                              'shadows',
+                              'ombre',
+                              'smoke bomb',
+                              'bombe fumigÃ¨ne',
+                              'wind shear',
+                              'cisaillement du vent',
+                            ];
+                            if (defensiveTokens.contains(token.toLowerCase())) {
+                              _checkParasiteDefensiveTrigger(
+                                isHero: false,
+                                tokenUsed: token,
+                              );
+                            }
+                          },
+                        ),
+                  ),
                 Expanded(
                   child: ListView(
                     controller: _combatScrollController,
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 180),
                     children: [
-                      FightStatusPanel(
-                        adventure: widget.adventure,
-                        enemy: enemy,
-                        phase: _phase,
-                        naraxusRollHistory: _naraxusRollHistory,
-                        onFinish: null,
-                        onChanged: () {
-                          widget.onChanged();
-                          setState(() {});
-                        },
-                        onEditHeroTokens: _editHeroTokens,
-                        onEditEnemyTokens: _editEnemyTokens,
-                        onHeroTokenRemoved: (token) {
-                          final defensiveTokens = [
-                            'agility',
-                            'agilitÃ©',
-                            'chi',
-                            'evasive',
-                            'Ã©vitement',
-                            'flight',
-                            'vol',
-                            'force field',
-                            'champ de force',
-                            'protect',
-                            'protection',
-                            'shadow',
-                            'shadows',
-                            'ombre',
-                            'smoke bomb',
-                            'bombe fumigÃ¨ne',
-                            'wind shear',
-                            'cisaillement du vent',
-                          ];
-                          if (defensiveTokens.contains(token.toLowerCase())) {
-                            _checkParasiteDefensiveTrigger(
-                              isHero: true,
-                              tokenUsed: token,
-                            );
-                          }
-                        },
-                        onEnemyTokenRemoved: (token) {
-                          final defensiveTokens = [
-                            'agility',
-                            'agilitÃ©',
-                            'chi',
-                            'evasive',
-                            'Ã©vitement',
-                            'flight',
-                            'vol',
-                            'force field',
-                            'champ de force',
-                            'protect',
-                            'protection',
-                            'shadow',
-                            'shadows',
-                            'ombre',
-                            'smoke bomb',
-                            'bombe fumigÃ¨ne',
-                            'wind shear',
-                            'cisaillement du vent',
-                          ];
-                          if (defensiveTokens.contains(token.toLowerCase())) {
-                            _checkParasiteDefensiveTrigger(
-                              isHero: false,
-                              tokenUsed: token,
-                            );
-                          }
-                        },
-                      ),
+                      if (_phase != CombatPhase.hero && _phase != CombatPhase.minionAttack)
+                        FightStatusPanel(
+                          adventure: widget.adventure,
+                          enemy: enemy,
+                          phase: _phase,
+                          naraxusRollHistory: _naraxusRollHistory,
+                          onFinish: null,
+                          onChanged: () {
+                            widget.onChanged();
+                            setState(() {});
+                          },
+                          onEditHeroTokens: _editHeroTokens,
+                          onEditEnemyTokens: _editEnemyTokens,
+                          onHeroTokenRemoved: (token) {
+                            final defensiveTokens = [
+                              'agility',
+                              'agilitÃ©',
+                              'chi',
+                              'evasive',
+                              'Ã©vitement',
+                              'flight',
+                              'vol',
+                              'force field',
+                              'champ de force',
+                              'protect',
+                              'protection',
+                              'shadow',
+                              'shadows',
+                              'ombre',
+                              'smoke bomb',
+                              'bombe fumigÃ¨ne',
+                              'wind shear',
+                              'cisaillement du vent',
+                            ];
+                            if (defensiveTokens.contains(token.toLowerCase())) {
+                              _checkParasiteDefensiveTrigger(
+                                isHero: true,
+                                tokenUsed: token,
+                              );
+                            }
+                          },
+                          onEnemyTokenRemoved: (token) {
+                            final defensiveTokens = [
+                              'agility',
+                              'agilitÃ©',
+                              'chi',
+                              'evasive',
+                              'Ã©vitement',
+                              'flight',
+                              'vol',
+                              'force field',
+                              'champ de force',
+                              'protect',
+                              'protection',
+                              'shadow',
+                              'shadows',
+                              'ombre',
+                              'smoke bomb',
+                              'bombe fumigÃ¨ne',
+                              'wind shear',
+                              'cisaillement du vent',
+                            ];
+                            if (defensiveTokens.contains(token.toLowerCase())) {
+                              _checkParasiteDefensiveTrigger(
+                                isHero: false,
+                                tokenUsed: token,
+                              );
+                            }
+                          },
+                        ),
                       const SizedBox(height: 12),
                       if (_isResolutionMode && !_reviewingLog)
                         _CombatResolutionPanel(
@@ -559,8 +640,9 @@ class _FightPageState extends State<FightPage> {
                           defenseKey: _defenseRulesKey,
                         ),
                         if (_aiMode) ...[
-                          const SizedBox(height: 12),
-                          MinionAiPanel(
+                          if (_phase != CombatPhase.heroUpkeep && _phase != CombatPhase.minionUpkeep) ...[
+                            const SizedBox(height: 12),
+                            MinionAiPanel(
                             enemy: enemy,
                             phase: _phase,
                             dice: _dice,
@@ -626,6 +708,7 @@ class _FightPageState extends State<FightPage> {
                                   _minionHexedThisAttack,
                               onChanged: _resolveExtraDicePhase,
                             ),
+                          ],
                           ],
                         ] else ...[
                           const SizedBox(height: 12),
@@ -8813,6 +8896,172 @@ class _FightPageState extends State<FightPage> {
     });
   }
 
+
+  void _openSettings(BuildContext context) {
+    var restartRank = enemy.rank;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xff111111),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Combat settings',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Close',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                _SettingsActionTile(
+                  icon: Icons.receipt_long,
+                  label: 'Run log',
+                  color: heroAccent,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _openAdventureDetails();
+                  },
+                ),
+                if (_developerMode)
+                  _SettingsActionTile(
+                    icon: Icons.ios_share,
+                    label: 'Export log',
+                    color: Colors.white,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _openCombatExport();
+                    },
+                  ),
+                _SettingsActionTile(
+                  icon: Icons.power_settings_new,
+                  label: 'Quit / abandon run',
+                  color: Colors.redAccent,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _openPauseDialog();
+                  },
+                ),
+                if (_developerMode && enemy.profileKey != 'naraxus') ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Restart recipe combat',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 6),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 380;
+                      final picker = _RecipeRankPicker(
+                        selected: restartRank,
+                        onChanged: (value) =>
+                            setSheetState(() => restartRank = value),
+                      );
+                      final okButton = SizedBox(
+                        height: 48,
+                        width: compact ? double.infinity : 62,
+                        child: FilledButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _restartCombatFromSettings(restartRank);
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xff8f43ff),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.zero,
+                          ),
+                          child: const Text(
+                            'OK',
+                            style: TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      );
+                      if (compact) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            picker,
+                            const SizedBox(height: 8),
+                            okButton,
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(child: picker),
+                          const SizedBox(width: 10),
+                          okButton,
+                        ],
+                      );
+                    },
+                  ),
+                ],
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onLongPress: () async {
+                          await AppSettings.instance.setDeveloperMode(
+                            !AppSettings.instance.developerMode,
+                          );
+                          if (context.mounted) {
+                            setSheetState(() {});
+                          }
+                        },
+                        child: Text(
+                          'Dice Throne Solo',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (_developerMode) ...[
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                        ),
+                        icon: const Icon(Icons.power_settings_new),
+                        onPressed: () async {
+                          await AppSettings.instance.setDeveloperMode(false);
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                            _openPauseDialog();
+                          }
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _openPauseDialog() async {
     final action = await showDialog<_PauseAction>(
       context: context,
@@ -12349,6 +12598,7 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
           CombatVersusStatusPanel(
             adventure: widget.adventure,
             enemy: widget.enemy,
+            isRollPhase: widget.phase == CombatPhase.hero || widget.phase == CombatPhase.minionAttack,
             onHeroHp: () => _openEditor('heroHp', widget.adventure.health),
             onHeroCp: () =>
                 _openEditor('heroCp', widget.adventure.combatPoints),
@@ -12585,6 +12835,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
   const CombatVersusStatusPanel({
     required this.adventure,
     required this.enemy,
+    this.isRollPhase = false,
     required this.onHeroHp,
     required this.onHeroCp,
     required this.onEnemyHp,
@@ -12608,9 +12859,112 @@ class CombatVersusStatusPanel extends StatelessWidget {
   final VoidCallback onTokensChanged;
   final ValueChanged<String>? onHeroTokenRemoved;
   final ValueChanged<String>? onEnemyTokenRemoved;
+  final bool isRollPhase;
 
   @override
   Widget build(BuildContext context) {
+    if (isRollPhase) {
+      return Container(
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.26)),
+        clipBehavior: Clip.hardEdge,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _CombatBadgeButton(
+                        onTap: onHeroHp,
+                        child: Transform.scale(scale: 0.65, child: _HpHeartBadge(value: adventure.health, style: _CombatHpStyle.hero)),
+                      ),
+                      const SizedBox(width: 8),
+                      _CombatBadgeButton(
+                        onTap: onHeroCp,
+                        child: Transform.scale(scale: 0.65, child: _PcTriangleBadge(value: adventure.combatPoints, infinity: false)),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(width: 1, height: 40, color: panelBorderGrey.withValues(alpha: 0.75)),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _CombatBadgeButton(
+                        onTap: onEnemyHp,
+                        child: Transform.scale(scale: 0.65, child: _HpHeartBadge(value: enemy.health, style: _CombatHpStyle.enemy)),
+                      ),
+                      const SizedBox(width: 8),
+                      _CombatBadgeButton(
+                        onTap: enemy.profileKey == 'naraxus' || enemy.profileKey == 'viseer' ? () {} : onEnemyCp,
+                        child: Transform.scale(scale: 0.65, child: _PcTriangleBadge(value: enemy.combatPoints, infinity: enemy.profileKey == 'naraxus' || enemy.profileKey == 'viseer')),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 45,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(6, 0, 6, 7),
+                      child: CompactItemStrip(
+                        label: 'Tokens',
+                        emptyText: 'Tokens',
+                        items: adventure.alterations,
+                        accent: heroAccent,
+                        background: Colors.black.withValues(alpha: 0.22),
+                        border: panelBorderGrey,
+                        onTokensChanged: onTokensChanged,
+                        onTokenRemoved: onHeroTokenRemoved,
+                        trailing: IconButton(
+                          tooltip: 'Edit tokens',
+                          visualDensity: VisualDensity.compact,
+                          onPressed: onEditHeroTokens,
+                          icon: const Icon(Icons.edit, size: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Container(width: 1, height: 45, color: panelBorderGrey.withValues(alpha: 0.75)),
+                Expanded(
+                  child: SizedBox(
+                    height: 45,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(6, 0, 6, 7),
+                      child: CompactItemStrip(
+                        label: 'Tokens',
+                        emptyText: 'Tokens',
+                        items: enemy.alterations,
+                        accent: enemy.rank.color,
+                        background: Colors.black.withValues(alpha: 0.22),
+                        border: panelBorderGrey,
+                        onTokensChanged: onTokensChanged,
+                        onTokenRemoved: onEnemyTokenRemoved,
+                        trailing: IconButton(
+                          tooltip: 'Edit tokens',
+                          visualDensity: VisualDensity.compact,
+                          onPressed: onEditEnemyTokens,
+                          icon: const Icon(Icons.edit, size: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       height: 196,
       decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.26)),
@@ -12620,6 +12974,29 @@ class CombatVersusStatusPanel extends StatelessWidget {
         children: [
           Row(
             children: [
+              Expanded(
+                child: _CombatantVersusHalf(
+                  title: adventure.hero.label,
+                  hp: adventure.health,
+                  cp: adventure.combatPoints,
+                  tokens: adventure.alterations,
+                  accent: heroAccent,
+                  portraitAsset: adventure.hero.asset,
+                  portraitAlignment: adventure.hero.imageAlignment,
+                  portraitScale: min(adventure.hero.imageScale, 1.08),
+                  hpStyle: _CombatHpStyle.hero,
+                  onHp: onHeroHp,
+                  onCp: onHeroCp,
+                  onEditTokens: onEditHeroTokens,
+                  onTokensChanged: onTokensChanged,
+                  onTokenRemoved: onHeroTokenRemoved,
+                  imageOnRight: false,
+                ),
+              ),
+              Container(
+                width: 1,
+                color: panelBorderGrey.withValues(alpha: 0.75),
+              ),
               Expanded(
                 child: _CombatantVersusHalf(
                   title: enemy.label,
@@ -12640,28 +13017,6 @@ class CombatVersusStatusPanel extends StatelessWidget {
                   onEditTokens: onEditEnemyTokens,
                   onTokensChanged: onTokensChanged,
                   onTokenRemoved: onEnemyTokenRemoved,
-                ),
-              ),
-              Container(
-                width: 1,
-                color: panelBorderGrey.withValues(alpha: 0.75),
-              ),
-              Expanded(
-                child: _CombatantVersusHalf(
-                  title: adventure.hero.label,
-                  hp: adventure.health,
-                  cp: adventure.combatPoints,
-                  tokens: adventure.alterations,
-                  accent: heroAccent,
-                  portraitAsset: adventure.hero.asset,
-                  portraitAlignment: adventure.hero.imageAlignment,
-                  portraitScale: min(adventure.hero.imageScale, 1.08),
-                  hpStyle: _CombatHpStyle.hero,
-                  onHp: onHeroHp,
-                  onCp: onHeroCp,
-                  onEditTokens: onEditHeroTokens,
-                  onTokensChanged: onTokensChanged,
-                  onTokenRemoved: onHeroTokenRemoved,
                   imageOnRight: true,
                 ),
               ),
@@ -12957,7 +13312,7 @@ class _PcTriangleBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final safeValue = value.clamp(0, 99);
-    final valueText = infinity ? 'âˆž' : safeValue.toString();
+    final valueText = infinity ? '\u221E' : safeValue.toString();
     final showPcLabel = !infinity && safeValue < 10;
     return CustomPaint(
       painter: const _PcTriangleBadgePainter(),
@@ -13478,3 +13833,139 @@ class GameDie {
   }
 }
 
+
+
+class EnemyFightHeader extends StatelessWidget {
+  const EnemyFightHeader({
+    required this.enemy,
+    required this.developerMode,
+    required this.showUndo,
+    required this.onUndo,
+    required this.onOpenSettings,
+    super.key,
+  });
+
+  final EnemyNode enemy;
+  final bool developerMode;
+  final bool showUndo;
+  final VoidCallback onUndo;
+  final VoidCallback onOpenSettings;
+
+  void _openEnemyCard(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: InteractiveViewer(
+                  minScale: 0.8,
+                  maxScale: 4,
+                  child: Center(child: Image.asset(enemy.cardAsset)),
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton.filled(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xff121212),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: () => _openEnemyCard(context),
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              width: 64,
+              height: 46,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: panelBorderGrey),
+                image: DecorationImage(
+                  image: AssetImage(enemy.cardAsset),
+                  fit: BoxFit.cover,
+                  alignment: Alignment.centerLeft,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (developerMode)
+                    Text(
+                      enemy.profileKey ?? 'Unknown',
+                      style: TextStyle(
+                        color: enemy.rank.color.withValues(alpha: 0.7),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  Text(
+                    enemy.label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: enemy.rank.color,
+                      fontSize: 21,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          if (showUndo) ...[
+            IconButton.filledTonal(
+              tooltip: 'Undo step',
+              onPressed: onUndo,
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.black.withValues(alpha: 0.55),
+                foregroundColor: const Color(0xff8f43ff),
+                side: const BorderSide(color: Color(0xff8f43ff)),
+              ),
+              icon: const Icon(Icons.arrow_back),
+            ),
+            const SizedBox(width: 6),
+          ],
+          IconButton.filledTonal(
+            tooltip: 'Combat settings',
+            onPressed: onOpenSettings,
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.black.withValues(alpha: 0.22),
+              foregroundColor: developerMode
+                  ? Colors.orangeAccent
+                  : Colors.white,
+              side: BorderSide(
+                color: developerMode
+                    ? Colors.orangeAccent
+                    : panelBorderGrey,
+              ),
+            ),
+            icon: const Icon(Icons.settings),
+          ),
+        ],
+      ),
+    );
+  }
+}

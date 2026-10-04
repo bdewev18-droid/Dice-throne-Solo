@@ -168,86 +168,6 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  InkWell(
-                    onTap: () => _openEnemyCard(context),
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      width: 64,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: panelBorderGrey),
-                        image: DecorationImage(
-                          image: AssetImage(enemy.cardAsset),
-                          fit: BoxFit.cover,
-                          alignment: Alignment.centerLeft,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (widget.developerMode)
-                            Text(
-                              enemy.profileKey ?? 'Unknown',
-                              style: TextStyle(
-                                color: enemy.rank.color.withValues(alpha: 0.7),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          Text(
-                            enemy.label,
-                            maxLines: 1,
-                            style: TextStyle(
-                              color: enemy.rank.color,
-                              fontSize: 21,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  if (widget.showUndo) ...[
-                    IconButton.filledTonal(
-                      tooltip: 'Undo step',
-                      onPressed: widget.onUndo,
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.black.withValues(alpha: 0.55),
-                        foregroundColor: const Color(0xff8f43ff),
-                        side: const BorderSide(color: Color(0xff8f43ff)),
-                      ),
-                      icon: const Icon(Icons.arrow_back),
-                    ),
-                    const SizedBox(width: 6),
-                  ],
-                  IconButton.filledTonal(
-                    tooltip: 'Combat settings',
-                    onPressed: () => _openSettings(context),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.black.withValues(alpha: 0.22),
-                      foregroundColor: widget.developerMode
-                          ? Colors.orangeAccent
-                          : Colors.white,
-                      side: BorderSide(
-                        color: widget.developerMode
-                            ? Colors.orangeAccent
-                            : panelBorderGrey,
-                      ),
-                    ),
-                    icon: const Icon(Icons.settings),
-                  ),
-                ],
-              ),
               const SizedBox(height: 8),
               attackContent,
             ],
@@ -2317,7 +2237,6 @@ class CombatBottomDock extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xf2121212),
-        border: Border(bottom: BorderSide(color: Colors.white12)),
       ),
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       child: TurnPhasePanel(

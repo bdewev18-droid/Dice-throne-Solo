@@ -1,6 +1,6 @@
 part of '../../main.dart';
 
-class CombatAiChatDock extends StatelessWidget {
+class CombatAiChatDock extends StatefulWidget {
   const CombatAiChatDock({
     required this.aiMode,
     this.influenceRollReduction = 0,
@@ -281,8 +281,173 @@ class CombatAiChatDock extends StatelessWidget {
   final bool minionAgilityAvoided;
 
   @override
+  State<CombatAiChatDock> createState() => _CombatAiChatDockState();
+}
+
+class _CombatAiChatDockState extends State<CombatAiChatDock> {
+  static bool _globalCollapsedUpkeep = false;
+  static bool _globalCollapsedRoll = false;
+
+  bool get _isCollapsed {
+    if (widget.phase == CombatPhase.heroUpkeep ||
+        widget.phase == CombatPhase.minionUpkeep) {
+      return _globalCollapsedUpkeep;
+    } else {
+      return _globalCollapsedRoll;
+    }
+  }
+
+  set _isCollapsed(bool val) {
+    if (widget.phase == CombatPhase.heroUpkeep ||
+        widget.phase == CombatPhase.minionUpkeep) {
+      _globalCollapsedUpkeep = val;
+    } else {
+      _globalCollapsedRoll = val;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bool hasAnyAction = salveCount > 0 ||
+    final aiMode = widget.aiMode;
+    final influenceRollReduction = widget.influenceRollReduction;
+    final aiMessage = widget.aiMessage;
+    final phase = widget.phase;
+    final adventure = widget.adventure;
+    final enemy = widget.enemy;
+    final primaryEnemy = widget.primaryEnemy;
+    final secondaryEnemy = widget.secondaryEnemy;
+    final canSwitchTarget = widget.canSwitchTarget;
+    final onSelectTarget = widget.onSelectTarget;
+    final returnDamage = widget.returnDamage;
+    final returnDamageUndefendable = widget.returnDamageUndefendable;
+    final lifeSteal = widget.lifeSteal;
+    final enemyHeal = widget.enemyHeal;
+    final cpSteal = widget.cpSteal;
+    final heroTokens = widget.heroTokens;
+    final minionTokens = widget.minionTokens;
+    final notes = widget.notes;
+    final showResolution = widget.showResolution;
+    final attackValue = widget.attackValue;
+    final attackModifier = widget.attackModifier;
+    final defenseValue = widget.defenseValue;
+    final defenseModifier = widget.defenseModifier;
+    final showStunCover = widget.showStunCover;
+    final showOnlyCardsCover = widget.showOnlyCardsCover;
+    final onOnlyCardsUnlock = widget.onOnlyCardsUnlock;
+    final onAttackChanged = widget.onAttackChanged;
+    final onDefenseChanged = widget.onDefenseChanged;
+    final onApply = widget.onApply;
+    final blockApply = widget.blockApply;
+    final onFinish = widget.onFinish;
+    final onChanged = widget.onChanged;
+    final onEditHeroTokens = widget.onEditHeroTokens;
+    final onEditEnemyTokens = widget.onEditEnemyTokens;
+    final onHeroTokenRemoved = widget.onHeroTokenRemoved;
+    final onEnemyTokenRemoved = widget.onEnemyTokenRemoved;
+    final showBlindButton = widget.showBlindButton;
+    final onBlindPressed = widget.onBlindPressed;
+    final showEvasiveAttackCover = widget.showEvasiveAttackCover;
+    final showFlightAttackCover = widget.showFlightAttackCover;
+    final showParlayAttackCover = widget.showParlayAttackCover;
+    final showWebbedAttackCover = widget.showWebbedAttackCover;
+    final heroEvasiveCount = widget.heroEvasiveCount;
+    final heroEvasiveAvoided = widget.heroEvasiveAvoided;
+    final onUseHeroEvasive = widget.onUseHeroEvasive;
+    final heroFlightCount = widget.heroFlightCount;
+    final minionFlightCount = widget.minionFlightCount;
+    final flightAvoided = widget.flightAvoided;
+    final flightUndefendable = widget.flightUndefendable;
+    final onUseHeroFlight = widget.onUseHeroFlight;
+    final onUseMinionFlight = widget.onUseMinionFlight;
+    final heroAgilityCount = widget.heroAgilityCount;
+    final heroAgilityActive = widget.heroAgilityActive;
+    final heroAgilitySuccesses = widget.heroAgilitySuccesses;
+    final heroAgilityPrevented = widget.heroAgilityPrevented;
+    final onUseHeroAgility = widget.onUseHeroAgility;
+    final minionAgilityAvoided = widget.minionAgilityAvoided;
+    final shadowsActive = widget.shadowsActive;
+    final heroShadowsCount = widget.heroShadowsCount;
+    final onUseHeroShadows = widget.onUseHeroShadows;
+    final minionShadowsCount = widget.minionShadowsCount;
+    final minionShadowsActive = widget.minionShadowsActive;
+    final onUseMinionShadows = widget.onUseMinionShadows;
+    final attackerSneakAttackCount = widget.attackerSneakAttackCount;
+    final attackerSneakAttackActive = widget.attackerSneakAttackActive;
+    final attackerSneakAttackBonus = widget.attackerSneakAttackBonus;
+    final canUseAttackerSneakAttack = widget.canUseAttackerSneakAttack;
+    final onUseAttackerSneakAttack = widget.onUseAttackerSneakAttack;
+    final attackerGuardBreakCount = widget.attackerGuardBreakCount;
+    final canUseAttackerGuardBreak = widget.canUseAttackerGuardBreak;
+    final onUseAttackerGuardBreak = widget.onUseAttackerGuardBreak;
+    final defenderPreyCount = widget.defenderPreyCount;
+    final preyUsedCount = widget.preyUsedCount;
+    final canUsePrey = widget.canUsePrey;
+    final onUsePrey = widget.onUsePrey;
+    final windShearCount = widget.windShearCount;
+    final windShearActive = widget.windShearActive;
+    final canUseWindShear = widget.canUseWindShear;
+    final onUseWindShear = widget.onUseWindShear;
+    final attackerAccuracyCount = widget.attackerAccuracyCount;
+    final accuracyUsed = widget.accuracyUsed;
+    final canUseAccuracy = widget.canUseAccuracy;
+    final onUseAccuracy = widget.onUseAccuracy;
+    final attackerCritCount = widget.attackerCritCount;
+    final critUsed = widget.critUsed;
+    final canUseCrit = widget.canUseCrit;
+    final onUseCrit = widget.onUseCrit;
+    final availableDamageBonus = widget.availableDamageBonus;
+    final usedDamageBonus = widget.usedDamageBonus;
+    final onUseDamageBonus = widget.onUseDamageBonus;
+    final honorCount = widget.honorCount;
+    final salveCount = widget.salveCount;
+    final onUseSalve = widget.onUseSalve;
+    final smokeBombCount = widget.smokeBombCount;
+    final onUseSmokeBomb = widget.onUseSmokeBomb;
+    final smokeBombSuccess = widget.smokeBombSuccess;
+    final honorDamageBonus = widget.honorDamageBonus;
+    final onUseHonor = widget.onUseHonor;
+    final ninjitsuCount = widget.ninjitsuCount;
+    final ninjitsuDamageBonus = widget.ninjitsuDamageBonus;
+    final ninjitsuUndefendable = widget.ninjitsuUndefendable;
+    final onUseNinjitsu = widget.onUseNinjitsu;
+    final protectCount = widget.protectCount;
+    final protectUsed = widget.protectUsed;
+    final minionAutoProtect = widget.minionAutoProtect;
+    final onUseProtect = widget.onUseProtect;
+    final retributionCount = widget.retributionCount;
+    final retributionUsed = widget.retributionUsed;
+    final minionAutoRetribution = widget.minionAutoRetribution;
+    final onUseRetribution = widget.onUseRetribution;
+    final guardBreakSuccess = widget.guardBreakSuccess;
+    final barbedVineActive = widget.barbedVineActive;
+    final barbedVineCount = widget.barbedVineCount;
+    final onUseBarbedVine = widget.onUseBarbedVine;
+    final barbedVineUsed = widget.barbedVineUsed;
+    final constrictActive = widget.constrictActive;
+    final constrictCount = widget.constrictCount;
+    final onUseConstrict = widget.onUseConstrict;
+    final constrictUsed = widget.constrictUsed;
+    final decrepifyActive = widget.decrepifyActive;
+    final diceCubeActive = widget.diceCubeActive;
+    final diceCubeCount = widget.diceCubeCount;
+    final entangleActive = widget.entangleActive;
+    final entangleCount = widget.entangleCount;
+    final heroWellspringCount = widget.heroWellspringCount;
+    final onUseHeroWellspring = widget.onUseHeroWellspring;
+    final enemyWellspringCount = widget.enemyWellspringCount;
+    final onUseEnemyWellspring = widget.onUseEnemyWellspring;
+    final showBlindingLightAttackCover = widget.showBlindingLightAttackCover;
+    final onBlindingLightPressed = widget.onBlindingLightPressed;
+    final blindingLightZeroDamage = widget.blindingLightZeroDamage;
+    final blindingLightReducedDamage = widget.blindingLightReducedDamage;
+    final blindingLightBaseAttack = widget.blindingLightBaseAttack;
+    final blindingLightRoll = widget.blindingLightRoll;
+    final realityWarpActive = widget.realityWarpActive;
+    final silenceActive = widget.silenceActive;
+    final webbedActive = widget.webbedActive;
+
+    final bool hasAnyAction =
+        salveCount > 0 ||
         windShearCount > 0 ||
         defenderPreyCount > 0 ||
         attackerCritCount > 0 ||
@@ -312,8 +477,9 @@ class CombatAiChatDock extends StatelessWidget {
     final cleanMinionTokens = minionTokens
         .map((t) => t.replaceAll(RegExp(r'_active', caseSensitive: false), ''))
         .toList();
-    
-    final isHeroTurn = phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep;
+
+    final isHeroTurn =
+        phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep;
     final heroAsset = adventure.hero.asset;
 
     Widget buildOwnerAvatar(bool isHero, {double size = 24}) {
@@ -551,8 +717,8 @@ class CombatAiChatDock extends StatelessWidget {
             heroAgilityActive &&
             heroAgilitySuccesses >= 2) ||
         (phase == CombatPhase.hero && minionAgilityAvoided);
-//     final bool isHeroTurn =
-//         phase == CombatPhase.heroUpkeep || phase == CombatPhase.hero;
+    //     final bool isHeroTurn =
+    //         phase == CombatPhase.heroUpkeep || phase == CombatPhase.hero;
     final bool isMinionTurn =
         phase == CombatPhase.minionUpkeep || phase == CombatPhase.minionAttack;
     final bool showWellspringRow =
@@ -569,7 +735,7 @@ class CombatAiChatDock extends StatelessWidget {
         color: Color(0xf2121212),
         border: Border(top: BorderSide(color: Colors.white12)),
       ),
-      padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -583,110 +749,7 @@ class CombatAiChatDock extends StatelessWidget {
             ),
             const SizedBox(height: 8),
           ],
-          if (aiMode)
-            _AiChatWithHealth(
-              message: _battleChatText(aiMessage, tokenText),
-              accent: chatAccent,
-              heroHp: adventure.health,
-              heroCp: adventure.combatPoints,
-              enemyHp: enemy.health,
-              enemyCp: enemy.combatPoints,
-              enemyCpInfinity: enemyCpInfinity,
-              enemyColor: enemy.rank.color,
-              heroName: adventure.hero.label,
-              enemyName: enemy.label,
-              heroTokens: adventure.alterations.map((t) {
-                if (shadowsActive &&
-                    (t.toLowerCase() == 'shadows' ||
-                        t.toLowerCase() == 'ombre')) {
-                  return '${t}_active';
-                }
-                if (phase == CombatPhase.hero &&
-                    (barbedVineActive || barbedVineCount > 0) &&
-                    (t.toLowerCase() == 'barbed vine' ||
-                        t.toLowerCase() == 'barbedvine' ||
-                        t.toLowerCase() == 'ronces' ||
-                        t.toLowerCase() == 'ronce')) {
-                  return '${t}_active';
-                }
-                if ((phase == CombatPhase.hero ||
-                        phase == CombatPhase.minionAttack) &&
-                    influenceRollReduction > 0 &&
-                    t.toLowerCase() == 'influence') {
-                  return '$t (-$influenceRollReduction)_active';
-                }
-                return t;
-              }).toList(),
-              enemyTokens: enemy.alterations.map((t) {
-                if (phase == CombatPhase.minionAttack &&
-                    (barbedVineActive || barbedVineCount > 0) &&
-                    (t.toLowerCase() == 'barbed vine' ||
-                        t.toLowerCase() == 'barbedvine' ||
-                        t.toLowerCase() == 'ronces' ||
-                        t.toLowerCase() == 'ronce')) {
-                  return '${t}_active';
-                }
-                if ((phase == CombatPhase.hero ||
-                        phase == CombatPhase.minionAttack) &&
-                    influenceRollReduction > 0 &&
-                    t.toLowerCase() == 'influence') {
-                  return '$t (-$influenceRollReduction)_active';
-                }
-                return t;
-              }).toList(),
-              onEditHeroTokens: onEditHeroTokens,
-              onEditEnemyTokens: onEditEnemyTokens,
-              onTokensChanged: onChanged,
-              onHeroTokenRemoved: onHeroTokenRemoved,
-              onEnemyTokenRemoved: onEnemyTokenRemoved,
-              portraitAsset:
-                  phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
-                  ? adventure.hero.asset
-                  : enemy.previewAsset,
-              portraitAlignment:
-                  phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
-                  ? _topCropAlignment(adventure.hero.imageAlignment)
-                  : enemy.profileKey == 'naraxus'
-                  ? Alignment.topCenter
-                  : _topCropAlignment(Alignment.centerLeft),
-              portraitScale:
-                  phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
-                  ? adventure.hero.imageScale
-                  : 1,
-              portraitFit: BoxFit.cover,
-              showPortraitVitals:
-                  phase == CombatPhase.hero ||
-                  phase == CombatPhase.minionAttack,
-              showHealthControls: false,
-              onHeroHpSaved: (value) {
-                adventure.setHeroHealth(value);
-                onChanged();
-              },
-              onHeroCpSaved: (value) {
-                adventure.setHeroPc(value);
-                onChanged();
-              },
-              onEnemyHpSaved: (value) {
-                final oldHp = enemy.health;
-                enemy.health = value.clamp(0, enemy.maxHealth);
-                if (oldHp != enemy.health) {
-                  adventure.log(
-                    '[HP] ${enemy.label} HP: $oldHp âž” ${enemy.health} (Manual Adjustment)',
-                  );
-                }
-                onChanged();
-              },
-              onEnemyCpSaved: (value) {
-                final oldCp = enemy.combatPoints;
-                enemy.combatPoints = value.clamp(0, 99);
-                if (oldCp != enemy.combatPoints) {
-                  adventure.log(
-                    '[CP] ${enemy.label} CP: $oldCp âž” ${enemy.combatPoints} (Manual Adjustment)',
-                  );
-                }
-                onChanged();
-              },
-            ),
+
           if (showWellspringRow) ...[
             const SizedBox(height: 6),
             _TokenActionRow(
@@ -719,7 +782,8 @@ class CombatAiChatDock extends StatelessWidget {
           ],
           if (showResolution) ...[
             if (defenderHasTargeted)
-              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Targeted'),
+              _ActiveTokenBadge(
+                ownerWidget: tokenOwnerAvatar('Targeted'),
                 tokenLabel: 'Targeted',
                 tokenAsset: 'assets/token/Targeted.png',
                 activeText: attackValue > 0
@@ -727,7 +791,8 @@ class CombatAiChatDock extends StatelessWidget {
                     : 'Pending (ATK = 0)',
               ),
             if (defenderFocusFireCount > 0)
-              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Focus Fire'),
+              _ActiveTokenBadge(
+                ownerWidget: tokenOwnerAvatar('Focus Fire'),
                 tokenLabel: 'Focus Fire',
                 tokenAsset: 'assets/token/focus-fire.webp',
                 activeText: attackValue > 0
@@ -841,7 +906,8 @@ class CombatAiChatDock extends StatelessWidget {
               ),
             ],
             if (attackerWitherCount > 0)
-              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Wither'),
+              _ActiveTokenBadge(
+                ownerWidget: tokenOwnerAvatar('Wither'),
                 tokenLabel: attackerWitherCount > 1
                     ? 'Wither (x$attackerWitherCount)'
                     : 'Wither',
@@ -1209,7 +1275,8 @@ class CombatAiChatDock extends StatelessWidget {
             ],
             if (showBarbedVineRow) ...[
               const SizedBox(height: 6),
-              _MultiRollTokenActiveRow(ownerWidget: tokenOwnerAvatar('Barbed Vine'),
+              _MultiRollTokenActiveRow(
+                ownerWidget: tokenOwnerAvatar('Barbed Vine'),
                 tokenLabel: 'Barbed Vine',
                 tokenAsset: 'assets/token/Barbed-Vine.png',
                 count: barbedVineCount,
@@ -1222,7 +1289,8 @@ class CombatAiChatDock extends StatelessWidget {
             ],
             if (showConstrictRow) ...[
               const SizedBox(height: 6),
-              _MultiRollTokenActiveRow(ownerWidget: tokenOwnerAvatar('Constrict'),
+              _MultiRollTokenActiveRow(
+                ownerWidget: tokenOwnerAvatar('Constrict'),
                 tokenLabel: 'Constrict',
                 count: constrictCount,
                 tokenAsset: 'assets/token/Constrict.png',
@@ -1237,47 +1305,55 @@ class CombatAiChatDock extends StatelessWidget {
                 (phase == CombatPhase.minionAttack &&
                     attackerCritCount > 0 &&
                     attackValue > 0))
-              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Crit'),
+              _ActiveTokenBadge(
+                ownerWidget: tokenOwnerAvatar('Crit'),
                 tokenLabel: 'Crit',
                 tokenAsset: 'assets/token/crit.png',
                 activeText: 'Active (+ 4 DMG)',
               ),
             for (final val in usedDamageBonus)
-              _ActiveTokenBadge(ownerWidget: buildOwnerAvatar(isHeroTurn),
+              _ActiveTokenBadge(
+                ownerWidget: buildOwnerAvatar(isHeroTurn),
                 tokenLabel: 'Damage bonus $val',
                 tokenAsset: 'assets/token/bonus-atk-$val.webp',
                 activeText: 'Active (+$val DMG)',
               ),
             if (phase == CombatPhase.minionAttack && attackValue > 0)
               for (final val in availableDamageBonus)
-                _ActiveTokenBadge(ownerWidget: buildOwnerAvatar(isHeroTurn),
+                _ActiveTokenBadge(
+                  ownerWidget: buildOwnerAvatar(isHeroTurn),
                   tokenLabel: 'Damage bonus $val',
                   tokenAsset: 'assets/token/bonus-atk-$val.webp',
                   activeText: 'Active (+$val DMG)',
                 ),
             if (honorDamageBonus > 0)
-              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Honor'),
+              _ActiveTokenBadge(
+                ownerWidget: tokenOwnerAvatar('Honor'),
                 tokenLabel: 'Honor',
                 tokenAsset: 'assets/token/honor.png',
                 activeText: 'Active (+$honorDamageBonus DMG)',
               ),
             if (realityWarpActive)
-              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Reality Warp'),
+              _ActiveTokenBadge(
+                ownerWidget: tokenOwnerAvatar('Reality Warp'),
                 tokenLabel: 'Reality Warp',
                 tokenAsset: 'assets/token/reality-warp.webp',
               ),
             if (silenceActive)
-              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Silence'),
+              _ActiveTokenBadge(
+                ownerWidget: tokenOwnerAvatar('Silence'),
                 tokenLabel: 'Silence',
                 tokenAsset: 'assets/token/Silence.webp',
               ),
             if (webbedActive)
-              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Webbed'),
+              _ActiveTokenBadge(
+                ownerWidget: tokenOwnerAvatar('Webbed'),
                 tokenLabel: 'Webbed',
                 tokenAsset: 'assets/token/Webbed.webp',
               ),
             if (flightAvoided || flightUndefendable)
-              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Flight'),
+              _ActiveTokenBadge(
+                ownerWidget: tokenOwnerAvatar('Flight'),
                 tokenLabel: 'Flight',
                 tokenAsset: 'assets/token/Flight.png',
                 activeText: flightAvoided
@@ -1285,7 +1361,8 @@ class CombatAiChatDock extends StatelessWidget {
                     : 'Active (Undefendable)',
               ),
             if (showBlindingLightRow)
-              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Blinding Light'),
+              _ActiveTokenBadge(
+                ownerWidget: tokenOwnerAvatar('Blinding Light'),
                 tokenLabel: 'Blinding Light',
                 tokenAsset: 'assets/token/Blinding Light.webp',
               ),
@@ -1630,7 +1707,8 @@ class CombatAiChatDock extends StatelessWidget {
             ],
 
             if (showGuardBreakRow)
-              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Guard Break'),
+              _TokenActionRow(
+                ownerWidget: tokenOwnerAvatar('Guard Break'),
                 tokenLabel: 'Guard Break',
                 tokenAsset: 'assets/token/Guard-Break.png',
                 text: attackerGuardBreakCount > 1
@@ -1643,10 +1721,13 @@ class CombatAiChatDock extends StatelessWidget {
                 onUse: onUseAttackerGuardBreak,
               ),
             if (windShearCount > 0 || windShearActive)
-              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Wind Shear'),
+              _TokenActionRow(
+                ownerWidget: tokenOwnerAvatar('Wind Shear'),
                 tokenLabel: 'Wind Shear',
                 tokenAsset: 'assets/token/wind-shear.webp',
-                text: windShearCount > 1 ? 'Wind Shear x$windShearCount' : 'Wind Shear',
+                text: windShearCount > 1
+                    ? 'Wind Shear x$windShearCount'
+                    : 'Wind Shear',
                 isActive: windShearActive,
                 activeText: '+2 DEF / 2 DMG imparables',
                 showUseButton: !windShearActive,
@@ -1654,7 +1735,8 @@ class CombatAiChatDock extends StatelessWidget {
                 onUse: onUseWindShear,
               ),
             if (defenderPreyCount > 0)
-              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Prey'),
+              _TokenActionRow(
+                ownerWidget: tokenOwnerAvatar('Prey'),
                 tokenLabel: 'Prey',
                 tokenAsset: 'assets/token/Prey.png',
                 text: preyUsedCount > 0
@@ -1667,10 +1749,13 @@ class CombatAiChatDock extends StatelessWidget {
                 onUse: onUsePrey,
               ),
             if (attackerCritCount > 0 || critUsed)
-              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Crit'),
+              _TokenActionRow(
+                ownerWidget: tokenOwnerAvatar('Crit'),
                 tokenLabel: 'Crit',
                 tokenAsset: 'assets/token/Crit.png',
-                text: attackerCritCount > 1 ? 'Crit x$attackerCritCount' : 'Crit',
+                text: attackerCritCount > 1
+                    ? 'Crit x$attackerCritCount'
+                    : 'Crit',
                 isActive: critUsed,
                 activeText: 'Active (Auto-crit)',
                 showUseButton: !critUsed,
@@ -1678,10 +1763,13 @@ class CombatAiChatDock extends StatelessWidget {
                 onUse: onUseCrit,
               ),
             if (attackerAccuracyCount > 0 || accuracyUsed)
-              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Accuracy'),
+              _TokenActionRow(
+                ownerWidget: tokenOwnerAvatar('Accuracy'),
                 tokenLabel: 'Accuracy',
                 tokenAsset: 'assets/token/Accuracy.png',
-                text: attackerAccuracyCount > 1 ? 'Accuracy x$attackerAccuracyCount' : 'Accuracy',
+                text: attackerAccuracyCount > 1
+                    ? 'Accuracy x$attackerAccuracyCount'
+                    : 'Accuracy',
                 isActive: accuracyUsed,
                 activeText: 'Active (Undefendable)',
                 showUseButton: !accuracyUsed,
@@ -1691,7 +1779,8 @@ class CombatAiChatDock extends StatelessWidget {
             if (honorCount > 0 &&
                 phase == CombatPhase.hero &&
                 honorDamageBonus == 0)
-              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Honor'),
+              _TokenActionRow(
+                ownerWidget: tokenOwnerAvatar('Honor'),
                 tokenLabel: 'Honor',
                 tokenAsset: 'assets/token/honor.png',
                 text: honorCount > 1 ? 'Honor x$honorCount' : 'Honor',
@@ -1704,25 +1793,31 @@ class CombatAiChatDock extends StatelessWidget {
             if (ninjitsuDamageBonus > 0 ||
                 ninjitsuUndefendable ||
                 ninjitsuCount > 0)
-              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Ninjitsu'),
+              _TokenActionRow(
+                ownerWidget: tokenOwnerAvatar('Ninjitsu'),
                 tokenLabel: 'Ninjitsu',
                 tokenAsset: 'assets/token/Ninjutsu.webp',
-                text: ninjitsuCount > 1 ? 'Ninjitsu x$ninjitsuCount' : 'Ninjitsu',
+                text: ninjitsuCount > 1
+                    ? 'Ninjitsu x$ninjitsuCount'
+                    : 'Ninjitsu',
                 isActive: ninjitsuDamageBonus > 0 || ninjitsuUndefendable,
                 activeText: ninjitsuUndefendable && ninjitsuDamageBonus > 0
                     ? 'Active (+$ninjitsuDamageBonus DMG, Undefendable)'
                     : (ninjitsuUndefendable
-                        ? 'Active (Undefendable)'
-                        : 'Active (+$ninjitsuDamageBonus DMG)'),
+                          ? 'Active (Undefendable)'
+                          : 'Active (+$ninjitsuDamageBonus DMG)'),
                 showUseButton: ninjitsuCount > 0 && phase == CombatPhase.hero,
                 canUse: onUseNinjitsu != null,
                 onUse: onUseNinjitsu,
               ),
             if (smokeBombCount > 0 || smokeBombSuccess)
-              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Smoke Bomb'),
+              _TokenActionRow(
+                ownerWidget: tokenOwnerAvatar('Smoke Bomb'),
                 tokenLabel: 'Smoke Bomb',
                 tokenAsset: 'assets/token/Smoke-Bomb.png',
-                text: smokeBombCount > 1 ? 'Smoke Bomb x$smokeBombCount' : 'Smoke Bomb',
+                text: smokeBombCount > 1
+                    ? 'Smoke Bomb x$smokeBombCount'
+                    : 'Smoke Bomb',
                 isActive: smokeBombSuccess,
                 activeText: 'Active (Avoids DMG)',
                 showUseButton: !smokeBombSuccess,
@@ -2422,6 +2517,130 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
               ],
             ),
+          ],
+          GestureDetector(
+            onTap: () => setState(() => _isCollapsed = !_isCollapsed),
+            child: Container(
+              width: double.infinity,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.only(top: 8, bottom: 4),
+              child: Icon(
+                _isCollapsed
+                    ? Icons.keyboard_arrow_down
+                    : Icons.keyboard_arrow_up,
+                color: Colors.white54,
+              ),
+            ),
+          ),
+          if (!_isCollapsed) ...[
+            const SizedBox(height: 8),
+            if (aiMode)
+              _AiChatWithHealth(
+                isRollPhase:
+                    phase == CombatPhase.hero ||
+                    phase == CombatPhase.minionAttack,
+                message: _battleChatText(aiMessage, tokenText),
+                accent: chatAccent,
+                heroHp: adventure.health,
+                heroCp: adventure.combatPoints,
+                enemyHp: enemy.health,
+                enemyCp: enemy.combatPoints,
+                enemyCpInfinity: enemyCpInfinity,
+                enemyColor: enemy.rank.color,
+                heroName: adventure.hero.label,
+                enemyName: enemy.label,
+                heroTokens: adventure.alterations.map((t) {
+                  if (shadowsActive &&
+                      (t.toLowerCase() == 'shadows' ||
+                          t.toLowerCase() == 'ombre')) {
+                    return '${t}_active';
+                  }
+                  if (phase == CombatPhase.hero &&
+                      (barbedVineActive || barbedVineCount > 0) &&
+                      (t.toLowerCase() == 'barbed vine' ||
+                          t.toLowerCase() == 'barbedvine' ||
+                          t.toLowerCase() == 'ronces' ||
+                          t.toLowerCase() == 'ronce')) {
+                    return '${t}_active';
+                  }
+                  if ((phase == CombatPhase.hero ||
+                          phase == CombatPhase.minionAttack) &&
+                      influenceRollReduction > 0 &&
+                      t.toLowerCase() == 'influence') {
+                    return '$t (-$influenceRollReduction)_active';
+                  }
+                  return t;
+                }).toList(),
+                enemyTokens: enemy.alterations.map((t) {
+                  if (phase == CombatPhase.minionAttack &&
+                      (barbedVineActive || barbedVineCount > 0) &&
+                      (t.toLowerCase() == 'barbed vine' ||
+                          t.toLowerCase() == 'barbedvine' ||
+                          t.toLowerCase() == 'ronces' ||
+                          t.toLowerCase() == 'ronce')) {
+                    return '${t}_active';
+                  }
+                  if ((phase == CombatPhase.hero ||
+                          phase == CombatPhase.minionAttack) &&
+                      influenceRollReduction > 0 &&
+                      t.toLowerCase() == 'influence') {
+                    return '$t (-$influenceRollReduction)_active';
+                  }
+                  return t;
+                }).toList(),
+                onEditHeroTokens: onEditHeroTokens,
+                onEditEnemyTokens: onEditEnemyTokens,
+                onTokensChanged: onChanged,
+                onHeroTokenRemoved: onHeroTokenRemoved,
+                onEnemyTokenRemoved: onEnemyTokenRemoved,
+                portraitAsset:
+                    phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
+                    ? adventure.hero.asset
+                    : enemy.previewAsset,
+                portraitAlignment:
+                    phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
+                    ? _topCropAlignment(adventure.hero.imageAlignment)
+                    : enemy.profileKey == 'naraxus'
+                    ? Alignment.topCenter
+                    : _topCropAlignment(Alignment.centerLeft),
+                portraitScale:
+                    phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
+                    ? adventure.hero.imageScale
+                    : 1,
+                portraitFit: BoxFit.cover,
+                showPortraitVitals:
+                    phase == CombatPhase.hero ||
+                    phase == CombatPhase.minionAttack,
+                showHealthControls: false,
+                onHeroHpSaved: (value) {
+                  adventure.setHeroHealth(value);
+                  onChanged();
+                },
+                onHeroCpSaved: (value) {
+                  adventure.setHeroPc(value);
+                  onChanged();
+                },
+                onEnemyHpSaved: (value) {
+                  final oldHp = enemy.health;
+                  enemy.health = value.clamp(0, enemy.maxHealth);
+                  if (oldHp != enemy.health) {
+                    adventure.log(
+                      '[HP] ${enemy.label} HP: $oldHp âž” ${enemy.health} (Manual Adjustment)',
+                    );
+                  }
+                  onChanged();
+                },
+                onEnemyCpSaved: (value) {
+                  final oldCp = enemy.combatPoints;
+                  enemy.combatPoints = value.clamp(0, 99);
+                  if (oldCp != enemy.combatPoints) {
+                    adventure.log(
+                      '[CP] ${enemy.label} CP: $oldCp âž” ${enemy.combatPoints} (Manual Adjustment)',
+                    );
+                  }
+                  onChanged();
+                },
+              ),
           ],
           if (onFinish != null) ...[
             const SizedBox(height: 10),

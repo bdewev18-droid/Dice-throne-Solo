@@ -1,11 +1,76 @@
 {
     "versions": [
         {
+            "buildNumber": 308,
+            "version": "1.4.11",
+            "date": "2026-10-05",
+            "title": "Roll Phase UI and Chat Updates",
+            "summary": "Fixed infinity symbol formatting, removed AI Chat portraits, moved AI Chat to absolute bottom below ATK/DEF validations, persisted chat collapsed state, reduced HP/CP sizes, correctly aligned Roll Phase header below turn phases, and removed unnecessary bottom border.",
+            "tags": [
+                "UI",
+                "Combat",
+                "UX"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": []
+        },
+        {
+            "buildNumber": 307,
+            "version": "1.4.11",
+            "date": "2026-10-04",
+            "title": "UI Layout Optimizations",
+            "summary": "Optimized the combat screen layout, made AI Chat collapsible, pinned the HP/CP in Roll Phase, and fixed token roll results display in AI chat.",
+            "tags": [
+                "UI",
+                "Combat",
+                "UX"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": []
+        },
+        {
+            "buildNumber": 305,
+            "version": "1.4.11",
+            "date": "2026-10-04",
+            "title": "Annulation UI et Rebuild",
+            "summary": "Annulation des exp\u00c3\u00a9rimentations UI et rebuild de la version locale suite au red\u00c3\u00a9marrage du serveur.",
+            "tags": [
+                "Rebuild",
+                "Rollback",
+                "UI"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": [
+                {
+                    "id": "p-1.4.11-1",
+                    "userPrompt": "non je reste sur la version d avant. Tu peux me rebuild la version web locale apr\u00c3\u00a8s reboot",
+                    "aiResponse": "Annulation des modifications sur la branche de test, retour sur main et ex\u00c3\u00a9cution du build.",
+                    "checklist": [
+                        {
+                            "text": "Discard des changements exp\u00c3\u00a9rimentaux (reset --hard sur main)",
+                            "done": true
+                        },
+                        {
+                            "text": "Incr\u00c3\u00a9mentation de version vers 1.4.11+305",
+                            "done": true
+                        },
+                        {
+                            "text": "Rebuild de la version locale (verify-fast)",
+                            "done": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "buildNumber": 304,
             "version": "1.4.10",
             "date": "2026-10-04",
-            "title": "Token Prey (Owner opposé) & Bag of Tricks (Owner Héros absolu) sur la ligne 11",
-            "summary": "1. Prey : Attribution de l'avatar du joueur opposé à celui qui subit/possède le token Prey sur la ligne 11 (le héros si le minion a Prey, et inversement).\n2. Bag of tricks : C'est toujours le héros qui est le propriétaire de Bag of tricks peu importe où le token est placé.\n3. Formatage de texte Prey : Affichage propre des compteurs 'Prey (Used X/Y)' sur la ligne d'action.",
+            "title": "Token Prey (Owner oppos\u00e9) & Bag of Tricks (Owner H\u00e9ros absolu) sur la ligne 11",
+            "summary": "1. Prey : Attribution de l'avatar du joueur oppos\u00e9 \u00e0 celui qui subit/poss\u00e8de le token Prey sur la ligne 11 (le h\u00e9ros si le minion a Prey, et inversement).\n2. Bag of tricks : C'est toujours le h\u00e9ros qui est le propri\u00e9taire de Bag of tricks peu importe o\u00f9 le token est plac\u00e9.\n3. Formatage de texte Prey : Affichage propre des compteurs 'Prey (Used X/Y)' sur la ligne d'action.",
             "tags": [
                 "Prey",
                 "Bag of Tricks",
@@ -19,12 +84,21 @@
             "prompts": [
                 {
                     "id": "p-1.4.10-1",
-                    "userPrompt": "le token Prey appartient au joueur opposé à celui qui le possède (pour l'image sur la ligne 11). C'est pareil pour Bag of tricks, c'est toujours le hero qui est owner du token peut importe où il est.",
-                    "aiResponse": "1. Mise à jour de tokenOwnerAvatar pour inverser l'avatar sur Prey (le bénéficiaire opposé à la cible qui porte le token).\n2. Forçage de l'avatar du héros pour Bag of tricks peu importe sa position.\n3. Nettoyage du libellé de Prey avec ses compteurs réels ($preyUsedCount/$defenderPreyCount).\n4. Validation des tests unitaires et packaging 1.4.10+304.",
+                    "userPrompt": "le token Prey appartient au joueur oppos\u00e9 \u00e0 celui qui le poss\u00e8de (pour l'image sur la ligne 11). C'est pareil pour Bag of tricks, c'est toujours le hero qui est owner du token peut importe o\u00f9 il est.",
+                    "aiResponse": "1. Mise \u00e0 jour de tokenOwnerAvatar pour inverser l'avatar sur Prey (le b\u00e9n\u00e9ficiaire oppos\u00e9 \u00e0 la cible qui porte le token).\n2. For\u00e7age de l'avatar du h\u00e9ros pour Bag of tricks peu importe sa position.\n3. Nettoyage du libell\u00e9 de Prey avec ses compteurs r\u00e9els ($preyUsedCount/$defenderPreyCount).\n4. Validation des tests unitaires et packaging 1.4.10+304.",
                     "checklist": [
-                        { "text": "Avatar de Prey attribué au joueur opposé à celui qui porte le token", "done": true },
-                        { "text": "Avatar de Bag of tricks attribué systématiquement au héros", "done": true },
-                        { "text": "Tests unitaires validés (fight_logic_test.dart)", "done": true }
+                        {
+                            "text": "Avatar de Prey attribu\u00e9 au joueur oppos\u00e9 \u00e0 celui qui porte le token",
+                            "done": true
+                        },
+                        {
+                            "text": "Avatar de Bag of tricks attribu\u00e9 syst\u00e9matiquement au h\u00e9ros",
+                            "done": true
+                        },
+                        {
+                            "text": "Tests unitaires valid\u00e9s (fight_logic_test.dart)",
+                            "done": true
+                        }
                     ]
                 }
             ]
@@ -33,8 +107,8 @@
             "buildNumber": 303,
             "version": "1.4.9",
             "date": "2026-10-04",
-            "title": "Avatars réels des propriétaires de tokens + Suppression doublon Wind Shear + Smoke Bomb popin & asset fix",
-            "summary": "1. Avatars des tokens (Composant 11) : Attribution systématique de l'avatar du vrai possesseur du token (héros vs ennemi) via un helper tokenOwnerAvatar, sans forcer arbitrairement l'avatar de l'attaquant du tour.\n2. Wind Shear : Suppression du bloc doublon obsolète dans le dock pour n'avoir qu'une seule ligne propre composant 11.\n3. Smoke Bomb : Correction de l'asset (assets/token/Smoke-Bomb.png) et ajout de la branche isSmokeBomb dans TokenAnimationDialog pour afficher le texte de résultat correct d'esquive au lieu du fallback Time Bomb.",
+            "title": "Avatars r\u00e9els des propri\u00e9taires de tokens + Suppression doublon Wind Shear + Smoke Bomb popin & asset fix",
+            "summary": "1. Avatars des tokens (Composant 11) : Attribution syst\u00e9matique de l'avatar du vrai possesseur du token (h\u00e9ros vs ennemi) via un helper tokenOwnerAvatar, sans forcer arbitrairement l'avatar de l'attaquant du tour.\n2. Wind Shear : Suppression du bloc doublon obsol\u00e8te dans le dock pour n'avoir qu'une seule ligne propre composant 11.\n3. Smoke Bomb : Correction de l'asset (assets/token/Smoke-Bomb.png) et ajout de la branche isSmokeBomb dans TokenAnimationDialog pour afficher le texte de r\u00e9sultat correct d'esquive au lieu du fallback Time Bomb.",
             "tags": [
                 "Wind Shear",
                 "Smoke Bomb",
@@ -48,13 +122,25 @@
             "prompts": [
                 {
                     "id": "p-1.4.9-1",
-                    "userPrompt": "token windshear uniquement sur le minion, j'ai 2 lignes composant 11 ? Token smoke bomb souci d'image, j'ai encore le message de Timbe bomb dans la popin de résolution du jet de dès. D'ailleurs tous les tokens sont pour l'ennemie et c'est la photo du hero que je vois pourquoi ? la régle est simple, il faut mettre l'image de qui possède le token.",
-                    "aiResponse": "1. Suppression du bloc doublon Wind Shear et Prey dans combat_ai_chat_dock.dart.\n2. Remplacement du tokenAsset erroné par assets/token/Smoke-Bomb.png et ajout de la clause isSmokeBomb dans la chaîne ternaire de token_animation_dialog.dart.\n3. Implémentation de tokenOwnerAvatar vérifiant adventure.alterations vs enemy.alterations pour afficher l'avatar de celui qui possède réellement le token sur chaque ligne.\n4. Validation avec fight_logic_test.dart et synchronisation 1.4.9+303.",
+                    "userPrompt": "token windshear uniquement sur le minion, j'ai 2 lignes composant 11 ? Token smoke bomb souci d'image, j'ai encore le message de Timbe bomb dans la popin de r\u00e9solution du jet de d\u00e8s. D'ailleurs tous les tokens sont pour l'ennemie et c'est la photo du hero que je vois pourquoi ? la r\u00e9gle est simple, il faut mettre l'image de qui poss\u00e8de le token.",
+                    "aiResponse": "1. Suppression du bloc doublon Wind Shear et Prey dans combat_ai_chat_dock.dart.\n2. Remplacement du tokenAsset erron\u00e9 par assets/token/Smoke-Bomb.png et ajout de la clause isSmokeBomb dans la cha\u00eene ternaire de token_animation_dialog.dart.\n3. Impl\u00e9mentation de tokenOwnerAvatar v\u00e9rifiant adventure.alterations vs enemy.alterations pour afficher l'avatar de celui qui poss\u00e8de r\u00e9ellement le token sur chaque ligne.\n4. Validation avec fight_logic_test.dart et synchronisation 1.4.9+303.",
                     "checklist": [
-                        { "text": "Suppression du doublon Wind Shear (une seule ligne composant 11)", "done": true },
-                        { "text": "Correction asset et message de jet de dé pour Smoke Bomb", "done": true },
-                        { "text": "Affichage de l'avatar du possesseur réel du token sur chaque composant 11", "done": true },
-                        { "text": "Validation des tests unitaires (fight_logic_test.dart)", "done": true }
+                        {
+                            "text": "Suppression du doublon Wind Shear (une seule ligne composant 11)",
+                            "done": true
+                        },
+                        {
+                            "text": "Correction asset et message de jet de d\u00e9 pour Smoke Bomb",
+                            "done": true
+                        },
+                        {
+                            "text": "Affichage de l'avatar du possesseur r\u00e9el du token sur chaque composant 11",
+                            "done": true
+                        },
+                        {
+                            "text": "Validation des tests unitaires (fight_logic_test.dart)",
+                            "done": true
+                        }
                     ]
                 }
             ]
@@ -63,8 +149,8 @@
             "buildNumber": 302,
             "version": "1.4.8",
             "date": "2026-10-04",
-            "title": "Silence : Maintien des dés micro-suite par l'IA + Ninjitsu : Exclusion totale en Upkeep & Résolution multiple consécutive",
-            "summary": "1. Silence & Stratégie dés IA : Correction de la stratégie de relance adverse sous Silence ; l'IA garde désormais bien les dés composant une micro-suite (longueur 3) au lieu de les relancer aveuglément.\n2. Ninjitsu - Exclusion Upkeep : Ninjitsu est désormais formellement exclu des popins d'entretien automatique pour les deux combattants.\n3. Ninjitsu Multi-stack : Résolution séquentielle complète de tous les tokens Ninjitsu disponibles pour l'ennemi (2 tokens = 2 popins/jets consécutifs avec cumul des effets).",
+            "title": "Silence : Maintien des d\u00e9s micro-suite par l'IA + Ninjitsu : Exclusion totale en Upkeep & R\u00e9solution multiple cons\u00e9cutive",
+            "summary": "1. Silence & Strat\u00e9gie d\u00e9s IA : Correction de la strat\u00e9gie de relance adverse sous Silence ; l'IA garde d\u00e9sormais bien les d\u00e9s composant une micro-suite (longueur 3) au lieu de les relancer aveugl\u00e9ment.\n2. Ninjitsu - Exclusion Upkeep : Ninjitsu est d\u00e9sormais formellement exclu des popins d'entretien automatique pour les deux combattants.\n3. Ninjitsu Multi-stack : R\u00e9solution s\u00e9quentielle compl\u00e8te de tous les tokens Ninjitsu disponibles pour l'ennemi (2 tokens = 2 popins/jets cons\u00e9cutifs avec cumul des effets).",
             "tags": [
                 "Silence",
                 "Ninjitsu",
@@ -78,13 +164,25 @@
             "prompts": [
                 {
                     "id": "p-1.4.8-1",
-                    "userPrompt": "token silence, les dès ne sont plus sélectionnés pour un micro suite, ca pose un souci car l'IA dice relance les dès alors qu'une micro suite était déjà validé. Ninjitsu token : j'ai encore eu la popin en upkeep pour l'ennemie. j'ai 2 token, j'ai bien eu une popin en roll phase (bien) mais j'en ai eu qu'une alors que j'ai deux token. bien vérifier de déclencher les 2 popins ou 3 popins s'il y a 2 ou 3 tokens.",
-                    "aiResponse": "1. Conservation des dés micro-suite IA : mise à jour de _applyMinionDiceStrategy et _reserveBestSuite pour appeler MinionDiceEngine.chooseSuiteHold avec limitTo3: _isMinionSilenced, permettant à l'IA de verrouiller immédiatement sa micro-suite.\n2. Exclusion stricte en Upkeep : ajout de Ninjitsu dans la liste d'exclusion de _triggerTokenAnimationDialogs en dehors de la Roll Phase.\n3. Déclenchement multi-token Ninjitsu : exécution séquentielle de chaque jet de dé via une boucle asynchrone tant que _availableNinjitsuCount > 0.\n4. Tests unitaires complétés et validés (27/27).",
+                    "userPrompt": "token silence, les d\u00e8s ne sont plus s\u00e9lectionn\u00e9s pour un micro suite, ca pose un souci car l'IA dice relance les d\u00e8s alors qu'une micro suite \u00e9tait d\u00e9j\u00e0 valid\u00e9. Ninjitsu token : j'ai encore eu la popin en upkeep pour l'ennemie. j'ai 2 token, j'ai bien eu une popin en roll phase (bien) mais j'en ai eu qu'une alors que j'ai deux token. bien v\u00e9rifier de d\u00e9clencher les 2 popins ou 3 popins s'il y a 2 ou 3 tokens.",
+                    "aiResponse": "1. Conservation des d\u00e9s micro-suite IA : mise \u00e0 jour de _applyMinionDiceStrategy et _reserveBestSuite pour appeler MinionDiceEngine.chooseSuiteHold avec limitTo3: _isMinionSilenced, permettant \u00e0 l'IA de verrouiller imm\u00e9diatement sa micro-suite.\n2. Exclusion stricte en Upkeep : ajout de Ninjitsu dans la liste d'exclusion de _triggerTokenAnimationDialogs en dehors de la Roll Phase.\n3. D\u00e9clenchement multi-token Ninjitsu : ex\u00e9cution s\u00e9quentielle de chaque jet de d\u00e9 via une boucle asynchrone tant que _availableNinjitsuCount > 0.\n4. Tests unitaires compl\u00e9t\u00e9s et valid\u00e9s (27/27).",
                     "checklist": [
-                        { "text": "Sélection et conservation des dés pour micro-suite par l'IA sous Silence", "done": true },
-                        { "text": "Exclusion formelle de Ninjitsu des popins d'Upkeep pour l'ennemi et le héros", "done": true },
-                        { "text": "Déclenchement consécutif de tous les tokens Ninjitsu disponibles (ex: 2 popins pour 2 tokens)", "done": true },
-                        { "text": "Tests unitaires validés (fight_logic_test.dart)", "done": true }
+                        {
+                            "text": "S\u00e9lection et conservation des d\u00e9s pour micro-suite par l'IA sous Silence",
+                            "done": true
+                        },
+                        {
+                            "text": "Exclusion formelle de Ninjitsu des popins d'Upkeep pour l'ennemi et le h\u00e9ros",
+                            "done": true
+                        },
+                        {
+                            "text": "D\u00e9clenchement cons\u00e9cutif de tous les tokens Ninjitsu disponibles (ex: 2 popins pour 2 tokens)",
+                            "done": true
+                        },
+                        {
+                            "text": "Tests unitaires valid\u00e9s (fight_logic_test.dart)",
+                            "done": true
+                        }
                     ]
                 }
             ]
@@ -93,8 +191,8 @@
             "buildNumber": 301,
             "version": "1.4.7",
             "date": "2026-10-04",
-            "title": "Silence : Micro-suite autorisée (seules Small & Large sont bloquées) + Ninjitsu Dock Unifié & Clean",
-            "summary": "1. Précision règle Silence : La micro suite (longueur 3) est autorisée ; seules les Small Straight (4) et Large Straight (5) sont bloquées par Silence.\n2. Ninjitsu sans popin automatique en Upkeep/Roll Start pour le Héros : déclenchement uniquement via le bouton 'Use' du Composant 11 dès qu'une attaque inflige au moins 1 dégât.\n3. Ninjitsu Ennemi : intégration dans le dock (Composant 11 sans 'Use') avec déclenchement automatique dès qu'une attaque inflige au moins 1 dégât.\n4. Dock Ninjitsu unifié : suppression de la ligne en doublon et de l'icône manquante, affichage sur UNE SEULE LIGNE avec cumul des bonus (ex: Active (+2 DMG, Undefendable)).",
+            "title": "Silence : Micro-suite autoris\u00e9e (seules Small & Large sont bloqu\u00e9es) + Ninjitsu Dock Unifi\u00e9 & Clean",
+            "summary": "1. Pr\u00e9cision r\u00e8gle Silence : La micro suite (longueur 3) est autoris\u00e9e ; seules les Small Straight (4) et Large Straight (5) sont bloqu\u00e9es par Silence.\n2. Ninjitsu sans popin automatique en Upkeep/Roll Start pour le H\u00e9ros : d\u00e9clenchement uniquement via le bouton 'Use' du Composant 11 d\u00e8s qu'une attaque inflige au moins 1 d\u00e9g\u00e2t.\n3. Ninjitsu Ennemi : int\u00e9gration dans le dock (Composant 11 sans 'Use') avec d\u00e9clenchement automatique d\u00e8s qu'une attaque inflige au moins 1 d\u00e9g\u00e2t.\n4. Dock Ninjitsu unifi\u00e9 : suppression de la ligne en doublon et de l'ic\u00f4ne manquante, affichage sur UNE SEULE LIGNE avec cumul des bonus (ex: Active (+2 DMG, Undefendable)).",
             "tags": [
                 "Silence",
                 "Ninjitsu",
@@ -108,16 +206,37 @@
             "prompts": [
                 {
                     "id": "p-1.4.7-1",
-                    "userPrompt": "token silence, la micro suite est bien autorisée c'est à partir de small et pour la large straight suite que ce bloque. Token ninjitsu, j'ai encore le message en upkeep alors que c'est uniquement via un composant 11 avec use qu'on doit déclencher la popin pour le hero. Quand c'est l'ennemi, un composant 11 sans le 'use' se met et se déclenche pendant la phase de roll, dès qu'un dégât est au moins fait. Quand c'est au hero, cf mon image, il y a 2 lignes ? pourquoi ? avec un souci d'image. Ne garder qu'une seule ligne et indiquer le cumul de ce qui est gagné par token sur une même ligne.",
-                    "aiResponse": "1. Silence & Micro-suites : adaptation de la logique de validation (_currentMinionAttackResult, _currentAttackGoalMet, _minionReachedMaxDamage, rat-de-la-rue, _applyConditionalRules, _minionAttackAiMessage) pour autoriser la micro suite (3 dés) et ne bloquer que les Small/Large Straights (longueur >= 4).\n2. Suppression des popins automatiques Ninjitsu : retrait de Ninjitsu des rappels de début de roll/upkeep pour le joueur ; activation exclusive via le bouton 'Use' du Composant 11 dès que l'attaque inflige des dégâts.\n3. Support Ninjitsu pour l'ennemi : affichage du Composant 11 sans bouton 'Use' dans le dock adverse et déclenchement automatique dès que l'attaque inflige au moins 1 dégât.\n4. Unification de la ligne Ninjitsu dans le dock : suppression du doublon _ActiveTokenBadge et de l'asset obsolète ninjitsu.png ; affichage unique et propre via _TokenActionRow avec cumul des bonus ('Active (+2 DMG, Undefendable)').\n5. Tests unitaires mis à jour et validés.",
+                    "userPrompt": "token silence, la micro suite est bien autoris\u00e9e c'est \u00e0 partir de small et pour la large straight suite que ce bloque. Token ninjitsu, j'ai encore le message en upkeep alors que c'est uniquement via un composant 11 avec use qu'on doit d\u00e9clencher la popin pour le hero. Quand c'est l'ennemi, un composant 11 sans le 'use' se met et se d\u00e9clenche pendant la phase de roll, d\u00e8s qu'un d\u00e9g\u00e2t est au moins fait. Quand c'est au hero, cf mon image, il y a 2 lignes ? pourquoi ? avec un souci d'image. Ne garder qu'une seule ligne et indiquer le cumul de ce qui est gagn\u00e9 par token sur une m\u00eame ligne.",
+                    "aiResponse": "1. Silence & Micro-suites : adaptation de la logique de validation (_currentMinionAttackResult, _currentAttackGoalMet, _minionReachedMaxDamage, rat-de-la-rue, _applyConditionalRules, _minionAttackAiMessage) pour autoriser la micro suite (3 d\u00e9s) et ne bloquer que les Small/Large Straights (longueur >= 4).\n2. Suppression des popins automatiques Ninjitsu : retrait de Ninjitsu des rappels de d\u00e9but de roll/upkeep pour le joueur ; activation exclusive via le bouton 'Use' du Composant 11 d\u00e8s que l'attaque inflige des d\u00e9g\u00e2ts.\n3. Support Ninjitsu pour l'ennemi : affichage du Composant 11 sans bouton 'Use' dans le dock adverse et d\u00e9clenchement automatique d\u00e8s que l'attaque inflige au moins 1 d\u00e9g\u00e2t.\n4. Unification de la ligne Ninjitsu dans le dock : suppression du doublon _ActiveTokenBadge et de l'asset obsol\u00e8te ninjitsu.png ; affichage unique et propre via _TokenActionRow avec cumul des bonus ('Active (+2 DMG, Undefendable)').\n5. Tests unitaires mis \u00e0 jour et valid\u00e9s.",
                     "checklist": [
-                        { "text": "Micro-suite (3 dés) autorisée sous Silence", "done": true },
-                        { "text": "Small & Large Straight bloquées sous Silence", "done": true },
-                        { "text": "Suppression des popins automatiques Upkeep / Roll Start pour Ninjitsu", "done": true },
-                        { "text": "Déclenchement joueur de Ninjitsu uniquement via le bouton 'Use' du Composant 11", "done": true },
-                        { "text": "Affichage Composant 11 sans 'Use' pour l'ennemi avec jet auto dès 1 DMG", "done": true },
-                        { "text": "Suppression de la double ligne Ninjitsu dans le dock et cumul sur 1 seule ligne", "done": true },
-                        { "text": "Tests unitaires validés (fight_logic_test.dart)", "done": true }
+                        {
+                            "text": "Micro-suite (3 d\u00e9s) autoris\u00e9e sous Silence",
+                            "done": true
+                        },
+                        {
+                            "text": "Small & Large Straight bloqu\u00e9es sous Silence",
+                            "done": true
+                        },
+                        {
+                            "text": "Suppression des popins automatiques Upkeep / Roll Start pour Ninjitsu",
+                            "done": true
+                        },
+                        {
+                            "text": "D\u00e9clenchement joueur de Ninjitsu uniquement via le bouton 'Use' du Composant 11",
+                            "done": true
+                        },
+                        {
+                            "text": "Affichage Composant 11 sans 'Use' pour l'ennemi avec jet auto d\u00e8s 1 DMG",
+                            "done": true
+                        },
+                        {
+                            "text": "Suppression de la double ligne Ninjitsu dans le dock et cumul sur 1 seule ligne",
+                            "done": true
+                        },
+                        {
+                            "text": "Tests unitaires valid\u00e9s (fight_logic_test.dart)",
+                            "done": true
+                        }
                     ]
                 }
             ]
@@ -126,8 +245,8 @@
             "buildNumber": 300,
             "version": "1.4.6",
             "date": "2026-10-04",
-            "title": "Token Silence (Roll Phase & Blocage Suites) + Ninjitsu M3 Dialog & Règles",
-            "summary": "Correction du déclenchement de Silence (Roll Phase au lieu d'Upkeep), interdiction formelle des suites lors des lancers et des modifications manuelles de dés quand Silence est actif. Prise en charge des règles exactes de Ninjitsu (1-3: +1 DMG, 4-5: +2 DMG, 6: choix de récompense) sans texte erroné de Time Bomb, nouvelle popin de choix Material 3 signée Nina (NinjitsuChoiceDialog), et affichage des quantités en x2/x3 au lieu de (x).",
+            "title": "Token Silence (Roll Phase & Blocage Suites) + Ninjitsu M3 Dialog & R\u00e8gles",
+            "summary": "Correction du d\u00e9clenchement de Silence (Roll Phase au lieu d'Upkeep), interdiction formelle des suites lors des lancers et des modifications manuelles de d\u00e9s quand Silence est actif. Prise en charge des r\u00e8gles exactes de Ninjitsu (1-3: +1 DMG, 4-5: +2 DMG, 6: choix de r\u00e9compense) sans texte erron\u00e9 de Time Bomb, nouvelle popin de choix Material 3 sign\u00e9e Nina (NinjitsuChoiceDialog), et affichage des quantit\u00e9s en x2/x3 au lieu de (x).",
             "tags": [
                 "Silence",
                 "Ninjitsu",
@@ -142,15 +261,33 @@
             "prompts": [
                 {
                     "id": "p-1.4.6-1",
-                    "userPrompt": "Token silence, la popin doit se lancer en phase de roll et non en phase d'upkeep. J'ai pu faire un micro suite, donc pas impacté par le token silence qui bloque les suites. j'ai changé un dès pour proviquer une suite medium et malgré que Silence soit activé, la medium suite s'est activé. je pense que l'app bloque bien dans les 3 lancés, mais ne bloque pas après les modifications de dès. Ninjitsu, j'ai encore les explications de time bomb sur le résultat des dès de ninjitsu dans sa popin comprenant le jet. Je rappelle la règle : résultat de 1 à 3 : On ajouter un dégat à l'attaque (+1) ; résultat de 4 et 5 : On ajouter un dégat à l'attaque (+2) ; résultat de 6 on affiche une nouvelle popin avec 3 choix (choix 1: +2 DMG, choix 2: Delayed Poison, choix 3: Undefendable). Refaire la popin avec Nina. Et pour Ninjitsu et tokens, mettre Ninjitsu x3 au lieu de (x).",
-                    "aiResponse": "1. Silence Roll Phase : ajout de isSilence à isAttackerRollToken dans _triggerTokenAnimationDialogs pour l'ignorer en Upkeep et l'exécuter en Roll Phase.\n2. Silence blocage suites : interdiction de valider toute suite (micro, small, large) dans _currentMinionAttackResult, _currentAttackGoalMet, rat-de-la-rue, _applyConditionalRules, _applyMinionDiceStrategy et les messages IA dès que Silence est actif, y compris après édition de dé.\n3. Ninjitsu résultat de dé : affichage des textes de règles exacts de Ninjitsu (1-3: +1 DMG, 4-5: +2 DMG, 6: choix de récompense) dans TokenAnimationDialog au lieu de Time Bomb.\n4. Ninjitsu Choice Dialog : nouveau widget Material 3 tactile (NinjitsuChoiceDialog) conçu selon l'audit UX de Nina avec cartes d'options dédiées et claires.\n5. Badges dock : remplacement de la notation (x) par x$count (ex: Ninjitsu x3, Guard Break x2, etc.).",
+                    "userPrompt": "Token silence, la popin doit se lancer en phase de roll et non en phase d'upkeep. J'ai pu faire un micro suite, donc pas impact\u00e9 par le token silence qui bloque les suites. j'ai chang\u00e9 un d\u00e8s pour proviquer une suite medium et malgr\u00e9 que Silence soit activ\u00e9, la medium suite s'est activ\u00e9. je pense que l'app bloque bien dans les 3 lanc\u00e9s, mais ne bloque pas apr\u00e8s les modifications de d\u00e8s. Ninjitsu, j'ai encore les explications de time bomb sur le r\u00e9sultat des d\u00e8s de ninjitsu dans sa popin comprenant le jet. Je rappelle la r\u00e8gle : r\u00e9sultat de 1 \u00e0 3 : On ajouter un d\u00e9gat \u00e0 l'attaque (+1) ; r\u00e9sultat de 4 et 5 : On ajouter un d\u00e9gat \u00e0 l'attaque (+2) ; r\u00e9sultat de 6 on affiche une nouvelle popin avec 3 choix (choix 1: +2 DMG, choix 2: Delayed Poison, choix 3: Undefendable). Refaire la popin avec Nina. Et pour Ninjitsu et tokens, mettre Ninjitsu x3 au lieu de (x).",
+                    "aiResponse": "1. Silence Roll Phase : ajout de isSilence \u00e0 isAttackerRollToken dans _triggerTokenAnimationDialogs pour l'ignorer en Upkeep et l'ex\u00e9cuter en Roll Phase.\n2. Silence blocage suites : interdiction de valider toute suite (micro, small, large) dans _currentMinionAttackResult, _currentAttackGoalMet, rat-de-la-rue, _applyConditionalRules, _applyMinionDiceStrategy et les messages IA d\u00e8s que Silence est actif, y compris apr\u00e8s \u00e9dition de d\u00e9.\n3. Ninjitsu r\u00e9sultat de d\u00e9 : affichage des textes de r\u00e8gles exacts de Ninjitsu (1-3: +1 DMG, 4-5: +2 DMG, 6: choix de r\u00e9compense) dans TokenAnimationDialog au lieu de Time Bomb.\n4. Ninjitsu Choice Dialog : nouveau widget Material 3 tactile (NinjitsuChoiceDialog) con\u00e7u selon l'audit UX de Nina avec cartes d'options d\u00e9di\u00e9es et claires.\n5. Badges dock : remplacement de la notation (x) par x$count (ex: Ninjitsu x3, Guard Break x2, etc.).",
                     "checklist": [
-                        { "text": "Déclenchement de la popin Silence en début de Roll Phase", "done": true },
-                        { "text": "Blocage persistant de la validation des suites sous Silence après modification de dé", "done": true },
-                        { "text": "Affichage des messages de résultat propres à Ninjitsu dans le dialog d'animation", "done": true },
-                        { "text": "Création du widget NinjitsuChoiceDialog Material 3 (cartes tactiles ergonomiques)", "done": true },
-                        { "text": "Formatage des badges multi-stacks en x2, x3 au lieu de (x)", "done": true },
-                        { "text": "Tests unitaires du blocage suite sous Silence validés", "done": true }
+                        {
+                            "text": "D\u00e9clenchement de la popin Silence en d\u00e9but de Roll Phase",
+                            "done": true
+                        },
+                        {
+                            "text": "Blocage persistant de la validation des suites sous Silence apr\u00e8s modification de d\u00e9",
+                            "done": true
+                        },
+                        {
+                            "text": "Affichage des messages de r\u00e9sultat propres \u00e0 Ninjitsu dans le dialog d'animation",
+                            "done": true
+                        },
+                        {
+                            "text": "Cr\u00e9ation du widget NinjitsuChoiceDialog Material 3 (cartes tactiles ergonomiques)",
+                            "done": true
+                        },
+                        {
+                            "text": "Formatage des badges multi-stacks en x2, x3 au lieu de (x)",
+                            "done": true
+                        },
+                        {
+                            "text": "Tests unitaires du blocage suite sous Silence valid\u00e9s",
+                            "done": true
+                        }
                     ]
                 }
             ]
@@ -159,8 +296,8 @@
             "buildNumber": 299,
             "version": "1.4.5",
             "date": "2026-10-04",
-            "title": "Salve Popin (Composant 1 HP Delta) & Avatar Ennemi Centré (Composants 10/11/12)",
-            "summary": "Correction de l'asset Salve (.webp), intégration de la popin Composant 1 avec delta de points de vie (+6 HP) lors du clic sur 'Use', et affichage du portrait ennemi centré sur le visage (identique à la zone de tour de jeu) pour les composants 10, 11 et 12.",
+            "title": "Salve Popin (Composant 1 HP Delta) & Avatar Ennemi Centr\u00e9 (Composants 10/11/12)",
+            "summary": "Correction de l'asset Salve (.webp), int\u00e9gration de la popin Composant 1 avec delta de points de vie (+6 HP) lors du clic sur 'Use', et affichage du portrait ennemi centr\u00e9 sur le visage (identique \u00e0 la zone de tour de jeu) pour les composants 10, 11 et 12.",
             "tags": [
                 "Bugfix",
                 "Combat",
@@ -174,14 +311,29 @@
             "prompts": [
                 {
                     "id": "p-1.4.5-1",
-                    "userPrompt": "Il y a un souci sur le logo du composant 11 que tu viens de mettre, j'ai un point d'intérrogartion. \nUne fois cliqué sur 'use', on fairt apparaitre une popin composant 1 avec l'affichage du changement du nb de point de vie\n\non a ajouté une image du joueur en premiere place du composant 10/11/12. \nc'est ok pour le joueur\nPour l'ennemie, il faut reprendre l'image qu'on a dans la zone de tour de jeu, centré sur le visage comme on a dans cette zone.",
-                    "aiResponse": "1. Correction du logo Salve : remplacement de assets/token/Salve.png par assets/token/Salve.webp dans combat_ai_chat_dock.dart.\n2. Popin Composant 1 pour Salve : appel de TokenAnimationDialog.show avec calcul dynamique de delta (+6 HP) et affichage du bloc HP vert (oldHp -> newHp) avant retrait du jeton.\n3. Portrait ennemi centré sur le visage : implémentation de buildOwnerAvatar et de attackerAvatar utilisant enemy.previewAsset / naxarus_head avec _minionEyeAlignment et _minionEyeFit dans tous les composants 10, 11, 12 (_TokenActionRow, _ActiveTokenBadge, _MultiRollTokenActiveRow).\n4. Mise à jour de la galerie UI de recette web (recette.js) avec avatars joueur/ennemi.",
+                    "userPrompt": "Il y a un souci sur le logo du composant 11 que tu viens de mettre, j'ai un point d'int\u00e9rrogartion. \nUne fois cliqu\u00e9 sur 'use', on fairt apparaitre une popin composant 1 avec l'affichage du changement du nb de point de vie\n\non a ajout\u00e9 une image du joueur en premiere place du composant 10/11/12. \nc'est ok pour le joueur\nPour l'ennemie, il faut reprendre l'image qu'on a dans la zone de tour de jeu, centr\u00e9 sur le visage comme on a dans cette zone.",
+                    "aiResponse": "1. Correction du logo Salve : remplacement de assets/token/Salve.png par assets/token/Salve.webp dans combat_ai_chat_dock.dart.\n2. Popin Composant 1 pour Salve : appel de TokenAnimationDialog.show avec calcul dynamique de delta (+6 HP) et affichage du bloc HP vert (oldHp -> newHp) avant retrait du jeton.\n3. Portrait ennemi centr\u00e9 sur le visage : impl\u00e9mentation de buildOwnerAvatar et de attackerAvatar utilisant enemy.previewAsset / naxarus_head avec _minionEyeAlignment et _minionEyeFit dans tous les composants 10, 11, 12 (_TokenActionRow, _ActiveTokenBadge, _MultiRollTokenActiveRow).\n4. Mise \u00e0 jour de la galerie UI de recette web (recette.js) avec avatars joueur/ennemi.",
                     "checklist": [
-                        { "text": "Remplacement du chemin d'icône Salve par Salve.webp", "done": true },
-                        { "text": "Affichage de la modale Composant 1 avec bloc HP delta (+6) au clic sur Use", "done": true },
-                        { "text": "Cadrage de l'avatar ennemi centré sur le visage (identique à la zone de tour)", "done": true },
-                        { "text": "Propagation de l'avatar dans les composants 10, 11 et 12", "done": true },
-                        { "text": "Mise à jour des tests et du journal de recette", "done": true }
+                        {
+                            "text": "Remplacement du chemin d'ic\u00f4ne Salve par Salve.webp",
+                            "done": true
+                        },
+                        {
+                            "text": "Affichage de la modale Composant 1 avec bloc HP delta (+6) au clic sur Use",
+                            "done": true
+                        },
+                        {
+                            "text": "Cadrage de l'avatar ennemi centr\u00e9 sur le visage (identique \u00e0 la zone de tour)",
+                            "done": true
+                        },
+                        {
+                            "text": "Propagation de l'avatar dans les composants 10, 11 et 12",
+                            "done": true
+                        },
+                        {
+                            "text": "Mise \u00e0 jour des tests et du journal de recette",
+                            "done": true
+                        }
                     ]
                 }
             ]
@@ -191,7 +343,7 @@
             "version": "1.4.4",
             "date": "2026-10-04",
             "title": "Fix Upkeep Token Action Rows (Salve & Wellspring)",
-            "summary": "Affichage et prise en charge du déclencheur Composant 11 (_TokenActionRow) pour le jeton Salve et Wellspring en phase d'upkeep (heroUpkeep & minionUpkeep).",
+            "summary": "Affichage et prise en charge du d\u00e9clencheur Composant 11 (_TokenActionRow) pour le jeton Salve et Wellspring en phase d'upkeep (heroUpkeep & minionUpkeep).",
             "tags": [
                 "Bugfix",
                 "Combat",
@@ -207,8 +359,8 @@
             "buildNumber": 297,
             "version": "1.4.3",
             "date": "2026-10-04",
-            "title": "Architecture & Découpage modulaire (Étape finale : Moteur IA, Snapshots et Mixins)",
-            "summary": "Finalisation du découpage de fight.dart : extraction du moteur IA de sélection de dés et d'attaques, gestion des snapshots/historique de combat, et documentation architecturale pour pérenniser le code.",
+            "title": "Architecture & D\u00e9coupage modulaire (\u00c9tape finale : Moteur IA, Snapshots et Mixins)",
+            "summary": "Finalisation du d\u00e9coupage de fight.dart : extraction du moteur IA de s\u00e9lection de d\u00e9s et d'attaques, gestion des snapshots/historique de combat, et documentation architecturale pour p\u00e9renniser le code.",
             "tags": [
                 "Refactoring",
                 "Architecture",
@@ -224,8 +376,8 @@
             "buildNumber": 296,
             "version": "1.4.2",
             "date": "2026-10-04",
-            "title": "Architecture & Découpage modulaire (Étape 4 : Écrans de fin et pauses)",
-            "summary": "Extraction des panneaux de fin de combat (_CombatResolutionPanel), dialogue de pause et assistants de résolution dans lib/parts/fight_widgets/combat_resolution_panel.dart.",
+            "title": "Architecture & D\u00e9coupage modulaire (\u00c9tape 4 : \u00c9crans de fin et pauses)",
+            "summary": "Extraction des panneaux de fin de combat (_CombatResolutionPanel), dialogue de pause et assistants de r\u00e9solution dans lib/parts/fight_widgets/combat_resolution_panel.dart.",
             "tags": [
                 "Refactoring",
                 "Architecture",
@@ -240,8 +392,8 @@
             "buildNumber": 295,
             "version": "1.4.1",
             "date": "2026-10-04",
-            "title": "Architecture & Découpage modulaire (Étape 3 : Mixin de gestion des dés)",
-            "summary": "Extraction de la logique et du contrôleur des dés de combat dans FightDiceMixin (lib/parts/fight_logic/fight_dice_mixin.dart).",
+            "title": "Architecture & D\u00e9coupage modulaire (\u00c9tape 3 : Mixin de gestion des d\u00e9s)",
+            "summary": "Extraction de la logique et du contr\u00f4leur des d\u00e9s de combat dans FightDiceMixin (lib/parts/fight_logic/fight_dice_mixin.dart).",
             "tags": [
                 "Refactoring",
                 "Architecture",
@@ -256,8 +408,8 @@
             "buildNumber": 294,
             "version": "1.4.0",
             "date": "2026-10-04",
-            "title": "Architecture & Découpage modulaire (Étape 2)",
-            "summary": "Extraction du domaine et des helpers de tokens de combat dans lib/parts/fight_logic/token_combat_helpers.dart avec vérification de non-régression et incrémentation majeure 1.4.0.",
+            "title": "Architecture & D\u00e9coupage modulaire (\u00c9tape 2)",
+            "summary": "Extraction du domaine et des helpers de tokens de combat dans lib/parts/fight_logic/token_combat_helpers.dart avec v\u00e9rification de non-r\u00e9gression et incr\u00e9mentation majeure 1.4.0.",
             "tags": [
                 "Refactoring",
                 "Architecture",
@@ -272,8 +424,8 @@
             "buildNumber": 293,
             "version": "1.3.293",
             "date": "2026-10-04",
-            "title": "Refactoring et découpage modulaire de fight.dart (Étape 1)",
-            "summary": "Extraction des widgets de combat autonomes (token_action_row, combat_ai_chat_dock, ai_chat_with_health, compact_item_strip, enemy_rules_panel, nanobot_detonation_dialog) dans lib/parts/fight_widgets/ avec vérification stricte de non-régression.",
+            "title": "Refactoring et d\u00e9coupage modulaire de fight.dart (\u00c9tape 1)",
+            "summary": "Extraction des widgets de combat autonomes (token_action_row, combat_ai_chat_dock, ai_chat_with_health, compact_item_strip, enemy_rules_panel, nanobot_detonation_dialog) dans lib/parts/fight_widgets/ avec v\u00e9rification stricte de non-r\u00e9gression.",
             "tags": [
                 "Refactoring",
                 "Architecture",

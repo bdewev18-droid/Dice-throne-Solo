@@ -58,6 +58,7 @@ enum _QuickVitalTarget { heroHp, heroCp, enemyHp, enemyCp }
 
 class _AiChatWithHealth extends StatefulWidget {
   const _AiChatWithHealth({
+    this.isRollPhase = false,
     required this.message,
     required this.accent,
     required this.heroHp,
@@ -114,6 +115,7 @@ class _AiChatWithHealth extends StatefulWidget {
   final ValueChanged<int> onHeroCpSaved;
   final ValueChanged<int> onEnemyHpSaved;
   final ValueChanged<int> onEnemyCpSaved;
+  final bool isRollPhase;
 
   @override
   State<_AiChatWithHealth> createState() => _AiChatWithHealthState();
@@ -259,9 +261,7 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
         height: chatHeight,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: widget.accent == heroAccent
-              ? [Expanded(child: chat), portrait]
-              : [portrait, Expanded(child: chat)],
+          children: [Expanded(child: chat)],
         ),
       );
       if (target == null) {
