@@ -350,6 +350,15 @@ class CombatAiChatDock extends StatelessWidget {
 
     Widget tokenOwnerAvatar(String tokenLabel, {bool? defaultToHero}) {
       final norm = _normalizeTokenKey(tokenLabel);
+
+      // Bag of tricks : toujours le hero qui est owner du token peu importe où il est
+      if (norm.contains('bag of tricks') ||
+          norm.contains('bagoftricks') ||
+          norm.contains('sacamalices') ||
+          norm.contains('sac a malices')) {
+        return buildOwnerAvatar(true);
+      }
+
       final onEnemy = enemy.alterations.any((t) {
         final k = _normalizeTokenKey(t);
         return k == norm || k.contains(norm) || norm.contains(k);
@@ -358,6 +367,18 @@ class CombatAiChatDock extends StatelessWidget {
         final k = _normalizeTokenKey(t);
         return k == norm || k.contains(norm) || norm.contains(k);
       });
+
+      // Prey : appartient au joueur opposé à celui qui le possède
+      if (norm == 'prey' || norm.contains('proie')) {
+        if (onEnemy && !onHero) {
+          return buildOwnerAvatar(true);
+        }
+        if (onHero && !onEnemy) {
+          return buildOwnerAvatar(false);
+        }
+        return buildOwnerAvatar(!isHeroTurn);
+      }
+
       if (onEnemy && !onHero) {
         return buildOwnerAvatar(false);
       }
@@ -1636,7 +1657,9 @@ class CombatAiChatDock extends StatelessWidget {
               _TokenActionRow(ownerWidget: tokenOwnerAvatar('Prey'),
                 tokenLabel: 'Prey',
                 tokenAsset: 'assets/token/Prey.png',
-                text: preyUsedCount > 0 ? 'Prey (Used /)' : 'Prey (/)',
+                text: preyUsedCount > 0
+                    ? 'Prey (Used $preyUsedCount/$defenderPreyCount)'
+                    : 'Prey ($preyUsedCount/$defenderPreyCount)',
                 isActive: preyUsedCount > 0,
                 activeText: 'Active',
                 showUseButton: preyUsedCount < defenderPreyCount,

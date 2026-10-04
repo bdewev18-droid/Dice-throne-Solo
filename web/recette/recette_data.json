@@ -1,6 +1,35 @@
 {
     "versions": [
         {
+            "buildNumber": 304,
+            "version": "1.4.10",
+            "date": "2026-10-04",
+            "title": "Token Prey (Owner opposé) & Bag of Tricks (Owner Héros absolu) sur la ligne 11",
+            "summary": "1. Prey : Attribution de l'avatar du joueur opposé à celui qui subit/possède le token Prey sur la ligne 11 (le héros si le minion a Prey, et inversement).\n2. Bag of tricks : C'est toujours le héros qui est le propriétaire de Bag of tricks peu importe où le token est placé.\n3. Formatage de texte Prey : Affichage propre des compteurs 'Prey (Used X/Y)' sur la ligne d'action.",
+            "tags": [
+                "Prey",
+                "Bag of Tricks",
+                "Avatar",
+                "Composant 11",
+                "Dock",
+                "Combat"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": [
+                {
+                    "id": "p-1.4.10-1",
+                    "userPrompt": "le token Prey appartient au joueur opposé à celui qui le possède (pour l'image sur la ligne 11). C'est pareil pour Bag of tricks, c'est toujours le hero qui est owner du token peut importe où il est.",
+                    "aiResponse": "1. Mise à jour de tokenOwnerAvatar pour inverser l'avatar sur Prey (le bénéficiaire opposé à la cible qui porte le token).\n2. Forçage de l'avatar du héros pour Bag of tricks peu importe sa position.\n3. Nettoyage du libellé de Prey avec ses compteurs réels ($preyUsedCount/$defenderPreyCount).\n4. Validation des tests unitaires et packaging 1.4.10+304.",
+                    "checklist": [
+                        { "text": "Avatar de Prey attribué au joueur opposé à celui qui porte le token", "done": true },
+                        { "text": "Avatar de Bag of tricks attribué systématiquement au héros", "done": true },
+                        { "text": "Tests unitaires validés (fight_logic_test.dart)", "done": true }
+                    ]
+                }
+            ]
+        },
+        {
             "buildNumber": 303,
             "version": "1.4.9",
             "date": "2026-10-04",
