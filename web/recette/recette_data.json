@@ -1,6 +1,36 @@
 {
     "versions": [
         {
+            "buildNumber": 302,
+            "version": "1.4.8",
+            "date": "2026-10-04",
+            "title": "Silence : Maintien des dés micro-suite par l'IA + Ninjitsu : Exclusion totale en Upkeep & Résolution multiple consécutive",
+            "summary": "1. Silence & Stratégie dés IA : Correction de la stratégie de relance adverse sous Silence ; l'IA garde désormais bien les dés composant une micro-suite (longueur 3) au lieu de les relancer aveuglément.\n2. Ninjitsu - Exclusion Upkeep : Ninjitsu est désormais formellement exclu des popins d'entretien automatique pour les deux combattants.\n3. Ninjitsu Multi-stack : Résolution séquentielle complète de tous les tokens Ninjitsu disponibles pour l'ennemi (2 tokens = 2 popins/jets consécutifs avec cumul des effets).",
+            "tags": [
+                "Silence",
+                "Ninjitsu",
+                "Combat",
+                "AI-Dice",
+                "Multi-stack",
+                "Bugfix"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": [
+                {
+                    "id": "p-1.4.8-1",
+                    "userPrompt": "token silence, les dès ne sont plus sélectionnés pour un micro suite, ca pose un souci car l'IA dice relance les dès alors qu'une micro suite était déjà validé. Ninjitsu token : j'ai encore eu la popin en upkeep pour l'ennemie. j'ai 2 token, j'ai bien eu une popin en roll phase (bien) mais j'en ai eu qu'une alors que j'ai deux token. bien vérifier de déclencher les 2 popins ou 3 popins s'il y a 2 ou 3 tokens.",
+                    "aiResponse": "1. Conservation des dés micro-suite IA : mise à jour de _applyMinionDiceStrategy et _reserveBestSuite pour appeler MinionDiceEngine.chooseSuiteHold avec limitTo3: _isMinionSilenced, permettant à l'IA de verrouiller immédiatement sa micro-suite.\n2. Exclusion stricte en Upkeep : ajout de Ninjitsu dans la liste d'exclusion de _triggerTokenAnimationDialogs en dehors de la Roll Phase.\n3. Déclenchement multi-token Ninjitsu : exécution séquentielle de chaque jet de dé via une boucle asynchrone tant que _availableNinjitsuCount > 0.\n4. Tests unitaires complétés et validés (27/27).",
+                    "checklist": [
+                        { "text": "Sélection et conservation des dés pour micro-suite par l'IA sous Silence", "done": true },
+                        { "text": "Exclusion formelle de Ninjitsu des popins d'Upkeep pour l'ennemi et le héros", "done": true },
+                        { "text": "Déclenchement consécutif de tous les tokens Ninjitsu disponibles (ex: 2 popins pour 2 tokens)", "done": true },
+                        { "text": "Tests unitaires validés (fight_logic_test.dart)", "done": true }
+                    ]
+                }
+            ]
+        },
+        {
             "buildNumber": 301,
             "version": "1.4.7",
             "date": "2026-10-04",

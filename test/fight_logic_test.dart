@@ -555,5 +555,25 @@ void main() {
       );
       expect(msgNoSuite, contains('Silence is active: Small and Large suites are blocked'));
     });
+
+    test('MinionDiceEngine chooses hold for micro suite (length 3) when silenced', () {
+      final dice = [
+        GameDie(id: 0)..value = 1..settled = true,
+        GameDie(id: 1)..value = 2..settled = true,
+        GameDie(id: 2)..value = 3..settled = true,
+        GameDie(id: 3)..value = 4..settled = true,
+        GameDie(id: 4)..value = 6..settled = true,
+      ];
+      final decision = MinionDiceEngine.chooseSuiteHold(dice, limitTo3: true);
+      expect(decision.values.length, 3);
+      expect(decision.values, equals([1, 2, 3]));
+    });
+
+    test('Ninjitsu token properties in TokenCatalogRepository', () {
+      final rule = TokenCatalogRepository.byLabel('Ninjitsu');
+      expect(rule, isNotNull);
+      expect(rule!.maxStack, 3);
+      expect(rule.minionAllowed, isTrue);
+    });
   });
 }

@@ -1519,8 +1519,14 @@ class _FightPageState extends State<FightPage> {
         _rollCount >= 1 &&
         (_rollCount == _maxRolls || _currentAttackGoalMet())) {
       _minionNinjitsuRolled = true;
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (mounted) _triggerNinjitsuAttempt();
+      Future.delayed(const Duration(milliseconds: 600), () async {
+        if (!mounted) return;
+        while (_availableNinjitsuCount > 0 && mounted) {
+          await _triggerNinjitsuAttempt();
+          if (_availableNinjitsuCount > 0) {
+            await Future.delayed(const Duration(milliseconds: 300));
+          }
+        }
       });
     }
   }
@@ -7306,6 +7312,9 @@ class _FightPageState extends State<FightPage> {
       if (l == 'wellspring' || l == 'source') {
         continue;
       }
+      if (l.contains('ninjitsu') || l.contains('ninjutsu')) {
+        continue;
+      }
       if (isCoal) {
         if (targetName != widget.adventure.hero.label && _isNaraxus) {
           continue;
@@ -8616,9 +8625,7 @@ class _FightPageState extends State<FightPage> {
   void _applyMinionDiceStrategy() {
     switch (enemy.attackPlan.style) {
       case MinionAttackStyle.suite:
-        if (!_isMinionSilenced) {
-          _reserveBestSuite();
-        }
+        _reserveBestSuite();
       case MinionAttackStyle.symbols:
         _reserveSymbolGoal();
       case MinionAttackStyle.none:
@@ -8644,7 +8651,8 @@ class _FightPageState extends State<FightPage> {
 
   void _reserveBestSuite() {
     final active = _activeDice;
-    final decision = MinionDiceEngine.chooseSuiteHold(active);
+    final decision =
+        MinionDiceEngine.chooseSuiteHold(active, limitTo3: _isMinionSilenced);
     final needed = <int, int>{for (final value in decision.values) value: 1};
     for (final die in _dice) {
       if (!active.contains(die)) {
