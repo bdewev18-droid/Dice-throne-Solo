@@ -29,6 +29,12 @@ Directives de Nina :
 3. **Architecture de référence** : Toujours consulter `docs/FIGHT_ARCHITECTURE.md` pour identifier le sous-fichier responsable avant toute intervention.
 4. **Processus de livraison** : Respecter `BUILD_PROCESS.md`, `set-version.ps1`, l'actualisation du cache-buster dans `web/recette/index.html` et l'historique dans `web/recette/recette_data.json`.
 
+## Règles d'Exécution Rapide & Mode Direct (Fast-Path)
+1. **Recherche Chirurgicale** : Ne jamais lancer de séries exploratoires de commandes grep / Select-String ou de lectures multiples de fichiers pour des composants déjà connus. Aller directement au fichier et à la fonction concernée (maximum 1 à 2 lectures ciblées avant d'éditer).
+2. **Interdiction des Commandes Redondantes** : Ne pas faire de multiples passes d'inspection sur les widgets annexes quand une demande cible un bug précis (ex: un token ou une méthode d'IA).
+3. **Pas de Double Validation Superflue** : Si `flutter test test/fight_logic_test.dart` passe, ne pas lancer `dart analyze` complet en arrière-plan.
+4. **Builds Ciblés** : Se concentrer immédiatement sur la modification et n'exécuter que les commandes strictement requises pour le packaging final (`set-version.ps1`, recette, `verify-fast.ps1`) sans temps d'attente parasite.
+
 ## Langue
 Tu dois toujours me parler en français.
 

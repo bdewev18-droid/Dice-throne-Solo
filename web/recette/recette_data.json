@@ -1,6 +1,36 @@
 {
     "versions": [
         {
+            "buildNumber": 303,
+            "version": "1.4.9",
+            "date": "2026-10-04",
+            "title": "Avatars réels des propriétaires de tokens + Suppression doublon Wind Shear + Smoke Bomb popin & asset fix",
+            "summary": "1. Avatars des tokens (Composant 11) : Attribution systématique de l'avatar du vrai possesseur du token (héros vs ennemi) via un helper tokenOwnerAvatar, sans forcer arbitrairement l'avatar de l'attaquant du tour.\n2. Wind Shear : Suppression du bloc doublon obsolète dans le dock pour n'avoir qu'une seule ligne propre composant 11.\n3. Smoke Bomb : Correction de l'asset (assets/token/Smoke-Bomb.png) et ajout de la branche isSmokeBomb dans TokenAnimationDialog pour afficher le texte de résultat correct d'esquive au lieu du fallback Time Bomb.",
+            "tags": [
+                "Wind Shear",
+                "Smoke Bomb",
+                "Avatar",
+                "Composant 11",
+                "Combat Dock",
+                "Bugfix"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": [
+                {
+                    "id": "p-1.4.9-1",
+                    "userPrompt": "token windshear uniquement sur le minion, j'ai 2 lignes composant 11 ? Token smoke bomb souci d'image, j'ai encore le message de Timbe bomb dans la popin de résolution du jet de dès. D'ailleurs tous les tokens sont pour l'ennemie et c'est la photo du hero que je vois pourquoi ? la régle est simple, il faut mettre l'image de qui possède le token.",
+                    "aiResponse": "1. Suppression du bloc doublon Wind Shear et Prey dans combat_ai_chat_dock.dart.\n2. Remplacement du tokenAsset erroné par assets/token/Smoke-Bomb.png et ajout de la clause isSmokeBomb dans la chaîne ternaire de token_animation_dialog.dart.\n3. Implémentation de tokenOwnerAvatar vérifiant adventure.alterations vs enemy.alterations pour afficher l'avatar de celui qui possède réellement le token sur chaque ligne.\n4. Validation avec fight_logic_test.dart et synchronisation 1.4.9+303.",
+                    "checklist": [
+                        { "text": "Suppression du doublon Wind Shear (une seule ligne composant 11)", "done": true },
+                        { "text": "Correction asset et message de jet de dé pour Smoke Bomb", "done": true },
+                        { "text": "Affichage de l'avatar du possesseur réel du token sur chaque composant 11", "done": true },
+                        { "text": "Validation des tests unitaires (fight_logic_test.dart)", "done": true }
+                    ]
+                }
+            ]
+        },
+        {
             "buildNumber": 302,
             "version": "1.4.8",
             "date": "2026-10-04",

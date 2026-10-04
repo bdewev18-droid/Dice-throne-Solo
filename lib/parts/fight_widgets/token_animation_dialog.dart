@@ -1424,6 +1424,10 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                           : (_blindDieRoll! <= 5
                                                 ? 'Ninjitsu roll: $_blindDieRoll -> +2 Attack Damage!'
                                                 : 'Ninjitsu roll: 6 -> Roll 6! Choose reward: +2 DMG, Delayed Poison, or Undefendable.'))
+                                    : isSmokeBomb
+                                    ? (_blindDieRoll! <= 3
+                                          ? 'Smoke Bomb roll: $_blindDieRoll -> Attack Avoided! (0 Damage taken)'
+                                          : 'Smoke Bomb roll: $_blindDieRoll -> Smoke Bomb Failed! (Normal damage applies)')
                                     : isTimeBomb1
                                     ? (_blindDieRoll! <= 5
                                           ? 'Time bomb roll: $_blindDieRoll -> Transforms into Time Bomb 2!'

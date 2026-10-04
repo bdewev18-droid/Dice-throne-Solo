@@ -348,6 +348,28 @@ class CombatAiChatDock extends StatelessWidget {
       }
     }
 
+    Widget tokenOwnerAvatar(String tokenLabel, {bool? defaultToHero}) {
+      final norm = _normalizeTokenKey(tokenLabel);
+      final onEnemy = enemy.alterations.any((t) {
+        final k = _normalizeTokenKey(t);
+        return k == norm || k.contains(norm) || norm.contains(k);
+      });
+      final onHero = adventure.alterations.any((t) {
+        final k = _normalizeTokenKey(t);
+        return k == norm || k.contains(norm) || norm.contains(k);
+      });
+      if (onEnemy && !onHero) {
+        return buildOwnerAvatar(false);
+      }
+      if (onHero && !onEnemy) {
+        return buildOwnerAvatar(true);
+      }
+      if (defaultToHero != null) {
+        return buildOwnerAvatar(defaultToHero);
+      }
+      return buildOwnerAvatar(isHeroTurn);
+    }
+
     final attackerAvatar = buildOwnerAvatar(isHeroTurn);
     final isHeroBattle = phase == CombatPhase.hero;
     final hasBlindingLightInAiMessage = aiMessage.contains(
@@ -647,7 +669,7 @@ class CombatAiChatDock extends StatelessWidget {
           if (showWellspringRow) ...[
             const SizedBox(height: 6),
             _TokenActionRow(
-              ownerWidget: attackerAvatar,
+              ownerWidget: tokenOwnerAvatar('Wellspring'),
               tokenLabel: 'Wellspring',
               tokenAsset: 'assets/token/Wellspring.png',
               text: wellspringCount > 1
@@ -663,7 +685,7 @@ class CombatAiChatDock extends StatelessWidget {
           if (salveCount > 0) ...[
             const SizedBox(height: 6),
             _TokenActionRow(
-              ownerWidget: attackerAvatar,
+              ownerWidget: tokenOwnerAvatar('Salve'),
               tokenLabel: 'Salve',
               tokenAsset: 'assets/token/Salve.webp',
               text: salveCount > 1 ? 'Salve (x$salveCount)' : 'Salve',
@@ -676,7 +698,7 @@ class CombatAiChatDock extends StatelessWidget {
           ],
           if (showResolution) ...[
             if (defenderHasTargeted)
-              _ActiveTokenBadge(ownerWidget: attackerAvatar,
+              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Targeted'),
                 tokenLabel: 'Targeted',
                 tokenAsset: 'assets/token/Targeted.png',
                 activeText: attackValue > 0
@@ -684,7 +706,7 @@ class CombatAiChatDock extends StatelessWidget {
                     : 'Pending (ATK = 0)',
               ),
             if (defenderFocusFireCount > 0)
-              _ActiveTokenBadge(ownerWidget: attackerAvatar,
+              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Focus Fire'),
                 tokenLabel: 'Focus Fire',
                 tokenAsset: 'assets/token/focus-fire.webp',
                 activeText: attackValue > 0
@@ -717,7 +739,7 @@ class CombatAiChatDock extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      attackerAvatar,
+                      tokenOwnerAvatar('Shame'),
                       const SizedBox(width: 8),
                       Image.asset(
                         'assets/token/shame.png',
@@ -798,7 +820,7 @@ class CombatAiChatDock extends StatelessWidget {
               ),
             ],
             if (attackerWitherCount > 0)
-              _ActiveTokenBadge(ownerWidget: attackerAvatar,
+              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Wither'),
                 tokenLabel: attackerWitherCount > 1
                     ? 'Wither (x$attackerWitherCount)'
                     : 'Wither',
@@ -1166,7 +1188,7 @@ class CombatAiChatDock extends StatelessWidget {
             ],
             if (showBarbedVineRow) ...[
               const SizedBox(height: 6),
-              _MultiRollTokenActiveRow(ownerWidget: attackerAvatar,
+              _MultiRollTokenActiveRow(ownerWidget: tokenOwnerAvatar('Barbed Vine'),
                 tokenLabel: 'Barbed Vine',
                 tokenAsset: 'assets/token/Barbed-Vine.png',
                 count: barbedVineCount,
@@ -1179,7 +1201,7 @@ class CombatAiChatDock extends StatelessWidget {
             ],
             if (showConstrictRow) ...[
               const SizedBox(height: 6),
-              _MultiRollTokenActiveRow(ownerWidget: attackerAvatar,
+              _MultiRollTokenActiveRow(ownerWidget: tokenOwnerAvatar('Constrict'),
                 tokenLabel: 'Constrict',
                 count: constrictCount,
                 tokenAsset: 'assets/token/Constrict.png',
@@ -1194,47 +1216,47 @@ class CombatAiChatDock extends StatelessWidget {
                 (phase == CombatPhase.minionAttack &&
                     attackerCritCount > 0 &&
                     attackValue > 0))
-              _ActiveTokenBadge(ownerWidget: attackerAvatar,
+              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Crit'),
                 tokenLabel: 'Crit',
                 tokenAsset: 'assets/token/crit.png',
                 activeText: 'Active (+ 4 DMG)',
               ),
             for (final val in usedDamageBonus)
-              _ActiveTokenBadge(ownerWidget: attackerAvatar,
+              _ActiveTokenBadge(ownerWidget: buildOwnerAvatar(isHeroTurn),
                 tokenLabel: 'Damage bonus $val',
                 tokenAsset: 'assets/token/bonus-atk-$val.webp',
                 activeText: 'Active (+$val DMG)',
               ),
             if (phase == CombatPhase.minionAttack && attackValue > 0)
               for (final val in availableDamageBonus)
-                _ActiveTokenBadge(ownerWidget: attackerAvatar,
+                _ActiveTokenBadge(ownerWidget: buildOwnerAvatar(isHeroTurn),
                   tokenLabel: 'Damage bonus $val',
                   tokenAsset: 'assets/token/bonus-atk-$val.webp',
                   activeText: 'Active (+$val DMG)',
                 ),
             if (honorDamageBonus > 0)
-              _ActiveTokenBadge(ownerWidget: attackerAvatar,
+              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Honor'),
                 tokenLabel: 'Honor',
                 tokenAsset: 'assets/token/honor.png',
                 activeText: 'Active (+$honorDamageBonus DMG)',
               ),
             if (realityWarpActive)
-              _ActiveTokenBadge(ownerWidget: attackerAvatar,
+              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Reality Warp'),
                 tokenLabel: 'Reality Warp',
                 tokenAsset: 'assets/token/reality-warp.webp',
               ),
             if (silenceActive)
-              _ActiveTokenBadge(ownerWidget: attackerAvatar,
+              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Silence'),
                 tokenLabel: 'Silence',
                 tokenAsset: 'assets/token/Silence.webp',
               ),
             if (webbedActive)
-              _ActiveTokenBadge(ownerWidget: attackerAvatar,
+              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Webbed'),
                 tokenLabel: 'Webbed',
                 tokenAsset: 'assets/token/Webbed.webp',
               ),
             if (flightAvoided || flightUndefendable)
-              _ActiveTokenBadge(ownerWidget: attackerAvatar,
+              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Flight'),
                 tokenLabel: 'Flight',
                 tokenAsset: 'assets/token/Flight.png',
                 activeText: flightAvoided
@@ -1242,7 +1264,7 @@ class CombatAiChatDock extends StatelessWidget {
                     : 'Active (Undefendable)',
               ),
             if (showBlindingLightRow)
-              _ActiveTokenBadge(ownerWidget: attackerAvatar,
+              _ActiveTokenBadge(ownerWidget: tokenOwnerAvatar('Blinding Light'),
                 tokenLabel: 'Blinding Light',
                 tokenAsset: 'assets/token/Blinding Light.webp',
               ),
@@ -1263,6 +1285,8 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
+                    tokenOwnerAvatar('Decrep-ify'),
+                    const SizedBox(width: 8),
                     const _ActionRowLabel(
                       tokenLabel: 'Decrep-ify',
                       tokenAsset: 'assets/token/Decrep-ify.png',
@@ -1320,6 +1344,8 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
+                    tokenOwnerAvatar('Dice cube'),
+                    const SizedBox(width: 8),
                     _ActionRowLabel(
                       tokenLabel: 'Dice cube',
                       tokenAsset: 'assets/token/Dice cube.webp',
@@ -1379,6 +1405,8 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
+                    tokenOwnerAvatar('Entangle'),
+                    const SizedBox(width: 8),
                     _ActionRowLabel(
                       tokenLabel: 'Entangle',
                       tokenAsset: 'assets/token/Entangle.png',
@@ -1438,6 +1466,8 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
+                    tokenOwnerAvatar('Influence'),
+                    const SizedBox(width: 8),
                     const _ActionRowLabel(
                       tokenLabel: 'Influence',
                       tokenAsset: 'assets/token/influence.webp',
@@ -1499,6 +1529,8 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
+                    tokenOwnerAvatar('Sneak Attack'),
+                    const SizedBox(width: 8),
                     _ActionRowLabel(
                       tokenLabel: 'Sneak Attack',
                       tokenAsset: 'assets/token/Sneak-Attack.png',
@@ -1577,7 +1609,7 @@ class CombatAiChatDock extends StatelessWidget {
             ],
 
             if (showGuardBreakRow)
-              _TokenActionRow(ownerWidget: attackerAvatar,
+              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Guard Break'),
                 tokenLabel: 'Guard Break',
                 tokenAsset: 'assets/token/Guard-Break.png',
                 text: attackerGuardBreakCount > 1
@@ -1590,7 +1622,7 @@ class CombatAiChatDock extends StatelessWidget {
                 onUse: onUseAttackerGuardBreak,
               ),
             if (windShearCount > 0 || windShearActive)
-              _TokenActionRow(ownerWidget: attackerAvatar,
+              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Wind Shear'),
                 tokenLabel: 'Wind Shear',
                 tokenAsset: 'assets/token/wind-shear.webp',
                 text: windShearCount > 1 ? 'Wind Shear x$windShearCount' : 'Wind Shear',
@@ -1601,7 +1633,7 @@ class CombatAiChatDock extends StatelessWidget {
                 onUse: onUseWindShear,
               ),
             if (defenderPreyCount > 0)
-              _TokenActionRow(ownerWidget: attackerAvatar,
+              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Prey'),
                 tokenLabel: 'Prey',
                 tokenAsset: 'assets/token/Prey.png',
                 text: preyUsedCount > 0 ? 'Prey (Used /)' : 'Prey (/)',
@@ -1612,7 +1644,7 @@ class CombatAiChatDock extends StatelessWidget {
                 onUse: onUsePrey,
               ),
             if (attackerCritCount > 0 || critUsed)
-              _TokenActionRow(ownerWidget: attackerAvatar,
+              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Crit'),
                 tokenLabel: 'Crit',
                 tokenAsset: 'assets/token/Crit.png',
                 text: attackerCritCount > 1 ? 'Crit x$attackerCritCount' : 'Crit',
@@ -1623,7 +1655,7 @@ class CombatAiChatDock extends StatelessWidget {
                 onUse: onUseCrit,
               ),
             if (attackerAccuracyCount > 0 || accuracyUsed)
-              _TokenActionRow(ownerWidget: attackerAvatar,
+              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Accuracy'),
                 tokenLabel: 'Accuracy',
                 tokenAsset: 'assets/token/Accuracy.png',
                 text: attackerAccuracyCount > 1 ? 'Accuracy x$attackerAccuracyCount' : 'Accuracy',
@@ -1636,7 +1668,7 @@ class CombatAiChatDock extends StatelessWidget {
             if (honorCount > 0 &&
                 phase == CombatPhase.hero &&
                 honorDamageBonus == 0)
-              _TokenActionRow(ownerWidget: attackerAvatar,
+              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Honor'),
                 tokenLabel: 'Honor',
                 tokenAsset: 'assets/token/honor.png',
                 text: honorCount > 1 ? 'Honor x$honorCount' : 'Honor',
@@ -1649,7 +1681,7 @@ class CombatAiChatDock extends StatelessWidget {
             if (ninjitsuDamageBonus > 0 ||
                 ninjitsuUndefendable ||
                 ninjitsuCount > 0)
-              _TokenActionRow(ownerWidget: attackerAvatar,
+              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Ninjitsu'),
                 tokenLabel: 'Ninjitsu',
                 tokenAsset: 'assets/token/Ninjutsu.webp',
                 text: ninjitsuCount > 1 ? 'Ninjitsu x$ninjitsuCount' : 'Ninjitsu',
@@ -1664,9 +1696,9 @@ class CombatAiChatDock extends StatelessWidget {
                 onUse: onUseNinjitsu,
               ),
             if (smokeBombCount > 0 || smokeBombSuccess)
-              _TokenActionRow(ownerWidget: attackerAvatar,
+              _TokenActionRow(ownerWidget: tokenOwnerAvatar('Smoke Bomb'),
                 tokenLabel: 'Smoke Bomb',
-                tokenAsset: 'assets/token/bombe-fumigene.png',
+                tokenAsset: 'assets/token/Smoke-Bomb.png',
                 text: smokeBombCount > 1 ? 'Smoke Bomb x$smokeBombCount' : 'Smoke Bomb',
                 isActive: smokeBombSuccess,
                 activeText: 'Active (Avoids DMG)',
@@ -1694,6 +1726,8 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
+                    buildOwnerAvatar(false),
+                    const SizedBox(width: 8),
                     _ActionRowLabel(
                       tokenLabel: 'Protect',
                       tokenAsset: 'assets/token/Protect.png',
@@ -1793,6 +1827,8 @@ class CombatAiChatDock extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
+                    buildOwnerAvatar(false),
+                    const SizedBox(width: 8),
                     _ActionRowLabel(
                       tokenLabel: 'Retribution',
                       tokenAsset: 'assets/token/Retribution.png',
@@ -2074,148 +2110,6 @@ class CombatAiChatDock extends StatelessWidget {
                 return Column(children: rows);
               },
             ),
-            if (windShearCount > 0 || windShearActive) ...[
-              const SizedBox(height: 8),
-              if (windShearActive)
-                _ActiveTokenBadge(ownerWidget: attackerAvatar,
-                  tokenLabel: 'Wind Shear',
-                  tokenAsset: 'assets/token/wind-shear.webp',
-                  activeText: '+2 DEF / Counter 2 DMG',
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xff1f1a2e),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xff3b315b)),
-                  ),
-                  child: Row(
-                    children: [
-                      _ActionRowLabel(
-                        tokenLabel: 'Wind Shear',
-                        tokenAsset: 'assets/token/wind-shear.webp',
-                        text: 'Wind Shear (' + windShearCount.toString() + ')',
-                      ),
-                      const Spacer(),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff3b315b),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: canUseWindShear ? onUseWindShear : null,
-                        child: const Text(
-                          'Use',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-            if (defenderPreyCount > 0) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: preyUsedCount > 0
-                      ? const Color(0xff132b1e)
-                      : const Color(0xff1f1a2e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: preyUsedCount > 0
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
-                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    _ActionRowLabel(
-                      tokenLabel: 'Prey',
-                      tokenAsset: 'assets/token/Prey.png',
-                      text: preyUsedCount > 0
-                          ? 'Prey (Used $preyUsedCount/$defenderPreyCount)'
-                          : 'Prey ($preyUsedCount/$defenderPreyCount)',
-                    ),
-                    const Spacer(),
-                    if (preyUsedCount > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.greenAccent,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Colors.greenAccent,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Active',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.greenAccent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    if (preyUsedCount > 0 && preyUsedCount < defenderPreyCount)
-                      const SizedBox(width: 8),
-                    if (preyUsedCount < defenderPreyCount)
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: canUsePrey
-                              ? const Color(0xff8f43ff)
-                              : Colors.grey.shade700,
-                          foregroundColor: canUsePrey
-                              ? Colors.white
-                              : Colors.white38,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: canUsePrey ? onUsePrey : null,
-                        child: const Text(
-                          'Use',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
             const SizedBox(height: 8),
             Row(
               children: [
