@@ -1,6 +1,23 @@
 {
     "versions": [
         {
+            "buildNumber": 297,
+            "version": "1.4.3",
+            "date": "2026-10-04",
+            "title": "Architecture & Découpage modulaire (Étape finale : Moteur IA, Snapshots et Mixins)",
+            "summary": "Finalisation du découpage de fight.dart : extraction du moteur IA de sélection de dés et d'attaques, gestion des snapshots/historique de combat, et documentation architecturale pour pérenniser le code.",
+            "tags": [
+                "Refactoring",
+                "Architecture",
+                "AI",
+                "Combat",
+                "Docs"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": []
+        },
+        {
             "buildNumber": 296,
             "version": "1.4.2",
             "date": "2026-10-04",
