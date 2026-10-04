@@ -1589,7 +1589,7 @@ class CombatAiChatDock extends StatelessWidget {
                 tokenLabel: 'Guard Break',
                 tokenAsset: 'assets/token/Guard-Break.png',
                 text: attackerGuardBreakCount > 1
-                    ? 'Guard Break (x)'
+                    ? 'Guard Break x$attackerGuardBreakCount'
                     : 'Guard Break',
                 isActive: guardBreakSuccess,
                 activeText: 'Active (Undefendable)',
@@ -1601,7 +1601,7 @@ class CombatAiChatDock extends StatelessWidget {
               _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Wind Shear',
                 tokenAsset: 'assets/token/wind-shear.webp',
-                text: windShearCount > 1 ? 'Wind Shear (x)' : 'Wind Shear',
+                text: windShearCount > 1 ? 'Wind Shear x$windShearCount' : 'Wind Shear',
                 isActive: windShearActive,
                 activeText: '+2 DEF / 2 DMG imparables',
                 showUseButton: !windShearActive,
@@ -1623,7 +1623,7 @@ class CombatAiChatDock extends StatelessWidget {
               _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Crit',
                 tokenAsset: 'assets/token/Crit.png',
-                text: attackerCritCount > 1 ? 'Crit (x)' : 'Crit',
+                text: attackerCritCount > 1 ? 'Crit x$attackerCritCount' : 'Crit',
                 isActive: critUsed,
                 activeText: 'Active (Auto-crit)',
                 showUseButton: !critUsed,
@@ -1634,7 +1634,7 @@ class CombatAiChatDock extends StatelessWidget {
               _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Accuracy',
                 tokenAsset: 'assets/token/Accuracy.png',
-                text: attackerAccuracyCount > 1 ? 'Accuracy (x)' : 'Accuracy',
+                text: attackerAccuracyCount > 1 ? 'Accuracy x$attackerAccuracyCount' : 'Accuracy',
                 isActive: accuracyUsed,
                 activeText: 'Active (Undefendable)',
                 showUseButton: !accuracyUsed,
@@ -1647,7 +1647,7 @@ class CombatAiChatDock extends StatelessWidget {
               _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Honor',
                 tokenAsset: 'assets/token/honor.png',
-                text: honorCount > 1 ? 'Honor (x)' : 'Honor',
+                text: honorCount > 1 ? 'Honor x$honorCount' : 'Honor',
                 isActive: false,
                 activeText: '',
                 showUseButton: true,
@@ -1660,7 +1660,7 @@ class CombatAiChatDock extends StatelessWidget {
               _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Ninjitsu',
                 tokenAsset: 'assets/token/Ninjutsu.webp',
-                text: ninjitsuCount > 1 ? 'Ninjitsu (x)' : 'Ninjitsu',
+                text: ninjitsuCount > 1 ? 'Ninjitsu x$ninjitsuCount' : 'Ninjitsu',
                 isActive: ninjitsuDamageBonus > 0 || ninjitsuUndefendable,
                 activeText: ninjitsuUndefendable
                     ? 'Active (Undefendable)'
@@ -1673,7 +1673,7 @@ class CombatAiChatDock extends StatelessWidget {
               _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Smoke Bomb',
                 tokenAsset: 'assets/token/bombe-fumigene.png',
-                text: smokeBombCount > 1 ? 'Smoke Bomb (x)' : 'Smoke Bomb',
+                text: smokeBombCount > 1 ? 'Smoke Bomb x$smokeBombCount' : 'Smoke Bomb',
                 isActive: smokeBombSuccess,
                 activeText: 'Active (Avoids DMG)',
                 showUseButton: !smokeBombSuccess,
@@ -1703,7 +1703,9 @@ class CombatAiChatDock extends StatelessWidget {
                     _ActionRowLabel(
                       tokenLabel: 'Protect',
                       tokenAsset: 'assets/token/Protect.png',
-                      text: 'Protection',
+                      text: protectCount > 1
+                          ? 'Protection x$protectCount'
+                          : 'Protection',
                     ),
                     const SizedBox(width: 8),
                     if (protectUsed || minionAutoProtect)

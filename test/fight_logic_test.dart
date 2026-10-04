@@ -482,5 +482,44 @@ void main() {
       expect(salveRule.maxStack, equals(99));
       expect(salveRule.matches('Salve'), isTrue);
     });
+
+    test('Silence prevents suite attack validation on minion with suite style', () {
+      final adventure = AdventureState(
+        config: SurvivalConfig(mode: SurvivalMode.mediumFixed, targetScore: mediumTarget),
+        hero: HeroType.barbare,
+      );
+      final enemy = EnemyNode(
+        id: 99,
+        label: 'Suite Minion',
+        rank: EnemyRank.green,
+        maxHealth: 20,
+        cp: 3,
+        attacks: const ['Small suite: 4 damage', 'Large suite: 7 damage'],
+        defense: 'Defense',
+        defenseDice: 1,
+        attackPlan: const MinionAttackPlan.suite(),
+        cardAsset: '',
+      );
+      final dice = [
+        GameDie(id: 0)..value = 1..settled = true,
+        GameDie(id: 1)..value = 2..settled = true,
+        GameDie(id: 2)..value = 3..settled = true,
+        GameDie(id: 3)..value = 4..settled = true,
+        GameDie(id: 4)..value = 5..settled = true,
+      ];
+
+      // With silenceActive = true
+      final msgSilenced = minionAttackAiMessage(
+        enemy,
+        dice,
+        3,
+        adventure,
+        '',
+        minionSilenceActive: true,
+      );
+      expect(msgSilenced, contains('Silence is active'));
+      expect(msgSilenced, contains('cannot validate a suite'));
+      expect(msgSilenced, contains('No attack will be performed'));
+    });
   });
 }

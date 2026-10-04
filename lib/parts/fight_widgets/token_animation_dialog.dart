@@ -1243,6 +1243,8 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                 border: Border.all(
                                   color: isWellspring || isRiposte
                                       ? Colors.greenAccent
+                                      : isNinjitsu
+                                      ? const Color(0xff8f43ff)
                                       : isPowderKeg
                                       ? (_blindDieRoll! <= 2
                                             ? Colors.redAccent
@@ -1416,6 +1418,12 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                                               _secondDieRoll == 6)
                                           ? 'Flight roll: [$_blindDieRoll, $_secondDieRoll] -> Success!'
                                           : 'Flight roll: [$_blindDieRoll, $_secondDieRoll] -> Failed.')
+                                    : isNinjitsu
+                                    ? (_blindDieRoll! <= 3
+                                          ? 'Ninjitsu roll: $_blindDieRoll -> +1 Attack Damage!'
+                                          : (_blindDieRoll! <= 5
+                                                ? 'Ninjitsu roll: $_blindDieRoll -> +2 Attack Damage!'
+                                                : 'Ninjitsu roll: 6 -> Roll 6! Choose reward: +2 DMG, Delayed Poison, or Undefendable.'))
                                     : isTimeBomb1
                                     ? (_blindDieRoll! <= 5
                                           ? 'Time bomb roll: $_blindDieRoll -> Transforms into Time Bomb 2!'

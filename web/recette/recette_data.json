@@ -1,6 +1,39 @@
 {
     "versions": [
         {
+            "buildNumber": 300,
+            "version": "1.4.6",
+            "date": "2026-10-04",
+            "title": "Token Silence (Roll Phase & Blocage Suites) + Ninjitsu M3 Dialog & Règles",
+            "summary": "Correction du déclenchement de Silence (Roll Phase au lieu d'Upkeep), interdiction formelle des suites lors des lancers et des modifications manuelles de dés quand Silence est actif. Prise en charge des règles exactes de Ninjitsu (1-3: +1 DMG, 4-5: +2 DMG, 6: choix de récompense) sans texte erroné de Time Bomb, nouvelle popin de choix Material 3 signée Nina (NinjitsuChoiceDialog), et affichage des quantités en x2/x3 au lieu de (x).",
+            "tags": [
+                "Silence",
+                "Ninjitsu",
+                "Combat",
+                "Tokens",
+                "UI",
+                "UX-Nina",
+                "Material-3"
+            ],
+            "author": "Antigravity AI & Nina UX",
+            "commit": "local-dev",
+            "prompts": [
+                {
+                    "id": "p-1.4.6-1",
+                    "userPrompt": "Token silence, la popin doit se lancer en phase de roll et non en phase d'upkeep. J'ai pu faire un micro suite, donc pas impacté par le token silence qui bloque les suites. j'ai changé un dès pour proviquer une suite medium et malgré que Silence soit activé, la medium suite s'est activé. je pense que l'app bloque bien dans les 3 lancés, mais ne bloque pas après les modifications de dès. Ninjitsu, j'ai encore les explications de time bomb sur le résultat des dès de ninjitsu dans sa popin comprenant le jet. Je rappelle la règle : résultat de 1 à 3 : On ajouter un dégat à l'attaque (+1) ; résultat de 4 et 5 : On ajouter un dégat à l'attaque (+2) ; résultat de 6 on affiche une nouvelle popin avec 3 choix (choix 1: +2 DMG, choix 2: Delayed Poison, choix 3: Undefendable). Refaire la popin avec Nina. Et pour Ninjitsu et tokens, mettre Ninjitsu x3 au lieu de (x).",
+                    "aiResponse": "1. Silence Roll Phase : ajout de isSilence à isAttackerRollToken dans _triggerTokenAnimationDialogs pour l'ignorer en Upkeep et l'exécuter en Roll Phase.\n2. Silence blocage suites : interdiction de valider toute suite (micro, small, large) dans _currentMinionAttackResult, _currentAttackGoalMet, rat-de-la-rue, _applyConditionalRules, _applyMinionDiceStrategy et les messages IA dès que Silence est actif, y compris après édition de dé.\n3. Ninjitsu résultat de dé : affichage des textes de règles exacts de Ninjitsu (1-3: +1 DMG, 4-5: +2 DMG, 6: choix de récompense) dans TokenAnimationDialog au lieu de Time Bomb.\n4. Ninjitsu Choice Dialog : nouveau widget Material 3 tactile (NinjitsuChoiceDialog) conçu selon l'audit UX de Nina avec cartes d'options dédiées et claires.\n5. Badges dock : remplacement de la notation (x) par x$count (ex: Ninjitsu x3, Guard Break x2, etc.).",
+                    "checklist": [
+                        { "text": "Déclenchement de la popin Silence en début de Roll Phase", "done": true },
+                        { "text": "Blocage persistant de la validation des suites sous Silence après modification de dé", "done": true },
+                        { "text": "Affichage des messages de résultat propres à Ninjitsu dans le dialog d'animation", "done": true },
+                        { "text": "Création du widget NinjitsuChoiceDialog Material 3 (cartes tactiles ergonomiques)", "done": true },
+                        { "text": "Formatage des badges multi-stacks en x2, x3 au lieu de (x)", "done": true },
+                        { "text": "Tests unitaires du blocage suite sous Silence validés", "done": true }
+                    ]
+                }
+            ]
+        },
+        {
             "buildNumber": 299,
             "version": "1.4.5",
             "date": "2026-10-04",

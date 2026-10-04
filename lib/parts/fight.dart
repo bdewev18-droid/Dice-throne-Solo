@@ -278,6 +278,14 @@ class _FightPageState extends State<FightPage> {
   bool _minionRealityWarpThisAttack = false;
   bool _heroSilenceThisAttack = false;
   bool _minionSilenceThisAttack = false;
+  bool get _isMinionSilenced =>
+      _minionSilenceThisAttack ||
+      enemy.alterations.any((t) => _normalizeTokenKey(t) == 'silence');
+  bool get _isHeroSilenced =>
+      _heroSilenceThisAttack ||
+      widget.adventure.alterations.any(
+        (t) => _normalizeTokenKey(t) == 'silence',
+      );
   late int _activeEnemyId;
   _FightStepSnapshot? _stepUndo;
 
@@ -382,6 +390,8 @@ class _FightPageState extends State<FightPage> {
             blindingLightBaseAttack: _blindingLightBaseAttack,
             heroCoalTriggered: _heroCoalTriggered,
             minionCoalTriggered: _minionCoalTriggered,
+            heroSilenceActive: _isHeroSilenced,
+            minionSilenceActive: _isMinionSilenced,
           )
         : '';
     final canAdvancePhase =
@@ -3782,50 +3792,7 @@ class _FightPageState extends State<FightPage> {
       }
       return 1; // +2 DMG
     }
-    return await showDialog<int>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) {
-            return AlertDialog(
-              backgroundColor: const Color(0xff1f1a2e),
-              title: const Text(
-                'Ninjitsu (Roll: 6)',
-                style: TextStyle(color: Colors.white),
-              ),
-              content: const Text(
-                'Choose your reward:',
-                style: TextStyle(color: Colors.white70),
-              ),
-              actions: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff8f43ff),
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(1),
-                  child: const Text('+2 DMG'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff8f43ff),
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(2),
-                  child: const Text('Delayed Poison'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff8f43ff),
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(3),
-                  child: const Text('Undefendable'),
-                ),
-              ],
-            );
-          },
-        ) ??
-        1;
+    return await NinjitsuChoiceDialog.show(context);
   }
 
   void _triggerProtectAttempt() {
@@ -4862,6 +4829,7 @@ class _FightPageState extends State<FightPage> {
 
   bool _minionReachedMaxDamage(EnemyNode enemy, List<GameDie> dice) {
     if (enemy.attackPlan.style == MinionAttackStyle.suite) {
+      if (_isMinionSilenced) return true;
       final values = dice
           .map((die) => die.effectiveValue)
           .whereType<int>()
@@ -5407,11 +5375,18 @@ class _FightPageState extends State<FightPage> {
         _symbolGoalMet(const SymbolGoal(yellow: 4))) {
       notes.add('Attack ready: roll 1 {die:any} to choose the Oni effect.');
     } else if (enemy.profileKey == 'rat-de-la-rue') {
-      final suite = _bestSuiteLength(
-        _activeDice.map((die) => die.effectiveValue).whereType<int>().toList(),
-      );
+      final suite = _isMinionSilenced
+          ? 0
+          : _bestSuiteLength(
+              _activeDice
+                  .map((die) => die.effectiveValue)
+                  .whereType<int>()
+                  .toList(),
+            );
       if (suite >= 3) {
         notes.add('Chapardage: suite validated.');
+      } else if (_isMinionSilenced) {
+        notes.add('Silence is active: cannot validate a suite.');
       } else if (_rollCount > 0) {
         notes.add('No valid attack yet.');
       }
@@ -5421,6 +5396,9 @@ class _FightPageState extends State<FightPage> {
             ? 'Attack result: deals ${result.value} undefendable damage.'
             : 'Attack result: deals ${result.value} damage.',
       );
+    } else if (_isMinionSilenced &&
+        enemy.attackPlan.style == MinionAttackStyle.suite) {
+      notes.add('Silence is active: cannot validate a suite.');
     } else if (_rollCount > 0) {
       notes.add('No valid attack yet.');
     }
@@ -5494,12 +5472,12 @@ class _FightPageState extends State<FightPage> {
     final values = acc.values;
     switch (enemy.profileKey) {
       case 'fee':
-        if (_bestSuiteLength(values) >= 5) {
+        if (!_isMinionSilenced && _bestSuiteLength(values) >= 5) {
           acc.cpSteal = 1;
           acc.notes.add('Large suite: steal 1 CP.');
         }
       case 'elfe-du-chaos':
-        if (_bestSuiteLength(values) >= 5) {
+        if (!_isMinionSilenced && _bestSuiteLength(values) >= 5) {
           acc.heroTokens.add('Ronces');
           acc.notes.add('Large suite: hero receives Ronces.');
         }
@@ -5677,7 +5655,9 @@ class _FightPageState extends State<FightPage> {
       case ConditionalConditionType.sameSymbol:
         matched = _hasRepeatedSymbol(acc.symbols, condition.count);
       case ConditionalConditionType.suite:
-        matched = _bestSuiteLength(acc.values) >= condition.minLength;
+        matched =
+            !_isMinionSilenced &&
+            _bestSuiteLength(acc.values) >= condition.minLength;
       case ConditionalConditionType.symbols:
         matched = _symbolGoalMet(
           SymbolGoal(
@@ -6189,6 +6169,9 @@ class _FightPageState extends State<FightPage> {
         }
         return result;
       case MinionAttackStyle.suite:
+        if (_isMinionSilenced) {
+          return null;
+        }
         final values = _activeDice
             .map((die) => die.effectiveValue)
             .whereType<int>()
@@ -6204,6 +6187,9 @@ class _FightPageState extends State<FightPage> {
       case MinionAttackStyle.symbols:
         return enemy.attackPlan.goals.any(_symbolGoalMet);
       case MinionAttackStyle.suite:
+        if (_isMinionSilenced) {
+          return false;
+        }
         final values = _activeDice
             .map((die) => die.effectiveValue)
             .whereType<int>()
@@ -7380,6 +7366,7 @@ class _FightPageState extends State<FightPage> {
           l.contains('webbed') ||
           l.contains('entoilÃ©') ||
           l.contains('entoile');
+      final isSilence = l.contains('silence');
 
       final isDefenderRollToken =
           isTargeted || isFocusFire || isSunMarked || isWebbed;
@@ -7394,6 +7381,7 @@ class _FightPageState extends State<FightPage> {
           isRealityWarp ||
           isShame ||
           isAccuracy ||
+          isSilence ||
           isWither;
 
       if (!isRollPhase) {
@@ -8632,7 +8620,9 @@ class _FightPageState extends State<FightPage> {
   void _applyMinionDiceStrategy() {
     switch (enemy.attackPlan.style) {
       case MinionAttackStyle.suite:
-        _reserveBestSuite();
+        if (!_isMinionSilenced) {
+          _reserveBestSuite();
+        }
       case MinionAttackStyle.symbols:
         _reserveSymbolGoal();
       case MinionAttackStyle.none:
@@ -9557,6 +9547,8 @@ String _aiMessageFor(
   int blindingLightBaseAttack = 0,
   bool heroCoalTriggered = false,
   bool minionCoalTriggered = false,
+  bool heroSilenceActive = false,
+  bool minionSilenceActive = false,
 }) {
   return switch (phase) {
     CombatPhase.intro => _introAiMessage(adventure, enemy, historyRecords),
@@ -9578,6 +9570,7 @@ String _aiMessageFor(
       blindingLightZeroDamage: blindingLightZeroDamage,
       blindingLightReducedDamage: blindingLightReducedDamage,
       blindingLightBaseAttack: blindingLightBaseAttack,
+      heroSilenceActive: heroSilenceActive,
     ),
     CombatPhase.minionUpkeep => _minionUpkeepAiMessage(
       adventure,
@@ -9597,6 +9590,7 @@ String _aiMessageFor(
       blindingLightZeroDamage: blindingLightZeroDamage,
       blindingLightReducedDamage: blindingLightReducedDamage,
       blindingLightBaseAttack: blindingLightBaseAttack,
+      minionSilenceActive: minionSilenceActive,
     ),
   };
 }
@@ -9774,6 +9768,7 @@ String _heroBattleAiMessage(
   bool blindingLightZeroDamage = false,
   int blindingLightReducedDamage = 0,
   int blindingLightBaseAttack = 0,
+  bool heroSilenceActive = false,
 }) {
   final intro = heroAttackCount == 0
       ? '_${adventure.hero.label} enters the fight. How much damage will the first attack deal?_'
@@ -9787,7 +9782,7 @@ String _heroBattleAiMessage(
     '${enemy.label} is waiting for the hero attack result.',
     if (!isZeroDamage)
       'If the attack is defendable, roll ${enemy.label} defense.',
-    if (adventure.alterations.contains('Silence'))
+    if (adventure.alterations.contains('Silence') || heroSilenceActive)
       'Silence is active: ${adventure.hero.label} cannot validate a suite this turn.',
     if (adventure.alterations.any(_isBarbedVineAlteration))
       'Barbed Vine is active: each roll attempt beyond the first inflicts 1 counter damage on ${adventure.hero.label}.',
@@ -9819,6 +9814,7 @@ String _minionAttackAiMessage(
   bool blindingLightZeroDamage = false,
   int blindingLightReducedDamage = 0,
   int blindingLightBaseAttack = 0,
+  bool minionSilenceActive = false,
 }) {
   final rolled = dice.where((die) => die.value != null).toList();
   if (enemy.profileKey == 'naraxus') {
@@ -9912,6 +9908,12 @@ String _minionAttackAiMessage(
   final blLine = blindingLightNote != null ? '\n$blindingLightNote' : '';
 
   if (enemy.attackPlan.style == MinionAttackStyle.suite) {
+    final isSilenced = minionSilenceActive ||
+        enemy.alterations.any((t) => _normalizeTokenKey(t) == 'silence');
+    if (isSilenced) {
+      return 'Silence is active: ${enemy.label} cannot validate a suite this turn.$blLine\n'
+          'No attack will be performed.';
+    }
     final decision = MinionDiceEngine.chooseSuiteHold(dice);
     final best = _bestSuiteLength(values);
     final rollLabel = _rollLabel(rollCount);
@@ -9996,6 +9998,7 @@ String minionAttackAiMessage(
   bool blindingLightZeroDamage = false,
   int blindingLightReducedDamage = 0,
   int blindingLightBaseAttack = 0,
+  bool minionSilenceActive = false,
 }) => _minionAttackAiMessage(
   enemy,
   dice,
@@ -10006,6 +10009,7 @@ String minionAttackAiMessage(
   blindingLightZeroDamage: blindingLightZeroDamage,
   blindingLightReducedDamage: blindingLightReducedDamage,
   blindingLightBaseAttack: blindingLightBaseAttack,
+  minionSilenceActive: minionSilenceActive,
 );
 
 String _defenseInstruction(AdventureState adventure, _AttackDamage? damage) {

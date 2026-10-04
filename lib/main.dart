@@ -29,11 +29,12 @@ part 'parts/fight_widgets/nanobot_detonation_dialog.dart';
 part 'parts/fight_widgets/dice_panel.dart';
 part 'parts/fight_widgets/token_animation_dialog.dart';
 part 'parts/fight_widgets/turn_phase_panel.dart';
+part 'parts/fight_widgets/ninjitsu_choice_dialog.dart';
 part 'parts/fight_logic/token_combat_helpers.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.4.5';
+const String appVersionLabel = 'Version 1.4.6';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
