@@ -1821,13 +1821,6 @@ class _FightPageState extends State<FightPage> {
     )) {
       tokensToRemind.add('Sun-Marked');
     }
-    if (widget.adventure.alterations.any(
-      (t) =>
-          _normalizeTokenKey(t) == 'ninjitsu' ||
-          _normalizeTokenKey(t) == 'ninjutsu',
-    )) {
-      tokensToRemind.add('Ninjitsu');
-    }
 
     if (tokensToRemind.isNotEmpty) {
       await _triggerTokenAnimationDialogs(
@@ -1983,13 +1976,6 @@ class _FightPageState extends State<FightPage> {
           _normalizeTokenKey(t) == 'sunmarked',
     )) {
       tokensToRemind.add('Sun-Marked');
-    }
-    if (enemy.alterations.any(
-      (t) =>
-          _normalizeTokenKey(t) == 'ninjitsu' ||
-          _normalizeTokenKey(t) == 'ninjutsu',
-    )) {
-      tokensToRemind.add('Ninjitsu');
     }
 
     if (tokensToRemind.isNotEmpty) {
@@ -4829,11 +4815,13 @@ class _FightPageState extends State<FightPage> {
 
   bool _minionReachedMaxDamage(EnemyNode enemy, List<GameDie> dice) {
     if (enemy.attackPlan.style == MinionAttackStyle.suite) {
-      if (_isMinionSilenced) return true;
       final values = dice
           .map((die) => die.effectiveValue)
           .whereType<int>()
           .toList();
+      if (_isMinionSilenced) {
+        return _bestSuiteLength(values) >= 3;
+      }
       return _bestSuiteLength(values) >= 5;
     }
     if (enemy.attackPlan.style == MinionAttackStyle.symbols) {
@@ -5375,18 +5363,14 @@ class _FightPageState extends State<FightPage> {
         _symbolGoalMet(const SymbolGoal(yellow: 4))) {
       notes.add('Attack ready: roll 1 {die:any} to choose the Oni effect.');
     } else if (enemy.profileKey == 'rat-de-la-rue') {
-      final suite = _isMinionSilenced
-          ? 0
-          : _bestSuiteLength(
-              _activeDice
-                  .map((die) => die.effectiveValue)
-                  .whereType<int>()
-                  .toList(),
-            );
+      final suite = _bestSuiteLength(
+        _activeDice
+            .map((die) => die.effectiveValue)
+            .whereType<int>()
+            .toList(),
+      );
       if (suite >= 3) {
         notes.add('Chapardage: suite validated.');
-      } else if (_isMinionSilenced) {
-        notes.add('Silence is active: cannot validate a suite.');
       } else if (_rollCount > 0) {
         notes.add('No valid attack yet.');
       }
@@ -5398,7 +5382,16 @@ class _FightPageState extends State<FightPage> {
       );
     } else if (_isMinionSilenced &&
         enemy.attackPlan.style == MinionAttackStyle.suite) {
-      notes.add('Silence is active: cannot validate a suite.');
+      final values = _activeDice
+          .map((die) => die.effectiveValue)
+          .whereType<int>()
+          .toList();
+      final suiteLen = _bestSuiteLength(values);
+      if (suiteLen >= 4) {
+        notes.add('Silence is active: Small/Large suite blocked (micro suite allowed).');
+      } else if (_rollCount > 0) {
+        notes.add('No valid attack yet.');
+      }
     } else if (_rollCount > 0) {
       notes.add('No valid attack yet.');
     }
@@ -5655,9 +5648,9 @@ class _FightPageState extends State<FightPage> {
       case ConditionalConditionType.sameSymbol:
         matched = _hasRepeatedSymbol(acc.symbols, condition.count);
       case ConditionalConditionType.suite:
-        matched =
-            !_isMinionSilenced &&
-            _bestSuiteLength(acc.values) >= condition.minLength;
+        matched = (_isMinionSilenced && condition.minLength >= 4)
+            ? false
+            : _bestSuiteLength(acc.values) >= condition.minLength;
       case ConditionalConditionType.symbols:
         matched = _symbolGoalMet(
           SymbolGoal(
@@ -6169,14 +6162,16 @@ class _FightPageState extends State<FightPage> {
         }
         return result;
       case MinionAttackStyle.suite:
-        if (_isMinionSilenced) {
-          return null;
-        }
         final values = _activeDice
             .map((die) => die.effectiveValue)
             .whereType<int>()
             .toList();
-        return _suiteDamage(enemy, _bestSuiteLength(values));
+        final rawLength = _bestSuiteLength(values);
+        if (_isMinionSilenced) {
+          // Silence blocks Small Straight (4) and Large Straight (5), but allows Micro Suite (3).
+          return rawLength >= 3 ? _suiteDamage(enemy, 3) : null;
+        }
+        return _suiteDamage(enemy, rawLength);
       case MinionAttackStyle.none:
         return null;
     }
@@ -6187,14 +6182,15 @@ class _FightPageState extends State<FightPage> {
       case MinionAttackStyle.symbols:
         return enemy.attackPlan.goals.any(_symbolGoalMet);
       case MinionAttackStyle.suite:
-        if (_isMinionSilenced) {
-          return false;
-        }
         final values = _activeDice
             .map((die) => die.effectiveValue)
             .whereType<int>()
             .toList();
-        return _bestSuiteLength(values) >= 3;
+        final best = _bestSuiteLength(values);
+        if (_isMinionSilenced) {
+          return best >= 3 && _suiteDamage(enemy, 3) != null;
+        }
+        return best >= 3;
       case MinionAttackStyle.none:
         return false;
     }
@@ -9783,7 +9779,7 @@ String _heroBattleAiMessage(
     if (!isZeroDamage)
       'If the attack is defendable, roll ${enemy.label} defense.',
     if (adventure.alterations.contains('Silence') || heroSilenceActive)
-      'Silence is active: ${adventure.hero.label} cannot validate a suite this turn.',
+      'Silence is active: ${adventure.hero.label} cannot validate Small or Large Straights this turn (micro suites allowed).',
     if (adventure.alterations.any(_isBarbedVineAlteration))
       'Barbed Vine is active: each roll attempt beyond the first inflicts 1 counter damage on ${adventure.hero.label}.',
     if (adventure.alterations.any(_isConstrictAlteration))
@@ -9910,13 +9906,34 @@ String _minionAttackAiMessage(
   if (enemy.attackPlan.style == MinionAttackStyle.suite) {
     final isSilenced = minionSilenceActive ||
         enemy.alterations.any((t) => _normalizeTokenKey(t) == 'silence');
-    if (isSilenced) {
-      return 'Silence is active: ${enemy.label} cannot validate a suite this turn.$blLine\n'
-          'No attack will be performed.';
-    }
-    final decision = MinionDiceEngine.chooseSuiteHold(dice);
+    final decision = MinionDiceEngine.chooseSuiteHold(dice, limitTo3: isSilenced);
     final best = _bestSuiteLength(values);
     final rollLabel = _rollLabel(rollCount);
+
+    if (isSilenced) {
+      if (best >= 3) {
+        final damage = adjustDamage(_suiteDamage(enemy, 3));
+        final suiteBlockedNote = best >= 4
+            ? 'Silence is active: Small/Large suite blocked, micro suite validated with ${_bestSuiteValues(values, 3).join('/')}.'
+            : 'Silence is active: micro suite validated with ${_bestSuiteValues(values, 3).join('/')}.';
+        if (hasBarbedVine && rollCount < 3) {
+          return 'On my $rollLabel roll, $suiteBlockedNote\n'
+              'Afflicted by Barbed Vine, I stop my attack rolls here to avoid taking counter damage.$blLine\n'
+              '${_defenseInstruction(adventure, damage)}';
+        }
+        return rollCount >= 3
+            ? 'After my 3 attack rolls, $suiteBlockedNote$blLine\n'
+                  '${_defenseInstruction(adventure, damage)}'
+            : 'On my $rollLabel roll, $suiteBlockedNote$blLine\n'
+                  'I keep ${kept.take(3).join('/')} (capped at micro suite by Silence).';
+      }
+      return 'Silence is active: Small and Large suites are blocked (only micro suite allowed).$blLine\n'
+          'On my $rollLabel roll, I deal no damage yet.'
+          '${hasBarbedVine ? '\nAfflicted by Barbed Vine: rerolling will inflict 1 counter damage on me.' : ''}\n'
+          '${decision.reason}\n'
+          'Kept dice: ${kept.isEmpty ? 'nothing' : kept.take(3).join('/')}.';
+    }
+
     if (best >= 5) {
       final damage = adjustDamage(_suiteDamage(enemy, 5));
       if (hasBarbedVine && rollCount < 3) {

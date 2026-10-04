@@ -483,7 +483,7 @@ void main() {
       expect(salveRule.matches('Salve'), isTrue);
     });
 
-    test('Silence prevents suite attack validation on minion with suite style', () {
+    test('Silence blocks Small/Large straights but allows Micro Suite (length 3)', () {
       final adventure = AdventureState(
         config: SurvivalConfig(mode: SurvivalMode.mediumFixed, targetScore: mediumTarget),
         hero: HeroType.barbare,
@@ -494,32 +494,66 @@ void main() {
         rank: EnemyRank.green,
         maxHealth: 20,
         cp: 3,
-        attacks: const ['Small suite: 4 damage', 'Large suite: 7 damage'],
+        attacks: const ['Micro suite: 2 damage', 'Small suite: 4 damage', 'Large suite: 7 damage'],
         defense: 'Defense',
         defenseDice: 1,
         attackPlan: const MinionAttackPlan.suite(),
         cardAsset: '',
       );
-      final dice = [
+
+      // Micro suite dice: 1, 2, 3, 5, 6
+      final microDice = [
+        GameDie(id: 0)..value = 1..settled = true,
+        GameDie(id: 1)..value = 2..settled = true,
+        GameDie(id: 2)..value = 3..settled = true,
+        GameDie(id: 3)..value = 5..settled = true,
+        GameDie(id: 4)..value = 6..settled = true,
+      ];
+      final msgMicro = minionAttackAiMessage(
+        enemy,
+        microDice,
+        3,
+        adventure,
+        '',
+        minionSilenceActive: true,
+      );
+      expect(msgMicro, contains('Silence is active: micro suite validated'));
+
+      // Large suite dice: 1, 2, 3, 4, 5 -> Under Silence, blocked down to micro suite
+      final largeDice = [
         GameDie(id: 0)..value = 1..settled = true,
         GameDie(id: 1)..value = 2..settled = true,
         GameDie(id: 2)..value = 3..settled = true,
         GameDie(id: 3)..value = 4..settled = true,
         GameDie(id: 4)..value = 5..settled = true,
       ];
-
-      // With silenceActive = true
-      final msgSilenced = minionAttackAiMessage(
+      final msgLarge = minionAttackAiMessage(
         enemy,
-        dice,
+        largeDice,
         3,
         adventure,
         '',
         minionSilenceActive: true,
       );
-      expect(msgSilenced, contains('Silence is active'));
-      expect(msgSilenced, contains('cannot validate a suite'));
-      expect(msgSilenced, contains('No attack will be performed'));
+      expect(msgLarge, contains('Silence is active: Small/Large suite blocked, micro suite validated'));
+
+      // No suite: 1, 1, 3, 5, 6
+      final noSuiteDice = [
+        GameDie(id: 0)..value = 1..settled = true,
+        GameDie(id: 1)..value = 1..settled = true,
+        GameDie(id: 2)..value = 3..settled = true,
+        GameDie(id: 3)..value = 5..settled = true,
+        GameDie(id: 4)..value = 6..settled = true,
+      ];
+      final msgNoSuite = minionAttackAiMessage(
+        enemy,
+        noSuiteDice,
+        3,
+        adventure,
+        '',
+        minionSilenceActive: true,
+      );
+      expect(msgNoSuite, contains('Silence is active: Small and Large suites are blocked'));
     });
   });
 }

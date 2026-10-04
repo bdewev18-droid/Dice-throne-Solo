@@ -1,6 +1,39 @@
 {
     "versions": [
         {
+            "buildNumber": 301,
+            "version": "1.4.7",
+            "date": "2026-10-04",
+            "title": "Silence : Micro-suite autorisée (seules Small & Large sont bloquées) + Ninjitsu Dock Unifié & Clean",
+            "summary": "1. Précision règle Silence : La micro suite (longueur 3) est autorisée ; seules les Small Straight (4) et Large Straight (5) sont bloquées par Silence.\n2. Ninjitsu sans popin automatique en Upkeep/Roll Start pour le Héros : déclenchement uniquement via le bouton 'Use' du Composant 11 dès qu'une attaque inflige au moins 1 dégât.\n3. Ninjitsu Ennemi : intégration dans le dock (Composant 11 sans 'Use') avec déclenchement automatique dès qu'une attaque inflige au moins 1 dégât.\n4. Dock Ninjitsu unifié : suppression de la ligne en doublon et de l'icône manquante, affichage sur UNE SEULE LIGNE avec cumul des bonus (ex: Active (+2 DMG, Undefendable)).",
+            "tags": [
+                "Silence",
+                "Ninjitsu",
+                "Combat",
+                "Micro-suite",
+                "Dock",
+                "UI-Fix"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": [
+                {
+                    "id": "p-1.4.7-1",
+                    "userPrompt": "token silence, la micro suite est bien autorisée c'est à partir de small et pour la large straight suite que ce bloque. Token ninjitsu, j'ai encore le message en upkeep alors que c'est uniquement via un composant 11 avec use qu'on doit déclencher la popin pour le hero. Quand c'est l'ennemi, un composant 11 sans le 'use' se met et se déclenche pendant la phase de roll, dès qu'un dégât est au moins fait. Quand c'est au hero, cf mon image, il y a 2 lignes ? pourquoi ? avec un souci d'image. Ne garder qu'une seule ligne et indiquer le cumul de ce qui est gagné par token sur une même ligne.",
+                    "aiResponse": "1. Silence & Micro-suites : adaptation de la logique de validation (_currentMinionAttackResult, _currentAttackGoalMet, _minionReachedMaxDamage, rat-de-la-rue, _applyConditionalRules, _minionAttackAiMessage) pour autoriser la micro suite (3 dés) et ne bloquer que les Small/Large Straights (longueur >= 4).\n2. Suppression des popins automatiques Ninjitsu : retrait de Ninjitsu des rappels de début de roll/upkeep pour le joueur ; activation exclusive via le bouton 'Use' du Composant 11 dès que l'attaque inflige des dégâts.\n3. Support Ninjitsu pour l'ennemi : affichage du Composant 11 sans bouton 'Use' dans le dock adverse et déclenchement automatique dès que l'attaque inflige au moins 1 dégât.\n4. Unification de la ligne Ninjitsu dans le dock : suppression du doublon _ActiveTokenBadge et de l'asset obsolète ninjitsu.png ; affichage unique et propre via _TokenActionRow avec cumul des bonus ('Active (+2 DMG, Undefendable)').\n5. Tests unitaires mis à jour et validés.",
+                    "checklist": [
+                        { "text": "Micro-suite (3 dés) autorisée sous Silence", "done": true },
+                        { "text": "Small & Large Straight bloquées sous Silence", "done": true },
+                        { "text": "Suppression des popins automatiques Upkeep / Roll Start pour Ninjitsu", "done": true },
+                        { "text": "Déclenchement joueur de Ninjitsu uniquement via le bouton 'Use' du Composant 11", "done": true },
+                        { "text": "Affichage Composant 11 sans 'Use' pour l'ennemi avec jet auto dès 1 DMG", "done": true },
+                        { "text": "Suppression de la double ligne Ninjitsu dans le dock et cumul sur 1 seule ligne", "done": true },
+                        { "text": "Tests unitaires validés (fight_logic_test.dart)", "done": true }
+                    ]
+                }
+            ]
+        },
+        {
             "buildNumber": 300,
             "version": "1.4.6",
             "date": "2026-10-04",

@@ -1218,14 +1218,6 @@ class CombatAiChatDock extends StatelessWidget {
                 tokenAsset: 'assets/token/honor.png',
                 activeText: 'Active (+$honorDamageBonus DMG)',
               ),
-            if (ninjitsuDamageBonus > 0 || ninjitsuUndefendable)
-              _ActiveTokenBadge(ownerWidget: attackerAvatar,
-                tokenLabel: 'Ninjitsu',
-                tokenAsset: 'assets/token/ninjitsu.png',
-                activeText: ninjitsuUndefendable
-                    ? 'Active (Undefendable)'
-                    : 'Active (+$ninjitsuDamageBonus DMG)',
-              ),
             if (realityWarpActive)
               _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: 'Reality Warp',
@@ -1656,16 +1648,18 @@ class CombatAiChatDock extends StatelessWidget {
               ),
             if (ninjitsuDamageBonus > 0 ||
                 ninjitsuUndefendable ||
-                (ninjitsuCount > 0 && phase == CombatPhase.hero))
+                ninjitsuCount > 0)
               _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Ninjitsu',
                 tokenAsset: 'assets/token/Ninjutsu.webp',
                 text: ninjitsuCount > 1 ? 'Ninjitsu x$ninjitsuCount' : 'Ninjitsu',
                 isActive: ninjitsuDamageBonus > 0 || ninjitsuUndefendable,
-                activeText: ninjitsuUndefendable
-                    ? 'Active (Undefendable)'
-                    : 'Active (+ DMG)',
-                showUseButton: ninjitsuCount > 0,
+                activeText: ninjitsuUndefendable && ninjitsuDamageBonus > 0
+                    ? 'Active (+$ninjitsuDamageBonus DMG, Undefendable)'
+                    : (ninjitsuUndefendable
+                        ? 'Active (Undefendable)'
+                        : 'Active (+$ninjitsuDamageBonus DMG)'),
+                showUseButton: ninjitsuCount > 0 && phase == CombatPhase.hero,
                 canUse: onUseNinjitsu != null,
                 onUse: onUseNinjitsu,
               ),
