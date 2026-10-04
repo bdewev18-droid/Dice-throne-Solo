@@ -1,6 +1,69 @@
 {
     "versions": [
         {
+            "buildNumber": 296,
+            "version": "1.4.2",
+            "date": "2026-10-04",
+            "title": "Architecture & Découpage modulaire (Étape 4 : Écrans de fin et pauses)",
+            "summary": "Extraction des panneaux de fin de combat (_CombatResolutionPanel), dialogue de pause et assistants de résolution dans lib/parts/fight_widgets/combat_resolution_panel.dart.",
+            "tags": [
+                "Refactoring",
+                "Architecture",
+                "Combat",
+                "Clean Code"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": []
+        },
+        {
+            "buildNumber": 295,
+            "version": "1.4.1",
+            "date": "2026-10-04",
+            "title": "Architecture & Découpage modulaire (Étape 3 : Mixin de gestion des dés)",
+            "summary": "Extraction de la logique et du contrôleur des dés de combat dans FightDiceMixin (lib/parts/fight_logic/fight_dice_mixin.dart).",
+            "tags": [
+                "Refactoring",
+                "Architecture",
+                "Dice",
+                "Mixins"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": []
+        },
+        {
+            "buildNumber": 294,
+            "version": "1.4.0",
+            "date": "2026-10-04",
+            "title": "Architecture & Découpage modulaire (Étape 2)",
+            "summary": "Extraction du domaine et des helpers de tokens de combat dans lib/parts/fight_logic/token_combat_helpers.dart avec vérification de non-régression et incrémentation majeure 1.4.0.",
+            "tags": [
+                "Refactoring",
+                "Architecture",
+                "Tokens",
+                "Major"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": []
+        },
+        {
+            "buildNumber": 293,
+            "version": "1.3.293",
+            "date": "2026-10-04",
+            "title": "Refactoring et découpage modulaire de fight.dart (Étape 1)",
+            "summary": "Extraction des widgets de combat autonomes (token_action_row, combat_ai_chat_dock, ai_chat_with_health, compact_item_strip, enemy_rules_panel, nanobot_detonation_dialog) dans lib/parts/fight_widgets/ avec vérification stricte de non-régression.",
+            "tags": [
+                "Refactoring",
+                "Architecture",
+                "Combat"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": []
+        },
+        {
             "buildNumber": 287,
             "version": "1.3.287",
             "date": "2026-10-03",
@@ -1531,5 +1594,5 @@
             }
         }
     ],
-    "version": "1.3.289"
+    "version": "1.3.292"
 }
