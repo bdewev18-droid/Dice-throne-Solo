@@ -23,5 +23,12 @@ Directives de Nina :
 3. Rejeter les designs génériques d'IA (anti-slop), privilégier des directions tranchées (Variance, Motion, Density).
 4. Respecter les standards Material 3 et les contraintes tactiles mobiles.
 
+## Règles Spécifiques Combat & Bonnes Pratiques de Développement
+1. **Règle d'or de `fight.dart`** : Il est strictement interdit d'ajouter de nouveaux widgets ou de nouvelles logiques volumineuses directement dans `lib/parts/fight.dart`. Tout nouveau widget doit être créé dans `lib/parts/fight_widgets/` et toute logique de calcul/jeton dans `lib/parts/fight_logic/` en utilisant `part of '../main.dart';` ou `part of '../../main.dart';`.
+2. **Remplacement et édition de code** : Ne jamais concevoir ni exécuter de scripts Python de substitution de texte multilignes ou de parsing regex long. N'utiliser que les outils natifs d'édition de fichiers.
+3. **Architecture de référence** : Toujours consulter `docs/FIGHT_ARCHITECTURE.md` pour identifier le sous-fichier responsable avant toute intervention.
+4. **Processus de livraison** : Respecter `BUILD_PROCESS.md`, `set-version.ps1`, l'actualisation du cache-buster dans `web/recette/index.html` et l'historique dans `web/recette/recette_data.json`.
+
 ## Langue
 Tu dois toujours me parler en français.
+
