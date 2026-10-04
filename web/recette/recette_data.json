@@ -1,6 +1,54 @@
 {
     "versions": [
         {
+            "buildNumber": 299,
+            "version": "1.4.5",
+            "date": "2026-10-04",
+            "title": "Salve Popin (Composant 1 HP Delta) & Avatar Ennemi Centré (Composants 10/11/12)",
+            "summary": "Correction de l'asset Salve (.webp), intégration de la popin Composant 1 avec delta de points de vie (+6 HP) lors du clic sur 'Use', et affichage du portrait ennemi centré sur le visage (identique à la zone de tour de jeu) pour les composants 10, 11 et 12.",
+            "tags": [
+                "Bugfix",
+                "Combat",
+                "Tokens",
+                "UI",
+                "Salve",
+                "Avatar"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": [
+                {
+                    "id": "p-1.4.5-1",
+                    "userPrompt": "Il y a un souci sur le logo du composant 11 que tu viens de mettre, j'ai un point d'intérrogartion. \nUne fois cliqué sur 'use', on fairt apparaitre une popin composant 1 avec l'affichage du changement du nb de point de vie\n\non a ajouté une image du joueur en premiere place du composant 10/11/12. \nc'est ok pour le joueur\nPour l'ennemie, il faut reprendre l'image qu'on a dans la zone de tour de jeu, centré sur le visage comme on a dans cette zone.",
+                    "aiResponse": "1. Correction du logo Salve : remplacement de assets/token/Salve.png par assets/token/Salve.webp dans combat_ai_chat_dock.dart.\n2. Popin Composant 1 pour Salve : appel de TokenAnimationDialog.show avec calcul dynamique de delta (+6 HP) et affichage du bloc HP vert (oldHp -> newHp) avant retrait du jeton.\n3. Portrait ennemi centré sur le visage : implémentation de buildOwnerAvatar et de attackerAvatar utilisant enemy.previewAsset / naxarus_head avec _minionEyeAlignment et _minionEyeFit dans tous les composants 10, 11, 12 (_TokenActionRow, _ActiveTokenBadge, _MultiRollTokenActiveRow).\n4. Mise à jour de la galerie UI de recette web (recette.js) avec avatars joueur/ennemi.",
+                    "checklist": [
+                        { "text": "Remplacement du chemin d'icône Salve par Salve.webp", "done": true },
+                        { "text": "Affichage de la modale Composant 1 avec bloc HP delta (+6) au clic sur Use", "done": true },
+                        { "text": "Cadrage de l'avatar ennemi centré sur le visage (identique à la zone de tour)", "done": true },
+                        { "text": "Propagation de l'avatar dans les composants 10, 11 et 12", "done": true },
+                        { "text": "Mise à jour des tests et du journal de recette", "done": true }
+                    ]
+                }
+            ]
+        },
+        {
+            "buildNumber": 298,
+            "version": "1.4.4",
+            "date": "2026-10-04",
+            "title": "Fix Upkeep Token Action Rows (Salve & Wellspring)",
+            "summary": "Affichage et prise en charge du déclencheur Composant 11 (_TokenActionRow) pour le jeton Salve et Wellspring en phase d'upkeep (heroUpkeep & minionUpkeep).",
+            "tags": [
+                "Bugfix",
+                "Combat",
+                "Tokens",
+                "Upkeep",
+                "UI"
+            ],
+            "author": "Antigravity AI",
+            "commit": "local-dev",
+            "prompts": []
+        },
+        {
             "buildNumber": 297,
             "version": "1.4.3",
             "date": "2026-10-04",

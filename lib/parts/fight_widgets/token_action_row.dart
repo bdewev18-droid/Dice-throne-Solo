@@ -52,7 +52,7 @@ class _MultiRollTokenActiveRow extends StatefulWidget {
   const _MultiRollTokenActiveRow({
     required this.tokenLabel,
     required this.tokenAsset,
-    this.ownerAsset,
+    this.ownerWidget,
     required this.count,
     required this.color,
     required this.onUse,
@@ -60,7 +60,7 @@ class _MultiRollTokenActiveRow extends StatefulWidget {
   });
   final String tokenLabel;
   final String tokenAsset;
-  final String? ownerAsset;
+  final Widget? ownerWidget;
   final int count;
   final Color color;
   final ValueChanged<int>? onUse;
@@ -105,10 +105,11 @@ class _MultiRollTokenActiveRowState extends State<_MultiRollTokenActiveRow> {
               },
               child: Row(
                 children: [
-                  if (widget.ownerAsset != null) ...[
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: Image.asset(widget.ownerAsset!, width: 22, height: 22, fit: BoxFit.cover),
+                  if (widget.ownerWidget != null) ...[
+                    SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: widget.ownerWidget!,
                     ),
                     const SizedBox(width: 8),
                   ],
@@ -270,7 +271,7 @@ class _TokenActionRow extends StatelessWidget {
   const _TokenActionRow({
     required this.tokenLabel,
     required this.tokenAsset,
-    this.ownerAsset,
+    this.ownerWidget,
     required this.text,
     this.isActive = false,
     this.activeText = 'Active',
@@ -281,7 +282,7 @@ class _TokenActionRow extends StatelessWidget {
 
   final String tokenLabel;
   final String tokenAsset;
-  final String? ownerAsset;
+  final Widget? ownerWidget;
   final String text;
   final bool isActive;
   final String activeText;
@@ -305,10 +306,11 @@ class _TokenActionRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (ownerAsset != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: Image.asset(ownerAsset!, width: 24, height: 24, fit: BoxFit.cover),
+          if (ownerWidget != null) ...[
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: ownerWidget!,
             ),
             const SizedBox(width: 8),
           ],
@@ -380,13 +382,13 @@ class _ActiveTokenBadge extends StatelessWidget {
   const _ActiveTokenBadge({
     required this.tokenLabel,
     required this.tokenAsset,
-    this.ownerAsset,
+    this.ownerWidget,
     this.activeText = 'Active',
   });
 
   final String tokenLabel;
   final String tokenAsset;
-  final String? ownerAsset;
+  final Widget? ownerWidget;
   final String activeText;
 
   @override
@@ -406,10 +408,11 @@ class _ActiveTokenBadge extends StatelessWidget {
           ),
           child: Row(
             children: [
-              if (ownerAsset != null) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: Image.asset(ownerAsset!, width: 24, height: 24, fit: BoxFit.cover),
+              if (ownerWidget != null) ...[
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: ownerWidget!,
                 ),
                 const SizedBox(width: 8),
               ],

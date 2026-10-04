@@ -536,8 +536,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="width: 100%; display: flex; flex-direction: column; gap: 0.5rem; background: #0b0710; padding: 2rem; border-radius: 8px;">
             <!-- Simulation du bandeau d'activation -->
             <div style="display: flex; align-items: center; background: #130a1e; border: 1.5px solid #a78bfa; border-radius: 8px; padding: 0.5rem 0.75rem; color: white; font-family: 'Segoe UI', sans-serif; max-width: 380px; margin: 0 auto; width: 100%;">
-              <div style="width: 26px; height: 26px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 0.75rem; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-                <img src="${comp.data.icon}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.outerHTML='<span style=\'color:black; font-size: 14px; font-weight: 900;\'>W</span>'">
+              <div style="width: 24px; height: 24px; border-radius: 4px; overflow: hidden; margin-right: 0.5rem; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.4);">
+                <img src="../assets/personnages/Barbarian.png" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='../assets/enemy_previews/bleu-001.webp'">
+              </div>
+              <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; margin-right: 0.5rem; flex-shrink: 0;">
+                <img src="${comp.data.icon}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.outerHTML='<span style=\\'color:#a78bfa; font-size: 14px; font-weight: 900;\\'>+</span>'">
               </div>
               <span style="font-size: 1rem; font-weight: bold; letter-spacing: 0.5px;">${comp.data.tokenName} (${comp.data.tokenCount})</span>
               <div style="flex-grow: 1;"></div>
@@ -552,8 +555,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="width: 100%; display: flex; flex-direction: column; gap: 0.5rem; background: #0b0710; padding: 2rem; border-radius: 8px;">
             ${comp.data.tokens.map(t => `
               <div style="display: flex; align-items: center; background: #112316; border: 1.5px solid #4ade80; border-radius: 8px; padding: 0.5rem 0.75rem; color: white; font-family: 'Segoe UI', sans-serif; max-width: 380px; margin: 0 auto; width: 100%;">
-                <div style="width: 26px; height: 26px; background: rgba(0,0,0,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 0.75rem; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
-                  <img src="${t.icon}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.outerHTML='<span style=\'color:white; font-size: 14px; font-weight: 900;\'>+</span>'">
+                <div style="width: 24px; height: 24px; border-radius: 4px; overflow: hidden; margin-right: 0.5rem; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.4);">
+                  <img src="../assets/personnages/Barbarian.png" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; margin-right: 0.5rem; flex-shrink: 0;">
+                  <img src="${t.icon}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.outerHTML='<span style=\\'color:#4ade80; font-size: 14px; font-weight: 900;\\'>+</span>'">
                 </div>
                 <span style="font-size: 1rem; font-weight: bold; letter-spacing: 0.5px;">${t.name}</span>
                 <div style="flex-grow: 1;"></div>
@@ -569,8 +575,11 @@ document.addEventListener('DOMContentLoaded', () => {
         stageContent = `
           <div style="width: 100%; display: flex; flex-direction: column; gap: 0.5rem; background: #0b0710; padding: 2rem; border-radius: 8px;">
             <div style="display: flex; align-items: center; background: #1f1a2e; border: 1.5px solid rgba(143, 67, 255, 0.6); border-radius: 8px; padding: 0.5rem 0.75rem; color: white; font-family: 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; width: 100%;">
-              <div style="width: 26px; height: 26px; background: rgba(0,0,0,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 0.75rem; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
-                <img src="${comp.data.icon}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.outerHTML='<span style=\'color:white; font-size: 14px; font-weight: 900;\'>+</span>'">
+              <div style="width: 22px; height: 22px; border-radius: 4px; overflow: hidden; margin-right: 0.5rem; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.4);">
+                <img src="../assets/personnages/Barbarian.png" style="width: 100%; height: 100%; object-fit: cover;">
+              </div>
+              <div style="width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; margin-right: 0.5rem; flex-shrink: 0;">
+                <img src="${comp.data.icon}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.outerHTML='<span style=\\'color:#a78bfa; font-size: 14px; font-weight: 900;\\'>+</span>'">
               </div>
               <span style="font-size: 1rem; font-weight: bold; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">Barbed Vine</span>
               <div style="flex-grow: 1;"></div>
@@ -721,7 +730,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="width: 100%; display: flex; flex-direction: column; gap: 0.5rem; background: #0b0710; padding: 1.5rem; border-radius: 8px;">
             ${comp.data.tokens.map(t => `
               <div style="display: flex; align-items: center; background: #271830; border: 1.2px solid #8f43ff; border-radius: 8px; padding: 0.5rem 0.75rem; color: white; font-family: sans-serif;">
-                <img src="${t.icon}" style="width: 22px; height: 22px; object-fit: contain; margin-right: 0.5rem;" onerror="this.outerHTML='<span style=\'font-size:1.2rem; margin-right:0.5rem;\'>&#x1F525;</span>'">
+                <div style="width: 24px; height: 24px; border-radius: 4px; overflow: hidden; margin-right: 0.5rem; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.4);">
+                  <img src="../assets/personnages/Barbarian.png" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='../assets/enemy_previews/bleu-001.webp'">
+                </div>
+                <img src="${t.icon}" style="width: 22px; height: 22px; object-fit: contain; margin-right: 0.5rem;" onerror="this.outerHTML='<span style=\\'font-size:1.2rem; margin-right:0.5rem;\\'>&#x1F525;</span>'">
                 <span style="font-size: 0.85rem; font-weight: bold;">${t.name} : </span>
                 <span style="font-size: 0.85rem; font-weight: 900; color: #8f43ff; margin-left: 0.25rem;">${t.modifier}</span>
                 <div style="flex-grow: 1;"></div>

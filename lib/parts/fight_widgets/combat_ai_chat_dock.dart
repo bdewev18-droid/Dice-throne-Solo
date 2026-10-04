@@ -1,4 +1,4 @@
-﻿part of '../../main.dart';
+part of '../../main.dart';
 
 class CombatAiChatDock extends StatelessWidget {
   const CombatAiChatDock({
@@ -315,10 +315,41 @@ class CombatAiChatDock extends StatelessWidget {
     
     final isHeroTurn = phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep;
     final heroAsset = adventure.hero.asset;
-    final enemyAsset = enemy.cardAsset;
-    final attackerAsset = isHeroTurn ? heroAsset : enemyAsset;
-    final defenderAsset = isHeroTurn ? enemyAsset : heroAsset;
-final isHeroBattle = phase == CombatPhase.hero;
+
+    Widget buildOwnerAvatar(bool isHero, {double size = 24}) {
+      if (isHero) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: Image.asset(
+            heroAsset,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+          ),
+        );
+      } else {
+        final imgAsset = enemy.profileKey == 'naraxus'
+            ? 'assets/enemy_previews/naxarus_head.png'
+            : enemy.previewAsset;
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Image.asset(
+              imgAsset,
+              width: size,
+              height: size,
+              fit: _minionEyeFit(enemy),
+              alignment: _minionEyeAlignment(enemy),
+            ),
+          ),
+        );
+      }
+    }
+
+    final attackerAvatar = buildOwnerAvatar(isHeroTurn);
+    final isHeroBattle = phase == CombatPhase.hero;
     final hasBlindingLightInAiMessage = aiMessage.contains(
       'Blinding Light (D6:',
     );
@@ -615,56 +646,37 @@ final isHeroBattle = phase == CombatPhase.hero;
             ),
           if (showWellspringRow) ...[
             const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xff1f1a2e),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: const Color(0xff8f43ff).withValues(alpha: 0.6),
-                  width: 1.2,
-                ),
-              ),
-              child: Row(
-                children: [
-                  _ActionRowLabel(
-                    tokenLabel: 'Wellspring',
-                    tokenAsset: 'assets/token/Wellspring.png',
-                    text: wellspringCount > 1
-                        ? 'Wellspring (x$wellspringCount)'
-                        : 'Wellspring',
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff8f43ff),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: onUseWellspring,
-                    child: const Text(
-                      'Use',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            _TokenActionRow(
+              ownerWidget: attackerAvatar,
+              tokenLabel: 'Wellspring',
+              tokenAsset: 'assets/token/Wellspring.png',
+              text: wellspringCount > 1
+                  ? 'Wellspring (x$wellspringCount)'
+                  : 'Wellspring',
+              isActive: false,
+              activeText: '',
+              showUseButton: true,
+              canUse: onUseWellspring != null,
+              onUse: onUseWellspring,
+            ),
+          ],
+          if (salveCount > 0) ...[
+            const SizedBox(height: 6),
+            _TokenActionRow(
+              ownerWidget: attackerAvatar,
+              tokenLabel: 'Salve',
+              tokenAsset: 'assets/token/Salve.webp',
+              text: salveCount > 1 ? 'Salve (x$salveCount)' : 'Salve',
+              isActive: false,
+              activeText: '',
+              showUseButton: true,
+              canUse: onUseSalve != null,
+              onUse: onUseSalve,
             ),
           ],
           if (showResolution) ...[
             if (defenderHasTargeted)
-              _ActiveTokenBadge(ownerAsset: attackerAsset,
+              _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: 'Targeted',
                 tokenAsset: 'assets/token/Targeted.png',
                 activeText: attackValue > 0
@@ -672,7 +684,7 @@ final isHeroBattle = phase == CombatPhase.hero;
                     : 'Pending (ATK = 0)',
               ),
             if (defenderFocusFireCount > 0)
-              _ActiveTokenBadge(ownerAsset: attackerAsset,
+              _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: 'Focus Fire',
                 tokenAsset: 'assets/token/focus-fire.webp',
                 activeText: attackValue > 0
@@ -705,6 +717,8 @@ final isHeroBattle = phase == CombatPhase.hero;
                   ),
                   child: Row(
                     children: [
+                      attackerAvatar,
+                      const SizedBox(width: 8),
                       Image.asset(
                         'assets/token/shame.png',
                         width: 22,
@@ -784,7 +798,7 @@ final isHeroBattle = phase == CombatPhase.hero;
               ),
             ],
             if (attackerWitherCount > 0)
-              _ActiveTokenBadge(ownerAsset: attackerAsset,
+              _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: attackerWitherCount > 1
                     ? 'Wither (x$attackerWitherCount)'
                     : 'Wither',
@@ -1152,7 +1166,7 @@ final isHeroBattle = phase == CombatPhase.hero;
             ],
             if (showBarbedVineRow) ...[
               const SizedBox(height: 6),
-              _MultiRollTokenActiveRow(ownerAsset: attackerAsset,
+              _MultiRollTokenActiveRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Barbed Vine',
                 tokenAsset: 'assets/token/Barbed-Vine.png',
                 count: barbedVineCount,
@@ -1165,7 +1179,7 @@ final isHeroBattle = phase == CombatPhase.hero;
             ],
             if (showConstrictRow) ...[
               const SizedBox(height: 6),
-              _MultiRollTokenActiveRow(ownerAsset: attackerAsset,
+              _MultiRollTokenActiveRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Constrict',
                 count: constrictCount,
                 tokenAsset: 'assets/token/Constrict.png',
@@ -1180,32 +1194,32 @@ final isHeroBattle = phase == CombatPhase.hero;
                 (phase == CombatPhase.minionAttack &&
                     attackerCritCount > 0 &&
                     attackValue > 0))
-              _ActiveTokenBadge(ownerAsset: attackerAsset,
+              _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: 'Crit',
                 tokenAsset: 'assets/token/crit.png',
                 activeText: 'Active (+ 4 DMG)',
               ),
             for (final val in usedDamageBonus)
-              _ActiveTokenBadge(ownerAsset: attackerAsset,
+              _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: 'Damage bonus $val',
                 tokenAsset: 'assets/token/bonus-atk-$val.webp',
                 activeText: 'Active (+$val DMG)',
               ),
             if (phase == CombatPhase.minionAttack && attackValue > 0)
               for (final val in availableDamageBonus)
-                _ActiveTokenBadge(ownerAsset: attackerAsset,
+                _ActiveTokenBadge(ownerWidget: attackerAvatar,
                   tokenLabel: 'Damage bonus $val',
                   tokenAsset: 'assets/token/bonus-atk-$val.webp',
                   activeText: 'Active (+$val DMG)',
                 ),
             if (honorDamageBonus > 0)
-              _ActiveTokenBadge(ownerAsset: attackerAsset,
+              _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: 'Honor',
                 tokenAsset: 'assets/token/honor.png',
                 activeText: 'Active (+$honorDamageBonus DMG)',
               ),
             if (ninjitsuDamageBonus > 0 || ninjitsuUndefendable)
-              _ActiveTokenBadge(ownerAsset: attackerAsset,
+              _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: 'Ninjitsu',
                 tokenAsset: 'assets/token/ninjitsu.png',
                 activeText: ninjitsuUndefendable
@@ -1213,22 +1227,22 @@ final isHeroBattle = phase == CombatPhase.hero;
                     : 'Active (+$ninjitsuDamageBonus DMG)',
               ),
             if (realityWarpActive)
-              _ActiveTokenBadge(ownerAsset: attackerAsset,
+              _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: 'Reality Warp',
                 tokenAsset: 'assets/token/reality-warp.webp',
               ),
             if (silenceActive)
-              _ActiveTokenBadge(ownerAsset: attackerAsset,
+              _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: 'Silence',
                 tokenAsset: 'assets/token/Silence.webp',
               ),
             if (webbedActive)
-              _ActiveTokenBadge(ownerAsset: attackerAsset,
+              _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: 'Webbed',
                 tokenAsset: 'assets/token/Webbed.webp',
               ),
             if (flightAvoided || flightUndefendable)
-              _ActiveTokenBadge(ownerAsset: attackerAsset,
+              _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: 'Flight',
                 tokenAsset: 'assets/token/Flight.png',
                 activeText: flightAvoided
@@ -1236,7 +1250,7 @@ final isHeroBattle = phase == CombatPhase.hero;
                     : 'Active (Undefendable)',
               ),
             if (showBlindingLightRow)
-              _ActiveTokenBadge(ownerAsset: attackerAsset,
+              _ActiveTokenBadge(ownerWidget: attackerAvatar,
                 tokenLabel: 'Blinding Light',
                 tokenAsset: 'assets/token/Blinding Light.webp',
               ),
@@ -1571,7 +1585,7 @@ final isHeroBattle = phase == CombatPhase.hero;
             ],
 
             if (showGuardBreakRow)
-              _TokenActionRow(ownerAsset: attackerAsset,
+              _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Guard Break',
                 tokenAsset: 'assets/token/Guard-Break.png',
                 text: attackerGuardBreakCount > 1
@@ -1584,7 +1598,7 @@ final isHeroBattle = phase == CombatPhase.hero;
                 onUse: onUseAttackerGuardBreak,
               ),
             if (windShearCount > 0 || windShearActive)
-              _TokenActionRow(ownerAsset: attackerAsset,
+              _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Wind Shear',
                 tokenAsset: 'assets/token/wind-shear.webp',
                 text: windShearCount > 1 ? 'Wind Shear (x)' : 'Wind Shear',
@@ -1595,7 +1609,7 @@ final isHeroBattle = phase == CombatPhase.hero;
                 onUse: onUseWindShear,
               ),
             if (defenderPreyCount > 0)
-              _TokenActionRow(ownerAsset: attackerAsset,
+              _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Prey',
                 tokenAsset: 'assets/token/Prey.png',
                 text: preyUsedCount > 0 ? 'Prey (Used /)' : 'Prey (/)',
@@ -1606,7 +1620,7 @@ final isHeroBattle = phase == CombatPhase.hero;
                 onUse: onUsePrey,
               ),
             if (attackerCritCount > 0 || critUsed)
-              _TokenActionRow(ownerAsset: attackerAsset,
+              _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Crit',
                 tokenAsset: 'assets/token/Crit.png',
                 text: attackerCritCount > 1 ? 'Crit (x)' : 'Crit',
@@ -1617,7 +1631,7 @@ final isHeroBattle = phase == CombatPhase.hero;
                 onUse: onUseCrit,
               ),
             if (attackerAccuracyCount > 0 || accuracyUsed)
-              _TokenActionRow(ownerAsset: attackerAsset,
+              _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Accuracy',
                 tokenAsset: 'assets/token/Accuracy.png',
                 text: attackerAccuracyCount > 1 ? 'Accuracy (x)' : 'Accuracy',
@@ -1630,7 +1644,7 @@ final isHeroBattle = phase == CombatPhase.hero;
             if (honorCount > 0 &&
                 phase == CombatPhase.hero &&
                 honorDamageBonus == 0)
-              _TokenActionRow(ownerAsset: attackerAsset,
+              _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Honor',
                 tokenAsset: 'assets/token/honor.png',
                 text: honorCount > 1 ? 'Honor (x)' : 'Honor',
@@ -1643,7 +1657,7 @@ final isHeroBattle = phase == CombatPhase.hero;
             if (ninjitsuDamageBonus > 0 ||
                 ninjitsuUndefendable ||
                 (ninjitsuCount > 0 && phase == CombatPhase.hero))
-              _TokenActionRow(ownerAsset: attackerAsset,
+              _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Ninjitsu',
                 tokenAsset: 'assets/token/Ninjutsu.webp',
                 text: ninjitsuCount > 1 ? 'Ninjitsu (x)' : 'Ninjitsu',
@@ -1655,19 +1669,8 @@ final isHeroBattle = phase == CombatPhase.hero;
                 canUse: onUseNinjitsu != null,
                 onUse: onUseNinjitsu,
               ),
-            if (salveCount > 0)
-              _TokenActionRow(ownerAsset: attackerAsset,
-                tokenLabel: 'Salve',
-                tokenAsset: 'assets/token/Salve.png',
-                text: salveCount > 1 ? 'Salve (x)' : 'Salve',
-                isActive: false,
-                activeText: '',
-                showUseButton: true,
-                canUse: onUseSalve != null,
-                onUse: onUseSalve,
-              ),
             if (smokeBombCount > 0 || smokeBombSuccess)
-              _TokenActionRow(ownerAsset: attackerAsset,
+              _TokenActionRow(ownerWidget: attackerAvatar,
                 tokenLabel: 'Smoke Bomb',
                 tokenAsset: 'assets/token/bombe-fumigene.png',
                 text: smokeBombCount > 1 ? 'Smoke Bomb (x)' : 'Smoke Bomb',
@@ -2078,7 +2081,7 @@ final isHeroBattle = phase == CombatPhase.hero;
             if (windShearCount > 0 || windShearActive) ...[
               const SizedBox(height: 8),
               if (windShearActive)
-                _ActiveTokenBadge(ownerAsset: attackerAsset,
+                _ActiveTokenBadge(ownerWidget: attackerAvatar,
                   tokenLabel: 'Wind Shear',
                   tokenAsset: 'assets/token/wind-shear.webp',
                   activeText: '+2 DEF / Counter 2 DMG',

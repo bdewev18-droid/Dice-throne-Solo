@@ -1,4 +1,4 @@
-﻿part of '../../main.dart';
+part of '../../main.dart';
 
 class _CombatResolutionPanel extends StatelessWidget {
   const _CombatResolutionPanel({
@@ -627,11 +627,14 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
 
   int _computeHpDelta(int count) {
     final l = widget.rule.label.toLowerCase();
-    if (l == 'regenerate 2' || l == 'rÃ©gÃ©nÃ©ration 2') {
+    if (l == 'regenerate 2' || l == 'régénération 2') {
       return count * 2;
     }
-    if (l == 'regenerate' || l == 'rÃ©gÃ©nÃ©ration') {
+    if (l == 'regenerate' || l == 'régénération') {
       return count * 1;
+    }
+    if (l == 'salve' || l == 'salvo') {
+      return 6;
     }
     if (l.contains('delayed poison') ||
         l.contains('poison latent') ||

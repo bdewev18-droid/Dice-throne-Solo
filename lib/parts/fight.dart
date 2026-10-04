@@ -1,4 +1,4 @@
-﻿part of '../main.dart';
+part of '../main.dart';
 
 int combatDiceAnimationSeconds = 0;
 
@@ -4007,15 +4007,31 @@ class _FightPageState extends State<FightPage> {
   }
 
   Future<void> _triggerSalveAttempt() async {
-    final targetList = _phase == CombatPhase.hero
+    final isHero = _phase == CombatPhase.hero || _phase == CombatPhase.heroUpkeep;
+    final targetList = isHero
         ? widget.adventure.alterations
         : enemy.alterations;
     final idx = targetList.indexWhere((t) => _normalizeTokenKey(t) == 'salve');
     if (idx == -1) return;
 
+    final rule = TokenCatalogRepository.byLabel('Salve');
+    if (rule != null && mounted) {
+      final oldHp = isHero ? widget.adventure.health : enemy.health;
+      final res = await TokenAnimationDialog.show(
+        context,
+        rule: rule,
+        initialCount: 1,
+        isMinion: !isHero,
+        targetName: isHero ? widget.adventure.hero.label : enemy.label,
+        currentHp: oldHp,
+        currentCp: isHero ? widget.adventure.combatPoints : enemy.combatPoints,
+      );
+      if (res == null) return;
+    }
+
     targetList.removeAt(idx);
 
-    if (_phase == CombatPhase.hero) {
+    if (isHero) {
       widget.adventure.setHeroHealth(
         (widget.adventure.health + 6).clamp(0, 999),
         source: 'Salve',

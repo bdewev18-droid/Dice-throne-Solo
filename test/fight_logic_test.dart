@@ -474,5 +474,13 @@ void main() {
       expect(msg, contains('Afflicted by Constrict'));
       expect(msg, contains('each reroll beyond the first costs 1 CP'));
     });
+
+    test('Salve token properties and catalog recognition', () {
+      final salveRule = TokenCatalogRepository.byLabel('Salve');
+      expect(salveRule, isNotNull);
+      expect(salveRule!.imageAsset, 'assets/token/Salve.webp');
+      expect(salveRule.maxStack, equals(99));
+      expect(salveRule.matches('Salve'), isTrue);
+    });
   });
 }
