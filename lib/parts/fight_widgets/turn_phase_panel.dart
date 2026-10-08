@@ -11,7 +11,8 @@ class TurnPhasePanel extends StatelessWidget {
     required this.heroUpkeepApplied,
     this.canAdvance = true,
     required this.onPhaseChanged,
-    required this.onNext,
+    required this.onSettings,
+    this.developerMode = false,
     required this.onApplyUpkeep,
     required this.onApplyHeroUpkeep,
     super.key,
@@ -26,7 +27,8 @@ class TurnPhasePanel extends StatelessWidget {
   final bool heroUpkeepApplied;
   final bool canAdvance;
   final ValueChanged<CombatPhase> onPhaseChanged;
-  final VoidCallback onNext;
+  final VoidCallback onSettings;
+  final bool developerMode;
   final VoidCallback onApplyUpkeep;
   final VoidCallback onApplyHeroUpkeep;
 
@@ -76,25 +78,20 @@ class TurnPhasePanel extends StatelessWidget {
               const SizedBox(width: 8),
               SizedBox(
                 width: 52,
-                height: 44,
-                child: _IntroPulse(
-                  active: phase == CombatPhase.intro,
-                  child: IconButton.filled(
-                    style: IconButton.styleFrom(
-                      backgroundColor: nextColor,
-                      foregroundColor: Colors.black,
+                height: 52,
+                child: IconButton.filledTonal(
+                  tooltip: 'Combat settings',
+                  onPressed: onSettings,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withOpacity(0.22),
+                    foregroundColor: developerMode
+                        ? Colors.orangeAccent
+                        : Colors.white.withOpacity(0.8),
+                    side: BorderSide(
+                      color: Colors.white.withOpacity(0.1),
                     ),
-                    tooltip: phase == CombatPhase.intro
-                        ? 'Start fight'
-                        : (phase == CombatPhase.minionUpkeep &&
-                                  !upkeepApplied) ||
-                              (phase == CombatPhase.heroUpkeep &&
-                                  !heroUpkeepApplied)
-                        ? 'Apply upkeep and continue'
-                        : 'Next phase',
-                    onPressed: canAdvance ? onNext : null,
-                    icon: const Icon(Icons.arrow_forward),
                   ),
+                  icon: const Icon(Icons.settings),
                 ),
               ),
             ],

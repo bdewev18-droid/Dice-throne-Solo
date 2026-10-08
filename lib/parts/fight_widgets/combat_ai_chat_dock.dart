@@ -139,6 +139,10 @@ class CombatAiChatDock extends StatefulWidget {
     this.realityWarpActive = false,
     this.silenceActive = false,
     this.webbedActive = false,
+    this.showUndo = false,
+    this.onUndo,
+    this.canAdvancePhase = false,
+    this.onNext,
     super.key,
   });
 
@@ -231,6 +235,10 @@ class CombatAiChatDock extends StatefulWidget {
   final bool realityWarpActive;
   final bool silenceActive;
   final bool webbedActive;
+  final bool showUndo;
+  final VoidCallback? onUndo;
+  final bool canAdvancePhase;
+  final VoidCallback? onNext;
   final ValueChanged<EnemyNode> onSelectTarget;
   final int returnDamage;
   final bool returnDamageUndefendable;
@@ -285,25 +293,29 @@ class CombatAiChatDock extends StatefulWidget {
 }
 
 class _CombatAiChatDockState extends State<CombatAiChatDock> {
-  static bool _globalCollapsedUpkeep = false;
-  static bool _globalCollapsedRoll = false;
+  bool? _userToggledCollapsed;
+
+  @override
+  void didUpdateWidget(covariant CombatAiChatDock oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.phase != oldWidget.phase) {
+      _userToggledCollapsed = null;
+    }
+  }
 
   bool get _isCollapsed {
+    if (_userToggledCollapsed != null) return _userToggledCollapsed!;
     if (widget.phase == CombatPhase.heroUpkeep ||
-        widget.phase == CombatPhase.minionUpkeep) {
-      return _globalCollapsedUpkeep;
+        widget.phase == CombatPhase.minionUpkeep ||
+        widget.phase == CombatPhase.intro) {
+      return false; // Always unfolded
     } else {
-      return _globalCollapsedRoll;
+      return true; // Always folded during roll phases
     }
   }
 
   set _isCollapsed(bool val) {
-    if (widget.phase == CombatPhase.heroUpkeep ||
-        widget.phase == CombatPhase.minionUpkeep) {
-      _globalCollapsedUpkeep = val;
-    } else {
-      _globalCollapsedRoll = val;
-    }
+    _userToggledCollapsed = val;
   }
 
   @override
@@ -749,8 +761,9 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
             ),
             const SizedBox(height: 8),
           ],
-
-          if (showWellspringRow) ...[
+          _TokenGridLayout(
+            children: [
+              if (showWellspringRow) ...[
             const SizedBox(height: 6),
             _TokenActionRow(
               ownerWidget: tokenOwnerAvatar('Wellspring'),
@@ -2228,11 +2241,13 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
                 return Column(children: rows);
               },
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: showBlindingLightAttackCover
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: showBlindingLightAttackCover
                       ? SizedBox(
                           height: 52,
                           child: ElevatedButton.icon(
@@ -2523,124 +2538,187 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
             child: Container(
               width: double.infinity,
               alignment: Alignment.center,
-              padding: const EdgeInsets.only(top: 8, bottom: 4),
+              padding: const EdgeInsets.only(top: 2, bottom: 2),
               child: Icon(
                 _isCollapsed
-                    ? Icons.keyboard_arrow_down
-                    : Icons.keyboard_arrow_up,
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
                 color: Colors.white54,
+                size: 20,
               ),
             ),
           ),
           if (!_isCollapsed) ...[
             const SizedBox(height: 8),
-            if (aiMode)
-              _AiChatWithHealth(
-                isRollPhase:
-                    phase == CombatPhase.hero ||
-                    phase == CombatPhase.minionAttack,
-                message: _battleChatText(aiMessage, tokenText),
-                accent: chatAccent,
-                heroHp: adventure.health,
-                heroCp: adventure.combatPoints,
-                enemyHp: enemy.health,
-                enemyCp: enemy.combatPoints,
-                enemyCpInfinity: enemyCpInfinity,
-                enemyColor: enemy.rank.color,
-                heroName: adventure.hero.label,
-                enemyName: enemy.label,
-                heroTokens: adventure.alterations.map((t) {
-                  if (shadowsActive &&
-                      (t.toLowerCase() == 'shadows' ||
-                          t.toLowerCase() == 'ombre')) {
-                    return '${t}_active';
-                  }
-                  if (phase == CombatPhase.hero &&
-                      (barbedVineActive || barbedVineCount > 0) &&
-                      (t.toLowerCase() == 'barbed vine' ||
-                          t.toLowerCase() == 'barbedvine' ||
-                          t.toLowerCase() == 'ronces' ||
-                          t.toLowerCase() == 'ronce')) {
-                    return '${t}_active';
-                  }
-                  if ((phase == CombatPhase.hero ||
-                          phase == CombatPhase.minionAttack) &&
-                      influenceRollReduction > 0 &&
-                      t.toLowerCase() == 'influence') {
-                    return '$t (-$influenceRollReduction)_active';
-                  }
-                  return t;
-                }).toList(),
-                enemyTokens: enemy.alterations.map((t) {
-                  if (phase == CombatPhase.minionAttack &&
-                      (barbedVineActive || barbedVineCount > 0) &&
-                      (t.toLowerCase() == 'barbed vine' ||
-                          t.toLowerCase() == 'barbedvine' ||
-                          t.toLowerCase() == 'ronces' ||
-                          t.toLowerCase() == 'ronce')) {
-                    return '${t}_active';
-                  }
-                  if ((phase == CombatPhase.hero ||
-                          phase == CombatPhase.minionAttack) &&
-                      influenceRollReduction > 0 &&
-                      t.toLowerCase() == 'influence') {
-                    return '$t (-$influenceRollReduction)_active';
-                  }
-                  return t;
-                }).toList(),
-                onEditHeroTokens: onEditHeroTokens,
-                onEditEnemyTokens: onEditEnemyTokens,
-                onTokensChanged: onChanged,
-                onHeroTokenRemoved: onHeroTokenRemoved,
-                onEnemyTokenRemoved: onEnemyTokenRemoved,
-                portraitAsset:
-                    phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
-                    ? adventure.hero.asset
-                    : enemy.previewAsset,
-                portraitAlignment:
-                    phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
-                    ? _topCropAlignment(adventure.hero.imageAlignment)
-                    : enemy.profileKey == 'naraxus'
-                    ? Alignment.topCenter
-                    : _topCropAlignment(Alignment.centerLeft),
-                portraitScale:
-                    phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
-                    ? adventure.hero.imageScale
-                    : 1,
-                portraitFit: BoxFit.cover,
-                showPortraitVitals:
-                    phase == CombatPhase.hero ||
-                    phase == CombatPhase.minionAttack,
-                showHealthControls: false,
-                onHeroHpSaved: (value) {
-                  adventure.setHeroHealth(value);
-                  onChanged();
-                },
-                onHeroCpSaved: (value) {
-                  adventure.setHeroPc(value);
-                  onChanged();
-                },
-                onEnemyHpSaved: (value) {
-                  final oldHp = enemy.health;
-                  enemy.health = value.clamp(0, enemy.maxHealth);
-                  if (oldHp != enemy.health) {
-                    adventure.log(
-                      '[HP] ${enemy.label} HP: $oldHp âž” ${enemy.health} (Manual Adjustment)',
-                    );
-                  }
-                  onChanged();
-                },
-                onEnemyCpSaved: (value) {
-                  final oldCp = enemy.combatPoints;
-                  enemy.combatPoints = value.clamp(0, 99);
-                  if (oldCp != enemy.combatPoints) {
-                    adventure.log(
-                      '[CP] ${enemy.label} CP: $oldCp âž” ${enemy.combatPoints} (Manual Adjustment)',
-                    );
-                  }
-                  onChanged();
-                },
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: !aiMode
+                        ? const SizedBox.shrink()
+                        : _AiChatWithHealth(
+                            isRollPhase:
+                                phase == CombatPhase.hero ||
+                                phase == CombatPhase.minionAttack,
+                            message: _battleChatText(aiMessage, tokenText),
+                            accent: chatAccent,
+                            heroHp: adventure.health,
+                            heroCp: adventure.combatPoints,
+                            enemyHp: enemy.health,
+                            enemyCp: enemy.combatPoints,
+                            enemyCpInfinity: enemyCpInfinity,
+                            enemyColor: enemy.rank.color,
+                            heroName: adventure.hero.label,
+                            enemyName: enemy.label,
+                            heroTokens: adventure.alterations.map((t) {
+                              if (shadowsActive &&
+                                  (t.toLowerCase() == 'shadows' ||
+                                      t.toLowerCase() == 'ombre')) {
+                                return '${t}_active';
+                              }
+                              if (phase == CombatPhase.hero &&
+                                  (barbedVineActive || barbedVineCount > 0) &&
+                                  (t.toLowerCase() == 'barbed vine' ||
+                                      t.toLowerCase() == 'barbedvine' ||
+                                      t.toLowerCase() == 'ronces' ||
+                                      t.toLowerCase() == 'ronce')) {
+                                return '${t}_active';
+                              }
+                              if ((phase == CombatPhase.hero ||
+                                      phase == CombatPhase.minionAttack) &&
+                                  influenceRollReduction > 0 &&
+                                  t.toLowerCase() == 'influence') {
+                                return '$t (-$influenceRollReduction)_active';
+                              }
+                              return t;
+                            }).toList(),
+                            enemyTokens: enemy.alterations.map((t) {
+                              if (phase == CombatPhase.minionAttack &&
+                                  (barbedVineActive || barbedVineCount > 0) &&
+                                  (t.toLowerCase() == 'barbed vine' ||
+                                      t.toLowerCase() == 'barbedvine' ||
+                                      t.toLowerCase() == 'ronces' ||
+                                      t.toLowerCase() == 'ronce')) {
+                                return '${t}_active';
+                              }
+                              if ((phase == CombatPhase.hero ||
+                                      phase == CombatPhase.minionAttack) &&
+                                  influenceRollReduction > 0 &&
+                                  t.toLowerCase() == 'influence') {
+                                return '$t (-$influenceRollReduction)_active';
+                              }
+                              return t;
+                            }).toList(),
+                            onEditHeroTokens: onEditHeroTokens,
+                            onEditEnemyTokens: onEditEnemyTokens,
+                            onTokensChanged: onChanged,
+                            onHeroTokenRemoved: onHeroTokenRemoved,
+                            onEnemyTokenRemoved: onEnemyTokenRemoved,
+                            portraitAsset:
+                                phase == CombatPhase.hero ||
+                                    phase == CombatPhase.heroUpkeep
+                                ? adventure.hero.asset
+                                : enemy.previewAsset,
+                            portraitAlignment:
+                                phase == CombatPhase.hero ||
+                                    phase == CombatPhase.heroUpkeep
+                                ? _topCropAlignment(
+                                    adventure.hero.imageAlignment,
+                                  )
+                                : enemy.profileKey == 'naraxus'
+                                ? Alignment.topCenter
+                                : _topCropAlignment(Alignment.centerLeft),
+                            portraitScale:
+                                phase == CombatPhase.hero ||
+                                    phase == CombatPhase.heroUpkeep
+                                ? adventure.hero.imageScale
+                                : 1,
+                            portraitFit: BoxFit.cover,
+                            showPortraitVitals:
+                                phase == CombatPhase.hero ||
+                                phase == CombatPhase.minionAttack,
+                            showHealthControls: false,
+                            onHeroHpSaved: (value) {
+                              adventure.setHeroHealth(value);
+                              onChanged();
+                            },
+                            onHeroCpSaved: (value) {
+                              adventure.setHeroPc(value);
+                              onChanged();
+                            },
+                            onEnemyHpSaved: (value) {
+                              final oldHp = enemy.health;
+                              enemy.health = value.clamp(0, enemy.maxHealth);
+                              if (oldHp != enemy.health) {
+                                adventure.log(
+                                  '[HP] ${enemy.label} HP: $oldHp âž” ${enemy.health} (Manual Adjustment)',
+                                );
+                              }
+                              onChanged();
+                            },
+                            onEnemyCpSaved: (value) {
+                              final oldCp = enemy.combatPoints;
+                              enemy.combatPoints = value.clamp(0, 99);
+                              if (oldCp != enemy.combatPoints) {
+                                adventure.log(
+                                  '[CP] ${enemy.label} CP: $oldCp âž” ${enemy.combatPoints} (Manual Adjustment)',
+                                );
+                              }
+                              onChanged();
+                            },
+                          ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: SizedBox(
+                      width: 52,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: widget.showUndo ? widget.onUndo : null,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xff8f43ff),
+                                disabledBackgroundColor: Colors.white10,
+                                disabledForegroundColor: Colors.white24,
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.zero,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Icon(Icons.arrow_back),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Expanded(
+                            child: _IntroPulse(
+                              active: widget.phase == CombatPhase.intro,
+                              child: FilledButton(
+                                onPressed: widget.canAdvancePhase ? widget.onNext : null,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xff8f43ff),
+                                  disabledBackgroundColor: Colors.white10,
+                                  disabledForegroundColor: Colors.white24,
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Icon(Icons.arrow_forward),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
+            ),
           ],
           if (onFinish != null) ...[
             const SizedBox(height: 10),

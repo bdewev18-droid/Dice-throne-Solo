@@ -204,17 +204,13 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
           ),
         );
       },
-      home: Builder(
-        builder: (context) => _buildHomePage(context),
-      ),
+      home: Builder(builder: (context) => _buildHomePage(context)),
     );
   }
 
   Widget _buildHomePage(BuildContext context) {
     if (!_storageReady) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return HomePage(
       activeAdventure: _activeAdventure,
@@ -246,10 +242,18 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
                 ),
                 onChangeHero: () => _openHeroChoice(context),
                 onReplay: () {
-                  final next = AdventureState(hero: adventure.hero, config: adventure.config);
+                  final next = AdventureState(
+                    hero: adventure.hero,
+                    config: adventure.config,
+                  );
                   _activeAdventure = next;
                   _saveActiveAdventure();
-                  _replaceWithMap(context, next, adventure.hero, adventure.config);
+                  _replaceWithMap(
+                    context,
+                    next,
+                    adventure.hero,
+                    adventure.config,
+                  );
                 },
               ),
             ),
@@ -270,7 +274,6 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
       _AppBootstrap.restartApp(context);
     }
   }
-
 
   Future<void> _loadActiveAdventure() async {
     final raw = await _store.read();
@@ -578,7 +581,9 @@ class _HomePageState extends State<HomePage> {
                                 label: 'Minion rush',
                                 icon: Icons.shield,
                                 badgeLabel: 'Coming soon',
-                                onPressed: AppSettings.instance.developerMode ? widget.onSurvival : null,
+                                onPressed: AppSettings.instance.developerMode
+                                    ? widget.onSurvival
+                                    : null,
                               )
                             else
                               ActiveCampaignHomeCard(
@@ -599,7 +604,8 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 18),
                   VersionPill(
-                    label: '$appVersionLabel${AppSettings.instance.developerMode ? ' - Dev mode' : ''}',
+                    label:
+                        '$appVersionLabel${AppSettings.instance.developerMode ? ' - Dev mode' : ''}',
                     isDev: AppSettings.instance.developerMode,
                     onTap: () async {
                       await AppSettings.instance.setDeveloperMode(
@@ -771,7 +777,10 @@ class ActiveCampaignHomeCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             icon: const Icon(Icons.warning_rounded, size: 18),
-            label: const Text('Abandonner la quête', style: TextStyle(fontWeight: FontWeight.bold)),
+            label: const Text(
+              'Abandonner la quête',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ],
@@ -824,6 +833,7 @@ class ImageActionButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.badgeLabel,
+    this.color,
     super.key,
   });
 
@@ -831,6 +841,7 @@ class ImageActionButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onPressed;
   final String? badgeLabel;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -847,7 +858,7 @@ class ImageActionButton extends StatelessWidget {
               child: Ink(
                 height: 84,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
+                  color: color ?? Colors.black.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.white24, width: 1.5),
                 ),
@@ -876,7 +887,10 @@ class ImageActionButton extends StatelessWidget {
             Transform.rotate(
               angle: -0.08,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 2,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xffd6512a).withValues(alpha: 0.82),
                   borderRadius: BorderRadius.circular(4),
@@ -941,16 +955,14 @@ class AccountChip extends StatelessWidget {
         ),
       );
     }
-    if (auth.isSignedIn && !auth.isAnonymous && (auth.email?.isNotEmpty ?? false)) {
+    if (auth.isSignedIn &&
+        !auth.isAnonymous &&
+        (auth.email?.isNotEmpty ?? false)) {
       return _pill(
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.verified_user,
-              size: 16,
-              color: Colors.white,
-            ),
+            const Icon(Icons.verified_user, size: 16, color: Colors.white),
             const SizedBox(width: 6),
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 140),

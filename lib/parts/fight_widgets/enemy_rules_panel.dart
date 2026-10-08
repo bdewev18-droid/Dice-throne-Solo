@@ -1,4 +1,4 @@
-﻿part of '../../main.dart';
+part of '../../main.dart';
 
 class EnemyRulesPanel extends StatefulWidget {
   const EnemyRulesPanel({
@@ -14,6 +14,8 @@ class EnemyRulesPanel extends StatefulWidget {
     required this.onUndo,
     this.attackKey,
     this.defenseKey,
+    this.showOnlyAttack = false,
+    this.showOnlyDefense = false,
     super.key,
   });
 
@@ -29,6 +31,8 @@ class EnemyRulesPanel extends StatefulWidget {
   final VoidCallback onUndo;
   final Key? attackKey;
   final Key? defenseKey;
+  final bool showOnlyAttack;
+  final bool showOnlyDefense;
 
   @override
   State<EnemyRulesPanel> createState() => _EnemyRulesPanelState();
@@ -163,21 +167,20 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _RulesBackgroundBand(
-          asset: 'assets/attack_background_feline_shadow.png',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 8),
-              attackContent,
-            ],
+        if (!widget.showOnlyDefense)
+          _RulesBackgroundBand(
+            asset: 'assets/attack_background_feline_shadow.png',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [const SizedBox(height: 8), attackContent],
+            ),
           ),
-        ),
-        _RulesBackgroundBand(
-          asset: 'assets/defense_background_feline_shadow.png',
-          child: defenseContent,
-        ),
-        if (_hasPassiveContent)
+        if (!widget.showOnlyAttack)
+          _RulesBackgroundBand(
+            asset: 'assets/defense_background_feline_shadow.png',
+            child: defenseContent,
+          ),
+        if (!widget.showOnlyDefense && _hasPassiveContent)
           _RulesBackgroundBand(
             asset: 'assets/passive_background_umbra.png',
             child: _CollapsibleRulesLine(
@@ -2213,9 +2216,10 @@ class CombatBottomDock extends StatelessWidget {
     required this.heroUpkeepApplied,
     required this.canAdvancePhase,
     required this.onPhaseChanged,
-    required this.onNext,
+    required this.onSettings,
     required this.onApplyUpkeep,
     required this.onApplyHeroUpkeep,
+    required this.developerMode,
     super.key,
   });
 
@@ -2228,16 +2232,15 @@ class CombatBottomDock extends StatelessWidget {
   final bool heroUpkeepApplied;
   final bool canAdvancePhase;
   final ValueChanged<CombatPhase> onPhaseChanged;
-  final VoidCallback onNext;
+  final VoidCallback onSettings;
   final VoidCallback onApplyUpkeep;
   final VoidCallback onApplyHeroUpkeep;
+  final bool developerMode;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xf2121212),
-      ),
+      decoration: const BoxDecoration(color: Color(0xf2121212)),
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       child: TurnPhasePanel(
         phase: phase,
@@ -2249,9 +2252,10 @@ class CombatBottomDock extends StatelessWidget {
         heroUpkeepApplied: heroUpkeepApplied,
         canAdvance: canAdvancePhase,
         onPhaseChanged: onPhaseChanged,
-        onNext: onNext,
+        onSettings: onSettings,
         onApplyUpkeep: onApplyUpkeep,
         onApplyHeroUpkeep: onApplyHeroUpkeep,
+        developerMode: developerMode,
       ),
     );
   }

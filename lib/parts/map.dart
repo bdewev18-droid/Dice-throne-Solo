@@ -215,69 +215,67 @@ class _MapPageState extends State<MapPage> {
                           minScale: 0.45,
                           maxScale: 2.4,
                           transformationController: _mapController,
-                                child: SizedBox(
-                                  width: renderSize.width,
-                                  height: renderSize.height,
-                                  child: Stack(
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      ..._buildMapNodes(context, mapSize),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        if (adventure.finished)
-                          Positioned(
-                            left: 16,
-                            right: 16,
-                            top: 12,
-                            child: EndAdventureBanner(
-                              adventure: adventure,
-                              onReplay: widget.onReplay,
-                              onChangeHero: widget.onChangeHero,
-                              onDetails: () => Navigator.of(
-                                context,
-                              ).popUntil((route) => route.isFirst),
+                          child: SizedBox(
+                            width: renderSize.width,
+                            height: renderSize.height,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [..._buildMapNodes(context, mapSize)],
                             ),
                           ),
-                        if (adventure.defeatedEnemies.isEmpty)
-                          Positioned(
-                            left: 12,
-                            right: 12,
-                            bottom: 126,
-                            child: MapObjectiveCard(adventure: adventure),
-                          ),
-                        Positioned(
-                          left: 12,
-                          right: 12,
-                          bottom: 12,
-                          child: CurrentTargetCard(
-                            enemy: currentTarget,
-                            choices: availableTargets,
-                            onSelectChoice: _selectEnemy,
-                            onFight: currentTarget == null
-                                ? null
-                                : () => _openFight(currentTarget),
-                          ),
-                        ),
-                        Positioned(
-                          top: 16,
-                          left: 16,
-                          right: 16,
-                          child: MapHeader(
-                            adventure: adventure,
-                            showRewards: false,
-                            onDetails: () => _openDetails(context),
-                            onChanged: () {
-                              widget.onChanged();
-                              setState(() {});
-                            },
-                            onPause: _openPauseDialog,
-                          ),
-                        ),
+                        );
+                      },
+                    ),
+                  ),
+                  if (adventure.finished)
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      top: 12,
+                      child: EndAdventureBanner(
+                        adventure: adventure,
+                        onReplay: widget.onReplay,
+                        onChangeHero: widget.onChangeHero,
+                        onDetails: () => Navigator.of(
+                          context,
+                        ).popUntil((route) => route.isFirst),
+                      ),
+                    ),
+                  if (adventure.defeatedEnemies.isEmpty)
+                    Positioned(
+                      left: 12,
+                      right: 12,
+                      bottom: 126,
+                      child: MapObjectiveCard(adventure: adventure),
+                    ),
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: 12,
+                    child: CurrentTargetCard(
+                      enemy: currentTarget,
+                      choices: availableTargets,
+                      onSelectChoice: _selectEnemy,
+                      onFight: currentTarget == null
+                          ? null
+                          : () => _openFight(currentTarget),
+                    ),
+                  ),
+                  Positioned(
+                    top: 16,
+                    left: 16,
+                    right: 16,
+                    child: MapHeader(
+                      adventure: adventure,
+                      showRewards: false,
+                      onDetails: () => _openDetails(context),
+                      onChanged: () {
+                        widget.onChanged();
+                        setState(() {});
+                      },
+                      onPause: _openPauseDialog,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -527,9 +525,9 @@ class _MapPageState extends State<MapPage> {
                   navigator.pop();
                 }
                 if (rewardDue == true && mounted) {
-                    widget.onChanged();
-                    setState(() {});
-                  }
+                  widget.onChanged();
+                  setState(() {});
+                }
               },
             ),
           ),
@@ -698,7 +696,10 @@ class _MapHeaderState extends State<MapHeader> {
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.3),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.5),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.1),
+              width: 1.5,
+            ),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
@@ -717,7 +718,8 @@ class _MapHeaderState extends State<MapHeader> {
                       ),
                     ),
                   ),
-                  if (!adventure.config.isNaraxusMode && adventure.targetScore > 0) ...[
+                  if (!adventure.config.isNaraxusMode &&
+                      adventure.targetScore > 0) ...[
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -753,110 +755,120 @@ class _MapHeaderState extends State<MapHeader> {
                   ),
                 ],
               ),
-          if (widget.showVitals) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                SizedBox(
-                  width: 62,
-                  child: _MapCombatBadgeButton(
-                    tooltip: 'HP: ${adventure.health}',
-                    onTap: () => _openStatEditor('HP', adventure.health),
-                    child: _HpHeartBadge(
-                      value: adventure.health,
-                      style: _CombatHpStyle.hero,
+              if (widget.showVitals) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 62,
+                      child: _MapCombatBadgeButton(
+                        tooltip: 'HP: ${adventure.health}',
+                        onTap: () => _openStatEditor('HP', adventure.health),
+                        child: _HpHeartBadge(
+                          value: adventure.health,
+                          style: _CombatHpStyle.hero,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 2),
+                    SizedBox(
+                      width: 62,
+                      child: _MapCombatBadgeButton(
+                        tooltip: 'CP: ${adventure.combatPoints}',
+                        onTap: () =>
+                            _openStatEditor('CP', adventure.combatPoints),
+                        child: _PcTriangleBadge(value: adventure.combatPoints),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: HeroTokenStrip(
+                        tokens: adventure.alterations,
+                        onEdit: () async {
+                          final values = await showAlterationDialog(
+                            context,
+                            adventure.alterations,
+                            duelTokens: [
+                              ...TokenCatalogRepository.heroTokens(
+                                adventure.hero,
+                              ),
+                              ...adventure.alterations,
+                            ],
+                            isMapPage: true,
+                          );
+                          if (values != null) {
+                            adventure.setAlterations(values);
+                            widget.onChanged();
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 2),
-                SizedBox(
-                  width: 62,
-                  child: _MapCombatBadgeButton(
-                    tooltip: 'CP: ${adventure.combatPoints}',
-                    onTap: () => _openStatEditor('CP', adventure.combatPoints),
-                    child: _PcTriangleBadge(value: adventure.combatPoints),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: HeroTokenStrip(
-                    tokens: adventure.alterations,
-                    onEdit: () async {
-                      final values = await showAlterationDialog(
-                        context,
-                        adventure.alterations,
-                        duelTokens: [...TokenCatalogRepository.heroTokens(adventure.hero), ...adventure.alterations],
-                        isMapPage: true,
-                      );
-                      if (values != null) {
-                        adventure.setAlterations(values);
-                        widget.onChanged();
-                      }
-                    },
+              ],
+              if (widget.showRewards) ...[
+                const SizedBox(height: 8),
+                CompactItemStrip(
+                  label: 'Rewards',
+                  emptyText: 'Rewards',
+                  items: adventure.bonuses,
+                  accent: heroAccent,
+                  background: Colors.black.withValues(alpha: 0.32),
+                  border: panelBorderGrey,
+                  compactDuplicates: false,
+                  leading: Icon(
+                    Icons.emoji_events,
+                    color: heroAccent,
+                    size: 18,
                   ),
                 ),
               ],
-            ),
-          ],
-          if (widget.showRewards) ...[
-            const SizedBox(height: 8),
-            CompactItemStrip(
-              label: 'Rewards',
-              emptyText: 'Rewards',
-              items: adventure.bonuses,
-              accent: heroAccent,
-              background: Colors.black.withValues(alpha: 0.32),
-              border: panelBorderGrey,
-              compactDuplicates: false,
-              leading: Icon(Icons.emoji_events, color: heroAccent, size: 18),
-            ),
-          ],
-          if (_editing != null) ...[
-            const SizedBox(height: 10),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Row(
-                children: [
-                  _buildCompactStatEditor(
-                    label: 'HP',
-                    color: Colors.redAccent,
-                    value: widget.adventure.health,
-                    onChanged: (val) {
-                      setState(() => widget.adventure.setHeroHealth(val));
-                      widget.onChanged();
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  _buildCompactStatEditor(
-                    label: 'CP',
-                    color: Colors.amber,
-                    value: widget.adventure.combatPoints,
-                    onChanged: (val) {
-                      setState(() => widget.adventure.setHeroPc(val));
-                      widget.onChanged();
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    onPressed: () => setState(() => _editing = null),
-                    icon: const Icon(Icons.check, size: 24),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xff54e98a),
-                      foregroundColor: Colors.black,
-                      minimumSize: const Size(50, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+              if (_editing != null) ...[
+                const SizedBox(height: 10),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      _buildCompactStatEditor(
+                        label: 'HP',
+                        color: Colors.redAccent,
+                        value: widget.adventure.health,
+                        onChanged: (val) {
+                          setState(() => widget.adventure.setHeroHealth(val));
+                          widget.onChanged();
+                        },
                       ),
-                    ),
-                    tooltip: 'Fermer',
+                      const SizedBox(width: 8),
+                      _buildCompactStatEditor(
+                        label: 'CP',
+                        color: Colors.amber,
+                        value: widget.adventure.combatPoints,
+                        onChanged: (val) {
+                          setState(() => widget.adventure.setHeroPc(val));
+                          widget.onChanged();
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        onPressed: () => setState(() => _editing = null),
+                        icon: const Icon(Icons.check, size: 24),
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xff54e98a),
+                          foregroundColor: Colors.black,
+                          minimumSize: const Size(50, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        tooltip: 'Fermer',
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -1296,7 +1308,12 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
     final lastIndex = _lastSelectedIndices[rank];
     if (lastIndex == null) {
       if (rank == EnemyRank.green) {
-        return _profiles.firstWhere((p) => p.name.toLowerCase().contains('fée') || p.name.toLowerCase().contains('fee'), orElse: () => _profiles.first);
+        return _profiles.firstWhere(
+          (p) =>
+              p.name.toLowerCase().contains('fée') ||
+              p.name.toLowerCase().contains('fee'),
+          orElse: () => _profiles.first,
+        );
       }
       return _profiles.first;
     } else {
@@ -1398,9 +1415,12 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
               ImageActionButton(
                 label: 'Next',
                 icon: Icons.arrow_forward,
+                color: const Color(0xff8f43ff),
                 onPressed: () {
                   final rank = widget.rank ?? widget.enemy.rank;
-                  final index = _profiles.indexWhere((p) => p.key == _selected.key);
+                  final index = _profiles.indexWhere(
+                    (p) => p.key == _selected.key,
+                  );
                   if (index >= 0) {
                     _lastSelectedIndices[rank] = index;
                   }
@@ -1488,8 +1508,7 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                       ),
                     ),
                   ),
-                  if (widget.showNext &&
-                      enemy.alterations.any(_isFirstStrike))
+                  if (widget.showNext && enemy.alterations.any(_isFirstStrike))
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: Padding(
@@ -1979,7 +1998,10 @@ class HeroStatusBar extends StatelessWidget {
                   final values = await showAlterationDialog(
                     context,
                     adventure.alterations,
-                    duelTokens: [...TokenCatalogRepository.heroTokens(adventure.hero), ...adventure.alterations],
+                    duelTokens: [
+                      ...TokenCatalogRepository.heroTokens(adventure.hero),
+                      ...adventure.alterations,
+                    ],
                     isMapPage: true,
                   );
                   if (values != null) {

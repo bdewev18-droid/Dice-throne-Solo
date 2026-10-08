@@ -456,3 +456,81 @@ class _ActiveTokenBadge extends StatelessWidget {
     );
   }
 }
+class _TokenGridLayout extends StatelessWidget {
+  const _TokenGridLayout({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> validTokens = [];
+    for (final child in children) {
+      if (child is SizedBox) continue;
+      validTokens.add(child);
+    }
+    
+    if (validTokens.isEmpty) return const SizedBox.shrink();
+
+    if (validTokens.length == 1) return validTokens.first;
+
+    if (validTokens.length == 2) return Row(
+      children: [
+        Expanded(child: validTokens[0]),
+        const SizedBox(width: 8),
+        Expanded(child: validTokens[1]),
+      ]
+    );
+
+    if (validTokens.length == 3) return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(child: validTokens[0]),
+            const SizedBox(width: 8),
+            Expanded(child: validTokens[1]),
+          ]
+        ),
+        const SizedBox(height: 8),
+        validTokens[2],
+      ]
+    );
+
+    if (validTokens.length == 4) return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(child: validTokens[0]),
+            const SizedBox(width: 8),
+            Expanded(child: validTokens[1]),
+          ]
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: validTokens[2]),
+            const SizedBox(width: 8),
+            Expanded(child: validTokens[3]),
+          ]
+        ),
+      ]
+    );
+
+    List<Widget> rows = [];
+    for (int i = 0; i < validTokens.length; i += 2) {
+      if (i + 1 < validTokens.length) {
+        rows.add(Row(
+          children: [
+            Expanded(child: validTokens[i]),
+            const SizedBox(width: 8),
+            Expanded(child: validTokens[i+1]),
+          ]
+        ));
+      } else {
+        rows.add(validTokens[i]);
+      }
+      if (i + 2 < validTokens.length) rows.add(const SizedBox(height: 8));
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: rows);
+  }
+}

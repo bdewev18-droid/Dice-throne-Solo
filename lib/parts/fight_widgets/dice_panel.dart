@@ -1,4 +1,4 @@
-﻿part of '../../main.dart';
+part of '../../main.dart';
 
 class DicePanel extends StatelessWidget {
   const DicePanel({
@@ -64,10 +64,17 @@ class DicePanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              const SizedBox(width: 48), // Balance for dropdown
+              Expanded(
                 child: Text(
-                  'Dice zone',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  maxRolls > 1
+                      ? 'Dice zone - $rollCount/$maxRolls'
+                      : 'Dice zone',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
               DropdownButton<int>(
@@ -88,60 +95,61 @@ class DicePanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: heroAccent,
-                  foregroundColor: Colors.black,
-                ),
-                onPressed: onToggleEdit,
-                icon: const Icon(Icons.tune),
-                label: Text(editMode ? 'Stop edit' : 'Edit a die'),
-              ),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: heroAccent,
-                  foregroundColor: Colors.black,
-                ),
-                onPressed: onToggleRerollOne,
-                icon: const Icon(Icons.refresh),
-                label: Text(rerollOneMode ? 'Choose a die' : 'Reroll one die'),
-              ),
-            ],
-          ),
           const SizedBox(height: 10),
           DiceZone(title: 'Dice to roll', dice: rollDice, onTapDie: onTapDie),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           Row(
             children: [
-              if (maxRolls > 1) ...[
-                Text(
-                  '$rollCount / $maxRolls',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(width: 10),
-              ],
               Expanded(
+                flex: 2,
                 child: _SolidRollButton(
                   onPressed:
                       !hasRollingDice && rollCount < maxRolls && diceToRoll > 0
                       ? onRoll
                       : null,
                   color: rollColor,
-                  child: Text(rollLabel),
+                  child: Text(rollLabel, textAlign: TextAlign.center),
                 ),
               ),
-              const _CubeIcon(size: 28),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 1,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: heroAccent,
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size(0, 46),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                  ),
+                  onPressed: onToggleEdit,
+                  child: Text(
+                    editMode ? 'Stop edit' : 'Edit die',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 1,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: heroAccent,
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size(0, 46),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                  ),
+                  onPressed: onToggleRerollOne,
+                  child: Text(
+                    rerollOneMode ? 'Choose' : 'Reroll die',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           DiceZone(title: 'Reserve', dice: reserveDice, onTapDie: onTapDie),
           if (editingDie != null) ...[
             const SizedBox(height: 12),
@@ -508,4 +516,3 @@ class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
     );
   }
 }
-
