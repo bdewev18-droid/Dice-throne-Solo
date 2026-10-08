@@ -2242,6 +2242,7 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
               },
             ),
             ],
+            ],
           ),
           const SizedBox(height: 8),
           Row(
