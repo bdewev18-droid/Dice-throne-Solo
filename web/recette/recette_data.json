@@ -2,6 +2,24 @@
   "versions": [
     {
       "version": "1.4.22",
+      "buildNumber": 333,
+      "date": "2026-10-10",
+      "commit": "local-dev",
+      "summary": "Fix AI Chat dice suite regex overlap",
+      "prompts": [
+        "pas pour la suite des chiffres cf image"
+      ],
+      "features": [
+        "Added negative lookaheads to prevent single-die regex from swallowing the first digit of a suite"
+      ],
+      "tags": [
+        "ui",
+        "chat",
+        "bugfix"
+      ]
+    },
+    {
+      "version": "1.4.22",
       "buildNumber": 332,
       "date": "2026-10-10",
       "commit": "local-dev",
