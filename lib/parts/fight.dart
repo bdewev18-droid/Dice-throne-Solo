@@ -9221,7 +9221,7 @@ List<InlineSpan> _chatSpans(
 }) {
   final spans = <InlineSpan>[];
   final pattern = RegExp(
-    '(${RegExp.escape(heroName)}|${RegExp.escape(enemyName)}|\\{[a-zA-Z]+:[^}]+\\}|\\*\\*[^*]+\\*\\*|_[^_]+_|prevents? \\d+ damage|prevented \\d+ damage|prÃ©vents? \\d+ damage|prÃ©vient \\d+ damage|returns? \\d+ undefendable damage|returned \\d+ undefendable damage|deals? \\d+ undefendable damage|dealt \\d+ undefendable damage|inflicts? \\d+ undefendable damage|inflige \\d+ undefendable damage|returns? \\d+ damage|returned \\d+ damage|deals? \\d+ defendable damage|dealt \\d+ defendable damage|inflicts? \\d+ defendable damage|inflige \\d+ defendable damage|deals? \\d+ damage|dealt \\d+ damage|inflicts? \\d+ damage|inflige \\d+ damage|heals? \\d+ HP|healed \\d+ HP|\\d+ HP|rolled [1-6]|d6: [1-6]|keep [1-6]|with [1-6]|[1-6](?:/[1-6])+|❤|❤️)',
+    '(${RegExp.escape(heroName)}|${RegExp.escape(enemyName)}|\\{[a-zA-Z]+:[^}]+\\}|\\*\\*[^*]+\\*\\*|_[^_]+_|prevents? \\d+ damage|prevented \\d+ damage|prÃ©vents? \\d+ damage|prÃ©vient \\d+ damage|returns? \\d+ undefendable damage|returned \\d+ undefendable damage|deals? \\d+ undefendable damage|dealt \\d+ undefendable damage|inflicts? \\d+ undefendable damage|inflige \\d+ undefendable damage|returns? \\d+ damage|returned \\d+ damage|deals? \\d+ defendable damage|dealt \\d+ defendable damage|inflicts? \\d+ defendable damage|inflige \\d+ defendable damage|deals? \\d+ damage|dealt \\d+ damage|inflicts? \\d+ damage|inflige \\d+ damage|heals? \\d+ HP|healed \\d+ HP|\\d+ HP|[1-6](?:/[1-6])+|rolled [1-6]|d6: [1-6]|keep [1-6]|with [1-6]|❤|❤️)',
     caseSensitive: false,
   );
   var index = 0;
@@ -9312,9 +9312,9 @@ InlineSpan? _chatVisualSpan(String token, {required Color enemyColor}) {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2),
               child: Image.asset(
-                'assets/dice_faces/face_.webp',
-                width: 18,
-                height: 18,
+                'assets/dice_faces/face_$faceValue.webp',
+                width: 20,
+                height: 20,
               ),
             ),
           ),
@@ -9334,9 +9334,9 @@ InlineSpan? _chatVisualSpan(String token, {required Color enemyColor}) {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2),
               child: Image.asset(
-                'assets/dice_faces/face_.webp',
-                width: 18,
-                height: 18,
+                'assets/dice_faces/face_$faceValue.webp',
+                width: 20,
+                height: 20,
               ),
             ),
           ),
@@ -9357,9 +9357,9 @@ InlineSpan? _chatVisualSpan(String token, {required Color enemyColor}) {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 1),
               child: Image.asset(
-                'assets/dice_faces/face_.webp',
-                width: 18,
-                height: 18,
+                'assets/dice_faces/face_$faceValue.webp',
+                width: 20,
+                height: 20,
               ),
             ),
           ),
@@ -11759,8 +11759,8 @@ class SuiteGoalView extends StatelessWidget {
       children: [
         for (var index = 0; index < count; index++)
           Container(
-            width: 18 + index * 4,
-            height: 18 + index * 4,
+            width: 20 + index * 4,
+            height: 20 + index * 4,
             decoration: BoxDecoration(
               color: Colors.black,
               borderRadius: BorderRadius.circular(4),

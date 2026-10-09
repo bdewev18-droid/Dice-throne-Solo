@@ -2,6 +2,25 @@
   "versions": [
     {
       "version": "1.4.22",
+      "buildNumber": 332,
+      "date": "2026-10-10",
+      "commit": "local-dev",
+      "summary": "Fix AI Chat dice missing rendering",
+      "prompts": [
+        "je ne vois pas les des dans le AI chat"
+      ],
+      "features": [
+        "Fixed string interpolation bug in dart breaking the dice faces image path",
+        "Reordered regex to properly parse dice sequences like 1/2/3"
+      ],
+      "tags": [
+        "ui",
+        "chat",
+        "bugfix"
+      ]
+    },
+    {
+      "version": "1.4.22",
       "buildNumber": 331,
       "date": "2026-10-10",
       "commit": "local-dev",
