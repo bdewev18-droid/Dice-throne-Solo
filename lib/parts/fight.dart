@@ -9221,7 +9221,7 @@ List<InlineSpan> _chatSpans(
 }) {
   final spans = <InlineSpan>[];
   final pattern = RegExp(
-    '(${RegExp.escape(heroName)}|${RegExp.escape(enemyName)}|\\{[a-zA-Z]+:[^}]+\\}|\\*\\*[^*]+\\*\\*|_[^_]+_|prevents? \\d+ damage|prevented \\d+ damage|prÃ©vents? \\d+ damage|prÃ©vient \\d+ damage|returns? \\d+ undefendable damage|returned \\d+ undefendable damage|deals? \\d+ undefendable damage|dealt \\d+ undefendable damage|inflicts? \\d+ undefendable damage|inflige \\d+ undefendable damage|returns? \\d+ damage|returned \\d+ damage|deals? \\d+ defendable damage|dealt \\d+ defendable damage|inflicts? \\d+ defendable damage|inflige \\d+ defendable damage|deals? \\d+ damage|dealt \\d+ damage|inflicts? \\d+ damage|inflige \\d+ damage|heals? \\d+ HP|healed \\d+ HP|\\d+ HP|[1-6](?:/[1-6])+|rolled [1-6](?!/)|d6: [1-6](?!/)|keep [1-6](?!/)|with [1-6](?!/)|❤|❤️)',
+    '(${RegExp.escape(heroName)}|${RegExp.escape(enemyName)}|\\{[a-zA-Z]+:[^}]+\\}|\\*\\*[^*]+\\*\\*|_[^_]+_|prevents? \\d+ damage|prevented \\d+ damage|prÃ©vents? \\d+ damage|prÃ©vient \\d+ damage|returns? \\d+ undefendable damage|returned \\d+ undefendable damage|deals? \\d+ undefendable damage|dealt \\d+ undefendable damage|inflicts? \\d+ undefendable damage|inflige \\d+ undefendable damage|returns? \\d+ damage|returned \\d+ damage|deals? \\d+ defendable damage|dealt \\d+ defendable damage|inflicts? \\d+ defendable damage|inflige \\d+ defendable damage|deals? \\d+ damage|dealt \\d+ damage|inflicts? \\d+ damage|inflige \\d+ damage|heals? \\d+ HP|healed \\d+ HP|\\d+ HP|(?<!\\()[1-6](?:/[1-6])+(?!\\s*damage|\\s*dmg|\\s*rÃ©ussi|\\s*reussi|\\s*r\\u00e9ussi)|rolled [1-6](?!/)|d6: [1-6](?!/)|keep [1-6](?!/)|with [1-6](?!/)|❤|❤️)',
     caseSensitive: false,
   );
   var index = 0;
@@ -9344,7 +9344,6 @@ InlineSpan? _chatVisualSpan(String token, {required Color enemyColor}) {
       );
     }
   }
-  if (lower.contains('prevent') || lower.contains('prÃ©vient')) {
   if (lower.contains('/')) {
     final digits = lower.split('/');
     final spans = <InlineSpan>[];
@@ -9371,6 +9370,7 @@ InlineSpan? _chatVisualSpan(String token, {required Color enemyColor}) {
     }
     return TextSpan(children: spans);
   }
+  if (lower.contains('prevent') || lower.contains('prÃ©vient')) {
     return TextSpan(
       children: [
         TextSpan(

@@ -2,6 +2,24 @@
   "versions": [
     {
       "version": "1.4.22",
+      "buildNumber": 334,
+      "date": "2026-10-10",
+      "commit": "local-dev",
+      "summary": "Fix AI Chat dice suite block scope",
+      "prompts": [
+        "fonctionne tjs pas"
+      ],
+      "features": [
+        "Moved sequence handler out of the prevent handler block"
+      ],
+      "tags": [
+        "ui",
+        "chat",
+        "bugfix"
+      ]
+    },
+    {
+      "version": "1.4.22",
       "buildNumber": 333,
       "date": "2026-10-10",
       "commit": "local-dev",
