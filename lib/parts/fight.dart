@@ -4423,6 +4423,9 @@ class _FightPageState extends State<FightPage> {
     } else if (_phase == CombatPhase.minionAttack && _minionSneakAttackActive) {
       mod += _minionSneakAttackBonus;
     }
+    if (_phase == CombatPhase.minionAttack && _heroAgilityDamagePrevented > 0) {
+      mod -= _heroAgilityDamagePrevented;
+    }
     return mod;
   }
 
@@ -6354,6 +6357,8 @@ class _FightPageState extends State<FightPage> {
     if (!_isBattlePhase) {
       return;
     }
+    final oldEnemyHealthBeforeBattle = enemy.health;
+    final oldHeroHealthBeforeBattle = widget.adventure.health;
 
     // AI heuristics for auto-triggering defensive tokens
     final currentEffectiveAttack = _battleAttackValue + _battleAttackModifier;
@@ -6649,7 +6654,8 @@ class _FightPageState extends State<FightPage> {
               '${_battleLifeSteal > 0 ? ' Steals $_battleLifeSteal health.' : ''}'
               '${_battleHeroTokens.isNotEmpty ? ' Hero receives ${_battleHeroTokens.join(', ')}.' : ''}'
               '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_battleMinionTokens.join(', ')}.' : ''}'
-              '${_battleCpSteal > 0 ? ' ${enemy.label} steals $_battleCpSteal CP.' : ''}';
+              '${_battleCpSteal > 0 ? ' ${enemy.label} steals $_battleCpSteal CP.' : ''}'
+              '\n❤️ ${enemy.label} HP: $oldEnemyHealthBeforeBattle ➔ ${enemy.health}';
         }
         _heroAttackCount++;
         _heroAttackTotal += _battleAttackValue;
@@ -6975,7 +6981,8 @@ class _FightPageState extends State<FightPage> {
             '${_battleEnemyHeal > 0 ? ' ${enemy.label} heals $_battleEnemyHeal HP.' : ''}'
             '${_battleLifeSteal > 0 ? ' ${enemy.label} steals $_battleLifeSteal health.' : ''}'
             '${_battleCpSteal > 0 ? ' ${enemy.label} steals $_battleCpSteal CP.' : ''}'
-            '${shouldSummonLevel3 ? ' Disciple leaves: a random level 3 minion engages.' : ''}';
+            '${shouldSummonLevel3 ? ' Disciple leaves: a random level 3 minion engages.' : ''}'
+            '\n❤️ ${widget.adventure.hero.label} HP: $oldHeroHealthBeforeBattle ➔ ${widget.adventure.health}';
         if (enemy.health <= 0) {
           _grantViseerRewardIfNeeded(enemy);
         }
@@ -8672,7 +8679,11 @@ class _FightPageState extends State<FightPage> {
           widget.adventure.log('[TOKEN] ${enemy.label}: $part');
         }
       }
-      _lastBattleOutcomeMessage = _isViseerNode(enemy) ? passiveLog : '';
+      if (_isViseerNode(enemy) && passiveLog.trim() != '') {
+        _lastBattleOutcomeMessage = _lastBattleOutcomeMessage.trim() == ''
+            ? passiveLog
+            : '\n\n';
+      }
       widget.onChanged();
     });
     if (enemy.health <= 0) {
@@ -9742,19 +9753,11 @@ class MinionAiPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Text(
-              enemy.profileKey != 'naxarus'
-                  ? 'Dice - $rollCount/$maxRolls'
-                  : 'Dice',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-            ),
-          ),
-          const SizedBox(height: 10),
           if (visibleDice.isNotEmpty || isDefensePhase) ...[
             Wrap(
               spacing: 10,
               runSpacing: 10,
+              alignment: visibleDice.length == 5 ? WrapAlignment.center : WrapAlignment.start,
               children: [
                 for (final die in visibleDice)
                   DieTile(
@@ -9808,6 +9811,24 @@ class MinionAiPanel extends StatelessWidget {
             ],
             Row(
               children: [
+                if (maxRolls > 0) ...[
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(maxRolls, (i) {
+                      final isAvailable = i < (maxRolls - rollCount);
+                      return Container(
+                        width: 20,
+                        height: 6,
+                        margin: EdgeInsets.only(bottom: i == maxRolls - 1 ? 0 : 4),
+                        decoration: BoxDecoration(
+                          color: isAvailable ? Colors.greenAccent : Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Expanded(
                   flex: 2,
                   child: _SolidRollButton(
@@ -9824,6 +9845,7 @@ class MinionAiPanel extends StatelessWidget {
                           ? 'Roll defense'
                           : (rollCount == 0 ? 'Roll' : 'Reroll'),
                       textAlign: TextAlign.center,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),

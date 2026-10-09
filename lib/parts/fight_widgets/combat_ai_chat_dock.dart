@@ -764,1491 +764,1533 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
           _TokenGridLayout(
             children: [
               if (showWellspringRow) ...[
-            const SizedBox(height: 6),
-            _TokenActionRow(
-              ownerWidget: tokenOwnerAvatar('Wellspring'),
-              tokenLabel: 'Wellspring',
-              tokenAsset: 'assets/token/Wellspring.png',
-              text: wellspringCount > 1
-                  ? 'Wellspring (x$wellspringCount)'
-                  : 'Wellspring',
-              isActive: false,
-              activeText: '',
-              showUseButton: true,
-              canUse: onUseWellspring != null,
-              onUse: onUseWellspring,
-            ),
-          ],
-          if (salveCount > 0) ...[
-            const SizedBox(height: 6),
-            _TokenActionRow(
-              ownerWidget: tokenOwnerAvatar('Salve'),
-              tokenLabel: 'Salve',
-              tokenAsset: 'assets/token/Salve.webp',
-              text: salveCount > 1 ? 'Salve (x$salveCount)' : 'Salve',
-              isActive: false,
-              activeText: '',
-              showUseButton: true,
-              canUse: onUseSalve != null,
-              onUse: onUseSalve,
-            ),
-          ],
-          if (showResolution) ...[
-            if (defenderHasTargeted)
-              _ActiveTokenBadge(
-                ownerWidget: tokenOwnerAvatar('Targeted'),
-                tokenLabel: 'Targeted',
-                tokenAsset: 'assets/token/Targeted.png',
-                activeText: attackValue > 0
-                    ? 'Active (+2 DMG)'
-                    : 'Pending (ATK = 0)',
-              ),
-            if (defenderFocusFireCount > 0)
-              _ActiveTokenBadge(
-                ownerWidget: tokenOwnerAvatar('Focus Fire'),
-                tokenLabel: 'Focus Fire',
-                tokenAsset: 'assets/token/focus-fire.webp',
-                activeText: attackValue > 0
-                    ? 'Active (+$defenderFocusFireCount DMG)'
-                    : 'Pending (ATK = 0)',
-              ),
-            if (attackerHasShame) ...[
-              const SizedBox(height: 6),
-              InkWell(
-                onTap: () {
-                  final rule = TokenCatalogRepository.byLabel('Shame');
-                  if (rule != null) showTokenDetails(context, rule);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                const SizedBox(height: 6),
+                _TokenActionRow(
+                  ownerWidget: tokenOwnerAvatar('Wellspring'),
+                  tokenLabel: 'Wellspring',
+                  tokenAsset: 'assets/token/Wellspring.png',
+                  text: wellspringCount > 1
+                      ? 'Wellspring (x$wellspringCount)'
+                      : 'Wellspring',
+                  isActive: false,
+                  activeText: '',
+                  showUseButton: true,
+                  canUse: onUseWellspring != null,
+                  onUse: onUseWellspring,
+                ),
+              ],
+              if (salveCount > 0) ...[
+                const SizedBox(height: 6),
+                _TokenActionRow(
+                  ownerWidget: tokenOwnerAvatar('Salve'),
+                  tokenLabel: 'Salve',
+                  tokenAsset: 'assets/token/Salve.webp',
+                  text: salveCount > 1 ? 'Salve (x$salveCount)' : 'Salve',
+                  isActive: false,
+                  activeText: '',
+                  showUseButton: true,
+                  canUse: onUseSalve != null,
+                  onUse: onUseSalve,
+                ),
+              ],
+              if (showResolution) ...[
+                if (defenderHasTargeted)
+                  _ActiveTokenBadge(
+                    ownerWidget: tokenOwnerAvatar('Targeted'),
+                    tokenLabel: 'Targeted',
+                    tokenAsset: 'assets/token/Targeted.png',
+                    activeText: attackValue > 0
+                        ? 'Active (+2 DMG)'
+                        : 'Pending (ATK = 0)',
                   ),
-                  decoration: BoxDecoration(
-                    color: attackValue > 0
-                        ? const Color(0xff2a1b18)
-                        : const Color(0xff1a1722),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: attackValue > 0
-                          ? const Color(0xff8f43ff)
-                          : Colors.white24,
-                      width: 1.2,
-                    ),
+                if (defenderFocusFireCount > 0)
+                  _ActiveTokenBadge(
+                    ownerWidget: tokenOwnerAvatar('Focus Fire'),
+                    tokenLabel: 'Focus Fire',
+                    tokenAsset: 'assets/token/focus-fire.webp',
+                    activeText: attackValue > 0
+                        ? 'Active (+$defenderFocusFireCount DMG)'
+                        : 'Pending (ATK = 0)',
                   ),
-                  child: Row(
-                    children: [
-                      tokenOwnerAvatar('Shame'),
-                      const SizedBox(width: 8),
-                      Image.asset(
-                        'assets/token/shame.png',
-                        width: 22,
-                        height: 22,
-                        errorBuilder: (ctx, err, stack) => const Icon(
-                          Icons.do_not_disturb_on,
-                          color: Color(0xff8f43ff),
-                          size: 20,
-                        ),
+                if (attackerHasShame) ...[
+                  const SizedBox(height: 6),
+                  InkWell(
+                    onTap: () {
+                      final rule = TokenCatalogRepository.byLabel('Shame');
+                      if (rule != null) showTokenDetails(context, rule);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Shame : ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Text(
-                        '-1 DMG',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 13,
-                          color: Color(0xff8f43ff),
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
+                      decoration: BoxDecoration(
+                        color: attackValue > 0
+                            ? const Color(0xff2a1b18)
+                            : const Color(0xff1a1722),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
                           color: attackValue > 0
-                              ? const Color(0xff8f43ff).withValues(alpha: 0.2)
-                              : Colors.grey.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: attackValue > 0
-                                ? const Color(0xff8f43ff)
-                                : Colors.grey,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              attackValue > 0
-                                  ? Icons.check_circle
-                                  : Icons.radio_button_unchecked,
-                              size: 12,
-                              color: attackValue > 0
-                                  ? const Color(0xff8f43ff)
-                                  : Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              attackValue > 0
-                                  ? 'Active (-1 DMG)'
-                                  : 'Pending (ATK = 0)',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: attackValue > 0
-                                    ? Colors.white
-                                    : Colors.grey,
-                              ),
-                            ),
-                          ],
+                              ? const Color(0xff8f43ff)
+                              : Colors.white24,
+                          width: 1.2,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-            if (attackerWitherCount > 0)
-              _ActiveTokenBadge(
-                ownerWidget: tokenOwnerAvatar('Wither'),
-                tokenLabel: attackerWitherCount > 1
-                    ? 'Wither (x$attackerWitherCount)'
-                    : 'Wither',
-                tokenAsset: 'assets/token/Wither.png',
-                activeText: attackValue > 0
-                    ? 'Active (-$attackerWitherCount DMG)'
-                    : 'Pending (ATK = 0)',
-              ),
-            if (showHeroEvasiveRow) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: heroEvasiveAvoided
-                      ? const Color(0xff132b1e)
-                      : const Color(0xff1f1a2e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: heroEvasiveAvoided
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
-                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    _ActionRowLabel(
-                      tokenLabel: 'Evasive',
-                      tokenAsset: 'assets/token/Evasive.png',
-                      text: 'Evasive (x$heroEvasiveCount)',
-                    ),
-                    const SizedBox(width: 8),
-                    if (heroEvasiveAvoided)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.greenAccent,
-                            width: 1,
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Colors.greenAccent,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Avoided (0 DMG)',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.greenAccent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff8f43ff),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: onUseHeroEvasive,
-                        child: const Text(
-                          'Use',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-            if (showHeroFlightRow) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: (flightAvoided || flightUndefendable)
-                      ? const Color(0xff132b1e)
-                      : const Color(0xff1f1a2e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: (flightAvoided || flightUndefendable)
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
-                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    _ActionRowLabel(
-                      tokenLabel: 'Flight',
-                      tokenAsset: 'assets/token/Flight.png',
-                      text: 'Flight (x$heroFlightCount)',
-                    ),
-                    const SizedBox(width: 8),
-                    if (flightAvoided || flightUndefendable)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.greenAccent,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Colors.greenAccent,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              flightAvoided
-                                  ? 'Avoided (0 DMG)'
-                                  : 'Undefendable',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.greenAccent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff8f43ff),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: onUseHeroFlight,
-                        child: const Text(
-                          'Use',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-            if (showHeroAgilityRow) ...[
-              const SizedBox(height: 8),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xff1f1b2e),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: heroAgilityActive
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
-                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    _ActionRowLabel(
-                      tokenLabel: 'Agility',
-                      tokenAsset: 'assets/token/Agility.webp',
-                      text: 'Agility (x$heroAgilityCount)',
-                    ),
-                    const SizedBox(width: 8),
-                    if (heroAgilityActive) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.greenAccent,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Colors.greenAccent,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              heroAgilitySuccesses >= 2
-                                  ? 'Avoided (0 DMG)'
-                                  : (heroAgilitySuccesses == 1
-                                        ? 'Half DMG (-$heroAgilityPrevented)'
-                                        : 'Failed (0 prevented)'),
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.greenAccent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (heroAgilityCount > 0 && heroAgilitySuccesses < 2) ...[
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xff8f43ff),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                      child: Row(
+                        children: [
+                          tokenOwnerAvatar('Shame'),
+                          const SizedBox(width: 8),
+                          Image.asset(
+                            'assets/token/shame.png',
+                            width: 22,
+                            height: 22,
+                            errorBuilder: (ctx, err, stack) => const Icon(
+                              Icons.do_not_disturb_on,
+                              color: Color(0xff8f43ff),
+                              size: 20,
                             ),
                           ),
-                          onPressed: onUseHeroAgility,
-                          child: const Text(
-                            'Use',
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Shame : ',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                              fontSize: 13,
+                              color: Colors.white,
                             ),
+                          ),
+                          const Text(
+                            '-1 DMG',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13,
+                              color: Color(0xff8f43ff),
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: attackValue > 0
+                                  ? const Color(
+                                      0xff8f43ff,
+                                    ).withValues(alpha: 0.2)
+                                  : Colors.grey.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: attackValue > 0
+                                    ? const Color(0xff8f43ff)
+                                    : Colors.grey,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  attackValue > 0
+                                      ? Icons.check_circle
+                                      : Icons.radio_button_unchecked,
+                                  size: 12,
+                                  color: attackValue > 0
+                                      ? const Color(0xff8f43ff)
+                                      : Colors.grey,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  attackValue > 0
+                                      ? 'Active (-1 DMG)'
+                                      : 'Pending (ATK = 0)',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: attackValue > 0
+                                        ? Colors.white
+                                        : Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                if (attackerWitherCount > 0)
+                  _ActiveTokenBadge(
+                    ownerWidget: tokenOwnerAvatar('Wither'),
+                    tokenLabel: attackerWitherCount > 1
+                        ? 'Wither (x$attackerWitherCount)'
+                        : 'Wither',
+                    tokenAsset: 'assets/token/Wither.png',
+                    activeText: attackValue > 0
+                        ? 'Active (-$attackerWitherCount DMG)'
+                        : 'Pending (ATK = 0)',
+                  ),
+                if (showHeroEvasiveRow) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: heroEvasiveAvoided
+                          ? const Color(0xff132b1e)
+                          : const Color(0xff1f1a2e),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: heroEvasiveAvoided
+                            ? Colors.greenAccent.withValues(alpha: 0.6)
+                            : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        _ActionRowLabel(
+                          tokenLabel: 'Evasive',
+                          tokenAsset: 'assets/token/Evasive.png',
+                          text: 'Evasive (x$heroEvasiveCount)',
+                        ),
+                        const SizedBox(width: 8),
+                        if (heroEvasiveAvoided)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.greenAccent,
+                                width: 1,
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  size: 12,
+                                  color: Colors.greenAccent,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Avoided (0 DMG)',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.greenAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xff8f43ff),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              minimumSize: const Size(0, 32),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            onPressed: onUseHeroEvasive,
+                            child: const Text(
+                              'Use',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (showHeroFlightRow) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: (flightAvoided || flightUndefendable)
+                          ? const Color(0xff132b1e)
+                          : const Color(0xff1f1a2e),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: (flightAvoided || flightUndefendable)
+                            ? Colors.greenAccent.withValues(alpha: 0.6)
+                            : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        _ActionRowLabel(
+                          tokenLabel: 'Flight',
+                          tokenAsset: 'assets/token/Flight.png',
+                          text: 'Flight (x$heroFlightCount)',
+                        ),
+                        const SizedBox(width: 8),
+                        if (flightAvoided || flightUndefendable)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.greenAccent,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  size: 12,
+                                  color: Colors.greenAccent,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  flightAvoided
+                                      ? 'Avoided (0 DMG)'
+                                      : 'Undefendable',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.greenAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xff8f43ff),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              minimumSize: const Size(0, 32),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            onPressed: onUseHeroFlight,
+                            child: const Text(
+                              'Use',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (showHeroAgilityRow) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff1f1b2e),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: heroAgilityActive
+                            ? Colors.greenAccent.withValues(alpha: 0.6)
+                            : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        _ActionRowLabel(
+                          tokenLabel: 'Agility',
+                          tokenAsset: 'assets/token/Agility.webp',
+                          text: 'Agility (x$heroAgilityCount)',
+                        ),
+                        const SizedBox(width: 8),
+                        if (heroAgilityActive) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.greenAccent,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  size: 12,
+                                  color: Colors.greenAccent,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  heroAgilitySuccesses >= 2
+                                      ? 'Avoided (0 DMG)'
+                                      : (heroAgilitySuccesses == 1
+                                            ? 'Half DMG (-$heroAgilityPrevented)'
+                                            : 'Failed (0 prevented)'),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.greenAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (heroAgilityCount > 0 &&
+                              heroAgilitySuccesses < 2) ...[
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xff8f43ff),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 6,
+                                ),
+                                minimumSize: const Size(0, 32),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              onPressed: onUseHeroAgility,
+                              child: const Text(
+                                'Use',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ] else
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xff8f43ff),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              minimumSize: const Size(0, 32),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            onPressed: onUseHeroAgility,
+                            child: const Text(
+                              'Use',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (showHeroShadowsRow) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff132b1e),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.greenAccent.withValues(alpha: 0.6),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        _ActionRowLabel(
+                          tokenLabel: 'Shadows',
+                          tokenAsset: 'assets/token/Shadows.png',
+                          text: heroShadowsCount > 1
+                              ? 'Shadows (x$heroShadowsCount)'
+                              : 'Shadows',
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.greenAccent,
+                              width: 1,
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                size: 12,
+                                color: Colors.greenAccent,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Actif',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.greenAccent,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ] else
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff8f43ff),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: onUseHeroAgility,
-                        child: const Text(
-                          'Use',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-            if (showHeroShadowsRow) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xff132b1e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.greenAccent.withValues(alpha: 0.6),
-                    width: 1.2,
+                    ),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    _ActionRowLabel(
-                      tokenLabel: 'Shadows',
-                      tokenAsset: 'assets/token/Shadows.png',
-                      text: heroShadowsCount > 1
-                          ? 'Shadows (x$heroShadowsCount)'
-                          : 'Shadows',
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.greenAccent, width: 1),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            size: 12,
-                            color: Colors.greenAccent,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Actif',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.greenAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (showBarbedVineRow) ...[
-              const SizedBox(height: 6),
-              _MultiRollTokenActiveRow(
-                ownerWidget: tokenOwnerAvatar('Barbed Vine'),
-                tokenLabel: 'Barbed Vine',
-                tokenAsset: 'assets/token/Barbed-Vine.png',
-                count: barbedVineCount,
-                color: isHeroTurn
-                    ? const Color(0xff8f43ff)
-                    : Colors.greenAccent,
-                onUse: isHeroTurn ? onUseBarbedVine : null,
-                isUsed: barbedVineUsed,
-              ),
-            ],
-            if (showConstrictRow) ...[
-              const SizedBox(height: 6),
-              _MultiRollTokenActiveRow(
-                ownerWidget: tokenOwnerAvatar('Constrict'),
-                tokenLabel: 'Constrict',
-                count: constrictCount,
-                tokenAsset: 'assets/token/Constrict.png',
-                color: isHeroTurn
-                    ? const Color(0xff8f43ff)
-                    : Colors.greenAccent,
-                onUse: isHeroTurn ? onUseConstrict : null,
-                isUsed: constrictUsed,
-              ),
-            ],
-            if (critUsed ||
-                (phase == CombatPhase.minionAttack &&
-                    attackerCritCount > 0 &&
-                    attackValue > 0))
-              _ActiveTokenBadge(
-                ownerWidget: tokenOwnerAvatar('Crit'),
-                tokenLabel: 'Crit',
-                tokenAsset: 'assets/token/crit.png',
-                activeText: 'Active (+ 4 DMG)',
-              ),
-            for (final val in usedDamageBonus)
-              _ActiveTokenBadge(
-                ownerWidget: buildOwnerAvatar(isHeroTurn),
-                tokenLabel: 'Damage bonus $val',
-                tokenAsset: 'assets/token/bonus-atk-$val.webp',
-                activeText: 'Active (+$val DMG)',
-              ),
-            if (phase == CombatPhase.minionAttack && attackValue > 0)
-              for (final val in availableDamageBonus)
-                _ActiveTokenBadge(
-                  ownerWidget: buildOwnerAvatar(isHeroTurn),
-                  tokenLabel: 'Damage bonus $val',
-                  tokenAsset: 'assets/token/bonus-atk-$val.webp',
-                  activeText: 'Active (+$val DMG)',
-                ),
-            if (honorDamageBonus > 0)
-              _ActiveTokenBadge(
-                ownerWidget: tokenOwnerAvatar('Honor'),
-                tokenLabel: 'Honor',
-                tokenAsset: 'assets/token/honor.png',
-                activeText: 'Active (+$honorDamageBonus DMG)',
-              ),
-            if (realityWarpActive)
-              _ActiveTokenBadge(
-                ownerWidget: tokenOwnerAvatar('Reality Warp'),
-                tokenLabel: 'Reality Warp',
-                tokenAsset: 'assets/token/reality-warp.webp',
-              ),
-            if (silenceActive)
-              _ActiveTokenBadge(
-                ownerWidget: tokenOwnerAvatar('Silence'),
-                tokenLabel: 'Silence',
-                tokenAsset: 'assets/token/Silence.webp',
-              ),
-            if (webbedActive)
-              _ActiveTokenBadge(
-                ownerWidget: tokenOwnerAvatar('Webbed'),
-                tokenLabel: 'Webbed',
-                tokenAsset: 'assets/token/Webbed.webp',
-              ),
-            if (flightAvoided || flightUndefendable)
-              _ActiveTokenBadge(
-                ownerWidget: tokenOwnerAvatar('Flight'),
-                tokenLabel: 'Flight',
-                tokenAsset: 'assets/token/Flight.png',
-                activeText: flightAvoided
-                    ? 'Active (Avoided)'
-                    : 'Active (Undefendable)',
-              ),
-            if (showBlindingLightRow)
-              _ActiveTokenBadge(
-                ownerWidget: tokenOwnerAvatar('Blinding Light'),
-                tokenLabel: 'Blinding Light',
-                tokenAsset: 'assets/token/Blinding Light.webp',
-              ),
-            if (showDecrepifyRow) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xff132b1e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.greenAccent.withValues(alpha: 0.6),
-                    width: 1.2,
+                ],
+                if (showBarbedVineRow) ...[
+                  const SizedBox(height: 6),
+                  _MultiRollTokenActiveRow(
+                    ownerWidget: tokenOwnerAvatar('Barbed Vine'),
+                    tokenLabel: 'Barbed Vine',
+                    tokenAsset: 'assets/token/Barbed-Vine.png',
+                    count: barbedVineCount,
+                    color: isHeroTurn
+                        ? const Color(0xff8f43ff)
+                        : Colors.greenAccent,
+                    onUse: isHeroTurn ? onUseBarbedVine : null,
+                    isUsed: barbedVineUsed,
                   ),
-                ),
-                child: Row(
-                  children: [
-                    tokenOwnerAvatar('Decrep-ify'),
-                    const SizedBox(width: 8),
-                    const _ActionRowLabel(
-                      tokenLabel: 'Decrep-ify',
-                      tokenAsset: 'assets/token/Decrep-ify.png',
-                      text: 'Decrep-ify',
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.greenAccent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.greenAccent, width: 1),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            size: 12,
-                            color: Colors.greenAccent,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Actif',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.greenAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (showDiceCubeRow) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xff132b1e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.greenAccent.withValues(alpha: 0.6),
-                    width: 1.2,
+                ],
+                if (showConstrictRow) ...[
+                  const SizedBox(height: 6),
+                  _MultiRollTokenActiveRow(
+                    ownerWidget: tokenOwnerAvatar('Constrict'),
+                    tokenLabel: 'Constrict',
+                    count: constrictCount,
+                    tokenAsset: 'assets/token/Constrict.png',
+                    color: isHeroTurn
+                        ? const Color(0xff8f43ff)
+                        : Colors.greenAccent,
+                    onUse: isHeroTurn ? onUseConstrict : null,
+                    isUsed: constrictUsed,
                   ),
-                ),
-                child: Row(
-                  children: [
-                    tokenOwnerAvatar('Dice cube'),
-                    const SizedBox(width: 8),
-                    _ActionRowLabel(
-                      tokenLabel: 'Dice cube',
-                      tokenAsset: 'assets/token/Dice cube.webp',
-                      text: diceCubeCount > 1
-                          ? 'Dice cube (x$diceCubeCount)'
-                          : 'Dice cube',
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.greenAccent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.greenAccent, width: 1),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            size: 12,
-                            color: Colors.greenAccent,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Actif',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.greenAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (showEntangleRow) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xff132b1e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.greenAccent.withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    tokenOwnerAvatar('Entangle'),
-                    const SizedBox(width: 8),
-                    _ActionRowLabel(
-                      tokenLabel: 'Entangle',
-                      tokenAsset: 'assets/token/Entangle.png',
-                      text: entangleCount > 1
-                          ? 'Entangle (x$entangleCount) (-1 Roll)'
-                          : 'Entangle (-1 Roll)',
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.greenAccent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.greenAccent, width: 1),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            size: 12,
-                            color: Colors.greenAccent,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Actif',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.greenAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (showInfluenceRow) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xff132b1e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.greenAccent.withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    tokenOwnerAvatar('Influence'),
-                    const SizedBox(width: 8),
-                    const _ActionRowLabel(
-                      tokenLabel: 'Influence',
-                      tokenAsset: 'assets/token/influence.webp',
-                      text: 'Influence',
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.greenAccent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.greenAccent, width: 1),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.check_circle,
-                            size: 12,
-                            color: Colors.greenAccent,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Active (-$influenceRollReduction roll attempt${influenceRollReduction > 1 ? 's' : ''})',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.greenAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (showSneakAttackRow) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: attackerSneakAttackActive
-                      ? const Color(0xff132b1e)
-                      : const Color(0xff1f1a2e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: attackerSneakAttackActive
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
-                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    tokenOwnerAvatar('Sneak Attack'),
-                    const SizedBox(width: 8),
-                    _ActionRowLabel(
-                      tokenLabel: 'Sneak Attack',
-                      tokenAsset: 'assets/token/Sneak-Attack.png',
-                      text: attackerSneakAttackCount > 1
-                          ? 'Sneak Attack (x$attackerSneakAttackCount)'
-                          : 'Sneak Attack',
-                    ),
-                    const SizedBox(width: 8),
-                    if (attackerSneakAttackActive)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.greenAccent,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Colors.greenAccent,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Active (+$attackerSneakAttackBonus DMG)',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.greenAccent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: canUseAttackerSneakAttack
-                              ? const Color(0xff8f43ff)
-                              : Colors.grey.shade700,
-                          foregroundColor: canUseAttackerSneakAttack
-                              ? Colors.white
-                              : Colors.white38,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: canUseAttackerSneakAttack
-                            ? onUseAttackerSneakAttack
-                            : null,
-                        child: const Text(
-                          'Use',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-
-            if (showGuardBreakRow)
-              _TokenActionRow(
-                ownerWidget: tokenOwnerAvatar('Guard Break'),
-                tokenLabel: 'Guard Break',
-                tokenAsset: 'assets/token/Guard-Break.png',
-                text: attackerGuardBreakCount > 1
-                    ? 'Guard Break x$attackerGuardBreakCount'
-                    : 'Guard Break',
-                isActive: guardBreakSuccess,
-                activeText: 'Active (Undefendable)',
-                showUseButton: !guardBreakSuccess,
-                canUse: canUseAttackerGuardBreak,
-                onUse: onUseAttackerGuardBreak,
-              ),
-            if (windShearCount > 0 || windShearActive)
-              _TokenActionRow(
-                ownerWidget: tokenOwnerAvatar('Wind Shear'),
-                tokenLabel: 'Wind Shear',
-                tokenAsset: 'assets/token/wind-shear.webp',
-                text: windShearCount > 1
-                    ? 'Wind Shear x$windShearCount'
-                    : 'Wind Shear',
-                isActive: windShearActive,
-                activeText: '+2 DEF / 2 DMG imparables',
-                showUseButton: !windShearActive,
-                canUse: canUseWindShear,
-                onUse: onUseWindShear,
-              ),
-            if (defenderPreyCount > 0)
-              _TokenActionRow(
-                ownerWidget: tokenOwnerAvatar('Prey'),
-                tokenLabel: 'Prey',
-                tokenAsset: 'assets/token/Prey.png',
-                text: preyUsedCount > 0
-                    ? 'Prey (Used $preyUsedCount/$defenderPreyCount)'
-                    : 'Prey ($preyUsedCount/$defenderPreyCount)',
-                isActive: preyUsedCount > 0,
-                activeText: 'Active',
-                showUseButton: preyUsedCount < defenderPreyCount,
-                canUse: canUsePrey,
-                onUse: onUsePrey,
-              ),
-            if (attackerCritCount > 0 || critUsed)
-              _TokenActionRow(
-                ownerWidget: tokenOwnerAvatar('Crit'),
-                tokenLabel: 'Crit',
-                tokenAsset: 'assets/token/Crit.png',
-                text: attackerCritCount > 1
-                    ? 'Crit x$attackerCritCount'
-                    : 'Crit',
-                isActive: critUsed,
-                activeText: 'Active (Auto-crit)',
-                showUseButton: !critUsed,
-                canUse: canUseCrit,
-                onUse: onUseCrit,
-              ),
-            if (attackerAccuracyCount > 0 || accuracyUsed)
-              _TokenActionRow(
-                ownerWidget: tokenOwnerAvatar('Accuracy'),
-                tokenLabel: 'Accuracy',
-                tokenAsset: 'assets/token/Accuracy.png',
-                text: attackerAccuracyCount > 1
-                    ? 'Accuracy x$attackerAccuracyCount'
-                    : 'Accuracy',
-                isActive: accuracyUsed,
-                activeText: 'Active (Undefendable)',
-                showUseButton: !accuracyUsed,
-                canUse: canUseAccuracy,
-                onUse: onUseAccuracy,
-              ),
-            if (honorCount > 0 &&
-                phase == CombatPhase.hero &&
-                honorDamageBonus == 0)
-              _TokenActionRow(
-                ownerWidget: tokenOwnerAvatar('Honor'),
-                tokenLabel: 'Honor',
-                tokenAsset: 'assets/token/honor.png',
-                text: honorCount > 1 ? 'Honor x$honorCount' : 'Honor',
-                isActive: false,
-                activeText: '',
-                showUseButton: true,
-                canUse: onUseHonor != null,
-                onUse: onUseHonor,
-              ),
-            if (ninjitsuDamageBonus > 0 ||
-                ninjitsuUndefendable ||
-                ninjitsuCount > 0)
-              _TokenActionRow(
-                ownerWidget: tokenOwnerAvatar('Ninjitsu'),
-                tokenLabel: 'Ninjitsu',
-                tokenAsset: 'assets/token/Ninjutsu.webp',
-                text: ninjitsuCount > 1
-                    ? 'Ninjitsu x$ninjitsuCount'
-                    : 'Ninjitsu',
-                isActive: ninjitsuDamageBonus > 0 || ninjitsuUndefendable,
-                activeText: ninjitsuUndefendable && ninjitsuDamageBonus > 0
-                    ? 'Active (+$ninjitsuDamageBonus DMG, Undefendable)'
-                    : (ninjitsuUndefendable
-                          ? 'Active (Undefendable)'
-                          : 'Active (+$ninjitsuDamageBonus DMG)'),
-                showUseButton: ninjitsuCount > 0 && phase == CombatPhase.hero,
-                canUse: onUseNinjitsu != null,
-                onUse: onUseNinjitsu,
-              ),
-            if (smokeBombCount > 0 || smokeBombSuccess)
-              _TokenActionRow(
-                ownerWidget: tokenOwnerAvatar('Smoke Bomb'),
-                tokenLabel: 'Smoke Bomb',
-                tokenAsset: 'assets/token/Smoke-Bomb.png',
-                text: smokeBombCount > 1
-                    ? 'Smoke Bomb x$smokeBombCount'
-                    : 'Smoke Bomb',
-                isActive: smokeBombSuccess,
-                activeText: 'Active (Avoids DMG)',
-                showUseButton: !smokeBombSuccess,
-                canUse: onUseSmokeBomb != null,
-                onUse: onUseSmokeBomb,
-              ),
-            if (protectUsed ||
-                minionAutoProtect ||
-                (protectCount > 0 && phase == CombatPhase.minionAttack)) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: (protectUsed || minionAutoProtect)
-                      ? const Color(0xff132b1e)
-                      : const Color(0xff1f1a2e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: (protectUsed || minionAutoProtect)
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
-                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    buildOwnerAvatar(false),
-                    const SizedBox(width: 8),
-                    _ActionRowLabel(
-                      tokenLabel: 'Protect',
-                      tokenAsset: 'assets/token/Protect.png',
-                      text: protectCount > 1
-                          ? 'Protection x$protectCount'
-                          : 'Protection',
-                    ),
-                    const SizedBox(width: 8),
-                    if (protectUsed || minionAutoProtect)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.greenAccent,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Colors.greenAccent,
-                            ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              'Active',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.greenAccent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    if (protectCount > 0 &&
-                        phase == CombatPhase.minionAttack &&
-                        !protectUsed)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: onUseProtect != null
-                                ? const Color(0xff8f43ff)
-                                : Colors.grey.shade700,
-                            foregroundColor: onUseProtect != null
-                                ? Colors.white
-                                : Colors.white38,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            minimumSize: const Size(0, 32),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          onPressed: onUseProtect,
-                          child: const Text(
-                            'Use',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-            if (retributionUsed ||
-                minionAutoRetribution ||
-                (retributionCount > 0 &&
-                    phase == CombatPhase.minionAttack)) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: (retributionUsed || minionAutoRetribution)
-                      ? const Color(0xff132b1e)
-                      : const Color(0xff1f1a2e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: (retributionUsed || minionAutoRetribution)
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
-                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    buildOwnerAvatar(false),
-                    const SizedBox(width: 8),
-                    _ActionRowLabel(
-                      tokenLabel: 'Retribution',
-                      tokenAsset: 'assets/token/Retribution.png',
-                      text: 'RÃ©tribution',
-                    ),
-                    const SizedBox(width: 8),
-                    if (retributionUsed || minionAutoRetribution)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.greenAccent,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: Colors.greenAccent,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Active (+${(attackValue / 2.0).ceil()} DMG)',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.greenAccent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    if (retributionCount > 0 &&
-                        phase == CombatPhase.minionAttack &&
-                        !retributionUsed)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: onUseRetribution != null
-                                ? const Color(0xff8f43ff)
-                                : Colors.grey.shade700,
-                            foregroundColor: onUseRetribution != null
-                                ? Colors.white
-                                : Colors.white38,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            minimumSize: const Size(0, 32),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          onPressed: onUseRetribution,
-                          child: const Text(
-                            'Use',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-            if (attackerCritCount > 0 &&
-                !(critUsed ||
+                ],
+                if (critUsed ||
                     (phase == CombatPhase.minionAttack &&
-                        attackValue > 0))) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: critUsed
-                      ? const Color(0xff132b1e)
-                      : const Color(0xff1f1a2e),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: critUsed
-                        ? Colors.greenAccent.withValues(alpha: 0.6)
-                        : const Color(0xff8f43ff).withValues(alpha: 0.6),
-                    width: 1.2,
+                        attackerCritCount > 0 &&
+                        attackValue > 0))
+                  _ActiveTokenBadge(
+                    ownerWidget: tokenOwnerAvatar('Crit'),
+                    tokenLabel: 'Crit',
+                    tokenAsset: 'assets/token/crit.png',
+                    activeText: 'Active (+ 4 DMG)',
                   ),
-                ),
-                child: Row(
-                  children: [
-                    _ActionRowLabel(
-                      tokenLabel: 'Crit',
-                      tokenAsset: 'assets/token/crit.png',
-                      text: 'Crit',
+                if (phase != CombatPhase.hero)
+                  for (final val in usedDamageBonus)
+                    _ActiveTokenBadge(
+                      ownerWidget: buildOwnerAvatar(isHeroTurn),
+                      tokenLabel: 'Damage bonus $val',
+                      tokenAsset: 'assets/token/bonus-atk-$val.webp',
+                      activeText: 'Active (+$val DMG)',
                     ),
-                    const SizedBox(width: 8),
-                    if (critUsed)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                if (phase == CombatPhase.minionAttack && attackValue > 0)
+                  for (final val in availableDamageBonus)
+                    _ActiveTokenBadge(
+                      ownerWidget: buildOwnerAvatar(isHeroTurn),
+                      tokenLabel: 'Damage bonus $val',
+                      tokenAsset: 'assets/token/bonus-atk-$val.webp',
+                      activeText: 'Pending (+$val DMG)',
+                    ),
+                if (honorDamageBonus > 0)
+                  _ActiveTokenBadge(
+                    ownerWidget: tokenOwnerAvatar('Honor'),
+                    tokenLabel: 'Honor',
+                    tokenAsset: 'assets/token/honor.png',
+                    activeText: 'Active (+$honorDamageBonus DMG)',
+                  ),
+                if (realityWarpActive)
+                  _ActiveTokenBadge(
+                    ownerWidget: tokenOwnerAvatar('Reality Warp'),
+                    tokenLabel: 'Reality Warp',
+                    tokenAsset: 'assets/token/reality-warp.webp',
+                  ),
+                if (silenceActive)
+                  _ActiveTokenBadge(
+                    ownerWidget: tokenOwnerAvatar('Silence'),
+                    tokenLabel: 'Silence',
+                    tokenAsset: 'assets/token/Silence.webp',
+                  ),
+                if (webbedActive)
+                  _ActiveTokenBadge(
+                    ownerWidget: tokenOwnerAvatar('Webbed'),
+                    tokenLabel: 'Webbed',
+                    tokenAsset: 'assets/token/Webbed.webp',
+                  ),
+                if (flightAvoided || flightUndefendable)
+                  _ActiveTokenBadge(
+                    ownerWidget: tokenOwnerAvatar('Flight'),
+                    tokenLabel: 'Flight',
+                    tokenAsset: 'assets/token/Flight.png',
+                    activeText: flightAvoided
+                        ? 'Active (Avoided)'
+                        : 'Active (Undefendable)',
+                  ),
+                if (showBlindingLightRow)
+                  _ActiveTokenBadge(
+                    ownerWidget: tokenOwnerAvatar('Blinding Light'),
+                    tokenLabel: 'Blinding Light',
+                    tokenAsset: 'assets/token/Blinding Light.webp',
+                  ),
+                if (showDecrepifyRow) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff132b1e),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.greenAccent.withValues(alpha: 0.6),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        tokenOwnerAvatar('Decrep-ify'),
+                        const SizedBox(width: 8),
+                        const _ActionRowLabel(
+                          tokenLabel: 'Decrep-ify',
+                          tokenAsset: 'assets/token/Decrep-ify.png',
+                          text: 'Decrep-ify',
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.greenAccent,
-                            width: 1,
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
                           ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.greenAccent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
                               color: Colors.greenAccent,
+                              width: 1,
                             ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              'Active (+4 DMG)',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                size: 12,
                                 color: Colors.greenAccent,
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 4),
+                              Text(
+                                'Actif',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.greenAccent,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (showDiceCubeRow) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff132b1e),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.greenAccent.withValues(alpha: 0.6),
+                        width: 1.2,
                       ),
-                    if (!critUsed && phase == CombatPhase.hero)
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: canUseCrit
-                              ? const Color(0xff8f43ff)
-                              : Colors.grey.shade700,
-                          foregroundColor: canUseCrit
-                              ? Colors.white
-                              : Colors.white38,
+                    ),
+                    child: Row(
+                      children: [
+                        tokenOwnerAvatar('Dice cube'),
+                        const SizedBox(width: 8),
+                        _ActionRowLabel(
+                          tokenLabel: 'Dice cube',
+                          tokenAsset: 'assets/token/Dice cube.webp',
+                          text: diceCubeCount > 1
+                              ? 'Dice cube (x$diceCubeCount)'
+                              : 'Dice cube',
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
+                            horizontal: 8,
+                            vertical: 2,
                           ),
-                          minimumSize: const Size(0, 32),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                        onPressed: canUseCrit ? onUseCrit : null,
-                        child: const Text(
-                          'Use',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-            Builder(
-              builder: (context) {
-                final rows = <Widget>[];
-                final unallocatedUsed = List.of(usedDamageBonus);
-                for (final val in availableDamageBonus) {
-                  final isUsed = unallocatedUsed.remove(val);
-                  final isAutoApplied =
-                      phase == CombatPhase.minionAttack && attackValue > 0;
-                  if (isUsed || isAutoApplied) continue;
-
-                  final canUseThis =
-                      !isUsed &&
-                      phase == CombatPhase.hero &&
-                      onUseDamageBonus != null;
-                  rows.add(
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isUsed
-                              ? const Color(0xff132b1e)
-                              : const Color(0xff1f1a2e),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isUsed
-                                ? Colors.greenAccent.withValues(alpha: 0.6)
-                                : const Color(
-                                    0xff8f43ff,
-                                  ).withValues(alpha: 0.6),
-                            width: 1.2,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            _ActionRowLabel(
-                              tokenLabel: 'Damage bonus $val',
-                              tokenAsset: 'assets/token/bonus-atk-$val.webp',
-                              text: 'DÃ©gÃ¢t bonus $val',
+                          decoration: BoxDecoration(
+                            color: Colors.greenAccent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: Colors.greenAccent,
+                              width: 1,
                             ),
-                            const SizedBox(width: 8),
-                            if (isUsed)
-                              Container(
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                size: 12,
+                                color: Colors.greenAccent,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Actif',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.greenAccent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (showEntangleRow) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff132b1e),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.greenAccent.withValues(alpha: 0.6),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        tokenOwnerAvatar('Entangle'),
+                        const SizedBox(width: 8),
+                        _ActionRowLabel(
+                          tokenLabel: 'Entangle',
+                          tokenAsset: 'assets/token/Entangle.png',
+                          text: entangleCount > 1
+                              ? 'Entangle (x$entangleCount) (-1 Roll)'
+                              : 'Entangle (-1 Roll)',
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.greenAccent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: Colors.greenAccent,
+                              width: 1,
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                size: 12,
+                                color: Colors.greenAccent,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Actif',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.greenAccent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (showInfluenceRow) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff132b1e),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.greenAccent.withValues(alpha: 0.6),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        tokenOwnerAvatar('Influence'),
+                        const SizedBox(width: 8),
+                        const _ActionRowLabel(
+                          tokenLabel: 'Influence',
+                          tokenAsset: 'assets/token/influence.webp',
+                          text: 'Influence',
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.greenAccent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: Colors.greenAccent,
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.check_circle,
+                                size: 12,
+                                color: Colors.greenAccent,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Active (-$influenceRollReduction roll attempt${influenceRollReduction > 1 ? 's' : ''})',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.greenAccent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (showSneakAttackRow) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: attackerSneakAttackActive
+                          ? const Color(0xff132b1e)
+                          : const Color(0xff1f1a2e),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: attackerSneakAttackActive
+                            ? Colors.greenAccent.withValues(alpha: 0.6)
+                            : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        tokenOwnerAvatar('Sneak Attack'),
+                        const SizedBox(width: 8),
+                        _ActionRowLabel(
+                          tokenLabel: 'Sneak Attack',
+                          tokenAsset: 'assets/token/Sneak-Attack.png',
+                          text: attackerSneakAttackCount > 1
+                              ? 'Sneak Attack (x$attackerSneakAttackCount)'
+                              : 'Sneak Attack',
+                        ),
+                        const SizedBox(width: 8),
+                        if (attackerSneakAttackActive)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.greenAccent,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  size: 12,
+                                  color: Colors.greenAccent,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Active (+$attackerSneakAttackBonus DMG)',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.greenAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: canUseAttackerSneakAttack
+                                  ? const Color(0xff8f43ff)
+                                  : Colors.grey.shade700,
+                              foregroundColor: canUseAttackerSneakAttack
+                                  ? Colors.white
+                                  : Colors.white38,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: canUseAttackerSneakAttack
+                                ? onUseAttackerSneakAttack
+                                : null,
+                            child: const Text(
+                              'Use',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                if (showGuardBreakRow)
+                  _TokenActionRow(
+                    ownerWidget: tokenOwnerAvatar('Guard Break'),
+                    tokenLabel: 'Guard Break',
+                    tokenAsset: 'assets/token/Guard-Break.png',
+                    text: attackerGuardBreakCount > 1
+                        ? 'Guard Break x$attackerGuardBreakCount'
+                        : 'Guard Break',
+                    isActive: guardBreakSuccess,
+                    activeText: 'Active (Undefendable)',
+                    showUseButton: !guardBreakSuccess,
+                    canUse: canUseAttackerGuardBreak,
+                    onUse: onUseAttackerGuardBreak,
+                  ),
+                if (windShearCount > 0 || windShearActive)
+                  _TokenActionRow(
+                    ownerWidget: tokenOwnerAvatar('Wind Shear'),
+                    tokenLabel: 'Wind Shear',
+                    tokenAsset: 'assets/token/wind-shear.webp',
+                    text: windShearCount > 1
+                        ? 'Wind Shear x$windShearCount'
+                        : 'Wind Shear',
+                    isActive: windShearActive,
+                    activeText: '+2 DEF / 2 DMG imparables',
+                    showUseButton: !windShearActive,
+                    canUse: canUseWindShear,
+                    onUse: onUseWindShear,
+                  ),
+                if (defenderPreyCount > 0)
+                  _TokenActionRow(
+                    ownerWidget: tokenOwnerAvatar('Prey'),
+                    tokenLabel: 'Prey',
+                    tokenAsset: 'assets/token/Prey.png',
+                    text: preyUsedCount > 0
+                        ? 'Prey (Used $preyUsedCount/$defenderPreyCount)'
+                        : 'Prey ($preyUsedCount/$defenderPreyCount)',
+                    isActive: preyUsedCount > 0,
+                    activeText: 'Active',
+                    showUseButton: preyUsedCount < defenderPreyCount,
+                    canUse: canUsePrey,
+                    onUse: onUsePrey,
+                  ),
+                if (attackerCritCount > 0 || critUsed)
+                  _TokenActionRow(
+                    ownerWidget: tokenOwnerAvatar('Crit'),
+                    tokenLabel: 'Crit',
+                    tokenAsset: 'assets/token/Crit.png',
+                    text: attackerCritCount > 1
+                        ? 'Crit x$attackerCritCount'
+                        : 'Crit',
+                    isActive: critUsed,
+                    activeText: 'Active (Auto-crit)',
+                    showUseButton: !critUsed,
+                    canUse: canUseCrit,
+                    onUse: onUseCrit,
+                  ),
+                if (honorCount > 0 &&
+                    phase == CombatPhase.hero &&
+                    honorDamageBonus == 0)
+                  _TokenActionRow(
+                    ownerWidget: tokenOwnerAvatar('Honor'),
+                    tokenLabel: 'Honor',
+                    tokenAsset: 'assets/token/honor.png',
+                    text: honorCount > 1 ? 'Honor x$honorCount' : 'Honor',
+                    isActive: false,
+                    activeText: '',
+                    showUseButton: true,
+                    canUse: onUseHonor != null,
+                    onUse: onUseHonor,
+                  ),
+                if (ninjitsuDamageBonus > 0 ||
+                    ninjitsuUndefendable ||
+                    ninjitsuCount > 0)
+                  _TokenActionRow(
+                    ownerWidget: tokenOwnerAvatar('Ninjitsu'),
+                    tokenLabel: 'Ninjitsu',
+                    tokenAsset: 'assets/token/Ninjutsu.webp',
+                    text: ninjitsuCount > 1
+                        ? 'Ninjitsu x$ninjitsuCount'
+                        : 'Ninjitsu',
+                    isActive: ninjitsuDamageBonus > 0 || ninjitsuUndefendable,
+                    activeText: ninjitsuUndefendable && ninjitsuDamageBonus > 0
+                        ? 'Active (+$ninjitsuDamageBonus DMG, Undefendable)'
+                        : (ninjitsuUndefendable
+                              ? 'Active (Undefendable)'
+                              : 'Active (+$ninjitsuDamageBonus DMG)'),
+                    showUseButton:
+                        ninjitsuCount > 0 && phase == CombatPhase.hero,
+                    canUse: onUseNinjitsu != null,
+                    onUse: onUseNinjitsu,
+                  ),
+                if (smokeBombCount > 0 || smokeBombSuccess)
+                  _TokenActionRow(
+                    ownerWidget: tokenOwnerAvatar('Smoke Bomb'),
+                    tokenLabel: 'Smoke Bomb',
+                    tokenAsset: 'assets/token/Smoke-Bomb.png',
+                    text: smokeBombCount > 1
+                        ? 'Smoke Bomb x$smokeBombCount'
+                        : 'Smoke Bomb',
+                    isActive: smokeBombSuccess,
+                    activeText: 'Active (Avoids DMG)',
+                    showUseButton: !smokeBombSuccess,
+                    canUse: onUseSmokeBomb != null,
+                    onUse: onUseSmokeBomb,
+                  ),
+                if (protectUsed ||
+                    minionAutoProtect ||
+                    (protectCount > 0 &&
+                        phase == CombatPhase.minionAttack)) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: (protectUsed || minionAutoProtect)
+                          ? const Color(0xff132b1e)
+                          : const Color(0xff1f1a2e),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: (protectUsed || minionAutoProtect)
+                            ? Colors.greenAccent.withValues(alpha: 0.6)
+                            : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        buildOwnerAvatar(false),
+                        const SizedBox(width: 8),
+                        _ActionRowLabel(
+                          tokenLabel: 'Protect',
+                          tokenAsset: 'assets/token/Protect.png',
+                          text: protectCount > 1
+                              ? 'Protection x$protectCount'
+                              : 'Protection',
+                        ),
+                        const SizedBox(width: 8),
+                        if (protectUsed || minionAutoProtect)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.greenAccent,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  size: 12,
+                                  color: Colors.greenAccent,
+                                ),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'Active',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.greenAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (protectCount > 0 &&
+                            phase == CombatPhase.minionAttack &&
+                            !protectUsed)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: onUseProtect != null
+                                    ? const Color(0xff8f43ff)
+                                    : Colors.grey.shade700,
+                                foregroundColor: onUseProtect != null
+                                    ? Colors.white
+                                    : Colors.white38,
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
+                                  horizontal: 16,
                                   vertical: 4,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Colors.greenAccent,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.check_circle,
-                                      size: 12,
-                                      color: Colors.greenAccent,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Active (+$val DMG)',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.greenAccent,
-                                      ),
-                                    ),
-                                  ],
+                                minimumSize: const Size(0, 32),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                            if (!isUsed && phase == CombatPhase.hero)
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: onUseDamageBonus != null
-                                      ? const Color(0xff8f43ff)
-                                      : Colors.grey.shade700,
-                                  foregroundColor: onUseDamageBonus != null
-                                      ? Colors.white
-                                      : Colors.white38,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 6,
-                                  ),
-                                  minimumSize: const Size(0, 32),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                ),
-                                onPressed: onUseDamageBonus != null
-                                    ? () => onUseDamageBonus!(val)
-                                    : null,
-                                child: const Text(
-                                  'Use',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              onPressed: onUseProtect,
+                              child: const Text(
+                                'Use',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                          ],
-                        ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (retributionUsed ||
+                    minionAutoRetribution ||
+                    (retributionCount > 0 &&
+                        phase == CombatPhase.minionAttack)) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: (retributionUsed || minionAutoRetribution)
+                          ? const Color(0xff132b1e)
+                          : const Color(0xff1f1a2e),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: (retributionUsed || minionAutoRetribution)
+                            ? Colors.greenAccent.withValues(alpha: 0.6)
+                            : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                        width: 1.2,
                       ),
                     ),
-                  );
-                }
-                return Column(children: rows);
-              },
-            ),
-            ],
+                    child: Row(
+                      children: [
+                        buildOwnerAvatar(false),
+                        const SizedBox(width: 8),
+                        _ActionRowLabel(
+                          tokenLabel: 'Retribution',
+                          tokenAsset: 'assets/token/Retribution.png',
+                          text: 'RÃ©tribution',
+                        ),
+                        const SizedBox(width: 8),
+                        if (retributionUsed || minionAutoRetribution)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.greenAccent,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  size: 12,
+                                  color: Colors.greenAccent,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Active (+${(attackValue / 2.0).ceil()} DMG)',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.greenAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (retributionCount > 0 &&
+                            phase == CombatPhase.minionAttack &&
+                            !retributionUsed)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: onUseRetribution != null
+                                    ? const Color(0xff8f43ff)
+                                    : Colors.grey.shade700,
+                                foregroundColor: onUseRetribution != null
+                                    ? Colors.white
+                                    : Colors.white38,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 4,
+                                ),
+                                minimumSize: const Size(0, 32),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              onPressed: onUseRetribution,
+                              child: const Text(
+                                'Use',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (attackerCritCount > 0 &&
+                    !(critUsed ||
+                        (phase == CombatPhase.minionAttack &&
+                            attackValue > 0))) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: critUsed
+                          ? const Color(0xff132b1e)
+                          : const Color(0xff1f1a2e),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: critUsed
+                            ? Colors.greenAccent.withValues(alpha: 0.6)
+                            : const Color(0xff8f43ff).withValues(alpha: 0.6),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        _ActionRowLabel(
+                          tokenLabel: 'Crit',
+                          tokenAsset: 'assets/token/crit.png',
+                          text: 'Crit',
+                        ),
+                        const SizedBox(width: 8),
+                        if (critUsed)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.greenAccent,
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  size: 12,
+                                  color: Colors.greenAccent,
+                                ),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'Active (+4 DMG)',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.greenAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (!critUsed && phase == CombatPhase.hero)
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: canUseCrit
+                                  ? const Color(0xff8f43ff)
+                                  : Colors.grey.shade700,
+                              foregroundColor: canUseCrit
+                                  ? Colors.white
+                                  : Colors.white38,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              minimumSize: const Size(0, 32),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            onPressed: canUseCrit ? onUseCrit : null,
+                            child: const Text(
+                              'Use',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                ...(() {
+                  final rows = <Widget>[];
+                  final unallocatedUsed = List.of(usedDamageBonus);
+                  for (final val in availableDamageBonus) {
+                    final isUsed = unallocatedUsed.remove(val);
+                    final isAutoApplied =
+                        phase == CombatPhase.minionAttack && attackValue > 0;
+                    if (phase != CombatPhase.hero && (isUsed || isAutoApplied))
+                      continue;
+
+                    final canUseThis =
+                        !isUsed &&
+                        phase == CombatPhase.hero &&
+                        onUseDamageBonus != null;
+                    rows.add(
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isSmall = constraints.maxWidth < 240;
+                          final showAvatar =
+                              true; // Always show for damage bonus
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: isUsed
+                                    ? const Color(0xff132b1e)
+                                    : const Color(0xff1f1a2e),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isUsed
+                                      ? Colors.greenAccent.withValues(
+                                          alpha: 0.6,
+                                        )
+                                      : const Color(
+                                          0xff8f43ff,
+                                        ).withValues(alpha: 0.6),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  if (showAvatar) ...[
+                                    SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: tokenOwnerAvatar('Damage bonus'),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  _ActionRowLabel(
+                                    tokenLabel: 'Damage bonus $val',
+                                    tokenAsset:
+                                        'assets/token/bonus-atk-$val.webp',
+                                    text: 'Damage bonus $val',
+                                  ),
+                                  const SizedBox(width: 8),
+                                  if (isUsed)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.greenAccent,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.check_circle,
+                                            size: 12,
+                                            color: Colors.greenAccent,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Active (+$val DMG)',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.greenAccent,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  if (!isUsed && phase == CombatPhase.hero)
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            onUseDamageBonus != null
+                                            ? const Color(0xff8f43ff)
+                                            : Colors.grey.shade700,
+                                        foregroundColor:
+                                            onUseDamageBonus != null
+                                            ? Colors.white
+                                            : Colors.white38,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 6,
+                                        ),
+                                        minimumSize: const Size(0, 32),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: onUseDamageBonus != null
+                                          ? () => onUseDamageBonus!(val)
+                                          : null,
+                                      child: const Text(
+                                        'Use',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }
+                  return rows;
+                })(),
+                if (attackerAccuracyCount > 0 || accuracyUsed)
+                  _TokenActionRow(
+                    ownerWidget: tokenOwnerAvatar('Accuracy'),
+                    tokenLabel: 'Accuracy',
+                    tokenAsset: 'assets/token/Accuracy.png',
+                    text: attackerAccuracyCount > 1
+                        ? 'Accuracy x$attackerAccuracyCount'
+                        : 'Accuracy',
+                    isActive: accuracyUsed,
+                    activeText: 'Active (Undefendable)',
+                    showUseButton: !accuracyUsed,
+                    canUse: canUseAccuracy,
+                    onUse: onUseAccuracy,
+                  ),
+              ],
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: showBlindingLightAttackCover
+          if (phase != CombatPhase.intro &&
+              phase != CombatPhase.heroUpkeep &&
+              phase != CombatPhase.minionUpkeep) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: showBlindingLightAttackCover
                       ? SizedBox(
                           height: 52,
                           child: ElevatedButton.icon(
@@ -2698,7 +2740,9 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
                             child: _IntroPulse(
                               active: widget.phase == CombatPhase.intro,
                               child: FilledButton(
-                                onPressed: widget.canAdvancePhase ? widget.onNext : null,
+                                onPressed: widget.canAdvancePhase
+                                    ? widget.onNext
+                                    : null,
                                 style: FilledButton.styleFrom(
                                   backgroundColor: const Color(0xff8f43ff),
                                   disabledBackgroundColor: Colors.white10,

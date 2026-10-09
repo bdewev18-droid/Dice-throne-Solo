@@ -1,6 +1,244 @@
 {
   "versions": [
     {
+      "version": "1.4.22",
+      "buildNumber": 329,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "Stack gauge bars vertically to empty from bottom to top",
+      "prompts": [
+        "les barres les unes en dessous des autres",
+        "apres le 2eme jet, la premiere barre devient grise"
+      ],
+      "features": [
+        "Reverted gauge back to green bars, but stacked vertically in a Column",
+        "Empty logic inherently works bottom-to-top due to generation order index matching available rolls"
+      ],
+      "tags": [
+        "ui",
+        "dice"
+      ]
+    },
+    {
+      "version": "1.4.22",
+      "buildNumber": 328,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "Revert gauge to a simple row of horizontal green dashes",
+      "prompts": [
+        "revient sur ton idee des 3 barres vertes",
+        "horizontalement superposee"
+      ],
+      "features": [
+        "Restored the space-saving layout by using a simple inline Row of 3 green dashes directly next to the button",
+        "Removed the bulky vertical block"
+      ],
+      "tags": [
+        "ui",
+        "dice"
+      ]
+    },
+    {
+      "version": "1.4.22",
+      "buildNumber": 327,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "Update Reroll indicator to vertical purple block with stacked gauge bands",
+      "prompts": [
+        "je voyais plus une jauge verticale",
+        "emplacement de la taille du bouton ok",
+        "couleur violet",
+        "3 bandes blanches"
+      ],
+      "features": [
+        "Converted the roll indicator to a 56x50 purple block matching the OK button",
+        "Inside the block, 3 vertical bands (white when available, translucent when consumed)"
+      ],
+      "tags": [
+        "ui",
+        "ux",
+        "dice"
+      ]
+    },
+    {
+      "version": "1.4.22",
+      "buildNumber": 326,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "Separate roll state from CTA into an energy gauge",
+      "prompts": [
+        "option A (3 barres fixes)"
+      ],
+      "features": [
+        "Added 3 horizontal glowing bars (status gauge) to the left of the Reroll button",
+        "Cleaned up the Reroll button to only contain the action text"
+      ],
+      "tags": [
+        "ui",
+        "ux",
+        "dice"
+      ]
+    },
+    {
+      "version": "1.4.22",
+      "buildNumber": 325,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "Align reroll text to the left and pack dice tightly on the right",
+      "prompts": [
+        "Raprocher et f\u00e9rrer le texte reroll \u00e0 gauche du bouton"
+      ],
+      "features": [
+        "Changed reroll button layout to MainAxisAlignment.spaceBetween with left-aligned text",
+        "Removed extra padding between dice to pack them closer"
+      ],
+      "tags": [
+        "ui",
+        "dice"
+      ]
+    },
+    {
+      "version": "1.4.22",
+      "buildNumber": 324,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "Enlarge SVG dice icons in reroll button",
+      "prompts": [
+        "agrandir les des dans le bouton reroll (svg)",
+        "les rapprocher les un des autres"
+      ],
+      "features": [
+        "Increased the width and height of SVG dice from 14 to 22",
+        "Reduced horizontal padding to bring icons closer"
+      ],
+      "tags": [
+        "ui",
+        "dice"
+      ]
+    },
+    {
+      "version": "1.4.22",
+      "buildNumber": 323,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "Fix missing hero attack recap, remove Dice title for defense, use SVG dice icons",
+      "prompts": [
+        "supprimer le titre dice 0/1 en defense",
+        "degats du hero comme avant",
+        "utiliser image dice_cube_white.svg"
+      ],
+      "features": [
+        "Fixed hero attack recap being cleared prematurely before minion upkeep",
+        "Removed remaining Dice header during defense phase",
+        "Replaced generic dice icons with proper SVG assets (dice_cube_white.svg and dice_cube_upkeep.svg)"
+      ],
+      "tags": [
+        "ui",
+        "combat",
+        "fix"
+      ]
+    },
+    {
+      "version": "1.4.22",
+      "buildNumber": 322,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "Add HP recap to upkeep, redesign Dice Zone UI, fix Hero Agility damage prevention",
+      "prompts": [
+        "Ajouter recap pdv upkeep minion/boss",
+        "refonte Dice zone",
+        "Agility ne baisse pas atk"
+      ],
+      "features": [
+        "Added HP to upkeep messages",
+        "Removed Dice title and added dice indicator icons",
+        "Fixed Hero Agility modifying battleAttackModifier"
+      ],
+      "tags": [
+        "ui",
+        "combat",
+        "fix"
+      ]
+    },
+    {
+      "version": "1.4.22",
+      "buildNumber": 321,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "Tokens widths unified (Agility margin removed), all Use buttons styled like Damage Bonus",
+      "prompts": [
+        "La largeur nest pas la meme (Evasive vs Agility)",
+        "Tous les boutons use comme damage bonus"
+      ],
+      "features": [
+        "Fixed token width inconsistency",
+        "Unified Use button styling"
+      ],
+      "tags": [
+        "ui",
+        "ux",
+        "combat"
+      ]
+    },
+    {
+      "version": "1.4.22",
+      "buildNumber": 320,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "Accuracy token placed at the end, use button styling consistent",
+      "prompts": [
+        "Make use button style match damage bonus",
+        "Force accuracy to be on full line when odd"
+      ],
+      "features": [
+        "Accuracy exception",
+        "Use button styling"
+      ],
+      "tags": [
+        "ui",
+        "ux",
+        "combat"
+      ]
+    },
+    {
+      "version": "1.4.22",
+      "buildNumber": 319,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "UI/UX layout fixes for combat tokens",
+      "prompts": [
+        "tokens half-line layout",
+        "tokens jump fix"
+      ],
+      "features": [
+        "Tokens hide avatar on half lines when active",
+        "Used tokens do not jump positions in ATK section"
+      ],
+      "tags": [
+        "ui",
+        "ux",
+        "combat"
+      ]
+    },
+    {
+      "version": "1.4.22",
+      "buildNumber": 318,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "Build web locale habituelle",
+      "prompts": [
+        "build locale web habituelle"
+      ],
+      "features": [
+        "Build web"
+      ],
+      "tags": [
+        "Build"
+      ],
+      "author": "Antigravity AI",
+      "title": "Build Web Local"
+    },
+    {
       "version": "1.4.21",
       "buildNumber": 317,
       "date": "2026-10-08",
@@ -11,13 +249,13 @@
       ],
       "features": [
         "Grille adaptative des tokens en combat (AI chat)",
-        "Affichage tronqué ou pleine largeur des tokens dynamiquement selon la place",
-        "Boutons flèches harmonisés et stylisés"
+        "Affichage tronqu\u00e9 ou pleine largeur des tokens dynamiquement selon la place",
+        "Boutons fl\u00e8ches harmonis\u00e9s et stylis\u00e9s"
       ]
     },
     {
       "buildNumber": 311,
-      "summary": "1. Les fl�ches Next/Back sont d�sormais coll�es � la zone de texte AI (� droite de celle-ci) et au-dessus de la ligne d'attaque (OK). 2. R�tablissement du bouton Settings fixe et clignotement de la nouvelle fl�che Next en phase intro. 3. R�duction de la hauteur de la barre de repli. 4. Masquage correct des fl�ches quand le chat AI est repli�.",
+      "summary": "1. Les fl\ufffdches Next/Back sont d\ufffdsormais coll\ufffdes \ufffd la zone de texte AI (\ufffd droite de celle-ci) et au-dessus de la ligne d'attaque (OK). 2. R\ufffdtablissement du bouton Settings fixe et clignotement de la nouvelle fl\ufffdche Next en phase intro. 3. R\ufffdduction de la hauteur de la barre de repli. 4. Masquage correct des fl\ufffdches quand le chat AI est repli\ufffd.",
       "prompts": [],
       "version": "1.4.16",
       "commit": "local-dev",
@@ -32,7 +270,7 @@
     },
     {
       "buildNumber": 310,
-      "summary": "1. Réduction de la zone AI chat et intégration des boutons Back et Next à sa droite dans une zone violette. 2. Remplacement du bouton Next dans TurnPhasePanel par le bouton Settings. 3. Suppression de la zone morte tout en haut de l'écran (EnemyFightHeader supprimé). 4. Correction du ratio de l'avatar dans les réglages à 3x2.",
+      "summary": "1. R\u00e9duction de la zone AI chat et int\u00e9gration des boutons Back et Next \u00e0 sa droite dans une zone violette. 2. Remplacement du bouton Next dans TurnPhasePanel par le bouton Settings. 3. Suppression de la zone morte tout en haut de l'\u00e9cran (EnemyFightHeader supprim\u00e9). 4. Correction du ratio de l'avatar dans les r\u00e9glages \u00e0 3x2.",
       "prompts": [],
       "version": "1.4.14",
       "commit": "local-dev",
@@ -47,7 +285,7 @@
     },
     {
       "buildNumber": 309,
-      "summary": "1. Déplacement de l'avatar et titre dans les réglages. 2. Inversion des flèches AI Chat. 3. Chat AI déplié par défaut en Intro. 4. Zone défense basculée sous les dés en phase d'attaque. 5. Inversion des popups PV/PC selon l'inversion Héros/Ennemi.",
+      "summary": "1. D\u00e9placement de l'avatar et titre dans les r\u00e9glages. 2. Inversion des fl\u00e8ches AI Chat. 3. Chat AI d\u00e9pli\u00e9 par d\u00e9faut en Intro. 4. Zone d\u00e9fense bascul\u00e9e sous les d\u00e9s en phase d'attaque. 5. Inversion des popups PV/PC selon l'inversion H\u00e9ros/Ennemi.",
       "prompts": [],
       "version": "1.4.13",
       "commit": "local-dev",
@@ -65,7 +303,7 @@
       "version": "1.4.12",
       "date": "2026-10-07",
       "title": "Rebuild Base (Avant Mix des 12 modifications)",
-      "summary": "Retour au commit cc94a3c (feat: UI Layout optimizations) et sauvegarde (stash) des 12 fichiers modifiés récents pour un futur mixage (20%). Build local sur le port 8083.",
+      "summary": "Retour au commit cc94a3c (feat: UI Layout optimizations) et sauvegarde (stash) des 12 fichiers modifi\u00e9s r\u00e9cents pour un futur mixage (20%). Build local sur le port 8083.",
       "tags": [
         "Rebuild",
         "Rollback"
@@ -109,7 +347,7 @@
       "version": "1.4.11",
       "date": "2026-10-04",
       "title": "Annulation UI et Rebuild",
-      "summary": "Annulation des expérimentations UI et rebuild de la version locale suite au redémarrage du serveur.",
+      "summary": "Annulation des exp\u00e9rimentations UI et rebuild de la version locale suite au red\u00e9marrage du serveur.",
       "tags": [
         "Rebuild",
         "Rollback",
@@ -120,15 +358,15 @@
       "prompts": [
         {
           "id": "p-1.4.11-1",
-          "userPrompt": "non je reste sur la version d avant. Tu peux me rebuild la version web locale après reboot",
-          "aiResponse": "Annulation des modifications sur la branche de test, retour sur main et exécution du build.",
+          "userPrompt": "non je reste sur la version d avant. Tu peux me rebuild la version web locale apr\u00e8s reboot",
+          "aiResponse": "Annulation des modifications sur la branche de test, retour sur main et ex\u00e9cution du build.",
           "checklist": [
             {
-              "text": "Discard des changements expérimentaux (reset --hard sur main)",
+              "text": "Discard des changements exp\u00e9rimentaux (reset --hard sur main)",
               "done": true
             },
             {
-              "text": "Incrémentation de version vers 1.4.11+305",
+              "text": "Incr\u00e9mentation de version vers 1.4.11+305",
               "done": true
             },
             {
@@ -143,8 +381,8 @@
       "buildNumber": 304,
       "version": "1.4.10",
       "date": "2026-10-04",
-      "title": "Token Prey (Owner oppos�) & Bag of Tricks (Owner H�ros absolu) sur la ligne 11",
-      "summary": "1. Prey : Attribution de l'avatar du joueur oppos� � celui qui subit/poss�de le token Prey sur la ligne 11 (le h�ros si le minion a Prey, et inversement).\n2. Bag of tricks : C'est toujours le h�ros qui est le propri�taire de Bag of tricks peu importe o� le token est plac�.\n3. Formatage de texte Prey : Affichage propre des compteurs 'Prey (Used X/Y)' sur la ligne d'action.",
+      "title": "Token Prey (Owner oppos\ufffd) & Bag of Tricks (Owner H\ufffdros absolu) sur la ligne 11",
+      "summary": "1. Prey : Attribution de l'avatar du joueur oppos\ufffd \ufffd celui qui subit/poss\ufffdde le token Prey sur la ligne 11 (le h\ufffdros si le minion a Prey, et inversement).\n2. Bag of tricks : C'est toujours le h\ufffdros qui est le propri\ufffdtaire de Bag of tricks peu importe o\ufffd le token est plac\ufffd.\n3. Formatage de texte Prey : Affichage propre des compteurs 'Prey (Used X/Y)' sur la ligne d'action.",
       "tags": [
         "Prey",
         "Bag of Tricks",
@@ -158,19 +396,19 @@
       "prompts": [
         {
           "id": "p-1.4.10-1",
-          "userPrompt": "le token Prey appartient au joueur oppos� � celui qui le poss�de (pour l'image sur la ligne 11). C'est pareil pour Bag of tricks, c'est toujours le hero qui est owner du token peut importe o� il est.",
-          "aiResponse": "1. Mise � jour de tokenOwnerAvatar pour inverser l'avatar sur Prey (le b�n�ficiaire oppos� � la cible qui porte le token).\n2. For�age de l'avatar du h�ros pour Bag of tricks peu importe sa position.\n3. Nettoyage du libell� de Prey avec ses compteurs r�els ($preyUsedCount/$defenderPreyCount).\n4. Validation des tests unitaires et packaging 1.4.10+304.",
+          "userPrompt": "le token Prey appartient au joueur oppos\ufffd \ufffd celui qui le poss\ufffdde (pour l'image sur la ligne 11). C'est pareil pour Bag of tricks, c'est toujours le hero qui est owner du token peut importe o\ufffd il est.",
+          "aiResponse": "1. Mise \ufffd jour de tokenOwnerAvatar pour inverser l'avatar sur Prey (le b\ufffdn\ufffdficiaire oppos\ufffd \ufffd la cible qui porte le token).\n2. For\ufffdage de l'avatar du h\ufffdros pour Bag of tricks peu importe sa position.\n3. Nettoyage du libell\ufffd de Prey avec ses compteurs r\ufffdels ($preyUsedCount/$defenderPreyCount).\n4. Validation des tests unitaires et packaging 1.4.10+304.",
           "checklist": [
             {
-              "text": "Avatar de Prey attribu� au joueur oppos� � celui qui porte le token",
+              "text": "Avatar de Prey attribu\ufffd au joueur oppos\ufffd \ufffd celui qui porte le token",
               "done": true
             },
             {
-              "text": "Avatar de Bag of tricks attribu� syst�matiquement au h�ros",
+              "text": "Avatar de Bag of tricks attribu\ufffd syst\ufffdmatiquement au h\ufffdros",
               "done": true
             },
             {
-              "text": "Tests unitaires valid�s (fight_logic_test.dart)",
+              "text": "Tests unitaires valid\ufffds (fight_logic_test.dart)",
               "done": true
             }
           ]
@@ -181,8 +419,8 @@
       "buildNumber": 303,
       "version": "1.4.9",
       "date": "2026-10-04",
-      "title": "Avatars r�els des propri�taires de tokens + Suppression doublon Wind Shear + Smoke Bomb popin & asset fix",
-      "summary": "1. Avatars des tokens (Composant 11) : Attribution syst�matique de l'avatar du vrai possesseur du token (h�ros vs ennemi) via un helper tokenOwnerAvatar, sans forcer arbitrairement l'avatar de l'attaquant du tour.\n2. Wind Shear : Suppression du bloc doublon obsol�te dans le dock pour n'avoir qu'une seule ligne propre composant 11.\n3. Smoke Bomb : Correction de l'asset (assets/token/Smoke-Bomb.png) et ajout de la branche isSmokeBomb dans TokenAnimationDialog pour afficher le texte de r�sultat correct d'esquive au lieu du fallback Time Bomb.",
+      "title": "Avatars r\ufffdels des propri\ufffdtaires de tokens + Suppression doublon Wind Shear + Smoke Bomb popin & asset fix",
+      "summary": "1. Avatars des tokens (Composant 11) : Attribution syst\ufffdmatique de l'avatar du vrai possesseur du token (h\ufffdros vs ennemi) via un helper tokenOwnerAvatar, sans forcer arbitrairement l'avatar de l'attaquant du tour.\n2. Wind Shear : Suppression du bloc doublon obsol\ufffdte dans le dock pour n'avoir qu'une seule ligne propre composant 11.\n3. Smoke Bomb : Correction de l'asset (assets/token/Smoke-Bomb.png) et ajout de la branche isSmokeBomb dans TokenAnimationDialog pour afficher le texte de r\ufffdsultat correct d'esquive au lieu du fallback Time Bomb.",
       "tags": [
         "Wind Shear",
         "Smoke Bomb",
@@ -196,19 +434,19 @@
       "prompts": [
         {
           "id": "p-1.4.9-1",
-          "userPrompt": "token windshear uniquement sur le minion, j'ai 2 lignes composant 11 ? Token smoke bomb souci d'image, j'ai encore le message de Timbe bomb dans la popin de r�solution du jet de d�s. D'ailleurs tous les tokens sont pour l'ennemie et c'est la photo du hero que je vois pourquoi ? la r�gle est simple, il faut mettre l'image de qui poss�de le token.",
-          "aiResponse": "1. Suppression du bloc doublon Wind Shear et Prey dans combat_ai_chat_dock.dart.\n2. Remplacement du tokenAsset erron� par assets/token/Smoke-Bomb.png et ajout de la clause isSmokeBomb dans la cha�ne ternaire de token_animation_dialog.dart.\n3. Impl�mentation de tokenOwnerAvatar v�rifiant adventure.alterations vs enemy.alterations pour afficher l'avatar de celui qui poss�de r�ellement le token sur chaque ligne.\n4. Validation avec fight_logic_test.dart et synchronisation 1.4.9+303.",
+          "userPrompt": "token windshear uniquement sur le minion, j'ai 2 lignes composant 11 ? Token smoke bomb souci d'image, j'ai encore le message de Timbe bomb dans la popin de r\ufffdsolution du jet de d\ufffds. D'ailleurs tous les tokens sont pour l'ennemie et c'est la photo du hero que je vois pourquoi ? la r\ufffdgle est simple, il faut mettre l'image de qui poss\ufffdde le token.",
+          "aiResponse": "1. Suppression du bloc doublon Wind Shear et Prey dans combat_ai_chat_dock.dart.\n2. Remplacement du tokenAsset erron\ufffd par assets/token/Smoke-Bomb.png et ajout de la clause isSmokeBomb dans la cha\ufffdne ternaire de token_animation_dialog.dart.\n3. Impl\ufffdmentation de tokenOwnerAvatar v\ufffdrifiant adventure.alterations vs enemy.alterations pour afficher l'avatar de celui qui poss\ufffdde r\ufffdellement le token sur chaque ligne.\n4. Validation avec fight_logic_test.dart et synchronisation 1.4.9+303.",
           "checklist": [
             {
               "text": "Suppression du doublon Wind Shear (une seule ligne composant 11)",
               "done": true
             },
             {
-              "text": "Correction asset et message de jet de d� pour Smoke Bomb",
+              "text": "Correction asset et message de jet de d\ufffd pour Smoke Bomb",
               "done": true
             },
             {
-              "text": "Affichage de l'avatar du possesseur r�el du token sur chaque composant 11",
+              "text": "Affichage de l'avatar du possesseur r\ufffdel du token sur chaque composant 11",
               "done": true
             },
             {
@@ -223,8 +461,8 @@
       "buildNumber": 302,
       "version": "1.4.8",
       "date": "2026-10-04",
-      "title": "Silence : Maintien des d�s micro-suite par l'IA + Ninjitsu : Exclusion totale en Upkeep & R�solution multiple cons�cutive",
-      "summary": "1. Silence & Strat�gie d�s IA : Correction de la strat�gie de relance adverse sous Silence ; l'IA garde d�sormais bien les d�s composant une micro-suite (longueur 3) au lieu de les relancer aveugl�ment.\n2. Ninjitsu - Exclusion Upkeep : Ninjitsu est d�sormais formellement exclu des popins d'entretien automatique pour les deux combattants.\n3. Ninjitsu Multi-stack : R�solution s�quentielle compl�te de tous les tokens Ninjitsu disponibles pour l'ennemi (2 tokens = 2 popins/jets cons�cutifs avec cumul des effets).",
+      "title": "Silence : Maintien des d\ufffds micro-suite par l'IA + Ninjitsu : Exclusion totale en Upkeep & R\ufffdsolution multiple cons\ufffdcutive",
+      "summary": "1. Silence & Strat\ufffdgie d\ufffds IA : Correction de la strat\ufffdgie de relance adverse sous Silence ; l'IA garde d\ufffdsormais bien les d\ufffds composant une micro-suite (longueur 3) au lieu de les relancer aveugl\ufffdment.\n2. Ninjitsu - Exclusion Upkeep : Ninjitsu est d\ufffdsormais formellement exclu des popins d'entretien automatique pour les deux combattants.\n3. Ninjitsu Multi-stack : R\ufffdsolution s\ufffdquentielle compl\ufffdte de tous les tokens Ninjitsu disponibles pour l'ennemi (2 tokens = 2 popins/jets cons\ufffdcutifs avec cumul des effets).",
       "tags": [
         "Silence",
         "Ninjitsu",
@@ -238,23 +476,23 @@
       "prompts": [
         {
           "id": "p-1.4.8-1",
-          "userPrompt": "token silence, les d�s ne sont plus s�lectionn�s pour un micro suite, ca pose un souci car l'IA dice relance les d�s alors qu'une micro suite �tait d�j� valid�. Ninjitsu token : j'ai encore eu la popin en upkeep pour l'ennemie. j'ai 2 token, j'ai bien eu une popin en roll phase (bien) mais j'en ai eu qu'une alors que j'ai deux token. bien v�rifier de d�clencher les 2 popins ou 3 popins s'il y a 2 ou 3 tokens.",
-          "aiResponse": "1. Conservation des d�s micro-suite IA : mise � jour de _applyMinionDiceStrategy et _reserveBestSuite pour appeler MinionDiceEngine.chooseSuiteHold avec limitTo3: _isMinionSilenced, permettant � l'IA de verrouiller imm�diatement sa micro-suite.\n2. Exclusion stricte en Upkeep : ajout de Ninjitsu dans la liste d'exclusion de _triggerTokenAnimationDialogs en dehors de la Roll Phase.\n3. D�clenchement multi-token Ninjitsu : ex�cution s�quentielle de chaque jet de d� via une boucle asynchrone tant que _availableNinjitsuCount > 0.\n4. Tests unitaires compl�t�s et valid�s (27/27).",
+          "userPrompt": "token silence, les d\ufffds ne sont plus s\ufffdlectionn\ufffds pour un micro suite, ca pose un souci car l'IA dice relance les d\ufffds alors qu'une micro suite \ufffdtait d\ufffdj\ufffd valid\ufffd. Ninjitsu token : j'ai encore eu la popin en upkeep pour l'ennemie. j'ai 2 token, j'ai bien eu une popin en roll phase (bien) mais j'en ai eu qu'une alors que j'ai deux token. bien v\ufffdrifier de d\ufffdclencher les 2 popins ou 3 popins s'il y a 2 ou 3 tokens.",
+          "aiResponse": "1. Conservation des d\ufffds micro-suite IA : mise \ufffd jour de _applyMinionDiceStrategy et _reserveBestSuite pour appeler MinionDiceEngine.chooseSuiteHold avec limitTo3: _isMinionSilenced, permettant \ufffd l'IA de verrouiller imm\ufffddiatement sa micro-suite.\n2. Exclusion stricte en Upkeep : ajout de Ninjitsu dans la liste d'exclusion de _triggerTokenAnimationDialogs en dehors de la Roll Phase.\n3. D\ufffdclenchement multi-token Ninjitsu : ex\ufffdcution s\ufffdquentielle de chaque jet de d\ufffd via une boucle asynchrone tant que _availableNinjitsuCount > 0.\n4. Tests unitaires compl\ufffdt\ufffds et valid\ufffds (27/27).",
           "checklist": [
             {
-              "text": "S�lection et conservation des d�s pour micro-suite par l'IA sous Silence",
+              "text": "S\ufffdlection et conservation des d\ufffds pour micro-suite par l'IA sous Silence",
               "done": true
             },
             {
-              "text": "Exclusion formelle de Ninjitsu des popins d'Upkeep pour l'ennemi et le h�ros",
+              "text": "Exclusion formelle de Ninjitsu des popins d'Upkeep pour l'ennemi et le h\ufffdros",
               "done": true
             },
             {
-              "text": "D�clenchement cons�cutif de tous les tokens Ninjitsu disponibles (ex: 2 popins pour 2 tokens)",
+              "text": "D\ufffdclenchement cons\ufffdcutif de tous les tokens Ninjitsu disponibles (ex: 2 popins pour 2 tokens)",
               "done": true
             },
             {
-              "text": "Tests unitaires valid�s (fight_logic_test.dart)",
+              "text": "Tests unitaires valid\ufffds (fight_logic_test.dart)",
               "done": true
             }
           ]
@@ -265,8 +503,8 @@
       "buildNumber": 301,
       "version": "1.4.7",
       "date": "2026-10-04",
-      "title": "Silence : Micro-suite autoris�e (seules Small & Large sont bloqu�es) + Ninjitsu Dock Unifi� & Clean",
-      "summary": "1. Pr�cision r�gle Silence : La micro suite (longueur 3) est autoris�e ; seules les Small Straight (4) et Large Straight (5) sont bloqu�es par Silence.\n2. Ninjitsu sans popin automatique en Upkeep/Roll Start pour le H�ros : d�clenchement uniquement via le bouton 'Use' du Composant 11 d�s qu'une attaque inflige au moins 1 d�g�t.\n3. Ninjitsu Ennemi : int�gration dans le dock (Composant 11 sans 'Use') avec d�clenchement automatique d�s qu'une attaque inflige au moins 1 d�g�t.\n4. Dock Ninjitsu unifi� : suppression de la ligne en doublon et de l'ic�ne manquante, affichage sur UNE SEULE LIGNE avec cumul des bonus (ex: Active (+2 DMG, Undefendable)).",
+      "title": "Silence : Micro-suite autoris\ufffde (seules Small & Large sont bloqu\ufffdes) + Ninjitsu Dock Unifi\ufffd & Clean",
+      "summary": "1. Pr\ufffdcision r\ufffdgle Silence : La micro suite (longueur 3) est autoris\ufffde ; seules les Small Straight (4) et Large Straight (5) sont bloqu\ufffdes par Silence.\n2. Ninjitsu sans popin automatique en Upkeep/Roll Start pour le H\ufffdros : d\ufffdclenchement uniquement via le bouton 'Use' du Composant 11 d\ufffds qu'une attaque inflige au moins 1 d\ufffdg\ufffdt.\n3. Ninjitsu Ennemi : int\ufffdgration dans le dock (Composant 11 sans 'Use') avec d\ufffdclenchement automatique d\ufffds qu'une attaque inflige au moins 1 d\ufffdg\ufffdt.\n4. Dock Ninjitsu unifi\ufffd : suppression de la ligne en doublon et de l'ic\ufffdne manquante, affichage sur UNE SEULE LIGNE avec cumul des bonus (ex: Active (+2 DMG, Undefendable)).",
       "tags": [
         "Silence",
         "Ninjitsu",
@@ -280,15 +518,15 @@
       "prompts": [
         {
           "id": "p-1.4.7-1",
-          "userPrompt": "token silence, la micro suite est bien autoris�e c'est � partir de small et pour la large straight suite que ce bloque. Token ninjitsu, j'ai encore le message en upkeep alors que c'est uniquement via un composant 11 avec use qu'on doit d�clencher la popin pour le hero. Quand c'est l'ennemi, un composant 11 sans le 'use' se met et se d�clenche pendant la phase de roll, d�s qu'un d�g�t est au moins fait. Quand c'est au hero, cf mon image, il y a 2 lignes ? pourquoi ? avec un souci d'image. Ne garder qu'une seule ligne et indiquer le cumul de ce qui est gagn� par token sur une m�me ligne.",
-          "aiResponse": "1. Silence & Micro-suites : adaptation de la logique de validation (_currentMinionAttackResult, _currentAttackGoalMet, _minionReachedMaxDamage, rat-de-la-rue, _applyConditionalRules, _minionAttackAiMessage) pour autoriser la micro suite (3 d�s) et ne bloquer que les Small/Large Straights (longueur >= 4).\n2. Suppression des popins automatiques Ninjitsu : retrait de Ninjitsu des rappels de d�but de roll/upkeep pour le joueur ; activation exclusive via le bouton 'Use' du Composant 11 d�s que l'attaque inflige des d�g�ts.\n3. Support Ninjitsu pour l'ennemi : affichage du Composant 11 sans bouton 'Use' dans le dock adverse et d�clenchement automatique d�s que l'attaque inflige au moins 1 d�g�t.\n4. Unification de la ligne Ninjitsu dans le dock : suppression du doublon _ActiveTokenBadge et de l'asset obsol�te ninjitsu.png ; affichage unique et propre via _TokenActionRow avec cumul des bonus ('Active (+2 DMG, Undefendable)').\n5. Tests unitaires mis � jour et valid�s.",
+          "userPrompt": "token silence, la micro suite est bien autoris\ufffde c'est \ufffd partir de small et pour la large straight suite que ce bloque. Token ninjitsu, j'ai encore le message en upkeep alors que c'est uniquement via un composant 11 avec use qu'on doit d\ufffdclencher la popin pour le hero. Quand c'est l'ennemi, un composant 11 sans le 'use' se met et se d\ufffdclenche pendant la phase de roll, d\ufffds qu'un d\ufffdg\ufffdt est au moins fait. Quand c'est au hero, cf mon image, il y a 2 lignes ? pourquoi ? avec un souci d'image. Ne garder qu'une seule ligne et indiquer le cumul de ce qui est gagn\ufffd par token sur une m\ufffdme ligne.",
+          "aiResponse": "1. Silence & Micro-suites : adaptation de la logique de validation (_currentMinionAttackResult, _currentAttackGoalMet, _minionReachedMaxDamage, rat-de-la-rue, _applyConditionalRules, _minionAttackAiMessage) pour autoriser la micro suite (3 d\ufffds) et ne bloquer que les Small/Large Straights (longueur >= 4).\n2. Suppression des popins automatiques Ninjitsu : retrait de Ninjitsu des rappels de d\ufffdbut de roll/upkeep pour le joueur ; activation exclusive via le bouton 'Use' du Composant 11 d\ufffds que l'attaque inflige des d\ufffdg\ufffdts.\n3. Support Ninjitsu pour l'ennemi : affichage du Composant 11 sans bouton 'Use' dans le dock adverse et d\ufffdclenchement automatique d\ufffds que l'attaque inflige au moins 1 d\ufffdg\ufffdt.\n4. Unification de la ligne Ninjitsu dans le dock : suppression du doublon _ActiveTokenBadge et de l'asset obsol\ufffdte ninjitsu.png ; affichage unique et propre via _TokenActionRow avec cumul des bonus ('Active (+2 DMG, Undefendable)').\n5. Tests unitaires mis \ufffd jour et valid\ufffds.",
           "checklist": [
             {
-              "text": "Micro-suite (3 d�s) autoris�e sous Silence",
+              "text": "Micro-suite (3 d\ufffds) autoris\ufffde sous Silence",
               "done": true
             },
             {
-              "text": "Small & Large Straight bloqu�es sous Silence",
+              "text": "Small & Large Straight bloqu\ufffdes sous Silence",
               "done": true
             },
             {
@@ -296,11 +534,11 @@
               "done": true
             },
             {
-              "text": "D�clenchement joueur de Ninjitsu uniquement via le bouton 'Use' du Composant 11",
+              "text": "D\ufffdclenchement joueur de Ninjitsu uniquement via le bouton 'Use' du Composant 11",
               "done": true
             },
             {
-              "text": "Affichage Composant 11 sans 'Use' pour l'ennemi avec jet auto d�s 1 DMG",
+              "text": "Affichage Composant 11 sans 'Use' pour l'ennemi avec jet auto d\ufffds 1 DMG",
               "done": true
             },
             {
@@ -308,7 +546,7 @@
               "done": true
             },
             {
-              "text": "Tests unitaires valid�s (fight_logic_test.dart)",
+              "text": "Tests unitaires valid\ufffds (fight_logic_test.dart)",
               "done": true
             }
           ]
@@ -319,8 +557,8 @@
       "buildNumber": 300,
       "version": "1.4.6",
       "date": "2026-10-04",
-      "title": "Token Silence (Roll Phase & Blocage Suites) + Ninjitsu M3 Dialog & R�gles",
-      "summary": "Correction du d�clenchement de Silence (Roll Phase au lieu d'Upkeep), interdiction formelle des suites lors des lancers et des modifications manuelles de d�s quand Silence est actif. Prise en charge des r�gles exactes de Ninjitsu (1-3: +1 DMG, 4-5: +2 DMG, 6: choix de r�compense) sans texte erron� de Time Bomb, nouvelle popin de choix Material 3 sign�e Nina (NinjitsuChoiceDialog), et affichage des quantit�s en x2/x3 au lieu de (x).",
+      "title": "Token Silence (Roll Phase & Blocage Suites) + Ninjitsu M3 Dialog & R\ufffdgles",
+      "summary": "Correction du d\ufffdclenchement de Silence (Roll Phase au lieu d'Upkeep), interdiction formelle des suites lors des lancers et des modifications manuelles de d\ufffds quand Silence est actif. Prise en charge des r\ufffdgles exactes de Ninjitsu (1-3: +1 DMG, 4-5: +2 DMG, 6: choix de r\ufffdcompense) sans texte erron\ufffd de Time Bomb, nouvelle popin de choix Material 3 sign\ufffde Nina (NinjitsuChoiceDialog), et affichage des quantit\ufffds en x2/x3 au lieu de (x).",
       "tags": [
         "Silence",
         "Ninjitsu",
@@ -335,23 +573,23 @@
       "prompts": [
         {
           "id": "p-1.4.6-1",
-          "userPrompt": "Token silence, la popin doit se lancer en phase de roll et non en phase d'upkeep. J'ai pu faire un micro suite, donc pas impact� par le token silence qui bloque les suites. j'ai chang� un d�s pour proviquer une suite medium et malgr� que Silence soit activ�, la medium suite s'est activ�. je pense que l'app bloque bien dans les 3 lanc�s, mais ne bloque pas apr�s les modifications de d�s. Ninjitsu, j'ai encore les explications de time bomb sur le r�sultat des d�s de ninjitsu dans sa popin comprenant le jet. Je rappelle la r�gle : r�sultat de 1 � 3 : On ajouter un d�gat � l'attaque (+1) ; r�sultat de 4 et 5 : On ajouter un d�gat � l'attaque (+2) ; r�sultat de 6 on affiche une nouvelle popin avec 3 choix (choix 1: +2 DMG, choix 2: Delayed Poison, choix 3: Undefendable). Refaire la popin avec Nina. Et pour Ninjitsu et tokens, mettre Ninjitsu x3 au lieu de (x).",
-          "aiResponse": "1. Silence Roll Phase : ajout de isSilence � isAttackerRollToken dans _triggerTokenAnimationDialogs pour l'ignorer en Upkeep et l'ex�cuter en Roll Phase.\n2. Silence blocage suites : interdiction de valider toute suite (micro, small, large) dans _currentMinionAttackResult, _currentAttackGoalMet, rat-de-la-rue, _applyConditionalRules, _applyMinionDiceStrategy et les messages IA d�s que Silence est actif, y compris apr�s �dition de d�.\n3. Ninjitsu r�sultat de d� : affichage des textes de r�gles exacts de Ninjitsu (1-3: +1 DMG, 4-5: +2 DMG, 6: choix de r�compense) dans TokenAnimationDialog au lieu de Time Bomb.\n4. Ninjitsu Choice Dialog : nouveau widget Material 3 tactile (NinjitsuChoiceDialog) con�u selon l'audit UX de Nina avec cartes d'options d�di�es et claires.\n5. Badges dock : remplacement de la notation (x) par x$count (ex: Ninjitsu x3, Guard Break x2, etc.).",
+          "userPrompt": "Token silence, la popin doit se lancer en phase de roll et non en phase d'upkeep. J'ai pu faire un micro suite, donc pas impact\ufffd par le token silence qui bloque les suites. j'ai chang\ufffd un d\ufffds pour proviquer une suite medium et malgr\ufffd que Silence soit activ\ufffd, la medium suite s'est activ\ufffd. je pense que l'app bloque bien dans les 3 lanc\ufffds, mais ne bloque pas apr\ufffds les modifications de d\ufffds. Ninjitsu, j'ai encore les explications de time bomb sur le r\ufffdsultat des d\ufffds de ninjitsu dans sa popin comprenant le jet. Je rappelle la r\ufffdgle : r\ufffdsultat de 1 \ufffd 3 : On ajouter un d\ufffdgat \ufffd l'attaque (+1) ; r\ufffdsultat de 4 et 5 : On ajouter un d\ufffdgat \ufffd l'attaque (+2) ; r\ufffdsultat de 6 on affiche une nouvelle popin avec 3 choix (choix 1: +2 DMG, choix 2: Delayed Poison, choix 3: Undefendable). Refaire la popin avec Nina. Et pour Ninjitsu et tokens, mettre Ninjitsu x3 au lieu de (x).",
+          "aiResponse": "1. Silence Roll Phase : ajout de isSilence \ufffd isAttackerRollToken dans _triggerTokenAnimationDialogs pour l'ignorer en Upkeep et l'ex\ufffdcuter en Roll Phase.\n2. Silence blocage suites : interdiction de valider toute suite (micro, small, large) dans _currentMinionAttackResult, _currentAttackGoalMet, rat-de-la-rue, _applyConditionalRules, _applyMinionDiceStrategy et les messages IA d\ufffds que Silence est actif, y compris apr\ufffds \ufffddition de d\ufffd.\n3. Ninjitsu r\ufffdsultat de d\ufffd : affichage des textes de r\ufffdgles exacts de Ninjitsu (1-3: +1 DMG, 4-5: +2 DMG, 6: choix de r\ufffdcompense) dans TokenAnimationDialog au lieu de Time Bomb.\n4. Ninjitsu Choice Dialog : nouveau widget Material 3 tactile (NinjitsuChoiceDialog) con\ufffdu selon l'audit UX de Nina avec cartes d'options d\ufffddi\ufffdes et claires.\n5. Badges dock : remplacement de la notation (x) par x$count (ex: Ninjitsu x3, Guard Break x2, etc.).",
           "checklist": [
             {
-              "text": "D�clenchement de la popin Silence en d�but de Roll Phase",
+              "text": "D\ufffdclenchement de la popin Silence en d\ufffdbut de Roll Phase",
               "done": true
             },
             {
-              "text": "Blocage persistant de la validation des suites sous Silence apr�s modification de d�",
+              "text": "Blocage persistant de la validation des suites sous Silence apr\ufffds modification de d\ufffd",
               "done": true
             },
             {
-              "text": "Affichage des messages de r�sultat propres � Ninjitsu dans le dialog d'animation",
+              "text": "Affichage des messages de r\ufffdsultat propres \ufffd Ninjitsu dans le dialog d'animation",
               "done": true
             },
             {
-              "text": "Cr�ation du widget NinjitsuChoiceDialog Material 3 (cartes tactiles ergonomiques)",
+              "text": "Cr\ufffdation du widget NinjitsuChoiceDialog Material 3 (cartes tactiles ergonomiques)",
               "done": true
             },
             {
@@ -359,7 +597,7 @@
               "done": true
             },
             {
-              "text": "Tests unitaires du blocage suite sous Silence valid�s",
+              "text": "Tests unitaires du blocage suite sous Silence valid\ufffds",
               "done": true
             }
           ]
@@ -370,8 +608,8 @@
       "buildNumber": 299,
       "version": "1.4.5",
       "date": "2026-10-04",
-      "title": "Salve Popin (Composant 1 HP Delta) & Avatar Ennemi Centr� (Composants 10/11/12)",
-      "summary": "Correction de l'asset Salve (.webp), int�gration de la popin Composant 1 avec delta de points de vie (+6 HP) lors du clic sur 'Use', et affichage du portrait ennemi centr� sur le visage (identique � la zone de tour de jeu) pour les composants 10, 11 et 12.",
+      "title": "Salve Popin (Composant 1 HP Delta) & Avatar Ennemi Centr\ufffd (Composants 10/11/12)",
+      "summary": "Correction de l'asset Salve (.webp), int\ufffdgration de la popin Composant 1 avec delta de points de vie (+6 HP) lors du clic sur 'Use', et affichage du portrait ennemi centr\ufffd sur le visage (identique \ufffd la zone de tour de jeu) pour les composants 10, 11 et 12.",
       "tags": [
         "Bugfix",
         "Combat",
@@ -385,11 +623,11 @@
       "prompts": [
         {
           "id": "p-1.4.5-1",
-          "userPrompt": "Il y a un souci sur le logo du composant 11 que tu viens de mettre, j'ai un point d'int�rrogartion. \nUne fois cliqu� sur 'use', on fairt apparaitre une popin composant 1 avec l'affichage du changement du nb de point de vie\n\non a ajout� une image du joueur en premiere place du composant 10/11/12. \nc'est ok pour le joueur\nPour l'ennemie, il faut reprendre l'image qu'on a dans la zone de tour de jeu, centr� sur le visage comme on a dans cette zone.",
-          "aiResponse": "1. Correction du logo Salve : remplacement de assets/token/Salve.png par assets/token/Salve.webp dans combat_ai_chat_dock.dart.\n2. Popin Composant 1 pour Salve : appel de TokenAnimationDialog.show avec calcul dynamique de delta (+6 HP) et affichage du bloc HP vert (oldHp -> newHp) avant retrait du jeton.\n3. Portrait ennemi centr� sur le visage : impl�mentation de buildOwnerAvatar et de attackerAvatar utilisant enemy.previewAsset / naxarus_head avec _minionEyeAlignment et _minionEyeFit dans tous les composants 10, 11, 12 (_TokenActionRow, _ActiveTokenBadge, _MultiRollTokenActiveRow).\n4. Mise � jour de la galerie UI de recette web (recette.js) avec avatars joueur/ennemi.",
+          "userPrompt": "Il y a un souci sur le logo du composant 11 que tu viens de mettre, j'ai un point d'int\ufffdrrogartion. \nUne fois cliqu\ufffd sur 'use', on fairt apparaitre une popin composant 1 avec l'affichage du changement du nb de point de vie\n\non a ajout\ufffd une image du joueur en premiere place du composant 10/11/12. \nc'est ok pour le joueur\nPour l'ennemie, il faut reprendre l'image qu'on a dans la zone de tour de jeu, centr\ufffd sur le visage comme on a dans cette zone.",
+          "aiResponse": "1. Correction du logo Salve : remplacement de assets/token/Salve.png par assets/token/Salve.webp dans combat_ai_chat_dock.dart.\n2. Popin Composant 1 pour Salve : appel de TokenAnimationDialog.show avec calcul dynamique de delta (+6 HP) et affichage du bloc HP vert (oldHp -> newHp) avant retrait du jeton.\n3. Portrait ennemi centr\ufffd sur le visage : impl\ufffdmentation de buildOwnerAvatar et de attackerAvatar utilisant enemy.previewAsset / naxarus_head avec _minionEyeAlignment et _minionEyeFit dans tous les composants 10, 11, 12 (_TokenActionRow, _ActiveTokenBadge, _MultiRollTokenActiveRow).\n4. Mise \ufffd jour de la galerie UI de recette web (recette.js) avec avatars joueur/ennemi.",
           "checklist": [
             {
-              "text": "Remplacement du chemin d'ic�ne Salve par Salve.webp",
+              "text": "Remplacement du chemin d'ic\ufffdne Salve par Salve.webp",
               "done": true
             },
             {
@@ -397,7 +635,7 @@
               "done": true
             },
             {
-              "text": "Cadrage de l'avatar ennemi centr� sur le visage (identique � la zone de tour)",
+              "text": "Cadrage de l'avatar ennemi centr\ufffd sur le visage (identique \ufffd la zone de tour)",
               "done": true
             },
             {
@@ -405,7 +643,7 @@
               "done": true
             },
             {
-              "text": "Mise � jour des tests et du journal de recette",
+              "text": "Mise \ufffd jour des tests et du journal de recette",
               "done": true
             }
           ]
@@ -417,7 +655,7 @@
       "version": "1.4.4",
       "date": "2026-10-04",
       "title": "Fix Upkeep Token Action Rows (Salve & Wellspring)",
-      "summary": "Affichage et prise en charge du d�clencheur Composant 11 (_TokenActionRow) pour le jeton Salve et Wellspring en phase d'upkeep (heroUpkeep & minionUpkeep).",
+      "summary": "Affichage et prise en charge du d\ufffdclencheur Composant 11 (_TokenActionRow) pour le jeton Salve et Wellspring en phase d'upkeep (heroUpkeep & minionUpkeep).",
       "tags": [
         "Bugfix",
         "Combat",
@@ -433,8 +671,8 @@
       "buildNumber": 297,
       "version": "1.4.3",
       "date": "2026-10-04",
-      "title": "Architecture & D�coupage modulaire (�tape finale : Moteur IA, Snapshots et Mixins)",
-      "summary": "Finalisation du d�coupage de fight.dart : extraction du moteur IA de s�lection de d�s et d'attaques, gestion des snapshots/historique de combat, et documentation architecturale pour p�renniser le code.",
+      "title": "Architecture & D\ufffdcoupage modulaire (\ufffdtape finale : Moteur IA, Snapshots et Mixins)",
+      "summary": "Finalisation du d\ufffdcoupage de fight.dart : extraction du moteur IA de s\ufffdlection de d\ufffds et d'attaques, gestion des snapshots/historique de combat, et documentation architecturale pour p\ufffdrenniser le code.",
       "tags": [
         "Refactoring",
         "Architecture",
@@ -450,8 +688,8 @@
       "buildNumber": 296,
       "version": "1.4.2",
       "date": "2026-10-04",
-      "title": "Architecture & D�coupage modulaire (�tape 4 : �crans de fin et pauses)",
-      "summary": "Extraction des panneaux de fin de combat (_CombatResolutionPanel), dialogue de pause et assistants de r�solution dans lib/parts/fight_widgets/combat_resolution_panel.dart.",
+      "title": "Architecture & D\ufffdcoupage modulaire (\ufffdtape 4 : \ufffdcrans de fin et pauses)",
+      "summary": "Extraction des panneaux de fin de combat (_CombatResolutionPanel), dialogue de pause et assistants de r\ufffdsolution dans lib/parts/fight_widgets/combat_resolution_panel.dart.",
       "tags": [
         "Refactoring",
         "Architecture",
@@ -466,8 +704,8 @@
       "buildNumber": 295,
       "version": "1.4.1",
       "date": "2026-10-04",
-      "title": "Architecture & D�coupage modulaire (�tape 3 : Mixin de gestion des d�s)",
-      "summary": "Extraction de la logique et du contr�leur des d�s de combat dans FightDiceMixin (lib/parts/fight_logic/fight_dice_mixin.dart).",
+      "title": "Architecture & D\ufffdcoupage modulaire (\ufffdtape 3 : Mixin de gestion des d\ufffds)",
+      "summary": "Extraction de la logique et du contr\ufffdleur des d\ufffds de combat dans FightDiceMixin (lib/parts/fight_logic/fight_dice_mixin.dart).",
       "tags": [
         "Refactoring",
         "Architecture",
@@ -482,8 +720,8 @@
       "buildNumber": 294,
       "version": "1.4.0",
       "date": "2026-10-04",
-      "title": "Architecture & D�coupage modulaire (�tape 2)",
-      "summary": "Extraction du domaine et des helpers de tokens de combat dans lib/parts/fight_logic/token_combat_helpers.dart avec v�rification de non-r�gression et incr�mentation majeure 1.4.0.",
+      "title": "Architecture & D\ufffdcoupage modulaire (\ufffdtape 2)",
+      "summary": "Extraction du domaine et des helpers de tokens de combat dans lib/parts/fight_logic/token_combat_helpers.dart avec v\ufffdrification de non-r\ufffdgression et incr\ufffdmentation majeure 1.4.0.",
       "tags": [
         "Refactoring",
         "Architecture",
@@ -498,8 +736,8 @@
       "buildNumber": 293,
       "version": "1.3.293",
       "date": "2026-10-04",
-      "title": "Refactoring et d�coupage modulaire de fight.dart (�tape 1)",
-      "summary": "Extraction des widgets de combat autonomes (token_action_row, combat_ai_chat_dock, ai_chat_with_health, compact_item_strip, enemy_rules_panel, nanobot_detonation_dialog) dans lib/parts/fight_widgets/ avec v�rification stricte de non-r�gression.",
+      "title": "Refactoring et d\ufffdcoupage modulaire de fight.dart (\ufffdtape 1)",
+      "summary": "Extraction des widgets de combat autonomes (token_action_row, combat_ai_chat_dock, ai_chat_with_health, compact_item_strip, enemy_rules_panel, nanobot_detonation_dialog) dans lib/parts/fight_widgets/ avec v\ufffdrification stricte de non-r\ufffdgression.",
       "tags": [
         "Refactoring",
         "Architecture",
@@ -574,7 +812,7 @@
       "version": "1.3.282",
       "date": "2026-10-03",
       "title": "Correction UTF-8 BOM, Token Entangle, Harmonisation des Tokens",
-      "summary": "Fix BOM (A��T bug). Moved Entangle removal to end of phase. Replaced purple token badges with green badges to harmonize visual hierarchy (composant 10/12). Improved Disruption popin UX by emphasizing CP loss.",
+      "summary": "Fix BOM (A\ufffd\ufffdT bug). Moved Entangle removal to end of phase. Replaced purple token badges with green badges to harmonize visual hierarchy (composant 10/12). Improved Disruption popin UX by emphasizing CP loss.",
       "tags": [
         "Bugfix",
         "UX",
@@ -680,17 +918,17 @@
         "Build",
         "Preview"
       ],
-      "summary": "Build web locale preview comme d�fini",
+      "summary": "Build web locale preview comme d\ufffdfini",
       "prompts": [
         {
           "id": "p-250-1",
-          "userPrompt": "build web locale preview comme d�fini",
-          "aiResponse": "Mise � jour des num�ros de version, g�n�ration du build web, et lancement du serveur de preview local.",
+          "userPrompt": "build web locale preview comme d\ufffdfini",
+          "aiResponse": "Mise \ufffd jour des num\ufffdros de version, g\ufffdn\ufffdration du build web, et lancement du serveur de preview local.",
           "items": [
             {
               "id": "item-250-1-1",
               "title": "Build Web Local",
-              "description": "G�n�ration du build web.",
+              "description": "G\ufffdn\ufffdration du build web.",
               "category": "Build"
             }
           ]
@@ -708,17 +946,17 @@
         "Build",
         "Preview"
       ],
-      "summary": "Build web locale avec preview comme demand� par l'utilisateur.",
+      "summary": "Build web locale avec preview comme demand\ufffd par l'utilisateur.",
       "prompts": [
         {
           "id": "p-248-1",
           "userPrompt": "build web locale avec preview comme dans nos instructions",
-          "aiResponse": "Mise � jour des num�ros de version, g�n�ration du build web, et lancement du serveur de preview local.",
+          "aiResponse": "Mise \ufffd jour des num\ufffdros de version, g\ufffdn\ufffdration du build web, et lancement du serveur de preview local.",
           "items": [
             {
               "id": "item-248-1-1",
               "title": "Build Web Local",
-              "description": "G�n�ration du build web.",
+              "description": "G\ufffdn\ufffdration du build web.",
               "category": "Build"
             }
           ]
@@ -731,23 +969,23 @@
       "commit": "local-dev",
       "date": "2026-09-26",
       "author": "Antigravity AI",
-      "title": "Application des d�g�ts du token Phoenix Burn",
+      "title": "Application des d\ufffdg\ufffdts du token Phoenix Burn",
       "tags": [
         "Logic",
         "Combat",
         "Tokens"
       ],
-      "summary": "Ajout du traitement du token Phoenix Burn (Br�lure du ph�nix) lors de la phase d'entretien (upkeep) pour appliquer les 2 d�g�ts et afficher la ligne dans les logs.",
+      "summary": "Ajout du traitement du token Phoenix Burn (Br\ufffdlure du ph\ufffdnix) lors de la phase d'entretien (upkeep) pour appliquer les 2 d\ufffdg\ufffdts et afficher la ligne dans les logs.",
       "prompts": [
         {
           "id": "p-240-1",
-          "userPrompt": "apr�s recette, le token phonix brurn n'inglige pas les 2 d�gats (avant le jet de d�s) malgr�s l'affichage de la diminution dans la popin. je veux une ligne dans les logs pour les d�gats de ce token.",
-          "aiResponse": "Ajout de 'Phoenix burn' dans la m�thode _upkeepHandlers de game_engine.dart pour appliquer 2 d�g�ts persistants et ajout des traductions dans les m�thodes count() et remove().",
+          "userPrompt": "apr\ufffds recette, le token phonix brurn n'inglige pas les 2 d\ufffdgats (avant le jet de d\ufffds) malgr\ufffds l'affichage de la diminution dans la popin. je veux une ligne dans les logs pour les d\ufffdgats de ce token.",
+          "aiResponse": "Ajout de 'Phoenix burn' dans la m\ufffdthode _upkeepHandlers de game_engine.dart pour appliquer 2 d\ufffdg\ufffdts persistants et ajout des traductions dans les m\ufffdthodes count() et remove().",
           "items": [
             {
               "id": "item-240-1-1",
-              "title": "D�g�ts Phoenix Burn",
-              "description": "2 d�g�ts subis lors de la phase d'entretien.",
+              "title": "D\ufffdg\ufffdts Phoenix Burn",
+              "description": "2 d\ufffdg\ufffdts subis lors de la phase d'entretien.",
               "category": "Engine"
             }
           ]
@@ -766,17 +1004,17 @@
         "Combat",
         "Tokens"
       ],
-      "summary": "Mise à jour de Constrict pour utiliser le même comportement que Barbed Vine. Lors de la phase de lancer du héros, il doit désormais interagir avec le jeton Constrict pour déclarer son coût en CP avant de pouvoir valider l'étape.",
+      "summary": "Mise \u00e0 jour de Constrict pour utiliser le m\u00eame comportement que Barbed Vine. Lors de la phase de lancer du h\u00e9ros, il doit d\u00e9sormais interagir avec le jeton Constrict pour d\u00e9clarer son co\u00fbt en CP avant de pouvoir valider l'\u00e9tape.",
       "prompts": [
         {
           "id": "p-225-1",
-          "userPrompt": "Constrict token est compatible avec le composant 13. donc lorsque c'est le minion on garde el composant 12. lorsque c'est le hero, on affiche le composant 13 (bouton OK désactivé en attendant que le select soit utilisé) bref comme barded vine.",
-          "aiResponse": "Intégration du modèle MultiRollTokenActiveRow pour Constrict dans la phase offensive du dock, le rendant cliquable (composant 13) pour le joueur et informatif (composant 12) pour l'IA, avec retardement des pertes de CP à la résolution de l'attaque.",
+          "userPrompt": "Constrict token est compatible avec le composant 13. donc lorsque c'est le minion on garde el composant 12. lorsque c'est le hero, on affiche le composant 13 (bouton OK d\u00e9sactiv\u00e9 en attendant que le select soit utilis\u00e9) bref comme barded vine.",
+          "aiResponse": "Int\u00e9gration du mod\u00e8le MultiRollTokenActiveRow pour Constrict dans la phase offensive du dock, le rendant cliquable (composant 13) pour le joueur et informatif (composant 12) pour l'IA, avec retardement des pertes de CP \u00e0 la r\u00e9solution de l'attaque.",
           "items": [
             {
               "id": "item-225-1-1",
               "title": "Interface interactive Constrict",
-              "description": "Validation débloquée uniquement après que le joueur a renseigné le nombre de lancers pour soustraire ses CP, avec blocage de la séquence.",
+              "description": "Validation d\u00e9bloqu\u00e9e uniquement apr\u00e8s que le joueur a renseign\u00e9 le nombre de lancers pour soustraire ses CP, avec blocage de la s\u00e9quence.",
               "category": "UI"
             }
           ]
@@ -794,12 +1032,12 @@
         "UI",
         "Combat"
       ],
-      "summary": "Lorsque le jeton Blinding Light a été résolu via sa popin et qu'il est actif sur le lancer d'attaque, il affiche désormais la barre d'état (composant 12) avec le badge 'Actif' en vert dans le dock de combat.",
+      "summary": "Lorsque le jeton Blinding Light a \u00e9t\u00e9 r\u00e9solu via sa popin et qu'il est actif sur le lancer d'attaque, il affiche d\u00e9sormais la barre d'\u00e9tat (composant 12) avec le badge 'Actif' en vert dans le dock de combat.",
       "prompts": [
         {
           "id": "p-224-1",
-          "userPrompt": "sur le token Blinding Light, lorsqu'il a été déclenché par la popin. Il faut ajouter le composant 12 pour indiquer qu'il est actif.",
-          "aiResponse": "Ajout de la condition d'affichage de la ligne de token dans le dock IA : dès que le résultat du dé de Blinding Light est défini et appliqué, la ligne s'affiche avec le tag vert 'Actif'.",
+          "userPrompt": "sur le token Blinding Light, lorsqu'il a \u00e9t\u00e9 d\u00e9clench\u00e9 par la popin. Il faut ajouter le composant 12 pour indiquer qu'il est actif.",
+          "aiResponse": "Ajout de la condition d'affichage de la ligne de token dans le dock IA : d\u00e8s que le r\u00e9sultat du d\u00e9 de Blinding Light est d\u00e9fini et appliqu\u00e9, la ligne s'affiche avec le tag vert 'Actif'.",
           "items": [
             {
               "id": "item-224-1-1",
@@ -817,23 +1055,23 @@
       "commit": "local-dev",
       "date": "2026-09-25",
       "author": "Antigravity AI",
-      "title": "Ajustement UI v4 - Nettoyage icônes",
+      "title": "Ajustement UI v4 - Nettoyage ic\u00f4nes",
       "tags": [
         "UI",
         "MAP",
         "Ergonomie"
       ],
-      "summary": "Suppression des icônes cœur et éclair dans les puces compactes d'édition sur la map afin de libérer visuellement l'espace au profit des labels texte et des boutons de contrôle.",
+      "summary": "Suppression des ic\u00f4nes c\u0153ur et \u00e9clair dans les puces compactes d'\u00e9dition sur la map afin de lib\u00e9rer visuellement l'espace au profit des labels texte et des boutons de contr\u00f4le.",
       "prompts": [
         {
           "id": "p-223-1",
-          "userPrompt": "enlever picto coeur, et éclair dans ce qu'on vient de mettre ca laissera plus de place pour égaliser l'espace.",
-          "aiResponse": "Suppression des icônes dans le composant compact, ce qui réduit sa largeur de 24 pixels par composant, laissant ainsi plus de respiration pour l'ensemble.",
+          "userPrompt": "enlever picto coeur, et \u00e9clair dans ce qu'on vient de mettre ca laissera plus de place pour \u00e9galiser l'espace.",
+          "aiResponse": "Suppression des ic\u00f4nes dans le composant compact, ce qui r\u00e9duit sa largeur de 24 pixels par composant, laissant ainsi plus de respiration pour l'ensemble.",
           "items": [
             {
               "id": "item-223-1-1",
-              "title": "Retrait icônes superflues",
-              "description": "Les textes HP et CP suffisent, plus besoin des icônes pour ces contrôles miniatures.",
+              "title": "Retrait ic\u00f4nes superflues",
+              "description": "Les textes HP et CP suffisent, plus besoin des ic\u00f4nes pour ces contr\u00f4les miniatures.",
               "category": "UI"
             }
           ]
@@ -846,23 +1084,23 @@
       "commit": "local-dev",
       "date": "2026-09-24",
       "author": "Antigravity AI",
-      "title": "Ajustement UI v3 - Correction d'alignement et débordement (Page MAP)",
+      "title": "Ajustement UI v3 - Correction d'alignement et d\u00e9bordement (Page MAP)",
       "tags": [
         "UI",
         "MAP",
         "Bugfix"
       ],
-      "summary": "Sur de petits écrans, les composants côte à côte causaient un débordement (les boutons + étaient tronqués ou masqués). Le panel a été rendu auto-redimensionnable (FittedBox) et encore plus compact pour un affichage toujours parfait.",
+      "summary": "Sur de petits \u00e9crans, les composants c\u00f4te \u00e0 c\u00f4te causaient un d\u00e9bordement (les boutons + \u00e9taient tronqu\u00e9s ou masqu\u00e9s). Le panel a \u00e9t\u00e9 rendu auto-redimensionnable (FittedBox) et encore plus compact pour un affichage toujours parfait.",
       "prompts": [
         {
           "id": "p-222-1",
-          "userPrompt": "PB d'alignement [capture d'écran où le bouton + disparaît]",
-          "aiResponse": "Mise en place d'un `FittedBox` couplé à un widget spécifique ultra-compact (retrait du Spacer dynamique et marges réduites) pour garantir que l'édition simultanée des HP et CP tienne intégralement sans effet de débordement même sur les écrans les plus étroits.",
+          "userPrompt": "PB d'alignement [capture d'\u00e9cran o\u00f9 le bouton + dispara\u00eet]",
+          "aiResponse": "Mise en place d'un `FittedBox` coupl\u00e9 \u00e0 un widget sp\u00e9cifique ultra-compact (retrait du Spacer dynamique et marges r\u00e9duites) pour garantir que l'\u00e9dition simultan\u00e9e des HP et CP tienne int\u00e9gralement sans effet de d\u00e9bordement m\u00eame sur les \u00e9crans les plus \u00e9troits.",
           "items": [
             {
               "id": "item-222-1-1",
               "title": "Scaling intelligent",
-              "description": "Le composant d'édition HP/CP sur la map scale désormais automatiquement pour ne plus écraser ses contrôles sur mobile.",
+              "description": "Le composant d'\u00e9dition HP/CP sur la map scale d\u00e9sormais automatiquement pour ne plus \u00e9craser ses contr\u00f4les sur mobile.",
               "category": "UI"
             }
           ]
@@ -875,22 +1113,22 @@
       "commit": "local-dev",
       "date": "2026-09-24",
       "author": "Antigravity AI",
-      "title": "Ajustement UI v2 - Panneau d'édition MAP",
+      "title": "Ajustement UI v2 - Panneau d'\u00e9dition MAP",
       "tags": [
         "UI",
         "MAP",
         "Ergonomie"
       ],
-      "summary": "Le panneau d'édition des HP/CP de la MAP s'affiche désormais sous forme de deux blocs compacts côte à côte (identique à la page Combat) et réagit en temps réel. Le gros bouton Save est remplacé par un bouton de fermeture vert.",
+      "summary": "Le panneau d'\u00e9dition des HP/CP de la MAP s'affiche d\u00e9sormais sous forme de deux blocs compacts c\u00f4te \u00e0 c\u00f4te (identique \u00e0 la page Combat) et r\u00e9agit en temps r\u00e9el. Le gros bouton Save est remplac\u00e9 par un bouton de fermeture vert.",
       "prompts": [
         {
           "id": "p-221-1",
-          "userPrompt": "c'est trop gros, trop disproportionné. Vs la page de combat, c'est pas proportionnel. ou diviser la taille en 2 sur la largeur, d'un coté les Hp et de l'autrecoté les CP.",
-          "aiResponse": "Mise en page complètement révisée en réutilisant le widget `StepperStat` existant. Désormais, un clic sur HP ou CP affiche directement les deux compteurs proportionnés côte à côte, accompagnés d'un petit bouton pour fermer.",
+          "userPrompt": "c'est trop gros, trop disproportionn\u00e9. Vs la page de combat, c'est pas proportionnel. ou diviser la taille en 2 sur la largeur, d'un cot\u00e9 les Hp et de l'autrecot\u00e9 les CP.",
+          "aiResponse": "Mise en page compl\u00e8tement r\u00e9vis\u00e9e en r\u00e9utilisant le widget `StepperStat` existant. D\u00e9sormais, un clic sur HP ou CP affiche directement les deux compteurs proportionn\u00e9s c\u00f4te \u00e0 c\u00f4te, accompagn\u00e9s d'un petit bouton pour fermer.",
           "items": [
             {
               "id": "item-221-1-1",
-              "title": "Edition simultanée et compacte",
+              "title": "Edition simultan\u00e9e et compacte",
               "description": "Les widgets HP et CP partagent horizontalement l'espace du menu Map, rendant l'interface moins invasive.",
               "category": "UI"
             }
@@ -909,17 +1147,17 @@
         "UI",
         "MAP"
       ],
-      "summary": "Optimisation de l'espace dans la zone de modification HP/CP de la MAP : le gros bouton 'Save' a été remplacé par un bouton de validation compact (avec un v vert) superposé à l'espace initial de l'icône pour gagner un maximum de place.",
+      "summary": "Optimisation de l'espace dans la zone de modification HP/CP de la MAP : le gros bouton 'Save' a \u00e9t\u00e9 remplac\u00e9 par un bouton de validation compact (avec un v vert) superpos\u00e9 \u00e0 l'espace initial de l'ic\u00f4ne pour gagner un maximum de place.",
       "prompts": [
         {
           "id": "p-220-1",
           "userPrompt": "sur la page MAP, la modification des HP, et CP, le bouton est trop grand. Ajuste cela au mieux. [suite logic: 'soit faire en sorte que le bouton valider se superpose sur le coeur ou le mot CP ainsi une place pour 2 elements']",
-          "aiResponse": "Suppression du bouton `FilledButton('Save')` qui prenait 112px de large et du label dynamique (Cœur / CP). Remplacement direct par un `IconButton` vert compact (bouton valider) aligné à gauche, libérant tout l'espace d'édition pour les mobiles.",
+          "aiResponse": "Suppression du bouton `FilledButton('Save')` qui prenait 112px de large et du label dynamique (C\u0153ur / CP). Remplacement direct par un `IconButton` vert compact (bouton valider) align\u00e9 \u00e0 gauche, lib\u00e9rant tout l'espace d'\u00e9dition pour les mobiles.",
           "items": [
             {
               "id": "item-220-1-1",
               "title": "Optimisation widget Edition Stats",
-              "description": "Remplacement du bouton Save par une icône de validation intégrée à gauche.",
+              "description": "Remplacement du bouton Save par une ic\u00f4ne de validation int\u00e9gr\u00e9e \u00e0 gauche.",
               "category": "UI"
             }
           ]
@@ -932,29 +1170,29 @@
       "commit": "local-dev",
       "date": "2026-09-24",
       "author": "Antigravity AI",
-      "title": "Application déférée des dégâts de Barbed Vine",
+      "title": "Application d\u00e9f\u00e9r\u00e9e des d\u00e9g\u00e2ts de Barbed Vine",
       "tags": [
         "Logique",
         "Fight",
         "Bugfix"
       ],
-      "summary": "Les dégâts du jeton Barbed Vine sont désormais appliqués uniquement à la fin de la phase (lors de la validation par le bouton OK) afin d'éviter une mort immédiate empêchant une égalité. Un log détaillé est ajouté dans la résolution.",
+      "summary": "Les d\u00e9g\u00e2ts du jeton Barbed Vine sont d\u00e9sormais appliqu\u00e9s uniquement \u00e0 la fin de la phase (lors de la validation par le bouton OK) afin d'\u00e9viter une mort imm\u00e9diate emp\u00eachant une \u00e9galit\u00e9. Un log d\u00e9taill\u00e9 est ajout\u00e9 dans la r\u00e9solution.",
       "prompts": [
         {
           "id": "p-219-1",
-          "userPrompt": "les d�gats ne doivent pas se faire sur le bouton s�lected, mais sur le bouton OK. Pourquoi , car les d�gats en roll phase, se font touts en m�me temps (token et phase d'attaque); S'il reste que 2 points de vie aux 2 joueurs; Si le joueur qui a Barded vine subit 2 d�gats avant m�me attaqu�, il perd dans la version actuelle. Si il a le temps d'attaquer, il peut jouer l'�galit� contre un boss ou autre. Donc on d�clencher l'effet � la fin du tour de roll.(bouton ok) D'ailleurs, les d�gats doivent �tre visibles via une ligne claire dans le log.",
-          "aiResponse": "Mise en mémoire des dégâts du Barbed Vine lors du clic sur 'Select'. Ces dégâts sont maintenant déduits des HP et consignés dans le journal du combat lors du clic sur le bouton 'OK' (résolution générale de la phase de lancer).",
+          "userPrompt": "les d\ufffdgats ne doivent pas se faire sur le bouton s\ufffdlected, mais sur le bouton OK. Pourquoi , car les d\ufffdgats en roll phase, se font touts en m\ufffdme temps (token et phase d'attaque); S'il reste que 2 points de vie aux 2 joueurs; Si le joueur qui a Barded vine subit 2 d\ufffdgats avant m\ufffdme attaqu\ufffd, il perd dans la version actuelle. Si il a le temps d'attaquer, il peut jouer l'\ufffdgalit\ufffd contre un boss ou autre. Donc on d\ufffdclencher l'effet \ufffd la fin du tour de roll.(bouton ok) D'ailleurs, les d\ufffdgats doivent \ufffdtre visibles via une ligne claire dans le log.",
+          "aiResponse": "Mise en m\u00e9moire des d\u00e9g\u00e2ts du Barbed Vine lors du clic sur 'Select'. Ces d\u00e9g\u00e2ts sont maintenant d\u00e9duits des HP et consign\u00e9s dans le journal du combat lors du clic sur le bouton 'OK' (r\u00e9solution g\u00e9n\u00e9rale de la phase de lancer).",
           "items": [
             {
               "id": "item-219-1-1",
-              "title": "Délai des dégâts Barbed Vine",
-              "description": "Stockage des dégâts en attente au lieu d'une soustraction immédiate.",
+              "title": "D\u00e9lai des d\u00e9g\u00e2ts Barbed Vine",
+              "description": "Stockage des d\u00e9g\u00e2ts en attente au lieu d'une soustraction imm\u00e9diate.",
               "category": "Logique"
             },
             {
               "id": "item-219-1-2",
-              "title": "Intégration au journal",
-              "description": "Ajout d'une ligne dédiée aux dégâts Barbed Vine dans le résumé général du log lors du clic sur OK.",
+              "title": "Int\u00e9gration au journal",
+              "description": "Ajout d'une ligne d\u00e9di\u00e9e aux d\u00e9g\u00e2ts Barbed Vine dans le r\u00e9sum\u00e9 g\u00e9n\u00e9ral du log lors du clic sur OK.",
               "category": "Fight"
             }
           ]
@@ -974,17 +1212,17 @@
         "Fight",
         "Bugfix"
       ],
-      "summary": "Différenciation du composant Barbed Vine selon le joueur : vert classique (Composant 12) pour l'IA, violet avec sélection multi-rolls (Composant 13) pour le héros.",
+      "summary": "Diff\u00e9renciation du composant Barbed Vine selon le joueur : vert classique (Composant 12) pour l'IA, violet avec s\u00e9lection multi-rolls (Composant 13) pour le h\u00e9ros.",
       "prompts": [
         {
           "id": "p-218-1",
           "userPrompt": "barded vine, lorsque c'est au joueur Minion de jouer, le composant reste le 12 avec la couleur verte. (actif en vert et jouer par l'IA) Lorsque c'est au joueur d'avoir ce token en phase de roll alors on a le composant 13 avec le fond violet.",
-          "aiResponse": "Ajout d'une condition `isHeroTurn` sur la propriété `color` de `_MultiRollTokenActiveRow` pour Barbed Vine. Si c'est l'IA, on passe du vert, ce qui active le style du composant 12 automatiquement (sans sélection et vert).",
+          "aiResponse": "Ajout d'une condition `isHeroTurn` sur la propri\u00e9t\u00e9 `color` de `_MultiRollTokenActiveRow` pour Barbed Vine. Si c'est l'IA, on passe du vert, ce qui active le style du composant 12 automatiquement (sans s\u00e9lection et vert).",
           "items": [
             {
               "id": "item-218-1-1",
               "title": "Barbed Vine pour l'IA (Composant 12)",
-              "description": "Rétablissement de la couleur verte et du style non-interactif pour l'IA.",
+              "description": "R\u00e9tablissement de la couleur verte et du style non-interactif pour l'IA.",
               "category": "UI"
             }
           ]
@@ -1004,23 +1242,23 @@
         "Fight",
         "Bugfix"
       ],
-      "summary": "Mise � jour du design du statut Selected (vert actif) et du libell� Rolls centr�. Correction du calcul des d�g�ts : 1 d�g�t par relance apr�s le premier lancer (dmg = max(0, rolls - 1)).",
+      "summary": "Mise \ufffd jour du design du statut Selected (vert actif) et du libell\ufffd Rolls centr\ufffd. Correction du calcul des d\ufffdg\ufffdts : 1 d\ufffdg\ufffdt par relance apr\ufffds le premier lancer (dmg = max(0, rolls - 1)).",
       "prompts": [
         {
           "id": "p-217-1",
-          "userPrompt": "au lieu de mettre gris sur le selected, mettre le vert d'actif sur selected. Rolls, le coler X1 (devant) centr� � cot� du x1. Attention barbed vine, c'est un damage apr�s le 1er jet. Car l� au 3eme, j'ai eu 3 d�gats. Mais c'est apr�s le 1er jet, donc au 2eme c'est 1, d�gat et au 3eme c'est 2 d�dgats",
-          "aiResponse": "Mise en place de l'�tat Selected en vert type 'Actif'. D�placement du texte 'Rolls' juste devant les s�lecteurs [x1] [x2] [x3]. Correction de la formule de d�g�ts pour ignorer le 1er jet.",
+          "userPrompt": "au lieu de mettre gris sur le selected, mettre le vert d'actif sur selected. Rolls, le coler X1 (devant) centr\ufffd \ufffd cot\ufffd du x1. Attention barbed vine, c'est un damage apr\ufffds le 1er jet. Car l\ufffd au 3eme, j'ai eu 3 d\ufffdgats. Mais c'est apr\ufffds le 1er jet, donc au 2eme c'est 1, d\ufffdgat et au 3eme c'est 2 d\ufffddgats",
+          "aiResponse": "Mise en place de l'\ufffdtat Selected en vert type 'Actif'. D\ufffdplacement du texte 'Rolls' juste devant les s\ufffdlecteurs [x1] [x2] [x3]. Correction de la formule de d\ufffdg\ufffdts pour ignorer le 1er jet.",
           "items": [
             {
               "id": "item-217-1-1",
-              "title": "UI 'Selected' vert et label centr�",
-              "description": "Le composant 13 affiche un badge vert similaire au composant 12 une fois valid�. 'Rolls' est ins�r� avant les boutons x1 x2 x3.",
+              "title": "UI 'Selected' vert et label centr\ufffd",
+              "description": "Le composant 13 affiche un badge vert similaire au composant 12 une fois valid\ufffd. 'Rolls' est ins\ufffdr\ufffd avant les boutons x1 x2 x3.",
               "category": "UI"
             },
             {
               "id": "item-217-1-2",
               "title": "Correction formule Barbed Vine",
-              "description": "Le héros prend 1 d�g�t pour chaque jet apr�s le 1er (dmg = (rolls - 1)).",
+              "description": "Le h\u00e9ros prend 1 d\ufffdg\ufffdt pour chaque jet apr\ufffds le 1er (dmg = (rolls - 1)).",
               "category": "Logique"
             }
           ]
@@ -1040,23 +1278,23 @@
         "Tokens",
         "Fight"
       ],
-      "summary": "Passage du composant 13 en violet (comme Prey). Ajout de 'Rolls' dans le label. Blocage de l'action 'OK' (validation d'attaque) tant que le bouton 'Select' n'a pas été cliqué par le héros.",
+      "summary": "Passage du composant 13 en violet (comme Prey). Ajout de 'Rolls' dans le label. Blocage de l'action 'OK' (validation d'attaque) tant que le bouton 'Select' n'a pas \u00e9t\u00e9 cliqu\u00e9 par le h\u00e9ros.",
       "prompts": [
         {
           "id": "p-216-1",
-          "userPrompt": "on va passer le composant en violet comme le composant 11. Il faut ajouter 'Rolls' ou 'Roll' entre le nom du tolke et le x1. On va désactiver le bouton 'OK' ligen atk/def jusqu'à temps que le bouton 'use' soit actionné. On peut remplacer 'use' par 'Select' ou 'selected'. Tu ajouter se composant dans la page recette. COmposant 13.",
-          "aiResponse": "Composant 13 ajusté : fond violet, texte 'Rolls' ajouté, bouton renommé 'Select' et passe à l'état sélectionné après clic. Le bouton OK de la résolution d'attaque est désormais bloqué tant que l'action Barbed Vine n'a pas été résolue.",
+          "userPrompt": "on va passer le composant en violet comme le composant 11. Il faut ajouter 'Rolls' ou 'Roll' entre le nom du tolke et le x1. On va d\u00e9sactiver le bouton 'OK' ligen atk/def jusqu'\u00e0 temps que le bouton 'use' soit actionn\u00e9. On peut remplacer 'use' par 'Select' ou 'selected'. Tu ajouter se composant dans la page recette. COmposant 13.",
+          "aiResponse": "Composant 13 ajust\u00e9 : fond violet, texte 'Rolls' ajout\u00e9, bouton renomm\u00e9 'Select' et passe \u00e0 l'\u00e9tat s\u00e9lectionn\u00e9 apr\u00e8s clic. Le bouton OK de la r\u00e9solution d'attaque est d\u00e9sormais bloqu\u00e9 tant que l'action Barbed Vine n'a pas \u00e9t\u00e9 r\u00e9solue.",
           "items": [
             {
               "id": "item-216-1-1",
               "title": "Ajustements UI Barbed Vine",
-              "description": "Couleur violette, libellé 'Rolls' et bouton 'Select' / 'Selected' intégrés.",
+              "description": "Couleur violette, libell\u00e9 'Rolls' et bouton 'Select' / 'Selected' int\u00e9gr\u00e9s.",
               "category": "UI"
             },
             {
               "id": "item-216-1-2",
-              "title": "Blocage de résolution d'attaque",
-              "description": "Le bouton OK d'ATK/DEF est désactivé tant que le jeton Barbed Vine est en attente d'être traité par le héros.",
+              "title": "Blocage de r\u00e9solution d'attaque",
+              "description": "Le bouton OK d'ATK/DEF est d\u00e9sactiv\u00e9 tant que le jeton Barbed Vine est en attente d'\u00eatre trait\u00e9 par le h\u00e9ros.",
               "category": "Logique"
             },
             {
@@ -1075,23 +1313,23 @@
       "commit": "local-dev",
       "date": "2026-09-24",
       "author": "Antigravity AI",
-      "title": "Cr�ation du Composant 13 (Barbed Vine multi-rolls)",
+      "title": "Cr\ufffdation du Composant 13 (Barbed Vine multi-rolls)",
       "tags": [
         "UI",
         "Composants",
         "Tokens"
       ],
-      "summary": "Fusion du composant 11 et 12. Ajout d'un bandeau interactif permettant de choisir le nombre de lancers (x1, x2, x3) et d'appliquer directement les d�g�ts du jeton Barbed Vine lorsque c'est le tour du h�ros.",
+      "summary": "Fusion du composant 11 et 12. Ajout d'un bandeau interactif permettant de choisir le nombre de lancers (x1, x2, x3) et d'appliquer directement les d\ufffdg\ufffdts du jeton Barbed Vine lorsque c'est le tour du h\ufffdros.",
       "prompts": [
         {
           "id": "p-215-1",
-          "userPrompt": "on va cr�er un composant 13. Une fusion du 12 et 11. On part sur une base du 11. Mais je veux pourvoir activer plusieurs fois le token sur un m�me tour. comme barbed Vine, Cot� AI s'il est sur le joueur IA, c'est lui qui d�cide quand arr�t� (composant 12 est suffisant) Mais quand le token est sur le hero, alors c'est au hero de d�clarer combien de roll il a fait. Il faut donc 'use' plusieurs fois ou indiquer le nb de roll. Rollx1 Rollx2 Rollx3...",
-          "aiResponse": "Cr�ation du widget `_MultiRollTokenActiveRow`. S'il s'agit du tour du minion, le badge 'Actif' s'affiche (Composant 12). S'il s'agit du tour du h�ros, une ligne de boutons [x1] [x2] [x3] avec un bouton 'Use' (Composant 13) s'affiche pour appliquer instantan�ment les d�g�ts des lancers.",
+          "userPrompt": "on va cr\ufffder un composant 13. Une fusion du 12 et 11. On part sur une base du 11. Mais je veux pourvoir activer plusieurs fois le token sur un m\ufffdme tour. comme barbed Vine, Cot\ufffd AI s'il est sur le joueur IA, c'est lui qui d\ufffdcide quand arr\ufffdt\ufffd (composant 12 est suffisant) Mais quand le token est sur le hero, alors c'est au hero de d\ufffdclarer combien de roll il a fait. Il faut donc 'use' plusieurs fois ou indiquer le nb de roll. Rollx1 Rollx2 Rollx3...",
+          "aiResponse": "Cr\ufffdation du widget `_MultiRollTokenActiveRow`. S'il s'agit du tour du minion, le badge 'Actif' s'affiche (Composant 12). S'il s'agit du tour du h\ufffdros, une ligne de boutons [x1] [x2] [x3] avec un bouton 'Use' (Composant 13) s'affiche pour appliquer instantan\ufffdment les d\ufffdg\ufffdts des lancers.",
           "items": [
             {
               "id": "item-215-1-1",
               "title": "Composant 13: Barbed Vine Multi-Rolls",
-              "description": "Ajout de la s�lection du nombre de lancers et d'un bouton Use pour appliquer les d�g�ts de contre du jeton Barbed Vine au h�ros.",
+              "description": "Ajout de la s\ufffdlection du nombre de lancers et d'un bouton Use pour appliquer les d\ufffdg\ufffdts de contre du jeton Barbed Vine au h\ufffdros.",
               "category": "UI"
             }
           ]
@@ -1104,22 +1342,22 @@
       "commit": "local-dev",
       "date": "2026-09-24",
       "author": "Antigravity AI",
-      "title": "Optimisation UI pour l'�dition HP/CP",
+      "title": "Optimisation UI pour l'\ufffddition HP/CP",
       "tags": [
         "UI",
         "UX"
       ],
-      "summary": "Superposition du bouton Valider sur l'ic�ne HP/CP lorsqu'il y a une modification pour lib�rer de la place et permettre une meilleure visibilit� des nombres, particuli�rement sur les petits �crans.",
+      "summary": "Superposition du bouton Valider sur l'ic\ufffdne HP/CP lorsqu'il y a une modification pour lib\ufffdrer de la place et permettre une meilleure visibilit\ufffd des nombres, particuli\ufffdrement sur les petits \ufffdcrans.",
       "prompts": [
         {
           "id": "p-214-1",
-          "userPrompt": "Dans la zone de modification des HP et CP. On ne voit plus ou moins bien le chiffre des HP/CP surtout en dizaine car pas assez de place avec certain mobile; Je ne veux pas qu\"on agrandisse la place car on a la m�me zone juste � cot�. Soit r�duire les boutons, soit faire en sorte que le bouton valider se superpose sur le coeur ou le mot CP ainsi une place pour 2 �l�ments. On affiche le bouton valider que s'il y a une modification qui est enclench�.",
-          "aiResponse": "Fusion de l'ic�ne et du bouton valider. L'ic�ne s'affiche par d�faut. S'il y a une modification, l'ic�ne se transforme en un bouton vert Valider. On gagne l'espace du bouton de validation (environ 44 pixels).",
+          "userPrompt": "Dans la zone de modification des HP et CP. On ne voit plus ou moins bien le chiffre des HP/CP surtout en dizaine car pas assez de place avec certain mobile; Je ne veux pas qu\"on agrandisse la place car on a la m\ufffdme zone juste \ufffd cot\ufffd. Soit r\ufffdduire les boutons, soit faire en sorte que le bouton valider se superpose sur le coeur ou le mot CP ainsi une place pour 2 \ufffdl\ufffdments. On affiche le bouton valider que s'il y a une modification qui est enclench\ufffd.",
+          "aiResponse": "Fusion de l'ic\ufffdne et du bouton valider. L'ic\ufffdne s'affiche par d\ufffdfaut. S'il y a une modification, l'ic\ufffdne se transforme en un bouton vert Valider. On gagne l'espace du bouton de validation (environ 44 pixels).",
           "items": [
             {
               "id": "item-214-1-1",
               "title": "Merge Validate Button / Icon",
-              "description": "Le bouton de validation n'appara�t qu'en cas de diff�rence avec la valeur d'origine, � la place de l'ic�ne principale.",
+              "description": "Le bouton de validation n'appara\ufffdt qu'en cas de diff\ufffdrence avec la valeur d'origine, \ufffd la place de l'ic\ufffdne principale.",
               "category": "UI"
             }
           ]
@@ -1137,12 +1375,12 @@
         "Feature",
         "Tokens"
       ],
-      "summary": "Ajout des tokens Reality Warp, Shame, Webbed, Wound, et Time Bomb 2. Ajustements sur l'UI des d�g�ts et la logique d'authentification Google.",
+      "summary": "Ajout des tokens Reality Warp, Shame, Webbed, Wound, et Time Bomb 2. Ajustements sur l'UI des d\ufffdg\ufffdts et la logique d'authentification Google.",
       "prompts": [
         {
           "id": "p-213-1",
-          "userPrompt": "Mise � jour g�n�rale des tokens et de l'UI.",
-          "aiResponse": "Ajout des m�caniques pour Webbed, Wound, Reality Warp, Shame et Time Bomb 2. L'interface de combat (CombatAiChatDock et StatusTokenImage) a �t� adapt�e pour refl�ter ces nouveaux �tats (notamment Webbed).",
+          "userPrompt": "Mise \ufffd jour g\ufffdn\ufffdrale des tokens et de l'UI.",
+          "aiResponse": "Ajout des m\ufffdcaniques pour Webbed, Wound, Reality Warp, Shame et Time Bomb 2. L'interface de combat (CombatAiChatDock et StatusTokenImage) a \ufffdt\ufffd adapt\ufffde pour refl\ufffdter ces nouveaux \ufffdtats (notamment Webbed).",
           "items": [
             {
               "id": "item-213-1-1",
@@ -1153,7 +1391,7 @@
             {
               "id": "item-213-1-2",
               "title": "Ajustement de l'UI",
-              "description": "L'interface prend d�sormais en compte le style visuel sp�cifique pour le token Webbed (Entoil�).",
+              "description": "L'interface prend d\ufffdsormais en compte le style visuel sp\ufffdcifique pour le token Webbed (Entoil\ufffd).",
               "category": "UI"
             }
           ]
@@ -1171,17 +1409,17 @@
         "UI",
         "Bugfix"
       ],
-      "summary": "Correction du ciblage du Focus Fire (qui s'appliquait � l'attaquant au lieu du d�fenseur) et mise � jour du visuel (token +1/+2 DMG � gauche).",
+      "summary": "Correction du ciblage du Focus Fire (qui s'appliquait \ufffd l'attaquant au lieu du d\ufffdfenseur) et mise \ufffd jour du visuel (token +1/+2 DMG \ufffd gauche).",
       "prompts": [
         {
           "id": "p-206-1",
-          "userPrompt": "Focus fire il faut fairz comme targeted, mettre les +xDMG dans la partie droite ou il y a le mot actif. Et enlever le +2 DMG en violet on peut le remplacer par l'image/token de degats comme targeted, mettre le token 1 degats ou 2 en fonction du nb de degats /nb de token de focus fire. S'il y a qu'un seul focus fire, c'est 1 d�gats, l'app m'a mis 2 dans ce contexte. S'il y a 2 focus fire sur un joueur A et 1 sur un joueur B, l'app ne doit pas se melanger les pinceaux.",
-          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Le calcul du Focus Fire a �t� corrig�. Focus Fire s'applique au *d�fenseur* (celui qui subit l'attaque). L'application v�rifiait par erreur les tokens de l'attaquant, ce qui explique pourquoi vous avez vu '2 d�g�ts' s'ajouter si l'adversaire avait lui-m�me 2 jetons Focus Fire.\n2) C�t� UI, j'ai remplac� le texte '+$X DMG' � gauche par l'image du bonus de d�g�ts ('bonus-atk-X.webp') correspondante au nombre de tokens Focus Fire, exactement comme Targeted.",
+          "userPrompt": "Focus fire il faut fairz comme targeted, mettre les +xDMG dans la partie droite ou il y a le mot actif. Et enlever le +2 DMG en violet on peut le remplacer par l'image/token de degats comme targeted, mettre le token 1 degats ou 2 en fonction du nb de degats /nb de token de focus fire. S'il y a qu'un seul focus fire, c'est 1 d\ufffdgats, l'app m'a mis 2 dans ce contexte. S'il y a 2 focus fire sur un joueur A et 1 sur un joueur B, l'app ne doit pas se melanger les pinceaux.",
+          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Le calcul du Focus Fire a \ufffdt\ufffd corrig\ufffd. Focus Fire s'applique au *d\ufffdfenseur* (celui qui subit l'attaque). L'application v\ufffdrifiait par erreur les tokens de l'attaquant, ce qui explique pourquoi vous avez vu '2 d\ufffdg\ufffdts' s'ajouter si l'adversaire avait lui-m\ufffdme 2 jetons Focus Fire.\n2) C\ufffdt\ufffd UI, j'ai remplac\ufffd le texte '+$X DMG' \ufffd gauche par l'image du bonus de d\ufffdg\ufffdts ('bonus-atk-X.webp') correspondante au nombre de tokens Focus Fire, exactement comme Targeted.",
           "items": [
             {
               "id": "item-206-1-1",
               "title": "Fix Logique Focus Fire",
-              "description": "La m�canique v�rifie maintenant correctement si le d�fenseur poss�de le jeton Focus Fire pour booster les d�g�ts de l'attaquant.",
+              "description": "La m\ufffdcanique v\ufffdrifie maintenant correctement si le d\ufffdfenseur poss\ufffdde le jeton Focus Fire pour booster les d\ufffdg\ufffdts de l'attaquant.",
               "category": "Bugfix"
             },
             {
@@ -1204,12 +1442,12 @@
       "tags": [
         "UI"
       ],
-      "summary": "Restauration des visuels d'origine (c�t� gauche) pour Targeted et Focus Fire, et ajout des textes dynamiques (+X DMG) dans les pilules Actif (c�t� droit).",
+      "summary": "Restauration des visuels d'origine (c\ufffdt\ufffd gauche) pour Targeted et Focus Fire, et ajout des textes dynamiques (+X DMG) dans les pilules Actif (c\ufffdt\ufffd droit).",
       "prompts": [
         {
           "id": "p-205-1",
-          "userPrompt": "c'est pas bon targeted, je ne vois plus le texte targeted et les +2 en image, c'�tait mieux avant. le +2 DMG c'est �mettre � cot� d'actif � droite Focus fire est � faire aussi. Faire comme shame",
-          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Pour Targeted, j'ai restaur� la partie de gauche avec le logo du token, le texte 'Targeted :' et le logo du +2 DMG. Sur la partie de droite, la pilule indique bien 'Actif (+2 DMG)'.\n2) Pour Focus Fire, m�me traitement : le logo du token, le texte et le malus s'affichent � gauche, et la pilule indique d�sormais dynamiquement 'Actif (+X DMG)' � droite, de la m�me fa�on que pour Shame ou Wither.",
+          "userPrompt": "c'est pas bon targeted, je ne vois plus le texte targeted et les +2 en image, c'\ufffdtait mieux avant. le +2 DMG c'est \ufffdmettre \ufffd cot\ufffd d'actif \ufffd droite Focus fire est \ufffd faire aussi. Faire comme shame",
+          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Pour Targeted, j'ai restaur\ufffd la partie de gauche avec le logo du token, le texte 'Targeted :' et le logo du +2 DMG. Sur la partie de droite, la pilule indique bien 'Actif (+2 DMG)'.\n2) Pour Focus Fire, m\ufffdme traitement : le logo du token, le texte et le malus s'affichent \ufffd gauche, et la pilule indique d\ufffdsormais dynamiquement 'Actif (+X DMG)' \ufffd droite, de la m\ufffdme fa\ufffdon que pour Shame ou Wither.",
           "items": [
             {
               "id": "item-205-1-1",
@@ -1239,23 +1477,23 @@
         "Bugfix",
         "AI"
       ],
-      "summary": "Correction de l'ic�ne de Silence et application stricte de la limitation � 3 d�s pour l'IA lorsque le token Silence est actif.",
+      "summary": "Correction de l'ic\ufffdne de Silence et application stricte de la limitation \ufffd 3 d\ufffds pour l'IA lorsque le token Silence est actif.",
       "prompts": [
         {
           "id": "p-204-1",
-          "userPrompt": "manque le logo silence du token en composant 12 et AI dice selectionne 4 d�s alors que silence est pr�sent",
-          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) L'image du token Silence (`Silence.png`) pointait vers une extension PNG au lieu de WEBP, provoquant un fallback sur l'ic�ne par d�faut de Flutter. C'est corrig�, le logo va s'afficher.\n2) La fonction de s�lection des suites par l'IA recevait bien la consigne `limitTo3` en pr�sence du token Silence, mais ce param�tre n'�tait pas exploit� dans son code interne, ce qui poussait l'IA � bloquer tout de m�me 4 ou 5 d�s ! Ce bridage � 3 d�s a �t� strictement impl�ment�.",
+          "userPrompt": "manque le logo silence du token en composant 12 et AI dice selectionne 4 d\ufffds alors que silence est pr\ufffdsent",
+          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) L'image du token Silence (`Silence.png`) pointait vers une extension PNG au lieu de WEBP, provoquant un fallback sur l'ic\ufffdne par d\ufffdfaut de Flutter. C'est corrig\ufffd, le logo va s'afficher.\n2) La fonction de s\ufffdlection des suites par l'IA recevait bien la consigne `limitTo3` en pr\ufffdsence du token Silence, mais ce param\ufffdtre n'\ufffdtait pas exploit\ufffd dans son code interne, ce qui poussait l'IA \ufffd bloquer tout de m\ufffdme 4 ou 5 d\ufffds ! Ce bridage \ufffd 3 d\ufffds a \ufffdt\ufffd strictement impl\ufffdment\ufffd.",
           "items": [
             {
               "id": "item-204-1-1",
               "title": "Fix Logo Silence",
-              "description": "Le composant 12 affiche d�sormais le visuel .webp au lieu de .png",
+              "description": "Le composant 12 affiche d\ufffdsormais le visuel .webp au lieu de .png",
               "category": "UI"
             },
             {
               "id": "item-204-1-2",
               "title": "Fix IA Suite",
-              "description": "L'IA ne gardera jamais plus de 3 d�s pour une suite si le token Silence est actif sur elle.",
+              "description": "L'IA ne gardera jamais plus de 3 d\ufffds pour une suite si le token Silence est actif sur elle.",
               "category": "AI"
             }
           ]
@@ -1273,29 +1511,29 @@
         "UI",
         "Bugfix"
       ],
-      "summary": "Correction des libell�s UI pour Targeted et Wither, injection du composant 12 pour Silence et ajout de la description de Silence.",
+      "summary": "Correction des libell\ufffds UI pour Targeted et Wither, injection du composant 12 pour Silence et ajout de la description de Silence.",
       "prompts": [
         {
           "id": "p-203-1",
-          "userPrompt": "J'ai activ� shame et wither x2, dans la zonz atk, j'ai -1 � la place de -3 ? targeted je n'ai pas l Silence token, je n'ai pas la description dans la popin, alors que je 'avais donn� pr�d�cemment. Je n'ai pas le composant 12 d'activ�. Targeted je n'ai pas les DMG au niveau dubadget actif dans le composant 10. il manque bcp de chose dans la 202",
-          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Correction du parsing de 'Wither' qui ne prenait pas en compte la bonne traduction fran�aise du catalogue. Le malus -X fonctionne de nouveau correctement (Shame -1 + Wither x2 = -3).\n2) Ajout de la description du token Silence oubli�e dans le catalogue (token_catalog.json).\n3) Fix de l'injection du Composant 12 pour Silence qui avait �t� ins�r� au mauvais endroit dans le code.\n4) Remplacement du logo (+2) par le texte exact 'Actif (+2 DMG)' pour Targeted (Composant 10) qui n'avait pas fonctionn� suite � une erreur d'expression r�guli�re.",
+          "userPrompt": "J'ai activ\ufffd shame et wither x2, dans la zonz atk, j'ai -1 \ufffd la place de -3 ? targeted je n'ai pas l Silence token, je n'ai pas la description dans la popin, alors que je 'avais donn\ufffd pr\ufffdd\ufffdcemment. Je n'ai pas le composant 12 d'activ\ufffd. Targeted je n'ai pas les DMG au niveau dubadget actif dans le composant 10. il manque bcp de chose dans la 202",
+          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Correction du parsing de 'Wither' qui ne prenait pas en compte la bonne traduction fran\ufffdaise du catalogue. Le malus -X fonctionne de nouveau correctement (Shame -1 + Wither x2 = -3).\n2) Ajout de la description du token Silence oubli\ufffde dans le catalogue (token_catalog.json).\n3) Fix de l'injection du Composant 12 pour Silence qui avait \ufffdt\ufffd ins\ufffdr\ufffd au mauvais endroit dans le code.\n4) Remplacement du logo (+2) par le texte exact 'Actif (+2 DMG)' pour Targeted (Composant 10) qui n'avait pas fonctionn\ufffd suite \ufffd une erreur d'expression r\ufffdguli\ufffdre.",
           "items": [
             {
               "id": "item-203-1-1",
               "title": "Fix Calcul Wither",
-              "description": "La traduction fran�aise de Wither est g�r�e correctement pour l'impact des d�g�ts.",
+              "description": "La traduction fran\ufffdaise de Wither est g\ufffdr\ufffde correctement pour l'impact des d\ufffdg\ufffdts.",
               "category": "Tokens"
             },
             {
               "id": "item-203-1-2",
               "title": "Description Silence",
-              "description": "La popin de Silence affiche d�sormais son texte.",
+              "description": "La popin de Silence affiche d\ufffdsormais son texte.",
               "category": "UI"
             },
             {
               "id": "item-203-1-3",
               "title": "Targeted & Composant 12",
-              "description": "Bandeau Silence affich� correctement et badge Targeted harmonis� (+2 DMG).",
+              "description": "Bandeau Silence affich\ufffd correctement et badge Targeted harmonis\ufffd (+2 DMG).",
               "category": "UI"
             }
           ]
@@ -1308,7 +1546,7 @@
       "commit": "local-dev",
       "date": "2026-09-20",
       "author": "Antigravity AI",
-      "title": "Corrections Silence (Timing, Composant 12, IA D�s) & Validation Wither",
+      "title": "Corrections Silence (Timing, Composant 12, IA D\ufffds) & Validation Wither",
       "tags": [
         "Recette",
         "UI",
@@ -1316,35 +1554,35 @@
         "Wither",
         "Bugfix"
       ],
-      "summary": "Correction des bugs remont�s sur le jeton Silence (timing d'affichage de la popin, blocage des effets de suite pour la F�e, logique IA pour la conservation des d�s) et int�gration du composant 12 pour le Silence. Inclusion des correctifs pr�c�dents (Targeted, arrondis, Wither).",
+      "summary": "Correction des bugs remont\ufffds sur le jeton Silence (timing d'affichage de la popin, blocage des effets de suite pour la F\ufffde, logique IA pour la conservation des d\ufffds) et int\ufffdgration du composant 12 pour le Silence. Inclusion des correctifs pr\ufffdc\ufffddents (Targeted, arrondis, Wither).",
       "prompts": [
         {
           "id": "p-202-1",
-          "userPrompt": "Ce n'est pas bon pour le token silience. \nla popin s'est activ� en phase upkeep alors que c'est au d�but de la roll phase. \nLa large suite et medium suite ont bien �t� bloqu�es mais pas entierrement, ca n'est pas que les d�gats mais toute l'attaque qui n'est pas possible, donc le minion la f�e ne peux pas gagner le vol de CP sur la large suite. \nLa micro suite sera juste retenue. \nOn va ajouter un composant 12 avec le logo silence et l'effet actif pour rappeler qu'il n'est pas possible de faire des suites. \nOn va aussi traiter les d�s dans la zone Ai dice, s'il nest pas possible de faire une suite avec 4 d�s, alors AI dice n'en s�lectionne que 3 pour son attaque s'il a une small ou large suite. La selection de 4 ou 5 d�s suivant al suite r�ussie porte � confusion. \n\nPourke token targeted, je n'ai pas vu la diff�rence, toujours pas de 2 DMG dans le zone actif composant 10... \npeut =etre le souci de la compilation que tu indiques. \n\nIndique moi quand la compilation de la 201 est ok puis celle de la 202",
-          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Correction du moment de d�clenchement des popins (Silence, Wither, Focus Fire, Shame). La popin s'ouvre maintenant strictement au d�but de la phase de jet (Roll Phase) de l'attaquant au lieu de l'Upkeep.\n2) Bloquage total des effets secondaires de suite (ex: Vol de PC de la F�e). L'intercepteur de Silence agit d�sormais au niveau des conditions g�n�rales des effets, plafonnant virtuellement la suite � la Micro Suite (3 d�s) pour toutes les r�solutions.\n3) Int�gration du composant 12 pour Silence. Un bandeau vert \"Silence : Actif\" a �t� ajout� au-dessus du panneau des d�s de l'attaquant pour rappeler l'interdiction des suites.\n4) Traitement des d�s IA (Ai dice) : Modification de l'algorithme 'chooseSuiteHold' (MinionDiceEngine) pour limiter la s�lection et la mise de c�t� � 3 d�s maximum lorsque l'IA est sous silence. Cela emp�che l'IA de para�tre s�lectionner 5 d�s pour une suite irr�alisable.\n5) Le token Targeted (+2 DMG) n'�tait pas visible car la build 201 �tait en �chec. Ces modifications (Targeted, Wither, UI arrondies) sont incluses dans la nouvelle build 1.3.278.",
+          "userPrompt": "Ce n'est pas bon pour le token silience. \nla popin s'est activ\ufffd en phase upkeep alors que c'est au d\ufffdbut de la roll phase. \nLa large suite et medium suite ont bien \ufffdt\ufffd bloqu\ufffdes mais pas entierrement, ca n'est pas que les d\ufffdgats mais toute l'attaque qui n'est pas possible, donc le minion la f\ufffde ne peux pas gagner le vol de CP sur la large suite. \nLa micro suite sera juste retenue. \nOn va ajouter un composant 12 avec le logo silence et l'effet actif pour rappeler qu'il n'est pas possible de faire des suites. \nOn va aussi traiter les d\ufffds dans la zone Ai dice, s'il nest pas possible de faire une suite avec 4 d\ufffds, alors AI dice n'en s\ufffdlectionne que 3 pour son attaque s'il a une small ou large suite. La selection de 4 ou 5 d\ufffds suivant al suite r\ufffdussie porte \ufffd confusion. \n\nPourke token targeted, je n'ai pas vu la diff\ufffdrence, toujours pas de 2 DMG dans le zone actif composant 10... \npeut =etre le souci de la compilation que tu indiques. \n\nIndique moi quand la compilation de la 201 est ok puis celle de la 202",
+          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Correction du moment de d\ufffdclenchement des popins (Silence, Wither, Focus Fire, Shame). La popin s'ouvre maintenant strictement au d\ufffdbut de la phase de jet (Roll Phase) de l'attaquant au lieu de l'Upkeep.\n2) Bloquage total des effets secondaires de suite (ex: Vol de PC de la F\ufffde). L'intercepteur de Silence agit d\ufffdsormais au niveau des conditions g\ufffdn\ufffdrales des effets, plafonnant virtuellement la suite \ufffd la Micro Suite (3 d\ufffds) pour toutes les r\ufffdsolutions.\n3) Int\ufffdgration du composant 12 pour Silence. Un bandeau vert \"Silence : Actif\" a \ufffdt\ufffd ajout\ufffd au-dessus du panneau des d\ufffds de l'attaquant pour rappeler l'interdiction des suites.\n4) Traitement des d\ufffds IA (Ai dice) : Modification de l'algorithme 'chooseSuiteHold' (MinionDiceEngine) pour limiter la s\ufffdlection et la mise de c\ufffdt\ufffd \ufffd 3 d\ufffds maximum lorsque l'IA est sous silence. Cela emp\ufffdche l'IA de para\ufffdtre s\ufffdlectionner 5 d\ufffds pour une suite irr\ufffdalisable.\n5) Le token Targeted (+2 DMG) n'\ufffdtait pas visible car la build 201 \ufffdtait en \ufffdchec. Ces modifications (Targeted, Wither, UI arrondies) sont incluses dans la nouvelle build 1.3.278.",
           "items": [
             {
               "id": "item-202-1-1",
               "title": "Timing Popin Silence & Wither",
-              "description": "La popin de Silence ne doit plus appara�tre en phase Upkeep mais au d�but de la phase de Roll.",
+              "description": "La popin de Silence ne doit plus appara\ufffdtre en phase Upkeep mais au d\ufffdbut de la phase de Roll.",
               "category": "Workflow QA"
             },
             {
               "id": "item-202-1-2",
               "title": "Blocage complet effets Suite",
-              "description": "Le silence bloque l'attaque enti�re (d�g�ts ET effets comme le vol de CP de la F�e).",
+              "description": "Le silence bloque l'attaque enti\ufffdre (d\ufffdg\ufffdts ET effets comme le vol de CP de la F\ufffde).",
               "category": "Gameplay"
             },
             {
               "id": "item-202-1-3",
               "title": "Composant 12 pour Silence",
-              "description": "Ajout du bandeau vert Composant 12 avec logo silence et effet actif au-dessus des d�s.",
+              "description": "Ajout du bandeau vert Composant 12 avec logo silence et effet actif au-dessus des d\ufffds.",
               "category": "UI"
             },
             {
               "id": "item-202-1-4",
-              "title": "Logique IA D�s (Silence)",
-              "description": "L'IA ne doit retenir que 3 d�s maximum lorsqu'elle cherche une suite sous l'effet de Silence.",
+              "title": "Logique IA D\ufffds (Silence)",
+              "description": "L'IA ne doit retenir que 3 d\ufffds maximum lorsqu'elle cherche une suite sous l'effet de Silence.",
               "category": "IA"
             }
           ]
@@ -1357,24 +1595,24 @@
       "commit": "local-dev",
       "date": "2026-09-20",
       "author": "Antigravity AI",
-      "title": "Impl�mentation de Wither (D�p�rissement) et correctifs divers",
+      "title": "Impl\ufffdmentation de Wither (D\ufffdp\ufffdrissement) et correctifs divers",
       "tags": [
         "Wither",
         "Token",
         "UI",
         "Fail"
       ],
-      "summary": "Ajout du support du jeton Wither persistant avec masquage, affichage UI de type 'Shame' (Component 10). La compilation de cette version a �chou� en raison d'erreurs d'injection de code.",
+      "summary": "Ajout du support du jeton Wither persistant avec masquage, affichage UI de type 'Shame' (Component 10). La compilation de cette version a \ufffdchou\ufffd en raison d'erreurs d'injection de code.",
       "prompts": [
         {
           "id": "p-201-1",
-          "userPrompt": "Le token wither est activ�, mais il ne fonctionne pas bien. La description est bonne, on la met dans la popin de description. On va mettre la popin composant 1 avec une option de masquage comme le token est persistant. Cette popin se d�clenche sur le joueur qui poss�de le token au d�but de la phase de roll phase (avant le 1er jet). Ensuite on va utiliser le composant 10 comme shame, c'est le m�me effet, juste qu'il reste � la fin du t our et qu'il se cumule avec un Max de 2. Donc -1 ou -2 sur l'attaque.",
-          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Ajout du support de 'Wither' au catalogue (appSupported: true, appAnimation: true).\n2) Ajout de la popin de d�clenchement persistant de type Composant 1 avec option 'Ne plus afficher' (via le syst�me maskedTokens existant).\n3) Clonage de l'UI du composant 10 (Shame) pour afficher Wither : Actif (-X DMG) cumulable jusqu'� 2.\n4) Note : �chec de compilation suite � une erreur de syntaxe lors de l'injection (corrig� dans la 1.3.278).",
+          "userPrompt": "Le token wither est activ\ufffd, mais il ne fonctionne pas bien. La description est bonne, on la met dans la popin de description. On va mettre la popin composant 1 avec une option de masquage comme le token est persistant. Cette popin se d\ufffdclenche sur le joueur qui poss\ufffdde le token au d\ufffdbut de la phase de roll phase (avant le 1er jet). Ensuite on va utiliser le composant 10 comme shame, c'est le m\ufffdme effet, juste qu'il reste \ufffd la fin du t our et qu'il se cumule avec un Max de 2. Donc -1 ou -2 sur l'attaque.",
+          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Ajout du support de 'Wither' au catalogue (appSupported: true, appAnimation: true).\n2) Ajout de la popin de d\ufffdclenchement persistant de type Composant 1 avec option 'Ne plus afficher' (via le syst\ufffdme maskedTokens existant).\n3) Clonage de l'UI du composant 10 (Shame) pour afficher Wither : Actif (-X DMG) cumulable jusqu'\ufffd 2.\n4) Note : \ufffdchec de compilation suite \ufffd une erreur de syntaxe lors de l'injection (corrig\ufffd dans la 1.3.278).",
           "items": [
             {
               "id": "item-201-1-1",
-              "title": "Int�gration Jeton Wither",
-              "description": "Ajout de la popin persistante masquable et du composant 10 actif sur le panneau de d�g�ts.",
+              "title": "Int\ufffdgration Jeton Wither",
+              "description": "Ajout de la popin persistante masquable et du composant 10 actif sur le panneau de d\ufffdg\ufffdts.",
               "category": "Tokens"
             }
           ]
@@ -1387,22 +1625,22 @@
       "commit": "local-dev",
       "date": "2026-09-20",
       "author": "Antigravity AI",
-      "title": "Impl�mentation du Jeton Silence",
+      "title": "Impl\ufffdmentation du Jeton Silence",
       "tags": [
         "Silence",
         "Token",
         "IA"
       ],
-      "summary": "Impl�mentation du jeton Silence bloquant les Small/Large straights et retrait automatique � la fin du tour. Remplacement de l'image Targeted par '+2 DMG'.",
+      "summary": "Impl\ufffdmentation du jeton Silence bloquant les Small/Large straights et retrait automatique \ufffd la fin du tour. Remplacement de l'image Targeted par '+2 DMG'.",
       "prompts": [
         {
           "id": "p-200-1",
-          "userPrompt": "Activation du token : Silence dans l'app\nDescription : A player with this token may not activate their Small Straight or Large Straight abilities. At the conclusion of their turn, remove this token.\n\nLe joueur qui a le token, on lui affichera une popin de type composant 1 avec la description du token. Le d�clenchement ca sera au d�but de la phase de roll du joueur qui subit le token (avant le lanc� de d�s). Ce token bloque les acc�s aux suites small et large. Donc le joueur devra faire une autre attaque (L'IA devra se focaliser sur une attaque possible soit inflig� un token n�gatiif � l'adversaire ou gagner un token positif. A la fin de la roll phase de ce joueur, le token se retire.\n\nTargeted harmoniser avec le composant 10 sur le rendu (manque DMG)",
-          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Ajout de la popin de description (Composant 1) au d�but de la phase de lancer pour Silence.\n2) Bridage de l'�valuation des suites (_bestSuiteLength) plafonn�e � 3 (Micro Suite) pour toute entit� subissant le Silence.\n3) Ajout du retrait automatique du Silence � la fin de la phase offensive.\n4) Remplacement de l'image de Targeted par le texte '+2 DMG' pour coller exactement au rendu du Composant 10 de Focus Fire.",
+          "userPrompt": "Activation du token : Silence dans l'app\nDescription : A player with this token may not activate their Small Straight or Large Straight abilities. At the conclusion of their turn, remove this token.\n\nLe joueur qui a le token, on lui affichera une popin de type composant 1 avec la description du token. Le d\ufffdclenchement ca sera au d\ufffdbut de la phase de roll du joueur qui subit le token (avant le lanc\ufffd de d\ufffds). Ce token bloque les acc\ufffds aux suites small et large. Donc le joueur devra faire une autre attaque (L'IA devra se focaliser sur une attaque possible soit inflig\ufffd un token n\ufffdgatiif \ufffd l'adversaire ou gagner un token positif. A la fin de la roll phase de ce joueur, le token se retire.\n\nTargeted harmoniser avec le composant 10 sur le rendu (manque DMG)",
+          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Ajout de la popin de description (Composant 1) au d\ufffdbut de la phase de lancer pour Silence.\n2) Bridage de l'\ufffdvaluation des suites (_bestSuiteLength) plafonn\ufffde \ufffd 3 (Micro Suite) pour toute entit\ufffd subissant le Silence.\n3) Ajout du retrait automatique du Silence \ufffd la fin de la phase offensive.\n4) Remplacement de l'image de Targeted par le texte '+2 DMG' pour coller exactement au rendu du Composant 10 de Focus Fire.",
           "items": [
             {
               "id": "item-200-1-1",
-              "title": "Impl�mentation Logique Silence",
+              "title": "Impl\ufffdmentation Logique Silence",
               "description": "Bloquage des suites > 3 et popin d'alerte.",
               "category": "Gameplay"
             },
@@ -1427,17 +1665,17 @@
         "UI",
         "Bugfix"
       ],
-      "summary": "Correction des arrondis (Composant 12) et correctif critique sur l'attribution des jetons Shame et Focus Fire dans le calcul des d�g�ts.",
+      "summary": "Correction des arrondis (Composant 12) et correctif critique sur l'attribution des jetons Shame et Focus Fire dans le calcul des d\ufffdg\ufffdts.",
       "prompts": [
         {
           "id": "p-199-1",
-          "userPrompt": "harmonisation du composant 12. ici sur l'image Dice cube et decrep-ify n'ont pas le m�me rendu. Harmoniser (bout arrondi) sur le bouton actif\n\nje viens de tester la 1.198, le traitement sur la partie actif avec bout arrondie n'a pas �t� pris en compte dans le rendu.",
-          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Harmonisation des bords (BorderRadius.circular(20)) sur les badges 'Actif' (Decrepify, Dice Cube, etc.) pour correspondre � la maquette du Composant 12.\n2) Fixation d'un bug majeur dans fight.dart : les tokens Shame et Focus Fire �taient �valu�s sur le d�fenseur au lieu de l'attaquant. La logique a �t� invers�e.",
+          "userPrompt": "harmonisation du composant 12. ici sur l'image Dice cube et decrep-ify n'ont pas le m\ufffdme rendu. Harmoniser (bout arrondi) sur le bouton actif\n\nje viens de tester la 1.198, le traitement sur la partie actif avec bout arrondie n'a pas \ufffdt\ufffd pris en compte dans le rendu.",
+          "aiResponse": "Compte-Rendu Avant Build 1.3.278 (CR) :\n1) Harmonisation des bords (BorderRadius.circular(20)) sur les badges 'Actif' (Decrepify, Dice Cube, etc.) pour correspondre \ufffd la maquette du Composant 12.\n2) Fixation d'un bug majeur dans fight.dart : les tokens Shame et Focus Fire \ufffdtaient \ufffdvalu\ufffds sur le d\ufffdfenseur au lieu de l'attaquant. La logique a \ufffdt\ufffd invers\ufffde.",
           "items": [
             {
               "id": "item-199-1-1",
               "title": "Harmonisation Bords",
-              "description": "Passage du BorderRadius de 4 � 20 sur les badges Actif.",
+              "description": "Passage du BorderRadius de 4 \ufffd 20 sur les badges Actif.",
               "category": "UI"
             },
             {
@@ -1456,36 +1694,36 @@
       "commit": "local-dev",
       "date": "2026-09-20",
       "author": "Antigravity AI",
-      "title": "Int�gration Composants UI & Journalisation Prompts Utilisateur",
+      "title": "Int\ufffdgration Composants UI & Journalisation Prompts Utilisateur",
       "tags": [
         "Recette",
         "UI",
         "Components",
         "QA"
       ],
-      "summary": "Mise � jour de l'Onglet 2 (Prompts & Suivi de Recette) avec la demande exacte de l'utilisateur, ses consignes de validation avant build, et la pr�paration de l'int�gration des nouvelles images UI.",
+      "summary": "Mise \ufffd jour de l'Onglet 2 (Prompts & Suivi de Recette) avec la demande exacte de l'utilisateur, ses consignes de validation avant build, et la pr\ufffdparation de l'int\ufffdgration des nouvelles images UI.",
       "prompts": [
         {
           "id": "p-197-1",
-          "userPrompt": "ca ne va pas pour les composants, je vais te donner les images des composants que je souhaite (/recette) et tu les int�gres, on compile � la fin que je dis que c'est ok. Je veux aussi le texte que j'�cris ici dans la partie 2 historique et tes CR avant la build aussi.\n\ntu peux vider l'onglet 3.\nOn commance par le composant 1 : La popin Simple d'information avec un bouton ok et une croix pour fermer.\nje passe � au 2eme composant 2 :\n\ncomposant 2, la popin avec un jet de d�s et la description ainsi que les 2 boutons roll die et edit die\n\nComposant 3 : popin d'information avec bouton oui et non.\n\nComposant 4 : la popin avec plusieurs choix.\n\ncomposant 5 la popin de r�sultat (explication, r�sultat du token)\n\nOn va laisser un vide pour les composant 6 � 9 , les prochaines popin. Composant 10 bonus, la barre violette pour un token actif sur l'attaque (bonus). on va ajouter DMG � cot� d'actif pour focus fire... 2eme souci, pourquoi j'ai un +2 alors focus donne +1 et shame -1 = 0 non ? fixer le bug au passage,\n\ncomposant 20, le bouton masqu� d�fensivement (avec parfois un image du token quand elle est disponible.\n\ncomposant 11 bandeau activation. ici c'est le bandeau de prey avec un bouton \"use\" et un fond vert.\n\ncomposant 12 le bandeau pendant la phase du joueur avec le token sur son plateau. le composant 11 c'est que le token est soit n�gatif soit sur le plateau d adverse. On va laisser le fond vert pour la couleur pendant le tour du hero. Et composant 11 fond violet (token sur le plateau adverse) ou token n�gatif. Cmposant 21 : couverture de la zone attaque avec le nom d'un token (ici Blinding light) M�me image 2 composants\n\ncomposant 23 : Ajout d'un bouton avec le logo et nom du token en phase de roll d'attaque d'un joueur. Ce composant masque le bouton reroll temps qu'il n'a pas �t� trait�e.\n\nharmonisation du composant 12. ici sur l'image Dice cube et decrep-ify n'ont pas le m�me rendu. Harmoniser (bout arrondi) sur le bouton actif\n\nActivation du token : Silence dans l'app\nDescription : A player with this token may not activate their Small Straight or Large Straight abilities. At the conclusion of their turn, remove this token.\n\nLe joueur qui a le token, on lui affichera une popin de type composant 1 avec la description du token. Le d�clenchement ca sera au d�but de la phase de roll du joueur qui subit le token (avant le lanc� de d�s). Ce token bloque les acc�s aux suites small et large. Donc le joueur devra faire une autre attaque (L'IA devra se focaliser sur une attaque possible soit inflig� un token n�gatiif � l'adversaire ou gagner un token positif. A la fin de la roll phase de ce joueur, le token se retire.\n\nLe token wither est activ�, mais il ne fonctionne pas bien... On va mettre la popin composant 1 avec une option de masquage comme le token est persistant. Ensuite on va utiliser le composant 10 comme shame... cumule avec un Max de 2.",
-          "aiResponse": "Compte-Rendu Avant Build (CR) :\n1) Enregistrement fid�le et int�gral du prompt utilisateur dans la partie 2 (Prompts & Suivi de Recette).\n2) Inscription des CR techniques et fonctionnels avant tout build.\n3) Suspension de la re-compilation Flutter Web jusqu'� l'accord explicite de l'utilisateur ('on compile � la fin que je dis que c'est ok').\n4) Attente de la transmission des images des nouveaux composants UI pour int�gration dans l'Onglet 3 (Galerie UI).\n5) Vidage de la galerie de l'Onglet 3.\n6) Cr�ation du Composant 1 : Popin Simple d'Information (First Strike) bas� sur l'image fournie.\n7) Cr�ation du Composant 2 : Popin de Jet de D� (Blind) avec la section de r�solution (d�, Roll Die, Edit Die).\n8) Cr�ation du Composant 3 : Popin de Confirmation (Oui/Non) de format r�duit (Nanobot), sans ic�ne g�ante, avec 2 boutons de validation/annulation.\n9) Cr�ation du Composant 4 : Popin � Choix Multiples (Disarm) proposant plusieurs actions principales c�te � c�te.\n10) Cr�ation du Composant 5 : Popin de R�sultat (Delayed Poison) affichant un bloc d'impact (HP 27 -> 24) en plus de la description.\n11) R�servation des composants 6 � 9. Cr�ation du composant 10 (Barre de modification d'attaque) avec harmonisation des textes \"Actif (+/- X DMG)\".\n12) Correction du bug majeur dans Flutter (lib/parts/fight.dart) o� Focus Fire et Shame �taient �valu�s sur le d�fenseur au lieu de l'attaquant, causant un calcul ATK erron� (+2).\n13) R�servation des composants 11 � 19. Cr�ation du composant 20 (Couverture D�fense / Only cards) qui superpose un grand bouton jaune � la place du compteur DEF, avec int�gration d'une ic�ne de token optionnelle.\n14) Remplacement du placeholder 11 par le Composant 11 : Bandeau d'activation interactif (ex: Prey) avec contour/fond vert et bouton \"Use\".\n15) Mise � jour du Composant 11 : passage en th�me violet (jeton sur plateau adverse / n�gatif).\n16) Cr�ation du Composant 12 (Barbed Vine) : bandeau d'activation vert (jeton sur plateau du h�ros) avec badge Actif.\n17) Cr�ation du Composant 21 : Bouton violet couvrant la zone ATK (ex: Blinding Light).\n18) R�servation du composant 22. Cr�ation du Composant 23 (Bouton d'Action Roll / Token) qui s'affiche en phase de lancer pour forcer la r�solution d'un token (ex: Blind) et d�sactive le bouton Reroll g�n�ral.\n19) Harmonisation du Composant 12 et du code source Flutter : Les badges \"Actif\" ont �t� harmonis�s pour avoir des bords totalement arrondis (BorderRadius 20 au lieu de 4) sur Decrep-ify et Dice cube.\n20) Cr�ation du Composant 24 (Popin Silence) bas� sur le Composant 1. Ajout de la logique Silence dans Flutter (d�clenchement de la popin, bridage de l'IA � la micro-suite maximum, retrait automatique � la fin du tour).\n21) Cr�ation du Composant 25 pour le Jeton Wither persistant avec masquage, et int�gration du composant 10 pour le malus d'attaque.",
+          "userPrompt": "ca ne va pas pour les composants, je vais te donner les images des composants que je souhaite (/recette) et tu les int\ufffdgres, on compile \ufffd la fin que je dis que c'est ok. Je veux aussi le texte que j'\ufffdcris ici dans la partie 2 historique et tes CR avant la build aussi.\n\ntu peux vider l'onglet 3.\nOn commance par le composant 1 : La popin Simple d'information avec un bouton ok et une croix pour fermer.\nje passe \ufffd au 2eme composant 2 :\n\ncomposant 2, la popin avec un jet de d\ufffds et la description ainsi que les 2 boutons roll die et edit die\n\nComposant 3 : popin d'information avec bouton oui et non.\n\nComposant 4 : la popin avec plusieurs choix.\n\ncomposant 5 la popin de r\ufffdsultat (explication, r\ufffdsultat du token)\n\nOn va laisser un vide pour les composant 6 \ufffd 9 , les prochaines popin. Composant 10 bonus, la barre violette pour un token actif sur l'attaque (bonus). on va ajouter DMG \ufffd cot\ufffd d'actif pour focus fire... 2eme souci, pourquoi j'ai un +2 alors focus donne +1 et shame -1 = 0 non ? fixer le bug au passage,\n\ncomposant 20, le bouton masqu\ufffd d\ufffdfensivement (avec parfois un image du token quand elle est disponible.\n\ncomposant 11 bandeau activation. ici c'est le bandeau de prey avec un bouton \"use\" et un fond vert.\n\ncomposant 12 le bandeau pendant la phase du joueur avec le token sur son plateau. le composant 11 c'est que le token est soit n\ufffdgatif soit sur le plateau d adverse. On va laisser le fond vert pour la couleur pendant le tour du hero. Et composant 11 fond violet (token sur le plateau adverse) ou token n\ufffdgatif. Cmposant 21 : couverture de la zone attaque avec le nom d'un token (ici Blinding light) M\ufffdme image 2 composants\n\ncomposant 23 : Ajout d'un bouton avec le logo et nom du token en phase de roll d'attaque d'un joueur. Ce composant masque le bouton reroll temps qu'il n'a pas \ufffdt\ufffd trait\ufffde.\n\nharmonisation du composant 12. ici sur l'image Dice cube et decrep-ify n'ont pas le m\ufffdme rendu. Harmoniser (bout arrondi) sur le bouton actif\n\nActivation du token : Silence dans l'app\nDescription : A player with this token may not activate their Small Straight or Large Straight abilities. At the conclusion of their turn, remove this token.\n\nLe joueur qui a le token, on lui affichera une popin de type composant 1 avec la description du token. Le d\ufffdclenchement ca sera au d\ufffdbut de la phase de roll du joueur qui subit le token (avant le lanc\ufffd de d\ufffds). Ce token bloque les acc\ufffds aux suites small et large. Donc le joueur devra faire une autre attaque (L'IA devra se focaliser sur une attaque possible soit inflig\ufffd un token n\ufffdgatiif \ufffd l'adversaire ou gagner un token positif. A la fin de la roll phase de ce joueur, le token se retire.\n\nLe token wither est activ\ufffd, mais il ne fonctionne pas bien... On va mettre la popin composant 1 avec une option de masquage comme le token est persistant. Ensuite on va utiliser le composant 10 comme shame... cumule avec un Max de 2.",
+          "aiResponse": "Compte-Rendu Avant Build (CR) :\n1) Enregistrement fid\ufffdle et int\ufffdgral du prompt utilisateur dans la partie 2 (Prompts & Suivi de Recette).\n2) Inscription des CR techniques et fonctionnels avant tout build.\n3) Suspension de la re-compilation Flutter Web jusqu'\ufffd l'accord explicite de l'utilisateur ('on compile \ufffd la fin que je dis que c'est ok').\n4) Attente de la transmission des images des nouveaux composants UI pour int\ufffdgration dans l'Onglet 3 (Galerie UI).\n5) Vidage de la galerie de l'Onglet 3.\n6) Cr\ufffdation du Composant 1 : Popin Simple d'Information (First Strike) bas\ufffd sur l'image fournie.\n7) Cr\ufffdation du Composant 2 : Popin de Jet de D\ufffd (Blind) avec la section de r\ufffdsolution (d\ufffd, Roll Die, Edit Die).\n8) Cr\ufffdation du Composant 3 : Popin de Confirmation (Oui/Non) de format r\ufffdduit (Nanobot), sans ic\ufffdne g\ufffdante, avec 2 boutons de validation/annulation.\n9) Cr\ufffdation du Composant 4 : Popin \ufffd Choix Multiples (Disarm) proposant plusieurs actions principales c\ufffdte \ufffd c\ufffdte.\n10) Cr\ufffdation du Composant 5 : Popin de R\ufffdsultat (Delayed Poison) affichant un bloc d'impact (HP 27 -> 24) en plus de la description.\n11) R\ufffdservation des composants 6 \ufffd 9. Cr\ufffdation du composant 10 (Barre de modification d'attaque) avec harmonisation des textes \"Actif (+/- X DMG)\".\n12) Correction du bug majeur dans Flutter (lib/parts/fight.dart) o\ufffd Focus Fire et Shame \ufffdtaient \ufffdvalu\ufffds sur le d\ufffdfenseur au lieu de l'attaquant, causant un calcul ATK erron\ufffd (+2).\n13) R\ufffdservation des composants 11 \ufffd 19. Cr\ufffdation du composant 20 (Couverture D\ufffdfense / Only cards) qui superpose un grand bouton jaune \ufffd la place du compteur DEF, avec int\ufffdgration d'une ic\ufffdne de token optionnelle.\n14) Remplacement du placeholder 11 par le Composant 11 : Bandeau d'activation interactif (ex: Prey) avec contour/fond vert et bouton \"Use\".\n15) Mise \ufffd jour du Composant 11 : passage en th\ufffdme violet (jeton sur plateau adverse / n\ufffdgatif).\n16) Cr\ufffdation du Composant 12 (Barbed Vine) : bandeau d'activation vert (jeton sur plateau du h\ufffdros) avec badge Actif.\n17) Cr\ufffdation du Composant 21 : Bouton violet couvrant la zone ATK (ex: Blinding Light).\n18) R\ufffdservation du composant 22. Cr\ufffdation du Composant 23 (Bouton d'Action Roll / Token) qui s'affiche en phase de lancer pour forcer la r\ufffdsolution d'un token (ex: Blind) et d\ufffdsactive le bouton Reroll g\ufffdn\ufffdral.\n19) Harmonisation du Composant 12 et du code source Flutter : Les badges \"Actif\" ont \ufffdt\ufffd harmonis\ufffds pour avoir des bords totalement arrondis (BorderRadius 20 au lieu de 4) sur Decrep-ify et Dice cube.\n20) Cr\ufffdation du Composant 24 (Popin Silence) bas\ufffd sur le Composant 1. Ajout de la logique Silence dans Flutter (d\ufffdclenchement de la popin, bridage de l'IA \ufffd la micro-suite maximum, retrait automatique \ufffd la fin du tour).\n21) Cr\ufffdation du Composant 25 pour le Jeton Wither persistant avec masquage, et int\ufffdgration du composant 10 pour le malus d'attaque.",
           "items": [
             {
               "id": "item-197-1-1",
               "title": "Journalisation Texte Utilisateur & CR dans la Partie 2",
-              "description": "V�rifier que le texte exact du prompt utilisateur et le Compte-Rendu de l'agent apparaissent bien dans l'Onglet 2 (Prompts & Suivi de Recette).",
+              "description": "V\ufffdrifier que le texte exact du prompt utilisateur et le Compte-Rendu de l'agent apparaissent bien dans l'Onglet 2 (Prompts & Suivi de Recette).",
               "category": "Journal & Prompt"
             },
             {
               "id": "item-197-1-2",
               "title": "Verrouillage de la Compilation (Validation Humaine)",
-              "description": "Consigne stricte : aucune compilation Flutter (verify-fast.ps1) ne doit �tre ex�cut�e sans le OK explicite de l'utilisateur.",
+              "description": "Consigne stricte : aucune compilation Flutter (verify-fast.ps1) ne doit \ufffdtre ex\ufffdcut\ufffde sans le OK explicite de l'utilisateur.",
               "category": "Workflow QA"
             },
             {
               "id": "item-197-1-3",
-              "title": "Int�gration des nouvelles images UI /recette",
-              "description": "Pr�paration du module UI de l'Onglet 3 pour ins�rer les images et maquettes fournies par l'utilisateur.",
+              "title": "Int\ufffdgration des nouvelles images UI /recette",
+              "description": "Pr\ufffdparation du module UI de l'Onglet 3 pour ins\ufffdrer les images et maquettes fournies par l'utilisateur.",
               "category": "UI Galerie"
             }
           ]
@@ -1505,23 +1743,23 @@
         "UI",
         "Admin"
       ],
-      "summary": "Cr�ation du module Web standalone web/recette/ avec journal d'historique Git r�el, suivi des prompts avec checklist granulaire et biblioth�que de composants UI r�els du jeu.",
+      "summary": "Cr\ufffdation du module Web standalone web/recette/ avec journal d'historique Git r\ufffdel, suivi des prompts avec checklist granulaire et biblioth\ufffdque de composants UI r\ufffdels du jeu.",
       "prompts": [
         {
           "id": "p-196-1",
           "userPrompt": "build web locale avec preview",
-          "aiResponse": "Mise � jour de pubspec.yaml & main.dart vers la version 1.3.278+228, compilation Web release sans erreur et d�marrage du serveur local sur http://127.0.0.1:8083/Dice-throne-Solo/.",
+          "aiResponse": "Mise \ufffd jour de pubspec.yaml & main.dart vers la version 1.3.278+228, compilation Web release sans erreur et d\ufffdmarrage du serveur local sur http://127.0.0.1:8083/Dice-throne-Solo/.",
           "items": [
             {
               "id": "item-196-1-1",
               "title": "Script set-version.ps1 1.3.278+228",
-              "description": "V�rifier la synchronisation parfaite de pubspec.yaml et appVersionLabel dans lib/main.dart.",
+              "description": "V\ufffdrifier la synchronisation parfaite de pubspec.yaml et appVersionLabel dans lib/main.dart.",
               "category": "Versioning"
             },
             {
               "id": "item-196-1-2",
               "title": "Compilation Web Release (verify-fast.ps1)",
-              "description": "V�rifier l'absence d'erreurs Dart et le tree-shaking des ic�nes dans build/web.",
+              "description": "V\ufffdrifier l'absence d'erreurs Dart et le tree-shaking des ic\ufffdnes dans build/web.",
               "category": "Build"
             },
             {
@@ -1534,25 +1772,25 @@
         },
         {
           "id": "p-196-2",
-          "userPrompt": "Je veux un journal de recette hors application avec historique Git, prompts et biblioth�que UI...",
-          "aiResponse": "Cr�ation du module web/recette avec 3 onglets complets, persistance localStorage, export/import JSON et widgets UI interactifs aliment�s par les vrais assets d'images.",
+          "userPrompt": "Je veux un journal de recette hors application avec historique Git, prompts et biblioth\ufffdque UI...",
+          "aiResponse": "Cr\ufffdation du module web/recette avec 3 onglets complets, persistance localStorage, export/import JSON et widgets UI interactifs aliment\ufffds par les vrais assets d'images.",
           "items": [
             {
               "id": "item-196-2-1",
-              "title": "Onglet 1 : Journal Git R�el & Moteur de Recherche",
-              "description": "Moteur de recherche temps r�el sur les commits Git r�els (SHA, dates, auteurs, tags).",
+              "title": "Onglet 1 : Journal Git R\ufffdel & Moteur de Recherche",
+              "description": "Moteur de recherche temps r\ufffdel sur les commits Git r\ufffdels (SHA, dates, auteurs, tags).",
               "category": "Git Journal"
             },
             {
               "id": "item-196-2-2",
-              "title": "Onglet 2 : Checklist Granulaire & Prompts D�taill�s",
-              "description": "Demandes/r�ponses compl�tes avec validation � 3 statuts, zone de commentaire et export/import JSON.",
+              "title": "Onglet 2 : Checklist Granulaire & Prompts D\ufffdtaill\ufffds",
+              "description": "Demandes/r\ufffdponses compl\ufffdtes avec validation \ufffd 3 statuts, zone de commentaire et export/import JSON.",
               "category": "Recette QA"
             },
             {
               "id": "item-196-2-3",
-              "title": "Onglet 3 : Galerie des Composants UI R�els",
-              "description": "Pr�visualisation des vraies popins de tokens (Focus Fire, Shame, Nanobot, Evasive) et de la barre d'attaque r�elles avec assets images.",
+              "title": "Onglet 3 : Galerie des Composants UI R\ufffdels",
+              "description": "Pr\ufffdvisualisation des vraies popins de tokens (Focus Fire, Shame, Nanobot, Evasive) et de la barre d'attaque r\ufffdelles avec assets images.",
               "category": "UI Gallery"
             }
           ]
@@ -1572,35 +1810,35 @@
         "Nanobot",
         "Fix"
       ],
-      "summary": "Ajout des jetons de statut Reality Warp et Shame dans le catalogue, correction de l'interface du Nanobot et gestion de l'entretien par unit� des Nanites.",
+      "summary": "Ajout des jetons de statut Reality Warp et Shame dans le catalogue, correction de l'interface du Nanobot et gestion de l'entretien par unit\ufffd des Nanites.",
       "prompts": [
         {
           "id": "p-195-1",
-          "userPrompt": "Ajouter les tokens Reality Warp et Shame, corriger l'UI du Nanobot et l'entretien des Nanites par unit�",
-          "aiResponse": "Ajout de 'Reality Warp' et 'Shame' dans assets/data/token_catalog.json, mise � jour des handlers de tokens dans fight.dart (L9496, L18502) et adaptation des r�gles d'entretien Upkeep Phase.",
+          "userPrompt": "Ajouter les tokens Reality Warp et Shame, corriger l'UI du Nanobot et l'entretien des Nanites par unit\ufffd",
+          "aiResponse": "Ajout de 'Reality Warp' et 'Shame' dans assets/data/token_catalog.json, mise \ufffd jour des handlers de tokens dans fight.dart (L9496, L18502) et adaptation des r\ufffdgles d'entretien Upkeep Phase.",
           "items": [
             {
               "id": "item-195-1-1",
-              "title": "Jeton Reality Warp (D�formation de R�alit�)",
-              "description": "V�rifier que la popin et les effets de modification de d�s s'appliquent correctement lors du ciblage d'un ennemi.",
+              "title": "Jeton Reality Warp (D\ufffdformation de R\ufffdalit\ufffd)",
+              "description": "V\ufffdrifier que la popin et les effets de modification de d\ufffds s'appliquent correctement lors du ciblage d'un ennemi.",
               "category": "Tokens UI"
             },
             {
               "id": "item-195-1-2",
               "title": "Jeton Shame (Honte)",
-              "description": "V�rifier l'affichage de l'ic�ne assets/token/shame.png et la r�duction des d�g�ts d'attaque.",
+              "description": "V\ufffdrifier l'affichage de l'ic\ufffdne assets/token/shame.png et la r\ufffdduction des d\ufffdg\ufffdts d'attaque.",
               "category": "Tokens UI"
             },
             {
               "id": "item-195-1-3",
-              "title": "Interface Nanobot & Synth�se",
-              "description": "Contr�ler le widget Nanobot (image assets/token/nanobot.webp) et le compteur de Nanites en combat.",
+              "title": "Interface Nanobot & Synth\ufffdse",
+              "description": "Contr\ufffdler le widget Nanobot (image assets/token/nanobot.webp) et le compteur de Nanites en combat.",
               "category": "Combat UI"
             },
             {
               "id": "item-195-1-4",
-              "title": "Entretien de Nanites par unit�",
-              "description": "S'assurer qu'en phase Upkeep, la consommation de CP/Nanite s'effectue correctement par unit� active.",
+              "title": "Entretien de Nanites par unit\ufffd",
+              "description": "S'assurer qu'en phase Upkeep, la consommation de CP/Nanite s'effectue correctement par unit\ufffd active.",
               "category": "Game Engine"
             }
           ]
@@ -1613,23 +1851,23 @@
       "commit": "50ecb6f",
       "date": "2026-09-19",
       "author": "Antigravity AI",
-      "title": "Correction Scaling Focus Fire, Poison Diff�r� & Premi�re Frappe",
+      "title": "Correction Scaling Focus Fire, Poison Diff\ufffdr\ufffd & Premi\ufffdre Frappe",
       "tags": [
         "Tokens",
         "Combat",
         "Fix"
       ],
-      "summary": "Correction de la m�thode normalizeTokenKey pour Focus Fire (+N Dgts) et affichage de la popin. Correction des m�caniques de Poison Diff�r�, Premi�re Frappe, D�sarmement et Perturbation.",
+      "summary": "Correction de la m\ufffdthode normalizeTokenKey pour Focus Fire (+N Dgts) et affichage de la popin. Correction des m\ufffdcaniques de Poison Diff\ufffdr\ufffd, Premi\ufffdre Frappe, D\ufffdsarmement et Perturbation.",
       "prompts": [
         {
           "id": "p-190-1",
-          "userPrompt": "Focus Fire ne cumule pas les d�g�ts correctement et les popins de Poison Diff�r� ne s'ouvrent pas",
-          "aiResponse": "Normalisation des cl�s de tokens dans fight.dart (L9401), correction du calcul du bonus +N DMG pour Focus Fire et correction des triggers de fin de tour.",
+          "userPrompt": "Focus Fire ne cumule pas les d\ufffdg\ufffdts correctement et les popins de Poison Diff\ufffdr\ufffd ne s'ouvrent pas",
+          "aiResponse": "Normalisation des cl\ufffds de tokens dans fight.dart (L9401), correction du calcul du bonus +N DMG pour Focus Fire et correction des triggers de fin de tour.",
           "items": [
             {
               "id": "item-190-1-1",
               "title": "Scaling Focus Fire (+N DMG)",
-              "description": "V�rifier que chaque stack de Focus Fire ajoute bien +3 d�g�ts sur la ligne d'attaque s�lectionn�e.",
+              "description": "V\ufffdrifier que chaque stack de Focus Fire ajoute bien +3 d\ufffdg\ufffdts sur la ligne d'attaque s\ufffdlectionn\ufffde.",
               "category": "Tokens Logic"
             },
             {
@@ -1640,8 +1878,8 @@
             },
             {
               "id": "item-190-1-3",
-              "title": "Poison Diff�r� & Premi�re Frappe",
-              "description": "V�rifier que le Poison Diff�r� se d�clenche uniquement en fin de tour et que Premi�re Frappe s'ex�cute avant l'attaque ennemie.",
+              "title": "Poison Diff\ufffdr\ufffd & Premi\ufffdre Frappe",
+              "description": "V\ufffdrifier que le Poison Diff\ufffdr\ufffd se d\ufffdclenche uniquement en fin de tour et que Premi\ufffdre Frappe s'ex\ufffdcute avant l'attaque ennemie.",
               "category": "Combat Rules"
             }
           ]
@@ -1654,36 +1892,36 @@
       "commit": "0f4fa58",
       "date": "2026-09-13",
       "author": "bdewev18-droid",
-      "title": "Verrouillage D�s Cube (Dice Cube), Decrep-ify & Constrict",
+      "title": "Verrouillage D\ufffds Cube (Dice Cube), Decrep-ify & Constrict",
       "tags": [
         "Dice",
         "Tokens",
         "IA",
         "Feature"
       ],
-      "summary": "Verrouillage visuel des d�s affect�s par Dice Cube, autorisation des relances sans alt�ration, mise � jour de la strat�gie IA et impl�mentation des tokens Decrep-ify, Constrict.",
+      "summary": "Verrouillage visuel des d\ufffds affect\ufffds par Dice Cube, autorisation des relances sans alt\ufffdration, mise \ufffd jour de la strat\ufffdgie IA et impl\ufffdmentation des tokens Decrep-ify, Constrict.",
       "prompts": [
         {
           "id": "p-150-1",
-          "userPrompt": "Impl�menter le jeton Dice Cube qui bloque la modification des d�s tout en permettant la relance",
-          "aiResponse": "Mise � jour des r�gles de relance dans fight.dart, ajout de l'indicateur visuel de cadenas sur le d� bloqu� (assets/token/Dice cube.webp) et ajustement des choix strat�giques du bot IA.",
+          "userPrompt": "Impl\ufffdmenter le jeton Dice Cube qui bloque la modification des d\ufffds tout en permettant la relance",
+          "aiResponse": "Mise \ufffd jour des r\ufffdgles de relance dans fight.dart, ajout de l'indicateur visuel de cadenas sur le d\ufffd bloqu\ufffd (assets/token/Dice cube.webp) et ajustement des choix strat\ufffdgiques du bot IA.",
           "items": [
             {
               "id": "item-150-1-1",
-              "title": "Visualisation Cadenas Dice Cube sur le d�",
-              "description": "V�rifier que lorsqu'un d� est sous l'effet de Dice Cube, une ic�ne de cadenas dor�e appara�t sur le d�.",
+              "title": "Visualisation Cadenas Dice Cube sur le d\ufffd",
+              "description": "V\ufffdrifier que lorsqu'un d\ufffd est sous l'effet de Dice Cube, une ic\ufffdne de cadenas dor\ufffde appara\ufffdt sur le d\ufffd.",
               "category": "Dice UI"
             },
             {
               "id": "item-150-1-2",
-              "title": "Relance autoris�e / Alt�ration bloqu�e",
-              "description": "Le joueur peut relancer le d� mais ne peut pas utiliser de cartes de modificateur de valeur de d� (ex: +1 / -1).",
+              "title": "Relance autoris\ufffde / Alt\ufffdration bloqu\ufffde",
+              "description": "Le joueur peut relancer le d\ufffd mais ne peut pas utiliser de cartes de modificateur de valeur de d\ufffd (ex: +1 / -1).",
               "category": "Combat Rules"
             },
             {
               "id": "item-150-1-3",
               "title": "Jetons Decrep-ify & Constrict",
-              "description": "V�rifier l'int�gration dans token_catalog.json et le bon d�clenchement des r�ductions d'attaque.",
+              "description": "V\ufffdrifier l'int\ufffdgration dans token_catalog.json et le bon d\ufffdclenchement des r\ufffdductions d'attaque.",
               "category": "Tokens UI"
             }
           ]
@@ -1702,29 +1940,29 @@
         "History",
         "Popins"
       ],
-      "summary": "Ajout de la vue Team Datas dans l'�cran Matchup (3v3), 3 niveaux de difficult� IA, popins interactives pour la Bombe � Retardement en Upkeep et refonte de l'historique Naxarus.",
+      "summary": "Ajout de la vue Team Datas dans l'\ufffdcran Matchup (3v3), 3 niveaux de difficult\ufffd IA, popins interactives pour la Bombe \ufffd Retardement en Upkeep et refonte de l'historique Naxarus.",
       "prompts": [
         {
           "id": "p-130-1",
-          "userPrompt": "Ajouter un mode d'analyse des �quipes 3v3 et rendre la Bombe � Retardement interactive en phase Upkeep",
-          "aiResponse": "Cr�ation du module Matchup Team Datas avec tri par pire winrate, impl�mentation des popins interactives Time Bomb 1 & 2 pendant l'upkeep phase dans fight.dart.",
+          "userPrompt": "Ajouter un mode d'analyse des \ufffdquipes 3v3 et rendre la Bombe \ufffd Retardement interactive en phase Upkeep",
+          "aiResponse": "Cr\ufffdation du module Matchup Team Datas avec tri par pire winrate, impl\ufffdmentation des popins interactives Time Bomb 1 & 2 pendant l'upkeep phase dans fight.dart.",
           "items": [
             {
               "id": "item-130-1-1",
               "title": "Vue Matchup Team Datas (3v3)",
-              "description": "Affichage du tableau comparatif des compositions d'�quipe avec filtre par difficult� (Normal, Expert, Cauchemar).",
+              "description": "Affichage du tableau comparatif des compositions d'\ufffdquipe avec filtre par difficult\ufffd (Normal, Expert, Cauchemar).",
               "category": "Matchup UI"
             },
             {
               "id": "item-130-1-2",
-              "title": "Popin interactive Bombe � Retardement",
-              "description": "En phase Upkeep, un lancer de d� interactif dans une modale d�termine l'explosion de la bombe.",
+              "title": "Popin interactive Bombe \ufffd Retardement",
+              "description": "En phase Upkeep, un lancer de d\ufffd interactif dans une modale d\ufffdtermine l'explosion de la bombe.",
               "category": "Upkeep UI"
             },
             {
               "id": "item-130-1-3",
-              "title": "D�fense d'attaque in�vitable",
-              "description": "Autoriser la saisie manuelle de cartes de d�fense uniquement lorsque l'attaque est in�vitable contre Naxarus.",
+              "title": "D\ufffdfense d'attaque in\ufffdvitable",
+              "description": "Autoriser la saisie manuelle de cartes de d\ufffdfense uniquement lorsque l'attaque est in\ufffdvitable contre Naxarus.",
               "category": "Combat Rules"
             }
           ]
@@ -1737,29 +1975,29 @@
       "commit": "97ef8eb",
       "date": "2026-08-19",
       "author": "bdewev18-droid",
-      "title": "Multi-Cha�ne Evasive, Entretien Br�lure, Perte CP Renversement",
+      "title": "Multi-Cha\ufffdne Evasive, Entretien Br\ufffdlure, Perte CP Renversement",
       "tags": [
         "Tokens",
         "Engine",
         "Balance"
       ],
-      "summary": "Gestion des cha�nes de relances d'Evasive multiples, d�g�ts de Br�lure en Upkeep, perte de CP sur Renversement (Knockdown) et am�liorations du Back Office Admin.",
+      "summary": "Gestion des cha\ufffdnes de relances d'Evasive multiples, d\ufffdg\ufffdts de Br\ufffdlure en Upkeep, perte de CP sur Renversement (Knockdown) et am\ufffdliorations du Back Office Admin.",
       "prompts": [
         {
           "id": "p-116-1",
-          "userPrompt": "R�soudre le probl�me des esquives Evasive cons�cutives et la perte de CP sur Knockdown",
-          "aiResponse": "R��criture de la boucle de r�solution d'Evasive dans game_engine.dart (L104) et ajout de la d�duction de CP en cas de jeton Renversement actif.",
+          "userPrompt": "R\ufffdsoudre le probl\ufffdme des esquives Evasive cons\ufffdcutives et la perte de CP sur Knockdown",
+          "aiResponse": "R\ufffd\ufffdcriture de la boucle de r\ufffdsolution d'Evasive dans game_engine.dart (L104) et ajout de la d\ufffdduction de CP en cas de jeton Renversement actif.",
           "items": [
             {
               "id": "item-116-1-1",
               "title": "Esquives Evasive multiples",
-              "description": "V�rifier que si un joueur poss�de 2 jetons Evasive, il peut relancer 2 fois de suite si le 1er jet �choue.",
+              "description": "V\ufffdrifier que si un joueur poss\ufffdde 2 jetons Evasive, il peut relancer 2 fois de suite si le 1er jet \ufffdchoue.",
               "category": "Tokens Logic"
             },
             {
               "id": "item-116-1-2",
               "title": "Perte de CP sur Renversement (Knockdown)",
-              "description": "S'assurer que le joueur perd 1 CP lorsqu'il subit Knockdown lors de la phase de d�fense.",
+              "description": "S'assurer que le joueur perd 1 CP lorsqu'il subit Knockdown lors de la phase de d\ufffdfense.",
               "category": "Combat Rules"
             }
           ]
@@ -1772,11 +2010,11 @@
       "id": "info-popin-1",
       "category": "Popins & Modales",
       "title": "Composant 1 : Popin Simple d'Information",
-      "description": "Popin affichant une ic�ne centrale, un titre, un sous-titre, une bo�te de description et un bouton de validation (OK). Bouton de fermeture (X) en haut � droite.",
+      "description": "Popin affichant une ic\ufffdne centrale, un titre, un sous-titre, une bo\ufffdte de description et un bouton de validation (OK). Bouton de fermeture (X) en haut \ufffd droite.",
       "data": {
         "icon": "../assets/token/First-Strike.png",
         "title": "First Strike",
-        "subtitle": "Triggered on F�e",
+        "subtitle": "Triggered on F\ufffde",
         "descriptionText": "This unit starts first.",
         "buttonText": "OK"
       }
@@ -1784,12 +2022,12 @@
     {
       "id": "roll-popin-1",
       "category": "Popins & Modales",
-      "title": "Composant 2 : Popin de Jet de D� (Blind)",
-      "description": "Modale affichant une description d�taill�e et un module de r�solution de d� avec 2 actions : Roll et Edit.",
+      "title": "Composant 2 : Popin de Jet de D\ufffd (Blind)",
+      "description": "Modale affichant une description d\ufffdtaill\ufffde et un module de r\ufffdsolution de d\ufffd avec 2 actions : Roll et Edit.",
       "data": {
         "icon": "../assets/token/Blind.png",
         "title": "Blind",
-        "subtitle": "Triggered on F�e",
+        "subtitle": "Triggered on F\ufffde",
         "descriptionText": "The next time a player afflicted with this token activates an Offensive Ability, they must remove it and roll 1 die. On 1-2, their Offensive Ability fails to activate and has no effect of any kind. If a player concludes their Offensive Roll Phase without activating an Offensive Ability, remove this token.",
         "rollTitle": "Blind Roll (1 D6)",
         "dieValue": "-",
@@ -1801,7 +2039,7 @@
       "id": "confirm-popin-1",
       "category": "Popins & Modales",
       "title": "Composant 3 : Popin de Confirmation (Oui/Non)",
-      "description": "Petite modale de questionnement avec titre (ic�ne int�gr�e au texte), question centrale, et deux boutons d'action (Non/Oui).",
+      "description": "Petite modale de questionnement avec titre (ic\ufffdne int\ufffdgr\ufffde au texte), question centrale, et deux boutons d'action (Non/Oui).",
       "data": {
         "icon": "../assets/token/nanobot.webp",
         "title": "Nanobot",
@@ -1813,8 +2051,8 @@
     {
       "id": "choice-popin-1",
       "category": "Popins & Modales",
-      "title": "Composant 4 : Popin � Choix Multiples (Disarm)",
-      "description": "Modale classique affichant une information, mais proposant � l'utilisateur deux choix d'actions distincts sous forme de boutons pleins.",
+      "title": "Composant 4 : Popin \ufffd Choix Multiples (Disarm)",
+      "description": "Modale classique affichant une information, mais proposant \ufffd l'utilisateur deux choix d'actions distincts sous forme de boutons pleins.",
       "data": {
         "icon": "../assets/token/Disarm.png",
         "title": "Disarm",
@@ -1829,8 +2067,8 @@
     {
       "id": "result-popin-1",
       "category": "Popins & Modales",
-      "title": "Composant 5 : Popin de R�sultat (Delayed Poison)",
-      "description": "Modale affichant une explication textuelle ainsi qu'un encart visuel de r�sultat (ex: calcul de points de vie) avec des actions Edit / OK.",
+      "title": "Composant 5 : Popin de R\ufffdsultat (Delayed Poison)",
+      "description": "Modale affichant une explication textuelle ainsi qu'un encart visuel de r\ufffdsultat (ex: calcul de points de vie) avec des actions Edit / OK.",
       "data": {
         "icon": "../assets/token/Delayed-Poison.png",
         "title": "Delayed Poison",
@@ -1843,37 +2081,37 @@
     },
     {
       "id": "placeholder-6",
-      "category": "� venir",
-      "title": "Composant 6 (Espace R�serv�)",
-      "description": "En attente des sp�cifications utilisateur.",
+      "category": "\ufffd venir",
+      "title": "Composant 6 (Espace R\ufffdserv\ufffd)",
+      "description": "En attente des sp\ufffdcifications utilisateur.",
       "data": {}
     },
     {
       "id": "placeholder-7",
-      "category": "� venir",
-      "title": "Composant 7 (Espace R�serv�)",
-      "description": "En attente des sp�cifications utilisateur.",
+      "category": "\ufffd venir",
+      "title": "Composant 7 (Espace R\ufffdserv\ufffd)",
+      "description": "En attente des sp\ufffdcifications utilisateur.",
       "data": {}
     },
     {
       "id": "placeholder-8",
-      "category": "� venir",
-      "title": "Composant 8 (Espace R�serv�)",
-      "description": "En attente des sp�cifications utilisateur.",
+      "category": "\ufffd venir",
+      "title": "Composant 8 (Espace R\ufffdserv\ufffd)",
+      "description": "En attente des sp\ufffdcifications utilisateur.",
       "data": {}
     },
     {
       "id": "placeholder-9",
-      "category": "� venir",
-      "title": "Composant 9 (Espace R�serv�)",
-      "description": "En attente des sp�cifications utilisateur.",
+      "category": "\ufffd venir",
+      "title": "Composant 9 (Espace R\ufffdserv\ufffd)",
+      "description": "En attente des sp\ufffdcifications utilisateur.",
       "data": {}
     },
     {
       "id": "token-modifier-bar",
       "category": "Modificateurs (Barres)",
       "title": "Composant 10 : Barre de Jeton Actif (Bonus/Malus)",
-      "description": "Barre indiquant l'impact d'un jeton sur l'attaque. Harmonisation de l'affichage (+x DMG / -x DMG) � c�t� du statut Actif, et r�percussion sur le compteur ATK.",
+      "description": "Barre indiquant l'impact d'un jeton sur l'attaque. Harmonisation de l'affichage (+x DMG / -x DMG) \ufffd c\ufffdt\ufffd du statut Actif, et r\ufffdpercussion sur le compteur ATK.",
       "data": {
         "tokens": [
           {
@@ -1897,7 +2135,7 @@
       "id": "token-action-bar",
       "category": "Modificateurs (Barres)",
       "title": "Composant 11 : Bandeau d'Activation de Jeton (Prey)",
-      "description": "Bandeau interactif permettant de d�clencher l'effet d'un jeton. Pr�sente un fond/bordure color�s (vert) et un bouton d'action (Use).",
+      "description": "Bandeau interactif permettant de d\ufffdclencher l'effet d'un jeton. Pr\ufffdsente un fond/bordure color\ufffds (vert) et un bouton d'action (Use).",
       "data": {
         "tokenName": "Prey",
         "tokenCount": "0/1",
@@ -1908,8 +2146,8 @@
     {
       "id": "hero-token-bar",
       "category": "Modificateurs (Barres)",
-      "title": "Composant 12 : Bandeau Jeton Actif du H�ros",
-      "description": "Bandeau vert indiquant qu'un jeton pr�sent sur le plateau du h�ros est actif (ex: Barbed Vine).",
+      "title": "Composant 12 : Bandeau Jeton Actif du H\ufffdros",
+      "description": "Bandeau vert indiquant qu'un jeton pr\ufffdsent sur le plateau du h\ufffdros est actif (ex: Barbed Vine).",
       "data": {
         "tokens": [
           {
@@ -1929,7 +2167,7 @@
       "id": "multi-roll-token-bar",
       "category": "Modificateurs (Barres)",
       "title": "Composant 13 : Bandeau Jeton Actif Multi-Rolls (Violet)",
-      "description": "Bandeau violet pour les tokens nécessitant la sélection du nombre de lancers (ex: Barbed Vine). Remplace le bouton OK tant que 'Select' n'est pas cliqué.",
+      "description": "Bandeau violet pour les tokens n\u00e9cessitant la s\u00e9lection du nombre de lancers (ex: Barbed Vine). Remplace le bouton OK tant que 'Select' n'est pas cliqu\u00e9.",
       "data": {
         "tokenName": "Barbed Vine Rolls",
         "icon": "../assets/token/Barbed-Vine.png",
@@ -1939,8 +2177,8 @@
     {
       "id": "silence-popin",
       "category": "Popins",
-      "title": "Composant 24 : Popin Silence (D�clenchement Roll Phase)",
-      "description": "Popin de type 1 affich�e au d�but de la phase de lancer lorsqu'un joueur subit le Silence.",
+      "title": "Composant 24 : Popin Silence (D\ufffdclenchement Roll Phase)",
+      "description": "Popin de type 1 affich\ufffde au d\ufffdbut de la phase de lancer lorsqu'un joueur subit le Silence.",
       "data": {
         "title": "Silence",
         "tokenIcon": "../assets/token/Silence.png",
@@ -1953,7 +2191,7 @@
       "id": "wither-popin",
       "category": "Popins",
       "title": "Composant 25 : Popin Wither (Persistant avec masque)",
-      "description": "Popin de type 1 affich�e au d�but de la phase de lancer, avec une checkbox \"Ne plus afficher\" (masque persistant).",
+      "description": "Popin de type 1 affich\ufffde au d\ufffdbut de la phase de lancer, avec une checkbox \"Ne plus afficher\" (masque persistant).",
       "data": {
         "title": "Wither",
         "tokenIcon": "../assets/token/Wither.png",
@@ -1965,44 +2203,44 @@
     },
     {
       "id": "placeholder-15",
-      "category": "� venir",
-      "title": "Composant 15 (Espace R�serv�)",
-      "description": "En attente des sp�cifications utilisateur.",
+      "category": "\ufffd venir",
+      "title": "Composant 15 (Espace R\ufffdserv\ufffd)",
+      "description": "En attente des sp\ufffdcifications utilisateur.",
       "data": {}
     },
     {
       "id": "placeholder-16",
-      "category": "� venir",
-      "title": "Composant 16 (Espace R�serv�)",
-      "description": "En attente des sp�cifications utilisateur.",
+      "category": "\ufffd venir",
+      "title": "Composant 16 (Espace R\ufffdserv\ufffd)",
+      "description": "En attente des sp\ufffdcifications utilisateur.",
       "data": {}
     },
     {
       "id": "placeholder-17",
-      "category": "� venir",
-      "title": "Composant 17 (Espace R�serv�)",
-      "description": "En attente des sp�cifications utilisateur.",
+      "category": "\ufffd venir",
+      "title": "Composant 17 (Espace R\ufffdserv\ufffd)",
+      "description": "En attente des sp\ufffdcifications utilisateur.",
       "data": {}
     },
     {
       "id": "placeholder-18",
-      "category": "� venir",
-      "title": "Composant 18 (Espace R�serv�)",
-      "description": "En attente des sp�cifications utilisateur.",
+      "category": "\ufffd venir",
+      "title": "Composant 18 (Espace R\ufffdserv\ufffd)",
+      "description": "En attente des sp\ufffdcifications utilisateur.",
       "data": {}
     },
     {
       "id": "placeholder-19",
-      "category": "� venir",
-      "title": "Composant 19 (Espace R�serv�)",
-      "description": "En attente des sp�cifications utilisateur.",
+      "category": "\ufffd venir",
+      "title": "Composant 19 (Espace R\ufffdserv\ufffd)",
+      "description": "En attente des sp\ufffdcifications utilisateur.",
       "data": {}
     },
     {
       "id": "defense-cover-btn",
-      "category": "Boutons & Contr�les",
-      "title": "Composant 20 : Bouton Couverture D�fense (Only cards)",
-      "description": "Bouton jaune recouvrant la zone de d�fense lorsque l'attaque est imparable (ex: Stun, attaque ultime). Peut afficher l'ic�ne du jeton concern�.",
+      "category": "Boutons & Contr\ufffdles",
+      "title": "Composant 20 : Bouton Couverture D\ufffdfense (Only cards)",
+      "description": "Bouton jaune recouvrant la zone de d\ufffdfense lorsque l'attaque est imparable (ex: Stun, attaque ultime). Peut afficher l'ic\ufffdne du jeton concern\ufffd.",
       "data": {
         "text": "Only cards",
         "tokenIcon": "../assets/token/stun.png",
@@ -2012,9 +2250,9 @@
     },
     {
       "id": "attack-cover-btn",
-      "category": "Boutons & Contr�les",
+      "category": "Boutons & Contr\ufffdles",
       "title": "Composant 21 : Couverture Attaque (Blinding Light)",
-      "description": "Bouton violet recouvrant la zone d'attaque pour indiquer un �tat sp�cial (ex: Blinding Light), affich� � c�t� de la zone de d�fense.",
+      "description": "Bouton violet recouvrant la zone d'attaque pour indiquer un \ufffdtat sp\ufffdcial (ex: Blinding Light), affich\ufffd \ufffd c\ufffdt\ufffd de la zone de d\ufffdfense.",
       "data": {
         "atkText": "Blinding Light",
         "atkIcon": "../assets/token/Blinding_Light.png",
@@ -2024,16 +2262,16 @@
     },
     {
       "id": "placeholder-22",
-      "category": "� venir",
-      "title": "Composant 22 (Espace R�serv�)",
+      "category": "\ufffd venir",
+      "title": "Composant 22 (Espace R\ufffdserv\ufffd)",
       "description": "En attente.",
       "data": {}
     },
     {
       "id": "roll-token-action",
-      "category": "Boutons & Contr�les",
+      "category": "Boutons & Contr\ufffdles",
       "title": "Composant 23 : Action Token de Lancer (Bloquant)",
-      "description": "Bouton d'action d'un token (ex: Blind) apparaissant au-dessus des boutons de relance pendant la phase de lancer, et d�sactivant le \"Reroll\" principal tant qu'il n'est pas r�solu.",
+      "description": "Bouton d'action d'un token (ex: Blind) apparaissant au-dessus des boutons de relance pendant la phase de lancer, et d\ufffdsactivant le \"Reroll\" principal tant qu'il n'est pas r\ufffdsolu.",
       "data": {
         "tokenName": "Blind",
         "icon": "../assets/token/Blind.png"

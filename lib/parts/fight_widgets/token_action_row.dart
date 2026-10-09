@@ -106,11 +106,7 @@ class _MultiRollTokenActiveRowState extends State<_MultiRollTokenActiveRow> {
               child: Row(
                 children: [
                   if (widget.ownerWidget != null) ...[
-                    SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: widget.ownerWidget!,
-                    ),
+                    SizedBox(width: 22, height: 22, child: widget.ownerWidget!),
                     const SizedBox(width: 8),
                   ],
                   Image.asset(
@@ -292,88 +288,94 @@ class _TokenActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xff132b1e) : const Color(0xff1f1a2e),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isActive
-              ? Colors.greenAccent.withValues(alpha: 0.6)
-              : const Color(0xff8f43ff).withValues(alpha: 0.6),
-          width: 1.2,
-        ),
-      ),
-      child: Row(
-        children: [
-          if (ownerWidget != null) ...[
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: ownerWidget!,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isSmall = constraints.maxWidth < 240;
+        final isAccuracy = tokenLabel == 'Accuracy';
+        final showAvatar = ownerWidget != null && !(isActive && isSmall && isAccuracy);
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xff132b1e) : const Color(0xff1f1a2e),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isActive
+                  ? Colors.greenAccent.withValues(alpha: 0.6)
+                  : const Color(0xff8f43ff).withValues(alpha: 0.6),
+              width: 1.2,
             ),
-            const SizedBox(width: 8),
-          ],
-          _ActionRowLabel(
-            tokenLabel: tokenLabel,
-            tokenAsset: tokenAsset,
-            text: text,
           ),
-          const SizedBox(width: 8),
-          if (isActive)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.greenAccent, width: 1),
+          child: Row(
+            children: [
+              if (showAvatar) ...[
+                SizedBox(width: 24, height: 24, child: ownerWidget!),
+                const SizedBox(width: 8),
+              ],
+              _ActionRowLabel(
+                tokenLabel: tokenLabel,
+                tokenAsset: tokenAsset,
+                text: text,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    size: 12,
-                    color: Colors.greenAccent,
+              const SizedBox(width: 8),
+              if (isActive)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    activeText,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.greenAccent,
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.greenAccent, width: 1),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        size: 12,
+                        color: Colors.greenAccent,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        activeText,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.greenAccent,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (isActive && showUseButton) const SizedBox(width: 8),
+              if (showUseButton)
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: canUse
+                        ? const Color(0xff8f43ff)
+                        : Colors.grey.shade700,
+                    foregroundColor: canUse ? Colors.white : Colors.white38,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    minimumSize: const Size(0, 32),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
                     ),
                   ),
-                ],
-              ),
-            ),
-          if (isActive && showUseButton) const SizedBox(width: 8),
-          if (showUseButton)
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: canUse
-                    ? const Color(0xff8f43ff)
-                    : Colors.grey.shade700,
-                foregroundColor: canUse ? Colors.white : Colors.white38,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 0,
+                  onPressed: canUse ? onUse : null,
+                  child: const Text(
+                    'Use',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
                 ),
-                minimumSize: const Size(0, 26),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              onPressed: canUse ? onUse : null,
-              child: const Text(
-                'Use',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              ),
-            ),
-        ],
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -409,11 +411,7 @@ class _ActiveTokenBadge extends StatelessWidget {
           child: Row(
             children: [
               if (ownerWidget != null) ...[
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: ownerWidget!,
-                ),
+                SizedBox(width: 24, height: 24, child: ownerWidget!),
                 const SizedBox(width: 8),
               ],
               _ActionRowLabel(
@@ -456,6 +454,7 @@ class _ActiveTokenBadge extends StatelessWidget {
     );
   }
 }
+
 class _TokenGridLayout extends StatelessWidget {
   const _TokenGridLayout({required this.children});
   final List<Widget> children;
@@ -467,70 +466,78 @@ class _TokenGridLayout extends StatelessWidget {
       if (child is SizedBox) continue;
       validTokens.add(child);
     }
-    
+
     if (validTokens.isEmpty) return const SizedBox.shrink();
 
     if (validTokens.length == 1) return validTokens.first;
 
-    if (validTokens.length == 2) return Row(
-      children: [
-        Expanded(child: validTokens[0]),
-        const SizedBox(width: 8),
-        Expanded(child: validTokens[1]),
-      ]
-    );
+    if (validTokens.length == 2)
+      return Row(
+        children: [
+          Expanded(child: validTokens[0]),
+          const SizedBox(width: 8),
+          Expanded(child: validTokens[1]),
+        ],
+      );
 
-    if (validTokens.length == 3) return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(child: validTokens[0]),
-            const SizedBox(width: 8),
-            Expanded(child: validTokens[1]),
-          ]
-        ),
-        const SizedBox(height: 8),
-        validTokens[2],
-      ]
-    );
+    if (validTokens.length == 3)
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(child: validTokens[0]),
+              const SizedBox(width: 8),
+              Expanded(child: validTokens[1]),
+            ],
+          ),
+          const SizedBox(height: 8),
+          validTokens[2],
+        ],
+      );
 
-    if (validTokens.length == 4) return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(child: validTokens[0]),
-            const SizedBox(width: 8),
-            Expanded(child: validTokens[1]),
-          ]
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: validTokens[2]),
-            const SizedBox(width: 8),
-            Expanded(child: validTokens[3]),
-          ]
-        ),
-      ]
-    );
+    if (validTokens.length == 4)
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(child: validTokens[0]),
+              const SizedBox(width: 8),
+              Expanded(child: validTokens[1]),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: validTokens[2]),
+              const SizedBox(width: 8),
+              Expanded(child: validTokens[3]),
+            ],
+          ),
+        ],
+      );
 
     List<Widget> rows = [];
     for (int i = 0; i < validTokens.length; i += 2) {
       if (i + 1 < validTokens.length) {
-        rows.add(Row(
-          children: [
-            Expanded(child: validTokens[i]),
-            const SizedBox(width: 8),
-            Expanded(child: validTokens[i+1]),
-          ]
-        ));
+        rows.add(
+          Row(
+            children: [
+              Expanded(child: validTokens[i]),
+              const SizedBox(width: 8),
+              Expanded(child: validTokens[i + 1]),
+            ],
+          ),
+        );
       } else {
         rows.add(validTokens[i]);
       }
       if (i + 2 < validTokens.length) rows.add(const SizedBox(height: 8));
     }
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: rows);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
+    );
   }
 }
