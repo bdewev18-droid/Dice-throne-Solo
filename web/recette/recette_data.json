@@ -2,6 +2,41 @@
   "versions": [
     {
       "version": "1.4.22",
+      "buildNumber": 331,
+      "date": "2026-10-10",
+      "commit": "local-dev",
+      "summary": "AI Chat Dice UI and heart color",
+      "prompts": [
+        "remplacer les chiffres de 1 a 6 par les faces de des",
+        "symbole coeur rouge"
+      ],
+      "features": [
+        "Parsed AI Chat for dice rolls (rolled, D6, kept, sequence) to render face SVGs",
+        "Rendered \u2764\ufe0f with red color in AI chat"
+      ],
+      "tags": [
+        "ui",
+        "chat"
+      ]
+    },
+    {
+      "version": "1.4.22",
+      "buildNumber": 330,
+      "date": "2026-10-09",
+      "commit": "local-dev",
+      "summary": "Build web locale apres reboot",
+      "prompts": [
+        "build web locale apres reboot"
+      ],
+      "features": [
+        "Redemarrage du serveur web local"
+      ],
+      "tags": [
+        "system"
+      ]
+    },
+    {
+      "version": "1.4.22",
       "buildNumber": 329,
       "date": "2026-10-09",
       "commit": "local-dev",

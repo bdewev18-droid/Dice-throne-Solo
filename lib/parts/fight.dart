@@ -9221,7 +9221,7 @@ List<InlineSpan> _chatSpans(
 }) {
   final spans = <InlineSpan>[];
   final pattern = RegExp(
-    '(${RegExp.escape(heroName)}|${RegExp.escape(enemyName)}|\\{[a-zA-Z]+:[^}]+\\}|\\*\\*[^*]+\\*\\*|_[^_]+_|prevents? \\d+ damage|prevented \\d+ damage|prÃ©vents? \\d+ damage|prÃ©vient \\d+ damage|returns? \\d+ undefendable damage|returned \\d+ undefendable damage|deals? \\d+ undefendable damage|dealt \\d+ undefendable damage|inflicts? \\d+ undefendable damage|inflige \\d+ undefendable damage|returns? \\d+ damage|returned \\d+ damage|deals? \\d+ defendable damage|dealt \\d+ defendable damage|inflicts? \\d+ defendable damage|inflige \\d+ defendable damage|deals? \\d+ damage|dealt \\d+ damage|inflicts? \\d+ damage|inflige \\d+ damage|heals? \\d+ HP|healed \\d+ HP|\\d+ HP)',
+    '(${RegExp.escape(heroName)}|${RegExp.escape(enemyName)}|\\{[a-zA-Z]+:[^}]+\\}|\\*\\*[^*]+\\*\\*|_[^_]+_|prevents? \\d+ damage|prevented \\d+ damage|prÃ©vents? \\d+ damage|prÃ©vient \\d+ damage|returns? \\d+ undefendable damage|returned \\d+ undefendable damage|deals? \\d+ undefendable damage|dealt \\d+ undefendable damage|inflicts? \\d+ undefendable damage|inflige \\d+ undefendable damage|returns? \\d+ damage|returned \\d+ damage|deals? \\d+ defendable damage|dealt \\d+ defendable damage|inflicts? \\d+ defendable damage|inflige \\d+ defendable damage|deals? \\d+ damage|dealt \\d+ damage|inflicts? \\d+ damage|inflige \\d+ damage|heals? \\d+ HP|healed \\d+ HP|\\d+ HP|rolled [1-6]|d6: [1-6]|keep [1-6]|with [1-6]|[1-6](?:/[1-6])+|❤|❤️)',
     caseSensitive: false,
   );
   var index = 0;
@@ -9289,12 +9289,88 @@ InlineSpan? _chatVisualSpan(String token, {required Color enemyColor}) {
       enemyColor: enemyColor,
     );
   }
+  if (token == '❤' || token == '❤️') {
+    return const TextSpan(
+      text: '❤️',
+      style: TextStyle(color: Colors.redAccent),
+    );
+  }
   final number = RegExp(r'\d+').firstMatch(token)?.group(0);
   if (number == null) {
     return null;
   }
   final lower = token.toLowerCase();
+  if (lower.startsWith('rolled ') || lower.startsWith('d6: ')) {
+    final faceValue = int.tryParse(number);
+    if (faceValue != null && faceValue >= 1 && faceValue <= 6) {
+      final prefix = lower.startsWith('rolled') ? 'rolled ' : 'D6: ';
+      return TextSpan(
+        children: [
+          TextSpan(text: prefix),
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Image.asset(
+                'assets/dice_faces/face_.webp',
+                width: 18,
+                height: 18,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+  }
+  if (lower.startsWith('keep ') || lower.startsWith('with ')) {
+    final faceValue = int.tryParse(number);
+    if (faceValue != null && faceValue >= 1 && faceValue <= 6) {
+      final prefix = lower.startsWith('keep') ? 'keep ' : 'with ';
+      return TextSpan(
+        children: [
+          TextSpan(text: prefix),
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Image.asset(
+                'assets/dice_faces/face_.webp',
+                width: 18,
+                height: 18,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+  }
   if (lower.contains('prevent') || lower.contains('prÃ©vient')) {
+  if (lower.contains('/')) {
+    final digits = lower.split('/');
+    final spans = <InlineSpan>[];
+    for (var i = 0; i < digits.length; i++) {
+      final faceValue = int.tryParse(digits[i]);
+      if (faceValue != null && faceValue >= 1 && faceValue <= 6) {
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 1),
+              child: Image.asset(
+                'assets/dice_faces/face_.webp',
+                width: 18,
+                height: 18,
+              ),
+            ),
+          ),
+        );
+      }
+      if (i < digits.length - 1) {
+        spans.add(const TextSpan(text: '/'));
+      }
+    }
+    return TextSpan(children: spans);
+  }
     return TextSpan(
       children: [
         TextSpan(
