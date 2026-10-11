@@ -1,6 +1,30 @@
 {
   "versions": [
     {
+      "version": "1.4.35",
+      "buildNumber": 347,
+      "date": "2026-10-11",
+      "commit": "local-dev",
+      "summary": "Filtrage strict du rendu des faces de dés dans l'AI Chat et préservation des chiffres numériques pour les PV (HP) et PC (CP)",
+      "prompts": [
+        "Dans AI chat, parfois le 1 de 10 HP est converti en dés de face 1. Ca ne va pas. Il.faut filter le.moment ou les faces de dés sont utilisés dans AI chat pour des résultats de lancé et garder les chiffres pour les HP, cp etc... Modification localisée, incrémente la version et merge sur main."
+      ],
+      "features": [
+        "Restriction du remplacement des dés dans AI chat aux contextes stricts de lancer (rolled, d6, blind roll, keep, validated with, suites 1-6)",
+        "Suppression de la règle permissive 'with [1-6]' qui convertissait à tort les PV comme 'starts with 10 HP' en face de dé 1",
+        "Ajout de bornes de mots et exclusion explicite des suffixes HP, CP, PV, PC pour éviter tout remplacement de chiffres de statistiques par des icônes de dés",
+        "Vérification d'intégrité sur les suites séparées par '/' pour n'accepter que les dés valides entre 1 et 6"
+      ],
+      "tags": [
+        "AI Chat",
+        "UI",
+        "Dice",
+        "Bugfix"
+      ],
+      "author": "Antigravity",
+      "title": "Correction du rendu des dés dans l'AI Chat et protection des compteurs HP/CP"
+    },
+    {
       "version": "1.4.34",
       "buildNumber": 346,
       "date": "2026-10-11",

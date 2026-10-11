@@ -9314,7 +9314,7 @@ List<InlineSpan> _chatSpans(
 }) {
   final spans = <InlineSpan>[];
   final pattern = RegExp(
-    '(${RegExp.escape(heroName)}|${RegExp.escape(enemyName)}|\\{[a-zA-Z]+:[^}]+\\}|\\*\\*[^*]+\\*\\*|_[^_]+_|prevents? \\d+ damage|prevented \\d+ damage|prÃ©vents? \\d+ damage|prÃ©vient \\d+ damage|returns? \\d+ undefendable damage|returned \\d+ undefendable damage|deals? \\d+ undefendable damage|dealt \\d+ undefendable damage|inflicts? \\d+ undefendable damage|inflige \\d+ undefendable damage|returns? \\d+ damage|returned \\d+ damage|deals? \\d+ defendable damage|dealt \\d+ defendable damage|inflicts? \\d+ defendable damage|inflige \\d+ defendable damage|deals? \\d+ damage|dealt \\d+ damage|inflicts? \\d+ damage|inflige \\d+ damage|heals? \\d+ HP|healed \\d+ HP|\\d+ HP|(?<!\\()[1-6](?:/[1-6])+(?!\\s*damage|\\s*dmg|\\s*rÃ©ussi|\\s*reussi|\\s*r\\u00e9ussi)|rolled [1-6](?!/)|d6: [1-6](?!/)|keep [1-6](?!/)|with [1-6](?!/)|❤|❤️)',
+    '(${RegExp.escape(heroName)}|${RegExp.escape(enemyName)}|\\{[a-zA-Z]+:[^}]+\\}|\\*\\*[^*]+\\*\\*|_[^_]+_|prevents? \\d+ damage|prevented \\d+ damage|prÃ©vents? \\d+ damage|prÃ©vient \\d+ damage|returns? \\d+ undefendable damage|returned \\d+ undefendable damage|deals? \\d+ undefendable damage|dealt \\d+ undefendable damage|inflicts? \\d+ undefendable damage|inflige \\d+ undefendable damage|returns? \\d+ damage|returned \\d+ damage|deals? \\d+ defendable damage|dealt \\d+ defendable damage|inflicts? \\d+ defendable damage|inflige \\d+ defendable damage|deals? \\d+ damage|dealt \\d+ damage|inflicts? \\d+ damage|inflige \\d+ damage|heals? \\d+\\s*HP|healed \\d+\\s*HP|\\d+\\s*(?:HP|CP|pv|pc)\\b|\\b[1-6](?:/[1-6])+\\b(?!\\s*(?:damage|dmg|rÃ©ussi|reussi|r\\u00e9ussi|hp|cp|pv|pc))|rolled [1-6]\\b(?!\\s*(?:hp|cp|pv|pc))|d6: [1-6]\\b(?!\\s*(?:hp|cp|pv|pc))|blind roll: [1-6]\\b(?!\\s*(?:hp|cp|pv|pc))|keep [1-6]\\b(?!\\s*(?:hp|cp|pv|pc))|validated with [1-6]\\b(?!\\s*(?:hp|cp|pv|pc))|❤|❤️)',
     caseSensitive: false,
   );
   var index = 0;
@@ -9393,10 +9393,16 @@ InlineSpan? _chatVisualSpan(String token, {required Color enemyColor}) {
     return null;
   }
   final lower = token.toLowerCase();
-  if (lower.startsWith('rolled ') || lower.startsWith('d6: ')) {
+  if (lower.startsWith('rolled ') ||
+      lower.startsWith('d6: ') ||
+      lower.startsWith('blind roll: ')) {
     final faceValue = int.tryParse(number);
     if (faceValue != null && faceValue >= 1 && faceValue <= 6) {
-      final prefix = lower.startsWith('rolled') ? 'rolled ' : 'D6: ';
+      final prefix = lower.startsWith('rolled')
+          ? 'rolled '
+          : lower.startsWith('blind roll:')
+              ? 'Blind roll: '
+              : 'D6: ';
       return TextSpan(
         children: [
           TextSpan(text: prefix),
@@ -9415,10 +9421,10 @@ InlineSpan? _chatVisualSpan(String token, {required Color enemyColor}) {
       );
     }
   }
-  if (lower.startsWith('keep ') || lower.startsWith('with ')) {
+  if (lower.startsWith('keep ') || lower.startsWith('validated with ')) {
     final faceValue = int.tryParse(number);
     if (faceValue != null && faceValue >= 1 && faceValue <= 6) {
-      final prefix = lower.startsWith('keep') ? 'keep ' : 'with ';
+      final prefix = lower.startsWith('keep') ? 'keep ' : 'validated with ';
       return TextSpan(
         children: [
           TextSpan(text: prefix),
@@ -9439,24 +9445,30 @@ InlineSpan? _chatVisualSpan(String token, {required Color enemyColor}) {
   }
   if (lower.contains('/')) {
     final digits = lower.split('/');
+    final allDice = digits.isNotEmpty &&
+        digits.every((d) {
+          final val = int.tryParse(d.trim());
+          return val != null && val >= 1 && val <= 6;
+        });
+    if (!allDice) {
+      return null;
+    }
     final spans = <InlineSpan>[];
     for (var i = 0; i < digits.length; i++) {
-      final faceValue = int.tryParse(digits[i]);
-      if (faceValue != null && faceValue >= 1 && faceValue <= 6) {
-        spans.add(
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 1),
-              child: Image.asset(
-                'assets/dice_faces/face_$faceValue.webp',
-                width: 20,
-                height: 20,
-              ),
+      final faceValue = int.tryParse(digits[i].trim())!;
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 1),
+            child: Image.asset(
+              'assets/dice_faces/face_$faceValue.webp',
+              width: 20,
+              height: 20,
             ),
           ),
-        );
-      }
+        ),
+      );
       if (i < digits.length - 1) {
         spans.add(const TextSpan(text: '/'));
       }
@@ -9527,7 +9539,7 @@ InlineSpan? _chatVisualSpan(String token, {required Color enemyColor}) {
       ],
     );
   }
-  if (lower.contains('hp')) {
+  if (lower.contains('hp') || lower.contains('cp') || lower.contains('pv') || lower.contains('pc')) {
     if (!lower.contains('heal')) {
       return null;
     }
@@ -9543,9 +9555,7 @@ InlineSpan? _chatVisualSpan(String token, {required Color enemyColor}) {
           alignment: PlaceholderAlignment.middle,
           child: _InlineChatBadge(
             label: number,
-            color: lower.contains('heal')
-                ? Colors.greenAccent
-                : Colors.redAccent,
+            color: Colors.greenAccent,
           ),
         ),
       ],
