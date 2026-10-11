@@ -142,6 +142,8 @@ class CombatAiChatDock extends StatefulWidget {
     this.showUndo = false,
     this.onUndo,
     this.canAdvancePhase = false,
+    this.minionChaosDefenseTokens = 0,
+    this.minionChaosDamage = 0,
     this.onNext,
     super.key,
   });
@@ -239,6 +241,8 @@ class CombatAiChatDock extends StatefulWidget {
   final VoidCallback? onUndo;
   final bool canAdvancePhase;
   final VoidCallback? onNext;
+  final int minionChaosDefenseTokens;
+  final int minionChaosDamage;
   final ValueChanged<EnemyNode> onSelectTarget;
   final int returnDamage;
   final bool returnDamageUndefendable;
@@ -602,8 +606,8 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
       ?blindingLightInterpretation,
       if (returnDamage > 0)
         returnDamageUndefendable
-            ? 'Returns $returnDamage undefendable damage'
-            : 'Returns $returnDamage damage',
+            ? 'Returns $returnDamage undefendable damage (${adventure.health} ➔ ${max(0, adventure.health - returnDamage)} HP)'
+            : 'Returns $returnDamage damage (${adventure.health} ➔ ${max(0, adventure.health - returnDamage)} HP)',
       if (lifeSteal > 0) 'Steals $lifeSteal health',
       if (enemyHeal > 0 && !enemyCpInfinity) 'Enemy heals: $enemyHeal',
       if (cpSteal > 0) 'CP steal: $cpSteal',
@@ -1788,6 +1792,36 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
                     showUseButton: !critUsed,
                     canUse: canUseCrit,
                     onUse: onUseCrit,
+                  ),
+                if (phase == CombatPhase.hero &&
+                    widget.minionChaosDefenseTokens > 0)
+                  _TokenActionRow(
+                    ownerWidget: tokenOwnerAvatar('Chaos'),
+                    tokenLabel: 'Chaos',
+                    tokenAsset: 'assets/token/Chaos.webp',
+                    text: widget.minionChaosDefenseTokens > 1
+                        ? 'Chaos x${widget.minionChaosDefenseTokens}'
+                        : 'Chaos',
+                    isActive: true,
+                    activeText: 'Actif',
+                    showUseButton: false,
+                    canUse: false,
+                    onUse: null,
+                  ),
+                if (phase == CombatPhase.minionAttack &&
+                    widget.minionChaosDamage > 0)
+                  _TokenActionRow(
+                    ownerWidget: tokenOwnerAvatar('Chaos'),
+                    tokenLabel: 'Chaos',
+                    tokenAsset: 'assets/token/Chaos.webp',
+                    text: widget.minionChaosDamage > 1
+                        ? 'Chaos x${widget.minionChaosDamage}'
+                        : 'Chaos',
+                    isActive: true,
+                    activeText: 'Active (+${widget.minionChaosDamage} DMG)',
+                    showUseButton: false,
+                    canUse: false,
+                    onUse: null,
                   ),
                 if (honorCount > 0 &&
                     phase == CombatPhase.hero &&

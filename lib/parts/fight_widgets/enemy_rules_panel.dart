@@ -12,6 +12,7 @@ class EnemyRulesPanel extends StatefulWidget {
     required this.onRestartCombat,
     required this.showUndo,
     required this.onUndo,
+    this.minionChaosDamage = 0,
     this.attackKey,
     this.defenseKey,
     this.showOnlyAttack = false,
@@ -33,6 +34,7 @@ class EnemyRulesPanel extends StatefulWidget {
   final Key? defenseKey;
   final bool showOnlyAttack;
   final bool showOnlyDefense;
+  final int minionChaosDamage;
 
   @override
   State<EnemyRulesPanel> createState() => _EnemyRulesPanelState();
@@ -393,7 +395,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            '$appVersionLabel${widget.developerMode ? ' - Developer mode' : ''}',
+                            '$appVersionLabel${EnemyProfileRepository.jsonVersion.isNotEmpty ? ' • JSON v${EnemyProfileRepository.jsonVersion}' : ''}${widget.developerMode ? ' - Developer mode' : ''}',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: widget.developerMode
@@ -788,6 +790,13 @@ class MinionAttackSummary extends StatelessWidget {
   /// the active alterations. Only meaningful for the Druid (vert-vert-014).
   final bool? previewBearForm;
 
+  int get minionChaosDamage {
+    if (enemy.profileKey == 'vert-vert-021' || enemy.profileKey == 'bleu-bleu-003') {
+      return enemy.alterations.where((t) => t == 'Chaos').length;
+    }
+    return 0;
+  }
+
   bool get _druidBear =>
       previewBearForm ??
       (enemy.profileKey == 'vert-vert-014' ? _isDruidBearForm(enemy) : false);
@@ -908,7 +917,7 @@ class MinionAttackSummary extends StatelessWidget {
     if (legacyDamage != null) {
       badges.add(
         DamageBadge(
-          value: legacyDamage.value,
+          value: legacyDamage.value, plusValue: minionChaosDamage,
           imparable: legacyDamage.imparable,
         ),
       );
@@ -1338,6 +1347,9 @@ class MinionAttackSummary extends StatelessWidget {
 
         switch (enemy.attackPlan.style) {
           case MinionAttackStyle.symbols:
+            final hasExplicitTokens = enemy.attackPlan.goals.any(
+              (g) => g.effect?.heroTokens.isNotEmpty == true,
+            );
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -1346,10 +1358,23 @@ class MinionAttackSummary extends StatelessWidget {
                   final align = effect?.align ?? 'left';
                   final damage = _damageForSymbolGoal(enemy, goal);
                   final result = <Widget>[];
+
+                  if (effect != null) {
+                    for (final token in effect.heroTokens) {
+                      result.add(TokenBadge(label: token, color: enemy.rank.color));
+                    }
+                    if (effect.stealHp > 0) {
+                      result.add(LifeStealBadge(value: effect.stealHp, color: enemy.rank.color));
+                    }
+                    if (effect.stealCp > 0) {
+                      result.add(CpStealBadge(value: effect.stealCp, color: enemy.rank.color));
+                    }
+                  }
+
                   if (damage != null) {
                     result.add(
                       DamageBadge(
-                        value: damage.value,
+                        value: damage.value, plusValue: minionChaosDamage,
                         imparable: damage.imparable,
                       ),
                     );
@@ -1360,7 +1385,7 @@ class MinionAttackSummary extends StatelessWidget {
                     align: align,
                   );
                 }),
-                ..._shortTokenHints(enemy),
+                if (!hasExplicitTokens) ..._shortTokenHints(enemy),
               ],
             );
           case MinionAttackStyle.suite:

@@ -1,4 +1,5 @@
 {
+  "version": "1.0.0",
   "schemaVersion": 2,
   "note": "Enemy profiles source of truth. Defense display and automation should use defensePlan, not duplicated defense text.",
   "diceSymbols": {
@@ -3796,13 +3797,13 @@
               "type": "attackSucceededAnd",
               "negate": false,
               "and": [],
+              "white": 0,
+              "orange": 0,
+              "red": 0,
               "inner": {
                 "type": "sameValue",
                 "count": 3
-              },
-              "white": 0,
-              "orange": 0,
-              "red": 0
+              }
             },
             "effect": {
               "heroTokens": [
@@ -3834,7 +3835,8 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validated": true
     },
     {
       "key": "bleu-bleu-003",
@@ -3994,7 +3996,8 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validated": false
     },
     {
       "key": "bleu-bleu-004",
@@ -4214,11 +4217,17 @@
           {
             "align": "left",
             "condition": {
-              "type": "text"
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 1,
+                "red": 0
+              },
+              "repeat": true
             },
             "label": "",
             "undefendable": false,
-            "stealHp": 0,
+            "stealHp": 1,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -4232,7 +4241,13 @@
           {
             "align": "left",
             "condition": {
-              "type": "text"
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 0,
+                "red": 1
+              },
+              "repeat": true
             },
             "label": "",
             "undefendable": false,

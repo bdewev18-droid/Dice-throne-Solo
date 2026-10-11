@@ -301,6 +301,30 @@ function defaultDefense() {
   };
 }
 
+function syncJsonVersionUI() {
+  const input = $('jsonVersionInput');
+  if (!input) return;
+  const currentVersion = sourceData?.version || '1.0.0';
+  input.value = currentVersion;
+}
+
+function incrementSemver(ver) {
+  if (!ver || typeof ver !== 'string') return '1.0.1';
+  const parts = ver.trim().split('.');
+  if (parts.length === 3 && !isNaN(Number(parts[2]))) {
+    return `${parts[0]}.${parts[1]}.${Number(parts[2]) + 1}`;
+  }
+  if (parts.length === 2 && !isNaN(Number(parts[1]))) {
+    return `${parts[0]}.${Number(parts[1]) + 1}`;
+  }
+  const match = ver.match(/\d+$/);
+  if (match) {
+    const nextNum = Number(match[0]) + 1;
+    return ver.slice(0, match.index) + nextNum;
+  }
+  return `${ver}.1`;
+}
+
 async function loadDefault() {
   const candidates = [
     `${appBaseUrl()}/assets/docs/enemy_profiles.json`,
@@ -316,6 +340,7 @@ async function loadDefault() {
       if (response.ok) {
         sourceData = await response.json();
         setDirty('enemy', false);
+        syncJsonVersionUI();
         if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
           $('saveFileBtn').disabled = false;
         }
@@ -348,6 +373,7 @@ async function openLocalJson() {
   const file = await handle.getFile();
   sourceData = JSON.parse(await file.text());
   setDirty('enemy', false);
+  syncJsonVersionUI();
   $('saveFileBtn').disabled = false;
   renderLists();
   selectFirst();
@@ -360,6 +386,10 @@ async function saveLocalFile() {
       computeDiffAndLog(originalSelectedProfile, selectedProfile);
       originalSelectedProfile = clone(selectedProfile);
     }
+    const inputVal = $('jsonVersionInput')?.value.trim();
+    const nextVer = inputVal || incrementSemver(sourceData.version);
+    sourceData.version = nextVer;
+    syncJsonVersionUI();
     try {
       const response = await fetch('/api/save-enemy', {
         method: 'POST',
@@ -369,7 +399,7 @@ async function saveLocalFile() {
       if (!response.ok) throw new Error('Save failed');
       setDirty('enemy', false);
       $('saveFileBtn').disabled = true;
-      flash('Saved locally via API!');
+      flash(`Saved locally via API! (JSON v${nextVer})`);
       return;
     } catch (e) {
       console.error('Direct save failed, falling back', e);
@@ -382,11 +412,15 @@ async function saveLocalFile() {
     computeDiffAndLog(originalSelectedProfile, selectedProfile);
     originalSelectedProfile = clone(selectedProfile);
   }
+  const inputVal = $('jsonVersionInput')?.value.trim();
+  const nextVer = inputVal || incrementSemver(sourceData.version);
+  sourceData.version = nextVer;
+  syncJsonVersionUI();
   const writable = await fileHandle.createWritable();
   await writable.write(JSON.stringify(sourceData, null, 2) + '\n');
   await writable.close();
   setDirty('enemy', false);
-  flash('Saved local JSON file.');
+  flash(`Saved local JSON file. (JSON v${nextVer})`);
 }
 
 function download(name, text) {
@@ -405,8 +439,14 @@ function exportJson() {
     computeDiffAndLog(originalSelectedProfile, selectedProfile);
     originalSelectedProfile = clone(selectedProfile);
   }
+  // Auto-increment version on export
+  const currentVer = $('jsonVersionInput')?.value.trim() || sourceData.version || '1.0.0';
+  const nextVer = incrementSemver(currentVer);
+  sourceData.version = nextVer;
+  syncJsonVersionUI();
   download('enemy_profiles.json', JSON.stringify(sourceData, null, 2) + '\n');
   setDirty('enemy', false);
+  flash(`Exported JSON v${nextVer}`);
 }
 
 function exportTokenJson() {
@@ -1549,6 +1589,12 @@ document.addEventListener('DOMContentLoaded', () => {
   $('saveFileBtn').onclick = saveLocalFile;
   $('exportJsonBtn').onclick = exportJson;
   $('exportTokenJsonBtn').onclick = exportTokenJson;
+  $('jsonVersionInput')?.addEventListener('input', (e) => {
+    if (sourceData) {
+      sourceData.version = e.target.value.trim();
+      setDirty('enemy');
+    }
+  });
   $('validateBtn').onclick = () => {
     if (!selectedProfile) return;
     selectedProfile.validated = !selectedProfile.validated;

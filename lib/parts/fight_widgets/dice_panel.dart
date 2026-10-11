@@ -162,9 +162,12 @@ class DicePanel extends StatelessWidget {
               children: [1, 2, 3, 4, 5, 6]
                   .where((face) => face != editingDie.value)
                   .map(
-                    (face) => ActionChip(
-                      label: Text(face.toString()),
-                      onPressed: () => onSelectFace(editingDie, face),
+                    (face) => DieTile(
+                      compact: true,
+                      die: GameDie(id: -1)
+                        ..value = face
+                        ..settled = true,
+                      onTap: () => onSelectFace(editingDie, face),
                     ),
                   )
                   .toList(),

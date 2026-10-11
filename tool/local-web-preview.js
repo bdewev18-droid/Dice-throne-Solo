@@ -45,7 +45,12 @@ http
         try {
           const json = JSON.parse(body);
           const enemyProfilesPath = path.resolve(__dirname, '..', 'docs', 'enemy_profiles.json');
-          fs.writeFileSync(enemyProfilesPath, JSON.stringify(json, null, 2) + '\n');
+          const enemyProfilesAssetsPath = path.resolve(__dirname, '..', 'docs', 'assets', 'docs', 'enemy_profiles.json');
+          const content = JSON.stringify(json, null, 2) + '\n';
+          fs.writeFileSync(enemyProfilesPath, content);
+          if (fs.existsSync(path.dirname(enemyProfilesAssetsPath))) {
+            fs.writeFileSync(enemyProfilesAssetsPath, content);
+          }
           
           response.writeHead(200, {
             'Content-Type': 'application/json',

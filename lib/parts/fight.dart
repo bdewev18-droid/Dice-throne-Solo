@@ -1149,6 +1149,17 @@ class _FightPageState extends State<FightPage> {
                     showUndo: _stepUndo != null,
                     onUndo: _undoStep,
                     canAdvancePhase: canAdvancePhase,
+                    minionChaosDefenseTokens: (enemy.profileKey == 'vert-vert-021' ||
+                            enemy.profileKey == 'bleu-bleu-003')
+                        ? _defenseGainedChaos
+                        : 0,
+                    minionChaosDamage: (_phase == CombatPhase.minionAttack &&
+                            (enemy.profileKey == 'vert-vert-021' ||
+                                enemy.profileKey == 'bleu-bleu-003'))
+                        ? enemy.alterations
+                            .where((t) => t.toLowerCase() == 'chaos')
+                            .length
+                        : 0,
                     onNext: _handleNextStep,
                   ),
               ],
@@ -1557,13 +1568,13 @@ class _FightPageState extends State<FightPage> {
             }
           });
           if (_showAiExtraDicePhase) {
-            _scrollToRulesKey(_extraDicePhaseKey);
+            _scrollToExtraDiceKey(_extraDicePhaseKey);
           }
         },
       );
     }
     if (_showAiExtraDicePhase) {
-      _scrollToRulesKey(_extraDicePhaseKey);
+      _scrollToExtraDiceKey(_extraDicePhaseKey);
     }
   }
 
@@ -2278,12 +2289,28 @@ class _FightPageState extends State<FightPage> {
     });
   }
 
+  void _scrollToExtraDiceKey(GlobalKey key) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = key.currentContext;
+      if (context == null) {
+        return;
+      }
+      Scrollable.ensureVisible(
+        context,
+        alignment: 0.95,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
   void _handleNextStep() {
     if (_phase == CombatPhase.hero || _phase == CombatPhase.minionAttack) {
       return;
     }
     if (_needsDruidFormRoll) {
-      _scrollToRulesKey(_extraDicePhaseKey);
+      _scrollToExtraDiceKey(_extraDicePhaseKey);
       return;
     }
     _captureStepUndo();
@@ -2546,6 +2573,8 @@ class _FightPageState extends State<FightPage> {
       enemy.alterations
         ..clear()
         ..addAll(snapshot.enemyTokens);
+      _defenseGainedChaos = 0;
+      _extraGainedChaos = 0;
       _battleAttackValue = snapshot.attackValue;
       _battleDefenseValue = snapshot.defenseValue;
       _battleAttackUndefendable = snapshot.attackUndefendable;
@@ -2667,6 +2696,14 @@ class _FightPageState extends State<FightPage> {
     _rerollOneMode = false;
     _specialAttackReady = false;
     _specialAttackMode = false;
+    if (_defenseGainedChaos > 0) {
+      for (int i = 0; i < _defenseGainedChaos; i++) {
+        final idx =
+            enemy.alterations.indexWhere((t) => t.toLowerCase() == 'chaos');
+        if (idx != -1) enemy.alterations.removeAt(idx);
+      }
+      _defenseGainedChaos = 0;
+    }
     for (final die in _dice) {
       die
         ..value = null
@@ -3426,6 +3463,8 @@ class _FightPageState extends State<FightPage> {
   int _blindingLightReducedDamage = 0;
   int _blindingLightBaseAttack = 0;
   bool _blindingLightZeroDamage = false;
+  int _defenseGainedChaos = 0;
+  int _extraGainedChaos = 0;
 
   bool get _hasActiveBlindingLightOnAttacker {
     if (_blindingLightResolved) return false;
@@ -4368,6 +4407,16 @@ class _FightPageState extends State<FightPage> {
     mod += _ninjitsuDamageBonus;
     mod += _minionAutoHonorBonus;
 
+    // Chaos token bonus (+1 per Chaos) for Mage Lézard and Mage de l'Entropie
+    if (_phase == CombatPhase.minionAttack &&
+        (enemy.profileKey == 'vert-vert-021' ||
+            enemy.profileKey == 'bleu-bleu-003')) {
+      final chaosCount = enemy.alterations
+          .where((t) => t.toLowerCase() == 'chaos')
+          .length;
+      mod += chaosCount;
+    }
+
     // Auto-apply damage bonus for minion
     final usedDamageBonus = _phase == CombatPhase.hero
         ? _usedDamageBonusTokens
@@ -5065,6 +5114,8 @@ class _FightPageState extends State<FightPage> {
     _blindingLightReducedDamage = 0;
     _blindingLightBaseAttack = 0;
     _blindingLightZeroDamage = false;
+    _defenseGainedChaos = 0;
+    _extraGainedChaos = 0;
   }
 
   void _refreshBattleResolutionFromDice() {
@@ -5219,19 +5270,30 @@ class _FightPageState extends State<FightPage> {
           notes.add('Defense: prevents $prevented damage.');
         }
       case 'vert-vert-021':
-        final currentChaos = _tokenCount(enemy.alterations, 'Chaos');
         final gainedChaos = yellow;
-        returnDamage = currentChaos + gainedChaos;
+        if (gainedChaos != _defenseGainedChaos) {
+          for (int i = 0; i < _defenseGainedChaos; i++) {
+            final idx =
+                enemy.alterations.indexWhere((t) => t.toLowerCase() == 'chaos');
+            if (idx != -1) enemy.alterations.removeAt(idx);
+          }
+          for (int i = 0; i < gainedChaos; i++) {
+            enemy.alterations.add('Chaos');
+          }
+          _defenseGainedChaos = gainedChaos;
+        }
+        final totalChaos = _tokenCount(enemy.alterations, 'Chaos');
+        returnDamage = totalChaos;
         returnDamageUndefendable = returnDamage > 0;
         if (gainedChaos > 0) {
           notes.add('Defense: gains $gainedChaos Chaos during the roll.');
         }
         if (returnDamage > 0) {
+          final newHp = max(0, widget.adventure.health - returnDamage);
           notes.add(
-            'Defense: $currentChaos existing Chaos + $gainedChaos new Chaos returns $returnDamage undefendable damage.',
+            'Defense: $totalChaos Chaos returns $returnDamage undefendable damage (${widget.adventure.health} ➔ $newHp HP).',
           );
         }
-        minionTokens.addAll(List.filled(gainedChaos, 'Chaos'));
       case 'rat-de-la-rue':
         if (yellow >= 2) {
           cpSteal = 1;
@@ -5267,17 +5329,28 @@ class _FightPageState extends State<FightPage> {
           notes.add('Defense: 2 orange symbols prevent 4 damage.');
         }
       case 'bleu-bleu-003':
-        final currentChaos = _tokenCount(enemy.alterations, 'Chaos');
         final gainedChaos = yellow;
-        returnDamage = currentChaos + gainedChaos;
+        if (gainedChaos != _defenseGainedChaos) {
+          for (int i = 0; i < _defenseGainedChaos; i++) {
+            final idx =
+                enemy.alterations.indexWhere((t) => t.toLowerCase() == 'chaos');
+            if (idx != -1) enemy.alterations.removeAt(idx);
+          }
+          for (int i = 0; i < gainedChaos; i++) {
+            enemy.alterations.add('Chaos');
+          }
+          _defenseGainedChaos = gainedChaos;
+        }
+        final totalChaos = _tokenCount(enemy.alterations, 'Chaos');
+        returnDamage = totalChaos;
         returnDamageUndefendable = returnDamage > 0;
         if (gainedChaos > 0) {
-          minionTokens.addAll(List.filled(gainedChaos, 'Chaos'));
           notes.add('Defense: gains $gainedChaos Chaos during the roll.');
         }
         if (returnDamage > 0) {
+          final newHp = max(0, widget.adventure.health - returnDamage);
           notes.add(
-            'Defense: $currentChaos existing Chaos + $gainedChaos new Chaos returns $returnDamage undefendable damage.',
+            'Defense: $totalChaos Chaos returns $returnDamage undefendable damage (${widget.adventure.health} ➔ $newHp HP).',
           );
         }
       case 'bleu-bleu-004':
@@ -5437,9 +5510,9 @@ class _FightPageState extends State<FightPage> {
         return firstSymbols(DieSymbol.red);
       case 'vert-vert-018':
       case 'bleu-vert-022':
-      case 'bleu-bleu-003':
         return [...allSymbols(DieSymbol.yellow), ...allSymbols(DieSymbol.red)];
       case 'vert-vert-021':
+      case 'bleu-bleu-003':
         return allSymbols(DieSymbol.yellow);
       case 'rat-de-la-rue':
         return [
@@ -5618,9 +5691,9 @@ class _FightPageState extends State<FightPage> {
         }
       case 'bleu-bleu-002':
         if (acc.result != null && hasThreeSameValue) {
-          acc.heroTokens.add('Eboulissement');
+          acc.heroTokens.add('Blind');
           acc.notes.add(
-            'Successful attack and 3 identical values: hero receives Eboulissement.',
+            'Successful attack and 3 identical values: hero receives Blind.',
           );
         }
       case 'ombre-feline':
@@ -6079,11 +6152,21 @@ class _FightPageState extends State<FightPage> {
       _markExtraDiceSelection(extraDice, [rolled.first.id]);
       final roll = rolled.first.value!;
       final symbol = _symbolForFace(roll);
-      final currentChaos = _tokenCount(enemy.alterations, 'Chaos');
       final gainedChaos = symbol == DieSymbol.white ? 2 : 0;
-      final totalChaos = currentChaos + gainedChaos;
+      if (gainedChaos != _extraGainedChaos) {
+        for (int i = 0; i < _extraGainedChaos; i++) {
+          final idx =
+              enemy.alterations.indexWhere((t) => t.toLowerCase() == 'chaos');
+          if (idx != -1) enemy.alterations.removeAt(idx);
+        }
+        for (int i = 0; i < gainedChaos; i++) {
+          enemy.alterations.add('Chaos');
+        }
+        _extraGainedChaos = gainedChaos;
+      }
+      final totalChaos = _tokenCount(enemy.alterations, 'Chaos');
       setState(() {
-        _battleAttackValue = (6 + totalChaos).clamp(0, 99);
+        _battleAttackValue = 6;
         _battleAttackUndefendable = false;
         _battleLifeSteal = 0;
         _battleEnemyHeal = 0;
@@ -6092,14 +6175,13 @@ class _FightPageState extends State<FightPage> {
         _battleMinionTokens.clear();
         _battleNotes.clear();
         if (symbol == DieSymbol.white) {
-          _battleMinionTokens.addAll(const ['Chaos', 'Chaos']);
           _battleNotes.add(
-            'Sorcellerie Ophique extra die $roll: Mage Lezard gains 2 Chaos during the roll.',
+            'Sorcellerie Ophique extra die $roll: Mage Lezard gains 2 Chaos immediately.',
           );
         } else if (symbol == DieSymbol.yellow) {
-          _battleHeroTokens.add('Eboulissement');
+          _battleHeroTokens.add('Blind');
           _battleNotes.add(
-            'Sorcellerie Ophique extra die $roll: hero receives Eboulissement after OK.',
+            'Sorcellerie Ophique extra die $roll: hero receives Blind after OK.',
           );
         } else {
           _battleNotes.add(
@@ -6107,16 +6189,16 @@ class _FightPageState extends State<FightPage> {
           );
         }
         _battleNotes.add(
-          'Sorcellerie Ophique: 6 base damage + $totalChaos Chaos = $_battleAttackValue damage.',
+          'Sorcellerie Ophique: 6 base damage + $totalChaos Chaos = ${6 + totalChaos} damage.',
         );
         _extraDiceOutcomeMessage =
             'Sorcellerie Ophique extra die: $roll.\n'
             '${symbol == DieSymbol.white
                 ? 'White symbol: Mage Lezard gains 2 Chaos immediately for this attack.\n'
                 : symbol == DieSymbol.yellow
-                ? 'Orange symbol: hero receives Eboulissement after OK.\n'
+                ? 'Orange symbol: hero receives Blind after OK.\n'
                 : 'Red symbol: no extra effect.\n'}'
-            'Mage Lezard inflicts 6 + $totalChaos Chaos = $_battleAttackValue damage.';
+            'Mage Lezard inflicts 6 + $totalChaos Chaos = ${6 + totalChaos} damage.';
       });
       return;
     }
@@ -6128,11 +6210,21 @@ class _FightPageState extends State<FightPage> {
       _markExtraDiceSelection(extraDice, [rolled.first.id]);
       final roll = rolled.first.value!;
       final symbol = _symbolForFace(roll);
-      final currentChaos = _tokenCount(enemy.alterations, 'Chaos');
       final gainedChaos = symbol == DieSymbol.white ? 2 : 0;
-      final totalChaos = currentChaos + gainedChaos;
+      if (gainedChaos != _extraGainedChaos) {
+        for (int i = 0; i < _extraGainedChaos; i++) {
+          final idx =
+              enemy.alterations.indexWhere((t) => t.toLowerCase() == 'chaos');
+          if (idx != -1) enemy.alterations.removeAt(idx);
+        }
+        for (int i = 0; i < gainedChaos; i++) {
+          enemy.alterations.add('Chaos');
+        }
+        _extraGainedChaos = gainedChaos;
+      }
+      final totalChaos = _tokenCount(enemy.alterations, 'Chaos');
       setState(() {
-        _battleAttackValue = (7 + totalChaos).clamp(0, 99);
+        _battleAttackValue = 7;
         _battleAttackUndefendable = false;
         _battleLifeSteal = 0;
         _battleEnemyHeal = 0;
@@ -6141,27 +6233,26 @@ class _FightPageState extends State<FightPage> {
         _battleMinionTokens.clear();
         _battleNotes.clear();
         if (symbol == DieSymbol.white) {
-          _battleMinionTokens.addAll(const ['Chaos', 'Chaos']);
           _battleNotes.add(
-            'Sorcellerie Chaotique extra die $roll: Mage de l Entropie gains 2 Chaos during the roll.',
+            'Sorcellerie Chaotique extra die $roll: Mage de l Entropie gains 2 Chaos immediately.',
           );
         } else if (symbol == DieSymbol.yellow) {
-          _battleHeroTokens.add('Sort 6');
+          _battleHeroTokens.add('Hex');
           _battleNotes.add(
-            'Sorcellerie Chaotique extra die $roll: hero receives Sort 6 after OK.',
+            'Sorcellerie Chaotique extra die $roll: hero receives Hex after OK.',
           );
         }
         _battleNotes.add(
-          'Sorcellerie Chaotique: 7 base damage + $totalChaos Chaos = $_battleAttackValue damage.',
+          'Sorcellerie Chaotique: 7 base damage + $totalChaos Chaos = ${7 + totalChaos} damage.',
         );
         _extraDiceOutcomeMessage =
             'Sorcellerie Chaotique extra die: $roll.\n'
             '${symbol == DieSymbol.white
                 ? 'White symbol: Mage de l Entropie gains 2 Chaos immediately for this attack.\n'
                 : symbol == DieSymbol.yellow
-                ? 'Orange symbol: hero receives Sort 6 after OK.\n'
+                ? 'Orange symbol: hero receives Hex after OK.\n'
                 : 'Red symbol: no extra effect.\n'}'
-            'Mage de l Entropie inflicts 7 + $totalChaos Chaos = $_battleAttackValue damage.';
+            'Mage de l Entropie inflicts 7 + $totalChaos Chaos = ${7 + totalChaos} damage.';
       });
       return;
     }
@@ -7089,6 +7180,7 @@ class _FightPageState extends State<FightPage> {
     }
 
     if (currentBattlePhase == CombatPhase.hero) {
+      _defenseGainedChaos = 0;
       if (!wasDefenderStunned || enemy.health <= 0) {
         await _checkAndTriggerRipostePopin(
           isHeroDefender: false,
@@ -7097,6 +7189,7 @@ class _FightPageState extends State<FightPage> {
         await _triggerDelayedPoisonIfNeeded(forHero: true);
       }
     } else if (currentBattlePhase == CombatPhase.minionAttack) {
+      _extraGainedChaos = 0;
       if (!wasDefenderStunned || widget.adventure.health <= 0) {
         await _checkAndTriggerRipostePopin(
           isHeroDefender: true,
@@ -9153,9 +9246,9 @@ class _FightPageState extends State<FightPage> {
                           }
                         },
                         child: Text(
-                          'Dice Throne Solo',
+                          'Dice Throne Solo${EnemyProfileRepository.jsonVersion.isNotEmpty ? ' • JSON v${EnemyProfileRepository.jsonVersion}' : ''}',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: Colors.white.withValues(alpha: 0.25),
                             fontSize: 10,
                           ),
                         ),
@@ -9976,9 +10069,23 @@ class MinionAiPanel extends StatelessWidget {
                   ),
                   for (final face in [1, 2, 3, 4, 5, 6])
                     if (face != editingDie.value)
-                      ActionChip(
-                        label: Text(face.toString()),
-                        onPressed: () => onSelectFace(editingDie, face),
+                      InkWell(
+                        onTap: () => onSelectFace(editingDie, face),
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white10,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.white24),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Image.asset(
+                            'assets/dice_faces/face_$face.webp',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                   FilledButton(
                     onPressed: onValidateEdit,
@@ -10784,10 +10891,8 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
               spacing: 6,
               children: [
                 for (var face = 1; face <= 6; face++)
-                  ChoiceChip(
-                    label: Text(face.toString()),
-                    selected: false,
-                    onSelected: (_) {
+                  InkWell(
+                    onTap: () {
                       setState(() {
                         _dice.firstWhere((die) => die.id == _editingDieId)
                           ..value = face
@@ -10799,23 +10904,45 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
                         _dice.take(_diceToRoll.clamp(0, 5)).toList(),
                       );
                     },
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white10,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.asset(
+                        'assets/dice_faces/face_$face.webp',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
               ],
             ),
           ],
           const SizedBox(height: 10),
-          _SolidRollButton(
-            color: widget.accent,
-            onPressed: _diceToRoll <= 0 || hasRollingDice
-                ? null
-                : _rollVisibleDice,
-            child: Text(_rollCount == 0 ? 'Roll' : 'Reroll'),
-          ),
-          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
-                child: FilledButton.icon(
+                flex: 2,
+                child: _SolidRollButton(
+                  color: widget.accent,
+                  onPressed: _diceToRoll <= 0 || hasRollingDice
+                      ? null
+                      : _rollVisibleDice,
+                  child: Text(
+                    _rollCount == 0 ? 'Roll' : 'Reroll',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 1,
+                child: FilledButton(
                   onPressed: () => setState(() {
                     _editMode = !_editMode;
                     _rerollMode = false;
@@ -10824,14 +10951,20 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
                   style: FilledButton.styleFrom(
                     backgroundColor: heroAccent,
                     foregroundColor: Colors.black,
+                    minimumSize: const Size(0, 46),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                   ),
-                  icon: const Icon(Icons.tune),
-                  label: Text(_editMode ? 'Stop edit' : 'Edit die'),
+                  child: Text(
+                    _editMode ? 'Stop edit' : 'Edit die',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: FilledButton.icon(
+                flex: 1,
+                child: FilledButton(
                   onPressed: () => setState(() {
                     _rerollMode = !_rerollMode;
                     _editMode = false;
@@ -10840,9 +10973,14 @@ class _ManualExtraDicePhasePanelState extends State<ManualExtraDicePhasePanel> {
                   style: FilledButton.styleFrom(
                     backgroundColor: heroAccent,
                     foregroundColor: Colors.black,
+                    minimumSize: const Size(0, 46),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                   ),
-                  icon: const Icon(Icons.refresh),
-                  label: Text(_rerollMode ? 'Cancel' : 'Reroll die'),
+                  child: Text(
+                    _rerollMode ? 'Cancel' : 'Reroll die',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ),
               ),
             ],
@@ -11938,20 +12076,21 @@ class DieSymbolMark extends StatelessWidget {
 }
 
 class DamageBadge extends StatelessWidget {
-  const DamageBadge({required this.value, required this.imparable, super.key});
+  const DamageBadge({required this.value, required this.imparable, this.plusValue = 0, super.key});
 
   final int value;
   final bool imparable;
+  final int plusValue;
 
   @override
   Widget build(BuildContext context) {
     return _EffectImageBadge(
-      value: value.toString(),
+      value: plusValue > 0 ? '$value+$plusValue' : value.toString(),
       asset: imparable
           ? 'assets/illustration/degat-imp.webp'
           : 'assets/illustration/degat.webp',
       textColor: Colors.white,
-      size: 30,
+      size: plusValue > 0 ? 40 : 30,
     );
   }
 }

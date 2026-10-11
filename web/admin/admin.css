@@ -239,6 +239,8 @@ label input,label select,label textarea{margin-top:4px}
 @media(max-width:760px){.app-shell{display:block}.sidebar{position:relative;height:auto}.topbar{display:block}.top-actions{margin-top:10px}.condition-grid,.effect-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.outcome-row-grid{grid-template-columns:1fr 1fr}}
 
 .admin-version{margin-top:5px;color:#ffb340;font-size:12px;font-weight:900}
+.json-version{margin-top:3px;color:#5fe38b;font-size:12px;font-weight:900}
+.json-version-input{width:64px;background:#0d120d;color:#5fe38b;border:1px solid #3d4a3e;border-radius:4px;padding:2px 4px;font-size:11px;font-weight:900;margin-left:4px}
 .syntax-help{display:grid;gap:6px;margin:8px 0 12px;padding:10px;border:1px solid #4d4630;border-radius:8px;background:#1b1710;color:#f3e4c0;font-size:12px;line-height:1.35}
 .syntax-help code{background:#050505;border:1px solid #ffffff22;border-radius:4px;padding:1px 4px;color:#fff}
 

@@ -9,11 +9,13 @@ class EnemyProfileRepository {
   const EnemyProfileRepository._();
 
   static List<EnemyProfile> _profiles = const [];
+  static String _jsonVersion = '';
 
   static Future<void> load() async {
     try {
       final source = await rootBundle.loadString('docs/enemy_profiles.json');
       final json = jsonDecode(source) as Map<String, dynamic>;
+      _jsonVersion = json['version']?.toString() ?? '';
       final rawProfiles = (json['profiles'] as List<dynamic>? ?? const []);
       _profiles = rawProfiles
           .whereType<Map<String, dynamic>>()
@@ -25,6 +27,7 @@ class EnemyProfileRepository {
     }
   }
 
+  static String get jsonVersion => _jsonVersion;
   static bool get isLoaded => _profiles.isNotEmpty;
 
   static List<EnemyProfile> byRank(EnemyRank rank) {
@@ -46,7 +49,19 @@ class EnemyProfileJson {
 
   static EnemyProfile fromJson(Map<String, dynamic> json) {
     final rank = _rankFromName(json['rank'] as String?) ?? EnemyRank.green;
-    final rewardRank = _rankFromName(json['rewardRank'] as String?);
+    final rewardRankStr = json['rewardRank'] as String?;
+    final rewardRank = _rankFromName(rewardRankStr);
+    
+    List<EnemyRank> parsedRewardRanks = _rankList(json['rewardRanks']);
+    if (parsedRewardRanks.isEmpty && rewardRankStr != null && rewardRankStr.contains('/')) {
+      parsedRewardRanks = rewardRankStr
+          .split('/')
+          .map((s) => s.trim())
+          .map(_rankFromName)
+          .whereType<EnemyRank>()
+          .toList(growable: false);
+    }
+
     return EnemyProfile(
       key: json['key'] as String? ?? 'unknown',
       name: json['name'] as String? ?? 'Unknown',
@@ -57,7 +72,7 @@ class EnemyProfileJson {
       initialTokens: _stringList(json['initialTokens']),
       rewardChests: _intValue(json['rewardChests'], fallback: 1),
       rewardRank: rewardRank,
-      rewardRanks: _rankList(json['rewardRanks']),
+      rewardRanks: parsedRewardRanks,
       attacks: _stringList(json['attacks']),
       defense: json['defense'] as String? ?? '',
       defenseDice: _intValue(json['defenseDice'], fallback: 0),
