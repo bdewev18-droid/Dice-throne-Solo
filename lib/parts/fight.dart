@@ -5362,6 +5362,19 @@ class _FightPageState extends State<FightPage> {
           minionTokens.add('Chaos');
           notes.add('Defense: red symbol gives Blood Mage 1 Chaos.');
         }
+      case 'bleu-bleu-005':
+        lifeSteal = yellow;
+        if (lifeSteal > 0) {
+          notes.add('Defense: steals $lifeSteal HP.');
+        }
+        if (red > 0) {
+          for (var i = 0; i < red; i++) {
+            heroTokens.add('Hémorragie');
+          }
+          notes.add(
+            'Defense: $red red symbol${red > 1 ? 's give' : ' gives'} Bleed to the hero.',
+          );
+        }
       case 'viseer':
         _viseerDefensePassivePending = red > 0;
         if (red > 0) {
@@ -5370,7 +5383,78 @@ class _FightPageState extends State<FightPage> {
           );
         }
       default:
-        notes.add('Defense rolled. Check the minion card for exact effects.');
+        if (enemy.defenseEffects.isNotEmpty) {
+          for (final eff in enemy.defenseEffects) {
+            bool matches = false;
+            int count = 1;
+            if (eff.white > 0 || eff.orange > 0 || eff.red > 0) {
+              if (eff.orWhiteOrange && (eff.white > 0 || eff.orange > 0)) {
+                final matchW = eff.white > 0 && white >= eff.white;
+                final matchO = eff.orange > 0 && yellow >= eff.orange;
+                final matchR = eff.red == 0 || red >= eff.red;
+                if ((matchW || matchO) && matchR) {
+                  matches = true;
+                  if (eff.repeat) {
+                    final wCount = eff.white > 0 ? white ~/ eff.white : 0;
+                    final oCount = eff.orange > 0 ? yellow ~/ eff.orange : 0;
+                    count = (wCount + oCount).clamp(1, 99);
+                  }
+                }
+              } else if (eff.orOrangeRed && (eff.orange > 0 || eff.red > 0)) {
+                final matchO = eff.orange > 0 && yellow >= eff.orange;
+                final matchR = eff.red > 0 && red >= eff.red;
+                final matchW = eff.white == 0 || white >= eff.white;
+                if ((matchO || matchR) && matchW) {
+                  matches = true;
+                  if (eff.repeat) {
+                    final oCount = eff.orange > 0 ? yellow ~/ eff.orange : 0;
+                    final rCount = eff.red > 0 ? red ~/ eff.red : 0;
+                    count = (oCount + rCount).clamp(1, 99);
+                  }
+                }
+              } else if (white >= eff.white && yellow >= eff.orange && red >= eff.red) {
+                matches = true;
+                if (eff.repeat) {
+                  final factors = <int>[];
+                  if (eff.orange > 0) factors.add(yellow ~/ eff.orange);
+                  if (eff.red > 0) factors.add(red ~/ eff.red);
+                  if (eff.white > 0) factors.add(white ~/ eff.white);
+                  count = factors.isEmpty ? 1 : factors.reduce(min);
+                }
+              }
+            } else if (eff.prevent > 0 || eff.returnDamage > 0 || eff.stealHp > 0) {
+              matches = true;
+            }
+
+            if (matches && count > 0) {
+              if (eff.prevent > 0) {
+                prevented += eff.prevent * count;
+                notes.add('Defense: ${eff.prevent * count} damage prevented.');
+              }
+              if (eff.returnDamage > 0) {
+                returnDamage += eff.returnDamage * count;
+                if (eff.undefendable) returnDamageUndefendable = true;
+                notes.add('Defense: ${eff.returnDamage * count} damage returned.');
+              }
+              if (eff.stealHp > 0) {
+                lifeSteal += eff.stealHp * count;
+                notes.add('Defense: steals ${eff.stealHp * count} HP.');
+              }
+              if (eff.stealCp > 0) {
+                cpSteal += eff.stealCp * count;
+                notes.add('Defense: steals ${eff.stealCp * count} CP.');
+              }
+              for (final t in eff.tokens) {
+                for (var i = 0; i < count; i++) {
+                  heroTokens.add(t);
+                }
+                notes.add('Defense: gives $t to the hero.');
+              }
+            }
+          }
+        } else {
+          notes.add('Defense rolled. Check the minion card for exact effects.');
+        }
     }
 
     if (prevented == 0 &&
@@ -5510,6 +5594,7 @@ class _FightPageState extends State<FightPage> {
         return firstSymbols(DieSymbol.red);
       case 'vert-vert-018':
       case 'bleu-vert-022':
+      case 'bleu-bleu-005':
         return [...allSymbols(DieSymbol.yellow), ...allSymbols(DieSymbol.red)];
       case 'vert-vert-021':
       case 'bleu-bleu-003':
@@ -5539,6 +5624,54 @@ class _FightPageState extends State<FightPage> {
     var attackUndefendable = result?.imparable ?? false;
     var lifeSteal = 0;
     var cpSteal = 0;
+
+    if (enemy.attackPlan.style == MinionAttackStyle.symbols) {
+      final goal = _currentMinionSymbolGoal();
+      final eff = goal?.effect;
+      if (eff != null) {
+        lifeSteal += eff.stealHp;
+        cpSteal += eff.stealCp;
+        heroTokens.addAll(eff.heroTokens);
+        minionTokens.addAll(eff.minionTokens);
+        if (eff.stealHp > 0) {
+          notes.add('Attack: steals ${eff.stealHp} HP.');
+        }
+        if (eff.stealCp > 0) {
+          notes.add('Attack: steals ${eff.stealCp} CP.');
+        }
+        for (final t in eff.heroTokens) {
+          notes.add('Attack: gives $t to the hero.');
+        }
+        for (final t in eff.minionTokens) {
+          notes.add('Attack: gives $t to minion.');
+        }
+      }
+    } else if (enemy.attackPlan.style == MinionAttackStyle.suite) {
+      final values = _activeDice
+          .map((die) => die.effectiveValue)
+          .whereType<int>()
+          .toList();
+      final rawLen = _isMinionSilenced ? 3 : _bestSuiteLength(values);
+      final eff = enemy.attackPlan.suiteEffects[rawLen];
+      if (eff != null) {
+        lifeSteal += eff.stealHp;
+        cpSteal += eff.stealCp;
+        heroTokens.addAll(eff.heroTokens);
+        minionTokens.addAll(eff.minionTokens);
+        if (eff.stealHp > 0) {
+          notes.add('Attack: steals ${eff.stealHp} HP.');
+        }
+        if (eff.stealCp > 0) {
+          notes.add('Attack: steals ${eff.stealCp} CP.');
+        }
+        for (final t in eff.heroTokens) {
+          notes.add('Attack: gives $t to the hero.');
+        }
+        for (final t in eff.minionTokens) {
+          notes.add('Attack: gives $t to minion.');
+        }
+      }
+    }
 
     if (enemy.profileKey == 'vert-vert-012' &&
         _symbolGoalMet(const SymbolGoal(yellow: 4))) {
@@ -6379,16 +6512,36 @@ class _FightPageState extends State<FightPage> {
     enemy.alterations.removeAt(_random.nextInt(enemy.alterations.length));
   }
 
+  SymbolGoal? _currentMinionSymbolGoal() {
+    if (enemy.attackPlan.style != MinionAttackStyle.symbols) return null;
+    SymbolGoal? bestGoal;
+    for (final goal in enemy.attackPlan.goals) {
+      if (_symbolGoalMet(goal)) {
+        if (bestGoal == null) {
+          bestGoal = goal;
+        } else {
+          final bestCount = bestGoal.white + bestGoal.yellow + bestGoal.red;
+          final candCount = goal.white + goal.yellow + goal.red;
+          if (candCount > bestCount) {
+            bestGoal = goal;
+          } else if (candCount == bestCount) {
+            final bestDmg = _damageForSymbolGoal(enemy, bestGoal)?.value ?? 0;
+            final candDmg = _damageForSymbolGoal(enemy, goal)?.value ?? 0;
+            if (candDmg >= bestDmg) {
+              bestGoal = goal;
+            }
+          }
+        }
+      }
+    }
+    return bestGoal;
+  }
+
   _AttackDamage? _currentMinionAttackResult() {
     switch (enemy.attackPlan.style) {
       case MinionAttackStyle.symbols:
-        _AttackDamage? result;
-        for (final goal in enemy.attackPlan.goals) {
-          if (_symbolGoalMet(goal)) {
-            result = _damageForSymbolGoal(enemy, goal);
-          }
-        }
-        return result;
+        final goal = _currentMinionSymbolGoal();
+        return goal != null ? _damageForSymbolGoal(enemy, goal) : null;
       case MinionAttackStyle.suite:
         final values = _activeDice
             .map((die) => die.effectiveValue)
@@ -7437,6 +7590,7 @@ class _FightPageState extends State<FightPage> {
       passives: profile.passives,
       defenseDisplayRows: profile.defenseDisplayRows,
       passiveDisplayRows: profile.passiveDisplayRows,
+      defenseEffects: profile.defenseEffects,
       branch: previous.branch,
       step: previous.step,
     )..current = true;
@@ -8690,6 +8844,14 @@ class _FightPageState extends State<FightPage> {
           passiveLog += ', spends 3 Chaos and steals 3 health';
         }
       }
+      if (enemy.profileKey == 'bleu-bleu-005') {
+        if (!enemy.alterations.any(_isLifeSiphonToken)) {
+          enemy.alterations.add('Siphon vital');
+          passiveLog = 'Sorcière d\'Os gains 1 Siphon vital';
+        } else {
+          passiveLog = 'Sorcière d\'Os already has Siphon vital';
+        }
+      }
       if (_isViseerNode(enemy)) {
         passiveLog = _resolveViseerPassive(source: 'Viseer upkeep');
       }
@@ -8943,9 +9105,23 @@ class _FightPageState extends State<FightPage> {
 
   bool _symbolGoalMet(SymbolGoal goal) {
     final counts = _symbolCounts();
-    return (counts[DieSymbol.white] ?? 0) >= goal.white &&
-        (counts[DieSymbol.yellow] ?? 0) >= goal.yellow &&
-        (counts[DieSymbol.red] ?? 0) >= goal.red;
+    final w = counts[DieSymbol.white] ?? 0;
+    final y = counts[DieSymbol.yellow] ?? 0;
+    final r = counts[DieSymbol.red] ?? 0;
+    final eff = goal.effect;
+    if (eff != null && eff.orWhiteOrange && (goal.white > 0 || goal.yellow > 0)) {
+      final matchW = goal.white > 0 && w >= goal.white;
+      final matchY = goal.yellow > 0 && y >= goal.yellow;
+      final matchR = goal.red == 0 || r >= goal.red;
+      return (matchW || matchY) && matchR;
+    }
+    if (eff != null && eff.orOrangeRed && (goal.yellow > 0 || goal.red > 0)) {
+      final matchY = goal.yellow > 0 && y >= goal.yellow;
+      final matchR = goal.red > 0 && r >= goal.red;
+      final matchW = goal.white == 0 || w >= goal.white;
+      return (matchY || matchR) && matchW;
+    }
+    return w >= goal.white && y >= goal.yellow && r >= goal.red;
   }
 
   Map<DieSymbol, int> _symbolCounts() {
@@ -10744,9 +10920,23 @@ bool _symbolGoalMetDice(List<GameDie> dice, SymbolGoal goal) {
       counts[symbol] = (counts[symbol] ?? 0) + 1;
     }
   }
-  return (counts[DieSymbol.white] ?? 0) >= goal.white &&
-      (counts[DieSymbol.yellow] ?? 0) >= goal.yellow &&
-      (counts[DieSymbol.red] ?? 0) >= goal.red;
+  final w = counts[DieSymbol.white] ?? 0;
+  final y = counts[DieSymbol.yellow] ?? 0;
+  final r = counts[DieSymbol.red] ?? 0;
+  final eff = goal.effect;
+  if (eff != null && eff.orWhiteOrange && (goal.white > 0 || goal.yellow > 0)) {
+    final matchW = goal.white > 0 && w >= goal.white;
+    final matchY = goal.yellow > 0 && y >= goal.yellow;
+    final matchR = goal.red == 0 || r >= goal.red;
+    return (matchW || matchY) && matchR;
+  }
+  if (eff != null && eff.orOrangeRed && (goal.yellow > 0 || goal.red > 0)) {
+    final matchY = goal.yellow > 0 && y >= goal.yellow;
+    final matchR = goal.red > 0 && r >= goal.red;
+    final matchW = goal.white == 0 || w >= goal.white;
+    return (matchY || matchR) && matchW;
+  }
+  return w >= goal.white && y >= goal.yellow && r >= goal.red;
 }
 
 int _bestSuiteLength(List<int> values) {
@@ -11450,13 +11640,71 @@ class _ExtraRollDisplayRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final eqIndex = row.items.indexOf('=');
+    if (eqIndex != -1) {
+      final leftItems = row.items.sublist(0, eqIndex);
+      final rightItems = row.items.sublist(eqIndex + 1);
+      return Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withOpacity(0.06)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Wrap(
+              spacing: 5,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: leftItems
+                  .map(
+                    (item) => InlineTokenText(
+                      item,
+                      color: color,
+                      style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: rightItems
+                    .map(
+                      (item) => InlineTokenText(
+                        item,
+                        color: color,
+                        style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final alignment = switch (row.align) {
       'center' || 'centre' => WrapAlignment.center,
       'right' => WrapAlignment.end,
       _ => WrapAlignment.start,
     };
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+      ),
       child: Wrap(
         spacing: 5,
         runSpacing: 4,
@@ -11489,16 +11737,52 @@ class _AttackResultLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showRepeat = goal.effect?.repeat == true;
+    final orWhiteOrange = goal.effect?.orWhiteOrange ?? false;
+    final orOrangeRed = goal.effect?.orOrangeRed ?? false;
+    final leftSymbolView = showRepeat
+        ? Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                'x',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(width: 4),
+              SymbolGoalView(
+                goal: goal,
+                orWhiteOrange: orWhiteOrange,
+                orOrangeRed: orOrangeRed,
+              ),
+            ],
+          )
+        : SymbolGoalView(
+            goal: goal,
+            orWhiteOrange: orWhiteOrange,
+            orOrangeRed: orOrangeRed,
+          );
+
     if (align == 'center') {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
+      return Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withOpacity(0.06)),
+        ),
         child: Wrap(
           spacing: 8,
           runSpacing: 4,
           alignment: WrapAlignment.center,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            SymbolGoalView(goal: goal),
+            leftSymbolView,
             if (result.isNotEmpty)
               Wrap(
                 spacing: 5,
@@ -11509,16 +11793,27 @@ class _AttackResultLine extends StatelessWidget {
         ),
       );
     }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(child: SymbolGoalView(goal: goal)),
+          leftSymbolView,
           const SizedBox(width: 8),
-          Wrap(
-            spacing: 5,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: result,
+          Expanded(
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              alignment: WrapAlignment.end,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: result,
+            ),
           ),
         ],
       ),
@@ -11566,20 +11861,20 @@ class InlineTokenText extends StatelessWidget {
 
 /// Regex for visual effect shortcodes inside authored text.
 final RegExp _visualShortcodeRegex = RegExp(
-  r'\{(damage|dmg|undef|imparable|prevent|block|heal|die|dice):([^}]+)\}',
+  r'\{(damage|dmg|undef|imparable|prevent|block|shield|bouclier|half_prevent|half_shield|half_block|heal|life|vie|soin|cp|die|dice)(?::([^}]+))?\}',
   caseSensitive: false,
 );
 
 /// Regex for the explicit `{token:Name}` shortcode. The capture group holds
 /// the raw token name as authored in JSON (it may include spaces, accents or
-/// digits, e.g. "Sort 6", "PremiÃ¨re Frappe").
+/// digits, e.g. "Sort 6", "Première Frappe").
 final RegExp _tokenShortcodeRegex = RegExp(
   r'\{token:([^}]+)\}',
   caseSensitive: false,
 );
 
 /// Tokens, sorted by descending label length so that the longest name wins
-/// when two candidates overlap (e.g. "DÃ©gat Bonus 2" before "DÃ©gat Bonus").
+/// when two candidates overlap (e.g. "Dégat Bonus 2" before "Dégat Bonus").
 List<StatusTokenRule> get _inlineTokenRules =>
     TokenCatalogRepository.rules
         .where((rule) => rule.imageAsset != null && rule.editorVisible)
@@ -11617,47 +11912,102 @@ List<InlineSpan> _buildSpans(
   void scanVisualShortcodes() {
     for (final match in _visualShortcodeRegex.allMatches(text)) {
       final tag = match.group(1)!.toLowerCase();
-      final rawValue = match.group(2)!.trim();
+      final rawValue = (match.group(2) ?? '').trim();
       if (tag == 'die' || tag == 'dice') {
         final normalized = rawValue.toLowerCase();
         final Widget widget = switch (normalized) {
           'any' || 'd6' => const _CubeIcon(size: 24),
           'white' || 'blanc' => Transform.scale(
             scale: 0.72,
-            child: DieSymbolMark(symbol: DieSymbol.white),
+            child: const DieSymbolMark(symbol: DieSymbol.white),
           ),
           'orange' || 'yellow' || 'jaune' => Transform.scale(
             scale: 0.72,
-            child: DieSymbolMark(symbol: DieSymbol.yellow),
+            child: const DieSymbolMark(symbol: DieSymbol.yellow),
           ),
           'red' || 'rouge' => Transform.scale(
             scale: 0.72,
-            child: DieSymbolMark(symbol: DieSymbol.red),
+            child: const DieSymbolMark(symbol: DieSymbol.red),
+          ),
+          '1' || '2' || '3' || '4' || '5' || '6' => DieValueBadge(
+            value: int.parse(normalized),
+            size: 24,
           ),
           _ => Text(rawValue),
         };
         matches.add(_TokenMatch(match.start, match.end, null, null, widget));
         continue;
       }
+      if (tag == 'half_prevent' ||
+          tag == 'half_shield' ||
+          tag == 'half_block' ||
+          (rawValue == '1/2' || rawValue == 'half')) {
+        matches.add(
+          _TokenMatch(
+            match.start,
+            match.end,
+            null,
+            null,
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2),
+              child: _HalfPreventBadge(),
+            ),
+          ),
+        );
+        continue;
+      }
+      if (tag == 'cp') {
+        final amount = int.tryParse(rawValue) ?? 1;
+        matches.add(
+          _TokenMatch(
+            match.start,
+            match.end,
+            null,
+            null,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: CpStealBadge(value: amount, color: color),
+            ),
+          ),
+        );
+        continue;
+      }
       final amount = int.tryParse(rawValue);
       if (amount == null) {
+        if (tag == 'shield' || tag == 'bouclier' || tag == 'prevent' || tag == 'block') {
+          matches.add(
+            _TokenMatch(
+              match.start,
+              match.end,
+              null,
+              null,
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 2),
+                child: PreventBadge(value: 0),
+              ),
+            ),
+          );
+          continue;
+        }
         matches.add(_TokenMatch(match.start, match.end, null, rawValue));
         continue;
       }
+      final Widget widget = switch (tag) {
+        'undef' || 'imparable' => DamageBadge(value: amount, imparable: true),
+        'damage' || 'dmg' => DamageBadge(value: amount, imparable: false),
+        'prevent' || 'block' || 'shield' || 'bouclier' => PreventBadge(value: amount),
+        'heal' || 'life' || 'vie' || 'soin' => _HealBadge(value: amount),
+        _ => _InlineChatBadge(label: amount.toString(), color: Colors.white),
+      };
       matches.add(
         _TokenMatch(
           match.start,
           match.end,
           null,
           null,
-          _InlineChatBadge(
-            label: amount.toString(),
-            color: switch (tag) {
-              'undef' || 'imparable' => Colors.redAccent,
-              'prevent' || 'block' => Colors.blueAccent,
-              'heal' => Colors.greenAccent,
-              _ => Colors.white,
-            },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: widget,
           ),
         ),
       );
@@ -12045,23 +12395,78 @@ class _CubeIconPainter extends CustomPainter {
 }
 
 class SymbolGoalView extends StatelessWidget {
-  const SymbolGoalView({required this.goal, super.key});
+  const SymbolGoalView({
+    required this.goal,
+    this.orWhiteOrange = false,
+    this.orOrangeRed = false,
+    super.key,
+  });
 
   final SymbolGoal goal;
+  final bool orWhiteOrange;
+  final bool orOrangeRed;
 
   @override
   Widget build(BuildContext context) {
+    final items = <Widget>[];
+    final whiteSymbols = [
+      for (var i = 0; i < goal.white; i++)
+        const DieSymbolMark(symbol: DieSymbol.white),
+    ];
+    final yellowSymbols = [
+      for (var i = 0; i < goal.yellow; i++)
+        const DieSymbolMark(symbol: DieSymbol.yellow),
+    ];
+    final redSymbols = [
+      for (var i = 0; i < goal.red; i++)
+        const DieSymbolMark(symbol: DieSymbol.red),
+    ];
+
+    if (whiteSymbols.isNotEmpty) {
+      items.addAll(whiteSymbols);
+    }
+    if (orWhiteOrange && whiteSymbols.isNotEmpty && yellowSymbols.isNotEmpty) {
+      items.add(
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 2),
+          child: Text(
+            'or',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Color(0xffa0b0a8),
+            ),
+          ),
+        ),
+      );
+    }
+    if (yellowSymbols.isNotEmpty) {
+      items.addAll(yellowSymbols);
+    }
+    if (orOrangeRed && yellowSymbols.isNotEmpty && redSymbols.isNotEmpty) {
+      items.add(
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 2),
+          child: Text(
+            'or',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Color(0xffa0b0a8),
+            ),
+          ),
+        ),
+      );
+    }
+    if (redSymbols.isNotEmpty) {
+      items.addAll(redSymbols);
+    }
+
     return Wrap(
-      spacing: 4,
+      spacing: 2,
       runSpacing: 4,
-      children: [
-        for (var i = 0; i < goal.white; i++)
-          const DieSymbolMark(symbol: DieSymbol.white),
-        for (var i = 0; i < goal.yellow; i++)
-          const DieSymbolMark(symbol: DieSymbol.yellow),
-        for (var i = 0; i < goal.red; i++)
-          const DieSymbolMark(symbol: DieSymbol.red),
-      ],
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: items,
     );
   }
 }
@@ -12231,10 +12636,16 @@ class _NaxarusDieValueBadge extends StatelessWidget {
 }
 
 class TokenBadge extends StatelessWidget {
-  const TokenBadge({required this.label, required this.color, super.key});
+  const TokenBadge({
+    required this.label,
+    required this.color,
+    this.count = 1,
+    super.key,
+  });
 
   final String label;
   final Color color;
+  final int count;
 
   @override
   Widget build(BuildContext context) {
@@ -12258,13 +12669,31 @@ class TokenBadge extends StatelessWidget {
           child: badge,
         );
       }
-      return Tooltip(
+      Widget widget = Tooltip(
         message: rule.label,
         child: GestureDetector(
           onTap: () => showTokenDetails(context, rule),
           child: badge,
         ),
       );
+      if (count > 1) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              '$count x ',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+            widget,
+          ],
+        );
+      }
+      return widget;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
@@ -12273,7 +12702,7 @@ class TokenBadge extends StatelessWidget {
         border: Border.all(color: color),
       ),
       child: Text(
-        label,
+        count > 1 ? '$count x $label' : label,
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w900,

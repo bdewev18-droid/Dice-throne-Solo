@@ -35,7 +35,7 @@ part 'parts/fight_logic/token_combat_helpers.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.4.35';
+const String appVersionLabel = 'Version 1.4.46';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -1294,6 +1294,7 @@ class EnemyNode {
     List<MinionPassive> passives = const [],
     List<DisplayRow> defenseDisplayRows = const [],
     List<DisplayRow> passiveDisplayRows = const [],
+    List<EnemyDefenseEffect> defenseEffects = const [],
     this.branch,
     this.step = 0,
     int? initialHealth,
@@ -1310,7 +1311,8 @@ class EnemyNode {
            : List<EnemyRank>.from(rewardRanks),
        passives = List<MinionPassive>.unmodifiable(passives),
        defenseDisplayRows = List<DisplayRow>.unmodifiable(defenseDisplayRows),
-       passiveDisplayRows = List<DisplayRow>.unmodifiable(passiveDisplayRows) {
+       passiveDisplayRows = List<DisplayRow>.unmodifiable(passiveDisplayRows),
+       defenseEffects = List<EnemyDefenseEffect>.unmodifiable(defenseEffects) {
     alterations.addAll(initialTokens);
   }
 
@@ -1332,6 +1334,7 @@ class EnemyNode {
   List<MinionPassive> passives;
   List<DisplayRow> defenseDisplayRows;
   List<DisplayRow> passiveDisplayRows;
+  List<EnemyDefenseEffect> defenseEffects;
   final BranchSide? branch;
   final int step;
   int health;
@@ -1401,6 +1404,7 @@ class EnemyNode {
       passives = restoredProfile.passives;
       defenseDisplayRows = restoredProfile.defenseDisplayRows;
       passiveDisplayRows = restoredProfile.passiveDisplayRows;
+      defenseEffects = restoredProfile.defenseEffects;
       cardAsset = restoredProfile.cardAsset;
       profileKey = restoredProfile.key;
       rewardChests = restoredProfile.rewardChests;
@@ -1446,6 +1450,7 @@ class EnemyNode {
     attackPlan = profile.attackPlan;
     defenseDisplayRows = profile.defenseDisplayRows;
     passiveDisplayRows = profile.passiveDisplayRows;
+    defenseEffects = profile.defenseEffects;
     cardAsset = profile.cardAsset;
     profileKey = profile.key;
     rewardChests = profile.rewardChests;

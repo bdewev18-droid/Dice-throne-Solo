@@ -1,3 +1,4 @@
+import 'package:dice_throne_survie/data/enemy_profile_repository.dart';
 import 'package:dice_throne_survie/game_engine.dart';
 import 'package:dice_throne_survie/main.dart';
 import 'package:dice_throne_survie/models/enemy_profile.dart';
@@ -7,6 +8,7 @@ void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     await TokenCatalogRepository.load();
+    await EnemyProfileRepository.load();
   });
 
   group('Game Engine & Fight Logic Tests', () {
@@ -574,6 +576,87 @@ void main() {
       expect(rule, isNotNull);
       expect(rule!.maxStack, 3);
       expect(rule.minionAllowed, isTrue);
+    });
+
+    test('Siphon vital token properties in TokenCatalogRepository', () {
+      final rule = TokenCatalogRepository.byLabel('Siphon vital');
+      expect(rule, isNotNull);
+      expect(rule!.maxStack, 1);
+      expect(rule.minionAllowed, isTrue);
+      expect(rule.aliases, contains('Life Siphon'));
+    });
+
+    test('Farceur defense parsed dynamically from defensePlan.effects', () {
+      final farceur = EnemyProfileRepository.byKey('bleu-bleu-020');
+      expect(farceur, isNotNull);
+      expect(farceur!.name, 'Farceur');
+      expect(farceur.defenseDice, 5);
+      expect(farceur.defenseEffects.length, 1);
+      expect(farceur.defenseEffects.first.orange, 2);
+      expect(farceur.defenseEffects.first.prevent, 3);
+    });
+
+    test('Farceur attackPlan includes all 4 actions from JSON in goals', () {
+      final farceur = EnemyProfileRepository.byKey('bleu-bleu-020');
+      expect(farceur, isNotNull);
+      expect(farceur!.attackPlan.style, MinionAttackStyle.symbols);
+      // All 4 actions from JSON should be present in goals:
+      // Recreation (1W, 2Y, 1R), Blanc (1W), Jaune (1Y), Rouge (1R)
+      expect(farceur.attackPlan.goals.length, 4);
+      final recreation = farceur.attackPlan.goals.first;
+      expect(recreation.white, 1);
+      expect(recreation.yellow, 2);
+      expect(recreation.red, 1);
+      expect(recreation.effect?.damage, 4);
+      expect(recreation.effect?.undefendable, isTrue);
+
+      final blanc = farceur.attackPlan.goals.firstWhere((g) => g.white == 1 && g.yellow == 0 && g.red == 0);
+      expect(blanc.effect?.stealCp, 2);
+    });
+
+    test('Bloodseeker, Umbra, Fell Summoner, and Cyclope Brutal defense effects', () {
+      final bloodseeker = EnemyProfileRepository.byKey('orange-orange-009');
+      expect(bloodseeker, isNotNull);
+      expect(bloodseeker!.defenseEffects.length, 1);
+      expect(bloodseeker.defenseEffects.first.white, 2);
+      expect(bloodseeker.defenseEffects.first.tokens, contains('Bleed'));
+      expect(bloodseeker.defenseDisplayRows, isEmpty);
+
+      final umbra = EnemyProfileRepository.byKey('orange-orange-004');
+      expect(umbra, isNotNull);
+      expect(umbra!.defenseEffects.length, 1);
+      expect(umbra.defenseEffects.first.red, 1);
+      expect(umbra.defenseEffects.first.tokens, contains('Shadows'));
+      expect(umbra.defenseDisplayRows, isEmpty);
+
+      final fell = EnemyProfileRepository.byKey('violet-violet-007');
+      expect(fell, isNotNull);
+      expect(fell!.defenseEffects.length, 1);
+      expect(fell.defenseEffects.first.orange, 1);
+      expect(fell.defenseEffects.first.tokens, contains('Chaos'));
+      expect(fell.defenseDisplayRows, isEmpty);
+
+      final cyclope = EnemyProfileRepository.byKey('bleu-bleu-006');
+      expect(cyclope, isNotNull);
+      expect(cyclope!.defenseEffects.length, 2);
+      expect(cyclope.defenseEffects[0].white, 1);
+      expect(cyclope.defenseEffects[0].returnDamage, 3);
+      expect(cyclope.defenseEffects[0].undefendable, isTrue);
+      expect(cyclope.defenseEffects[1].orange, 1);
+      expect(cyclope.defenseEffects[1].heal, 2);
+      expect(cyclope.defenseDisplayRows, isEmpty);
+    });
+
+    test('EnemyDefenseEffect with orOrangeRed matches orange or red dice', () {
+      const effect = EnemyDefenseEffect(
+        orange: 1,
+        red: 1,
+        orOrangeRed: true,
+        prevent: 2,
+        tokens: ['Poison', 'Poison'],
+      );
+      expect(effect.orOrangeRed, isTrue);
+      expect(effect.tokens.length, 2);
     });
   });
 }

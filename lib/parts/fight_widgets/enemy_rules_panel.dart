@@ -1360,8 +1360,43 @@ class MinionAttackSummary extends StatelessWidget {
                   final result = <Widget>[];
 
                   if (effect != null) {
+                    if (effect.label != null && effect.label!.isNotEmpty) {
+                      result.add(
+                        InlineTokenText(
+                          effect.label!,
+                          color: enemy.rank.color,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xffcbd8cc),
+                          ),
+                        ),
+                      );
+                    }
+                    final tokenCounts = <String, int>{};
                     for (final token in effect.heroTokens) {
-                      result.add(TokenBadge(label: token, color: enemy.rank.color));
+                      tokenCounts[token] = (tokenCounts[token] ?? 0) + 1;
+                    }
+                    for (final entry in tokenCounts.entries) {
+                      result.add(
+                        TokenBadge(
+                          label: entry.key,
+                          color: enemy.rank.color,
+                          count: entry.value,
+                        ),
+                      );
+                    }
+                    for (final note in effect.notes) {
+                      result.add(
+                        InlineTokenText(
+                          note,
+                          color: enemy.rank.color,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xffcbd8cc),
+                          ),
+                        ),
+                      );
                     }
                     if (effect.stealHp > 0) {
                       result.add(LifeStealBadge(value: effect.stealHp, color: enemy.rank.color));
@@ -1369,9 +1404,20 @@ class MinionAttackSummary extends StatelessWidget {
                     if (effect.stealCp > 0) {
                       result.add(CpStealBadge(value: effect.stealCp, color: enemy.rank.color));
                     }
+                    if (effect.heal > 0) {
+                      result.add(_HealBadge(value: effect.heal));
+                    }
                   }
 
-                  if (damage != null) {
+                  final hasOtherEffects = effect != null &&
+                      (effect.stealHp > 0 ||
+                          effect.stealCp > 0 ||
+                          effect.heal > 0 ||
+                          effect.heroTokens.isNotEmpty ||
+                          effect.notes.isNotEmpty ||
+                          (effect.label != null && effect.label!.isNotEmpty));
+
+                  if (damage != null && (damage.value > 0 || !hasOtherEffects)) {
                     result.add(
                       DamageBadge(
                         value: damage.value, plusValue: minionChaosDamage,
@@ -1842,15 +1888,24 @@ class MinionDefenseSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (enemy.profileKey == 'naraxus') {
+      return const _NaxarusDefenseGrid();
+    }
+    // 1. Structured defense effects from admin / JSON take highest priority
+    if (enemy.defenseEffects.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: _buildDefenseEffectsWidgets(enemy),
+      );
+    }
+    // 2. Explicit displayRows when no structured effects are present
     if (enemy.defenseDisplayRows.isNotEmpty) {
       return _DisplayRowsColumn(
         rows: enemy.defenseDisplayRows,
         color: enemy.rank.color,
       );
     }
-    if (enemy.profileKey == 'naraxus') {
-      return const _NaxarusDefenseGrid();
-    }
+    // 3. Fallback on legacy profileKey switch or regex
     final lines = _defenseEffectLines(enemy, previewBearForm: previewBearForm);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1864,6 +1919,109 @@ class MinionDefenseSummary extends StatelessWidget {
           : lines,
     );
   }
+}
+
+List<Widget> _buildDefenseEffectsWidgets(EnemyNode enemy) {
+  final list = <Widget>[];
+  for (final eff in enemy.defenseEffects) {
+    final leftWidgets = <Widget>[];
+    if (eff.repeat) {
+      leftWidgets.add(
+        const Text(
+          'x',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      );
+      leftWidgets.add(const SizedBox(width: 4));
+    }
+    leftWidgets.add(
+      SymbolGoalView(
+        goal: SymbolGoal(
+          white: eff.white,
+          yellow: eff.orange,
+          red: eff.red,
+        ),
+        orWhiteOrange: eff.orWhiteOrange,
+        orOrangeRed: eff.orOrangeRed,
+      ),
+    );
+
+    final rightWidgets = <Widget>[];
+    if (eff.label != null && eff.label!.isNotEmpty) {
+      rightWidgets.add(
+        InlineTokenText(
+          eff.label!,
+          color: enemy.rank.color,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Color(0xffcbd8cc),
+          ),
+        ),
+      );
+    }
+    final tokenCounts = <String, int>{};
+    for (final token in eff.tokens) {
+      tokenCounts[token] = (tokenCounts[token] ?? 0) + 1;
+    }
+    for (final entry in tokenCounts.entries) {
+      rightWidgets.add(
+        TokenBadge(
+          label: entry.key,
+          color: enemy.rank.color,
+          count: entry.value,
+        ),
+      );
+    }
+    for (final note in eff.notes) {
+      rightWidgets.add(
+        InlineTokenText(
+          note,
+          color: enemy.rank.color,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xffcbd8cc),
+          ),
+        ),
+      );
+    }
+    if (eff.prevent > 0) {
+      rightWidgets.add(PreventBadge(value: eff.prevent));
+    }
+    if (eff.returnDamage > 0) {
+      rightWidgets.add(
+        DamageBadge(
+          value: eff.returnDamage,
+          imparable: eff.undefendable,
+        ),
+      );
+    }
+    if (eff.stealHp > 0) {
+      rightWidgets.add(LifeStealBadge(value: eff.stealHp, color: enemy.rank.color));
+    }
+    if (eff.stealCp > 0) {
+      rightWidgets.add(CpStealBadge(value: eff.stealCp, color: enemy.rank.color));
+    }
+    if (eff.heal > 0) {
+      rightWidgets.add(_HealBadge(value: eff.heal));
+    }
+
+    list.add(
+      _DefenseEffectLine(
+        left: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: leftWidgets,
+        ),
+        right: rightWidgets,
+      ),
+    );
+  }
+  return list;
 }
 
 class _NaxarusDefenseGrid extends StatelessWidget {
@@ -2152,6 +2310,14 @@ List<Widget> _defenseEffectLines(EnemyNode enemy, {bool? previewBearForm}) {
         TokenBadge(label: 'Chaos', color: enemy.rank.color),
       ]);
       return lines;
+    case 'bleu-bleu-005':
+      symbol(const SymbolGoal(yellow: 1), [
+        LifeStealBadge(value: 1, color: enemy.rank.color),
+      ], repeat: true);
+      symbol(const SymbolGoal(red: 1), [
+        TokenBadge(label: 'Bleed', color: enemy.rank.color),
+      ], repeat: true);
+      return lines;
     case 'viseer':
       symbol(const SymbolGoal(red: 1), const [
         Text('Activate passive ability', textAlign: TextAlign.right),
@@ -2209,9 +2375,16 @@ class _DefenseEffectLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(width: 116, child: left),
           const SizedBox(width: 8),

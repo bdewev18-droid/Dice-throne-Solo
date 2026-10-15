@@ -1,6 +1,280 @@
 {
   "versions": [
     {
+      "version": "1.4.46",
+      "buildNumber": 358,
+      "date": "2026-10-15",
+      "commit": "local-dev",
+      "summary": "Masquage des formules côté UI (seules les notes avec shortcodes restent visibles)",
+      "prompts": [
+        "ce qui est écrit en formule ne doit pas être visible coté UI que les notes."
+      ],
+      "features": [
+        "Suppression de l'affichage des formules brutes dans les badges du combat (EnemyRulesPanel) : seules les notes enrichies s'affichent",
+        "Admin v1.7.16 : suppression des formules dans l'aperçu de droite (effectHtml) et dans la génération automatique de texte",
+        "Conservation intégrale de l'index des formules dans l'onglet Développeur 'Formulas index'"
+      ],
+      "tags": [
+        "UI",
+        "Defense",
+        "Attack",
+        "Formulas",
+        "Notes",
+        "Admin"
+      ],
+      "author": "Antigravity",
+      "title": "Masquage des formules côté UI"
+    },
+    {
+      "version": "1.4.45",
+      "buildNumber": 357,
+      "date": "2026-10-15",
+      "commit": "local-dev",
+      "summary": "Opérateur 'OR' entre dés, regroupement 'N x [IMG]' pour tokens multiples et shortcodes visuels pour notes/formules",
+      "prompts": [
+        "dans l'admin on peut diviser par 2 les champs des dès (white, orange, red) en largeur. Et ajouter un nouveau champs entre white et orange et orange et red... Ce champs c'est 'or' avec une case à cocher pour l'activer... Autre changement, dans le rendu, si j'ai dans l'admin 2 tokens sur une même ligne... '2 x '(IMG)... Enfin on a clean les display text et du coup j'ai des soucis avec des formules... Je propose que le champ note en dessous de formule puisse être utilisé pour écrire le texte (accepter les images de type bouclier, bouclier avec 1/2, vie, cp etc...)"
+      ],
+      "features": [
+        "Admin v1.7.15 : champs de dés compacts avec cases à cocher 'or' entre Blanc-Orange et Orange-Rouge",
+        "Rendu de combat & Aperçu : affichage des dés avec 'or' intercalé sur une même ligne pour les conditions alternatives",
+        "Tokens multiples : affichage propre '2 x [IMG]' ou '3 x [IMG]' au lieu de dupliquer l'icône",
+        "Shortcodes visuels étendus dans les notes et formules : {shield:X}, {half_shield}, {damage:X}, {undef:X}, {heal:X}, {cp:X}, {die:X}, {token:X}",
+        "Guide syntaxique intégré sous le champ Notes dans l'Admin pour faciliter la saisie"
+      ],
+      "tags": [
+        "UI",
+        "Admin",
+        "Dice",
+        "OR-Condition",
+        "Tokens",
+        "Badges",
+        "Shortcodes"
+      ],
+      "author": "Antigravity",
+      "title": "Opérateur OR, Tokens multiples 'N x [IMG]' et Shortcodes visuels"
+    },
+    {
+      "version": "1.4.44",
+      "buildNumber": 356,
+      "date": "2026-10-15",
+      "commit": "local-dev",
+      "summary": "Suppression des Display texts obsolètes, affichage 'x' pour repeat per symbol, et correction du rendu des tokens (Bloodseeker, Umbra, Fell Summoner, Cyclope Brutal)",
+      "prompts": [
+        "Je veux qu'on supprime tous les Display texts... D'ailleurs, souci sur le rendu, lorsqu'il y a un repeat per symbole... devant le symbole on va mettre 'x'... Pour umbra et Fell summoner... Bloodseeker, j'ai un '?' dans le rendu ?"
+      ],
+      "features": [
+        "Nettoyage complet des 83 displayRows textuels obsolètes de defensePlan dans enemy_profiles.json",
+        "Rendu natif direct basé sur defenseEffects (EnemyRulesPanel) : suppression de tous les '=' parasites",
+        "Prise en charge du préfixe 'x ' devant les symboles à gauche lorsque 'repeat per symbol' est actif (en défense et en attaque)",
+        "Correction Bloodseeker : disparition du '?' au profit des 2 symboles blancs infligeant Hémorragie (Bleed)",
+        "Correction Umbra & Fell Summoner : affichage immédiat de leurs tokens Ombre (Shadows) et Chaos en défense",
+        "Correction Cyclope Brutal : rendu structuré des 2 lignes (dégâts imparables et soin) sans '='",
+        "Admin v1.7.14 : déblocage de l'effacement des display texts (suppression de la ré-injection forcée automatique)"
+      ],
+      "tags": [
+        "UI",
+        "Defense",
+        "Attack",
+        "Repeat",
+        "DisplayRows",
+        "Admin",
+        "Tokens"
+      ],
+      "author": "Antigravity",
+      "title": "Suppression Display texts & préfixe repeat"
+    },
+    {
+      "version": "1.4.43",
+      "buildNumber": 355,
+      "date": "2026-10-15",
+      "commit": "local-dev",
+      "summary": "Mise en page épurée (symboles gauche / résultats droite), support 'Nb' tokens et recherche alphabétique dans l'Admin",
+      "prompts": [
+        "de ce fait, le code en dure a été nettoyé ? J'ai ajouté la défense de plus de 10 ennemie... Sur l'atk et la def. L'affichage c'est les symboles à gauche et le résultats à droite... On va faire 2 modification dans l'admin ennemie..."
+      ],
+      "features": [
+        "Mise en page carte (EnemyRulesPanel & fight.dart) : séparation nette entre symboles du jet (à gauche) et badges de résultat (alignés à droite) dans un conteneur stylisé, sans symbole '=' textuel",
+        "Prise en compte des 57 défenses ennemies du nouveau JSON sans recours aux anciens switchs en dur",
+        "Admin v1.7.12 : ajout du champ 'Nb' devant 'Tokens' pour multiplier un même token sur un symbole/action",
+        "Admin v1.7.12 : tri alphabétique automatique des tokens et ajout d'un moteur de recherche temps réel dans la modale de sélection"
+      ],
+      "tags": [
+        "UI",
+        "Layout",
+        "Tokens",
+        "Admin",
+        "Search",
+        "Defense"
+      ],
+      "author": "Antigravity",
+      "title": "Layout cartes épuré & améliorations Admin tokens"
+    },
+    {
+      "version": "1.4.42",
+      "buildNumber": 354,
+      "date": "2026-10-15",
+      "commit": "local-dev",
+      "summary": "Synchronisation dynamique des attaques (actions -> goals, effets de combat vol HP/PC/tokens et affichage des labels)",
+      "prompts": [
+        "je me pose la même question sur l'attaque, elle devrait aussi être impactée par le même souci. (je compléte le json, mais pas lu...) tu peux vérifier et fixer de la même façon ?"
+      ],
+      "features": [
+        "Inclusion automatique de toutes les actions du JSON dans goals (style symbols) : 31 ennemis corrigés dont Farceur (Recreation, Blanc, Jaune, Rouge)",
+        "Affichage enrichi dans la fiche ennemie (EnemyRulesPanel) : rendu des labels d'attaques, badges de soins/vol, et masquage du badge '0 dégâts' pour les actions utilitaires",
+        "Application dynamique des effets d'attaque en combat (fight.dart) : vol de vie, vol de PC et tokens infligés ou reçus depuis les actions ou les suites",
+        "Sélection intelligente d'attaque (_currentMinionSymbolGoal) : priorité automatique aux attaques demandant le plus de symboles / dégâts",
+        "Admin v1.7.11 : synchronisation automatique de goals à partir de actions à la saisie et à la sauvegarde"
+      ],
+      "tags": [
+        "Attaque",
+        "Admin",
+        "EnemyProfile",
+        "Combat",
+        "DynamicResolution"
+      ],
+      "author": "Antigravity",
+      "title": "Moteur dynamique d'attaque & synchronisation des actions"
+    },
+    {
+      "version": "1.4.41",
+      "buildNumber": 353,
+      "date": "2026-10-15",
+      "commit": "local-dev",
+      "summary": "Interprétation dynamique des plans de défense JSON (effets -> displayRows et combat) & correction de l'affichage vide",
+      "prompts": [
+        "J'ai pris un ennemie validé en defense ou l'affichage est ok... Farceur (bleu) => vide. Pourquoi ce n'est pas lu ?"
+      ],
+      "features": [
+        "Moteur de défense dynamique dans fight.dart : exécution automatique des effets configurés dans le JSON (prévention, renvoi, vol de vie/PC, tokens)",
+        "Génération automatique des displayRows de défense au chargement du profil si displayRows est vide dans le JSON",
+        "Export et sauvegarde admin : auto-remplissage des displayRows à partir de defensePlan.effects",
+        "Test unitaire automatisé validant la génération des displayRows et les effets de défense de Farceur"
+      ],
+      "tags": [
+        "Defense",
+        "Admin",
+        "EnemyProfile",
+        "Combat",
+        "DynamicResolution"
+      ],
+      "author": "Antigravity",
+      "title": "Moteur dynamique de défense & affichage des fiches JSON"
+    },
+    {
+      "version": "1.4.40",
+      "buildNumber": 352,
+      "date": "2026-10-15",
+      "commit": "local-dev",
+      "summary": "Division du bouton de validation admin (Atk validate / Def validate), calcul du % cumulé et indicateurs 🟩 🟠 ❌",
+      "prompts": [
+        "Travaillons sur l admin. Je veux que le bouton validate soit divisé en 2..."
+      ],
+      "features": [
+        "Admin v1.7.9 : Division de la validation en deux boutons dédiés ('Atk validate' et 'Def validate')",
+        "Calcul du pourcentage de fiches validées dans la colonne 1 sur le cumul des deux axes (Atk / Def)",
+        "Nouveaux symboles d'avancement par ennemi : 🟩 validé (Atk et Def), 🟠 partiel (Atk ou Def), ❌ non validé",
+        "Rétrocompatibilité des profils historiques et journalisation fine dans l'historique des modifications"
+      ],
+      "tags": [
+        "Admin",
+        "Validation",
+        "Atk/Def",
+        "Preview 8083"
+      ],
+      "author": "Antigravity",
+      "title": "Admin : Validation duale Atk & Def"
+    },
+    {
+      "version": "1.4.39",
+      "buildNumber": 351,
+      "date": "2026-10-13",
+      "commit": "local-dev",
+      "summary": "Build web local avec prévisualisation",
+      "prompts": [
+        "build local web avec preview"
+      ],
+      "features": [
+        "Compilation web locale en version 1.4.39+351",
+        "Lancement du serveur de prévisualisation web local sur le port 8083"
+      ],
+      "tags": [
+        "Build Web",
+        "Preview 8083"
+      ],
+      "author": "Antigravity",
+      "title": "Build Web Local & Prévisualisation"
+    },
+    {
+      "version": "1.4.38",
+      "buildNumber": 350,
+      "date": "2026-10-13",
+      "commit": "local-dev",
+      "summary": "Build web local et validation du rendu de défense sans surcharge displayRows sur serveur preview 8083",
+      "prompts": [
+        "je veux vérifier ton point 3. Tu peux build local web le projet DTS sur 127.... 8083"
+      ],
+      "features": [
+        "Compilation web locale en version 1.4.38+350",
+        "Vérification de l'affichage natif 2 colonnes de la défense (dés à gauche, effets à droite)",
+        "Lancement du serveur de prévisualisation web local sur le port 8083"
+      ],
+      "tags": [
+        "Build Web",
+        "Défense",
+        "Preview 8083"
+      ],
+      "author": "Antigravity",
+      "title": "Build Web Local & Prévisualisation Port 8083"
+    },
+    {
+      "version": "1.4.37",
+      "buildNumber": 349,
+      "date": "2026-10-12",
+      "commit": "local-dev",
+      "summary": "Intégration du JSON ennemis, affichage et résolution de la défense et passif Siphon vital pour Sorcière d'Os (bleu-005)",
+      "prompts": [
+        "voici une nouvelle version de enemy_profiles.json ici : D:\\dowload chrome ... Tu peux m'ajouter correctement mon json ennemie et me dire pk je n'ai rien de visible en défense et régler le passif."
+      ],
+      "features": [
+        "Importation et synchronisation du JSON ennemi (docs/enemy_profiles.json)",
+        "Génération et affichage des lignes de défense (defensePlan.displayRows & _defenseEffectLines) pour Sorcière d'Os : orange vole 1 PV, rouge inflige Bleed",
+        "Prise en charge de la résolution des dés de défense et conservation des dés IA pour Sorcière d'Os",
+        "Implémentation du passif d'upkeep de la Sorcière d'Os : gain du jeton Siphon vital",
+        "Ajout du test unitaire dans test/fight_logic_test.dart pour le jeton Siphon vital"
+      ],
+      "tags": [
+        "Enemy JSON",
+        "Combat",
+        "Sorcière d'Os",
+        "Défense",
+        "Passif",
+        "Tokens"
+      ],
+      "author": "Antigravity",
+      "title": "Mise à jour Sorcière d'Os (Défense & Passif Siphon vital)"
+    },
+    {
+      "version": "1.4.36",
+      "buildNumber": 348,
+      "date": "2026-10-12",
+      "commit": "local-dev",
+      "summary": "Build local Web et prévisualisation",
+      "prompts": [
+        "build web locale avec previex"
+      ],
+      "features": [
+        "Build web local de l'application",
+        "Lancement du serveur de prévisualisation local"
+      ],
+      "tags": [
+        "Build",
+        "Web",
+        "Preview"
+      ],
+      "author": "Antigravity",
+      "title": "Build Web local et preview"
+    },
+    {
       "version": "1.4.35",
       "buildNumber": 347,
       "date": "2026-10-11",

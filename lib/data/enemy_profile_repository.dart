@@ -80,6 +80,7 @@ class EnemyProfileJson {
       passives: _passivesFromJson(json),
       defenseDisplayRows: _defenseDisplayRowsFromJson(json['defensePlan']),
       passiveDisplayRows: _displayRowsFromJson(json['passiveDisplayRows']),
+      defenseEffects: _defenseEffectsFromJson(json['defensePlan']),
     );
   }
 
@@ -124,10 +125,18 @@ class EnemyProfileJson {
   }
 
   static List<String> _stringList(Object? value) {
+    if (value is String) {
+      final trimmed = value.trim();
+      return trimmed.isNotEmpty ? [trimmed] : const [];
+    }
     if (value is! List) {
       return const [];
     }
-    return value.whereType<String>().toList(growable: false);
+    return value
+        .whereType<String>()
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList(growable: false);
   }
 
   static List<EnemyRank> _rankList(Object? value) {
@@ -190,6 +199,17 @@ class EnemyProfileJson {
           label3: (action['label3'] as String?)?.trim(),
           extraRoll: _extraRollFromJson(action['extraRoll']),
           align: action['align'] as String? ?? 'left',
+          repeat: condition['repeat'] as bool? ?? action['repeat'] as bool? ?? false,
+          orWhiteOrange: condition['orWhiteOrange'] as bool? ??
+              symbols['orWhiteOrange'] as bool? ??
+              action['orWhiteOrange'] as bool? ??
+              false,
+          orOrangeRed: condition['orOrangeRed'] as bool? ??
+              symbols['orOrangeRed'] as bool? ??
+              action['orOrangeRed'] as bool? ??
+              false,
+          notes: _stringList(action['notes'] ?? action['note']),
+          formulas: _stringList(action['formulas'] ?? action['formula']),
         );
       }
     }
@@ -416,6 +436,34 @@ class EnemyProfileJson {
           ),
         );
       }
+      for (final action in actions) {
+        final cond = action['condition'];
+        if (cond is! Map<String, dynamic>) continue;
+        if (cond['type'] != 'symbols') continue;
+        final sym = cond['symbols'];
+        if (sym is! Map<String, dynamic>) continue;
+        final white = _intValue(sym['white'], fallback: 0);
+        final yellow = _intValue(sym['orange'] ?? sym['yellow'], fallback: 0);
+        final red = _intValue(sym['red'], fallback: 0);
+        final exists = goals.any(
+          (g) => g.white == white && g.yellow == yellow && g.red == red,
+        );
+        if (!exists) {
+          goals.add(
+            SymbolGoal(
+              white: white,
+              yellow: yellow,
+              red: red,
+              effect: _effectFromActions(
+                actions,
+                white: white,
+                yellow: yellow,
+                red: red,
+              ),
+            ),
+          );
+        }
+      }
       return MinionAttackPlan.symbols(
         goals,
         displayRows: displayRows,
@@ -433,6 +481,64 @@ class EnemyProfileJson {
       return const [];
     }
     return _displayRowsFromJson(value['displayRows']);
+  }
+
+  static List<EnemyDefenseEffect> _defenseEffectsFromJson(Object? value) {
+    if (value is! Map<String, dynamic>) {
+      return const [];
+    }
+    final effectsRaw = value['effects'];
+    if (effectsRaw is! List) {
+      return const [];
+    }
+    final list = <EnemyDefenseEffect>[];
+    for (final entry in effectsRaw) {
+      if (entry is! Map<String, dynamic>) continue;
+      final cond = entry['condition'] as Map<String, dynamic>? ?? const {};
+      final sym = cond['symbols'] as Map<String, dynamic>? ?? const {};
+      final white = _intValue(sym['white'], fallback: 0);
+      final orange = _intValue(sym['orange'] ?? sym['yellow'], fallback: 0);
+      final red = _intValue(sym['red'], fallback: 0);
+      final repeat = cond['repeat'] as bool? ?? entry['repeat'] as bool? ?? false;
+      final prevent = _intValue(entry['prevent'], fallback: 0);
+      final returnDamage = _intValue(entry['returnDamage'] ?? entry['damage'], fallback: 0);
+      final undefendable = entry['undefendable'] as bool? ?? false;
+      final stealHp = _intValue(entry['stealHp'], fallback: 0);
+      final stealCp = _intValue(entry['stealCp'], fallback: 0);
+      final heal = _intValue(entry['heal'], fallback: 0);
+      final tokens = _stringList(entry['tokens']);
+      final label = (entry['label'] as String?)?.trim();
+      final orWhiteOrange = cond['orWhiteOrange'] as bool? ??
+          sym['orWhiteOrange'] as bool? ??
+          entry['orWhiteOrange'] as bool? ??
+          false;
+      final orOrangeRed = cond['orOrangeRed'] as bool? ??
+          sym['orOrangeRed'] as bool? ??
+          entry['orOrangeRed'] as bool? ??
+          false;
+      final notes = _stringList(entry['notes'] ?? entry['note']);
+      final formulas = _stringList(entry['formulas'] ?? entry['formula']);
+
+      list.add(EnemyDefenseEffect(
+        white: white,
+        orange: orange,
+        red: red,
+        repeat: repeat,
+        prevent: prevent,
+        returnDamage: returnDamage,
+        undefendable: undefendable,
+        stealHp: stealHp,
+        stealCp: stealCp,
+        heal: heal,
+        tokens: tokens,
+        label: (label != null && label.isNotEmpty) ? label : null,
+        orWhiteOrange: orWhiteOrange,
+        orOrangeRed: orOrangeRed,
+        notes: notes,
+        formulas: formulas,
+      ));
+    }
+    return List<EnemyDefenseEffect>.unmodifiable(list);
   }
 
   /// Parses the JSON `attackPlan.conditionalRules` array into

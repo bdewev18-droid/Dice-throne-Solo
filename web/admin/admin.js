@@ -169,8 +169,15 @@ function openTokenModal(input) {
   const container = $('tokenCheckboxes');
   container.innerHTML = '';
 
-  tokenCatalog.forEach(token => {
+  const sortedTokens = [...tokenCatalog].sort((a, b) => {
+    const la = (a.label || '').toLowerCase();
+    const lb = (b.label || '').toLowerCase();
+    return la.localeCompare(lb, 'fr');
+  });
+
+  sortedTokens.forEach(token => {
     const label = document.createElement('label');
+    label.className = 'token-option';
     label.style.display = 'flex';
     label.style.alignItems = 'center';
     label.style.gap = '10px';
@@ -206,7 +213,23 @@ function openTokenModal(input) {
     label.appendChild(textSpan);
     container.appendChild(label);
   });
+
+  const searchInput = $('tokenSearchInput');
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.oninput = () => {
+      const q = searchInput.value.trim().toLowerCase();
+      container.querySelectorAll('.token-option').forEach(opt => {
+        const txt = opt.textContent.toLowerCase();
+        opt.style.display = (!q || txt.includes(q)) ? 'flex' : 'none';
+      });
+    };
+  }
+
   $('tokenModal').style.display = 'flex';
+  if (searchInput) {
+    setTimeout(() => searchInput.focus(), 60);
+  }
 }
 
 function onTokenInputChanged(e) {
@@ -379,9 +402,34 @@ async function openLocalJson() {
   selectFirst();
 }
 
+function ensureAllProfilesDisplayRows() {
+  if (!sourceData?.profiles) return;
+  for (const p of sourceData.profiles) {
+    if (p.attackPlan?.style === 'symbols' && p.attackPlan.actions?.length) {
+      p.attackPlan.goals ||= [];
+      const existing = new Set(p.attackPlan.goals.map(g => `${g.white || 0},${g.orange || g.yellow || 0},${g.red || 0}`));
+      for (const action of p.attackPlan.actions) {
+        if (action.condition?.type === 'symbols' && action.condition.symbols) {
+          const sym = action.condition.symbols;
+          const key = `${sym.white || 0},${sym.orange || sym.yellow || 0},${sym.red || 0}`;
+          if (!existing.has(key)) {
+            existing.add(key);
+            p.attackPlan.goals.push({
+              white: sym.white || 0,
+              orange: sym.orange || sym.yellow || 0,
+              red: sym.red || 0
+            });
+          }
+        }
+      }
+    }
+  }
+}
+
 async function saveLocalFile() {
   if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
     collectCurrent();
+    ensureAllProfilesDisplayRows();
     if (originalSelectedProfile && selectedProfile) {
       computeDiffAndLog(originalSelectedProfile, selectedProfile);
       originalSelectedProfile = clone(selectedProfile);
@@ -408,6 +456,7 @@ async function saveLocalFile() {
 
   if (!fileHandle || !sourceData) return;
   collectCurrent();
+  ensureAllProfilesDisplayRows();
   if (originalSelectedProfile && selectedProfile) {
     computeDiffAndLog(originalSelectedProfile, selectedProfile);
     originalSelectedProfile = clone(selectedProfile);
@@ -435,6 +484,7 @@ function download(name, text) {
 function exportJson() {
   if (!sourceData) return;
   collectCurrent();
+  ensureAllProfilesDisplayRows();
   if (originalSelectedProfile && selectedProfile) {
     computeDiffAndLog(originalSelectedProfile, selectedProfile);
     originalSelectedProfile = clone(selectedProfile);
@@ -463,15 +513,97 @@ function flash(text) {
   setTimeout(renderMeta, 1800);
 }
 
+function isAtkValid(p) {
+  if (!p) return false;
+  if (typeof p.validatedAtk === 'boolean') return p.validatedAtk;
+  return !!p.validated;
+}
+
+function isDefValid(p) {
+  if (!p) return false;
+  if (typeof p.validatedDef === 'boolean') return p.validatedDef;
+  return false;
+}
+
+function updateValidationButtons() {
+  const atkBtn = $('validateAtkBtn');
+  const defBtn = $('validateDefBtn');
+  if (!atkBtn || !defBtn) return;
+  if (!selectedProfile) {
+    atkBtn.disabled = true;
+    defBtn.disabled = true;
+    atkBtn.className = 'ghost-btn validate-btn';
+    defBtn.className = 'ghost-btn validate-btn';
+    atkBtn.innerHTML = '⚔️ Atk validate';
+    defBtn.innerHTML = '🛡️ Def validate';
+    return;
+  }
+  atkBtn.disabled = false;
+  defBtn.disabled = false;
+  const atkValid = isAtkValid(selectedProfile);
+  const defValid = isDefValid(selectedProfile);
+
+  if (atkValid) {
+    atkBtn.className = 'validate-btn valid';
+    atkBtn.innerHTML = '✅ Atk validate';
+  } else {
+    atkBtn.className = 'ghost-btn validate-btn';
+    atkBtn.innerHTML = '❌ Atk validate';
+  }
+
+  if (defValid) {
+    defBtn.className = 'validate-btn valid';
+    defBtn.innerHTML = '✅ Def validate';
+  } else {
+    defBtn.className = 'ghost-btn validate-btn';
+    defBtn.innerHTML = '❌ Def validate';
+  }
+}
+
+function toggleValidateAtk() {
+  if (!selectedProfile || selectedIndex < 0) return;
+  collectCurrent();
+  const currentAtk = isAtkValid(selectedProfile);
+  const currentDef = isDefValid(selectedProfile);
+  selectedProfile.validatedAtk = !currentAtk;
+  selectedProfile.validatedDef = currentDef;
+  selectedProfile.validated = selectedProfile.validatedAtk && selectedProfile.validatedDef;
+  sourceData.profiles[selectedIndex] = clone(selectedProfile);
+  setDirty('enemy');
+  updateValidationButtons();
+  renderLists();
+}
+
+function toggleValidateDef() {
+  if (!selectedProfile || selectedIndex < 0) return;
+  collectCurrent();
+  const currentAtk = isAtkValid(selectedProfile);
+  const currentDef = isDefValid(selectedProfile);
+  selectedProfile.validatedAtk = currentAtk;
+  selectedProfile.validatedDef = !currentDef;
+  selectedProfile.validated = selectedProfile.validatedAtk && selectedProfile.validatedDef;
+  sourceData.profiles[selectedIndex] = clone(selectedProfile);
+  setDirty('enemy');
+  updateValidationButtons();
+  renderLists();
+}
+
 function renderLists() {
   const root = $('enemyLists');
   root.innerHTML = '';
   const query = $('enemySearch').value.trim().toLowerCase();
   const allProfiles = sourceData?.profiles || [];
-  const globalValid = allProfiles.filter(p => p.validated).length;
-  const globalPct = allProfiles.length ? Math.round(globalValid * 100 / allProfiles.length) : 0;
+  
+  let globalValidPoints = 0;
+  for (const p of allProfiles) {
+    if (isAtkValid(p)) globalValidPoints++;
+    if (isDefValid(p)) globalValidPoints++;
+  }
+  const globalTotalPoints = allProfiles.length * 2;
+  const globalPct = globalTotalPoints ? Math.round(globalValidPoints * 100 / globalTotalPoints) : 0;
   if ($('validationProgress')) {
     $('validationProgress').textContent = allProfiles.length ? `${globalPct}% validated` : '';
+    $('validationProgress').title = `${globalValidPoints} / ${globalTotalPoints} validations (Atk + Def)`;
   }
 
   for (const rank of rankOrder) {
@@ -484,9 +616,13 @@ function renderLists() {
       );
     if (!profiles.length) continue;
     
-    const groupTotal = profiles.length;
-    const groupValid = profiles.filter(p => p.profile.validated).length;
-    const groupPct = Math.round(groupValid * 100 / groupTotal);
+    let groupValidPoints = 0;
+    for (const { profile } of profiles) {
+      if (isAtkValid(profile)) groupValidPoints++;
+      if (isDefValid(profile)) groupValidPoints++;
+    }
+    const groupTotalPoints = profiles.length * 2;
+    const groupPct = groupTotalPoints ? Math.round(groupValidPoints * 100 / groupTotalPoints) : 0;
 
     const group = document.createElement('section');
     group.className = 'rank-group';
@@ -506,7 +642,14 @@ function renderLists() {
       if (profile.cardAsset) {
         prefix = profile.cardAsset.split('/').pop().replace('.png', '') + ' ';
       }
-      const validIcon = profile.validated ? '✅ ' : '❌ ';
+      const atk = isAtkValid(profile);
+      const def = isDefValid(profile);
+      let validIcon = '❌ ';
+      if (atk && def) {
+        validIcon = '🟩 ';
+      } else if (atk || def) {
+        validIcon = '🟠 ';
+      }
       button.textContent = validIcon + prefix + (profile.name || profile.key);
       button.onclick = () => selectProfile(index);
       items.appendChild(button);
@@ -573,6 +716,12 @@ function computeDiffAndLog(original, current) {
   }
   if (original.name !== current.name) {
     changes.push(`name de "${original.name}" vers "${current.name}"`);
+  }
+  if (isAtkValid(original) !== isAtkValid(current)) {
+    changes.push(`validation Atk: ${isAtkValid(current) ? 'validé' : 'non validé'}`);
+  }
+  if (isDefValid(original) !== isDefValid(current)) {
+    changes.push(`validation Def: ${isDefValid(current) ? 'validé' : 'non validé'}`);
   }
 
   if (changes.length > 0) {
@@ -703,6 +852,7 @@ function renderEditor() {
   updateTabDots();
   validateTokens();
   updateRewardWarnings();
+  updateValidationButtons();
 }
 
 function collectCurrent() {
@@ -741,6 +891,24 @@ function collectCurrent() {
   selectedProfile.attackPlan.conditionalRules = [
     ...document.querySelectorAll('#conditionalRules .conditional-card'),
   ].map(readConditionalRuleCard);
+  if (selectedProfile.attackPlan.style === 'symbols' && selectedProfile.attackPlan.actions?.length) {
+    selectedProfile.attackPlan.goals ||= [];
+    const existing = new Set(selectedProfile.attackPlan.goals.map(g => `${g.white || 0},${g.orange || g.yellow || 0},${g.red || 0}`));
+    for (const action of selectedProfile.attackPlan.actions) {
+      if (action.condition?.type === 'symbols' && action.condition.symbols) {
+        const sym = action.condition.symbols;
+        const key = `${sym.white || 0},${sym.orange || sym.yellow || 0},${sym.red || 0}`;
+        if (!existing.has(key)) {
+          existing.add(key);
+          selectedProfile.attackPlan.goals.push({
+            white: sym.white || 0,
+            orange: sym.orange || sym.yellow || 0,
+            red: sym.red || 0
+          });
+        }
+      }
+    }
+  }
   selectedProfile.defensePlan ||= {
     dice: selectedProfile.defenseDice,
     effects: [],
@@ -759,11 +927,18 @@ function escapeAttr(value) {
 function escapeText(value) {
   return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;');
 }
+function resolveTokenCountDisplay(data) {
+  const tokens = data?.tokens || [];
+  if (!tokens.length) return '';
+  if (data.tokenCount && data.tokenCount > 0) return data.tokenCount;
+  if (tokens.length > 1 && tokens.every(t => t === tokens[0])) return tokens.length;
+  return 1;
+}
 function textarea(label, className, value = '', rows = 2) {
   return '<label class="wide-label formula-label">' + label + '<textarea class="' + className + '" rows="' + rows + '">' + escapeText(value) + '</textarea></label>';
 }
 function input(label, className, value = '', type = 'text') {
-  const isToken = className.includes('tokens') || className.includes('token');
+  const isToken = (className.includes('tokens') || className.includes('token')) && !className.includes('nb') && !className.includes('count');
   const tokenClass = isToken ? ' token-input' : '';
   const readOnlyAttr = isToken ? ' readonly style="cursor:pointer;" placeholder="Select tokens..."' : '';
   return `<label>${label}<input class="${className}${tokenClass}" type="${type}" value="${escapeAttr(value)}"${readOnlyAttr} /></label>`;
@@ -918,11 +1093,17 @@ function actionCard(data, index, isDefense) {
   const condition = data.condition || {};
   const type = condition.type || 'symbols';
   const symbols = condition.symbols || {};
+  const orWhiteOrange = condition.orWhiteOrange ?? symbols.orWhiteOrange ?? data.orWhiteOrange ?? false;
+  const orOrangeRed = condition.orOrangeRed ?? symbols.orOrangeRed ?? data.orOrangeRed ?? false;
   node.querySelector('.condition-grid').innerHTML = [
     select('Condition type', 'cond-type', type, ['symbols', 'suite', 'number', 'range', 'any', 'text']),
-    input('White', 'cond-white', symbols.white ?? 0, 'number'),
-    input('Orange', 'cond-orange', symbols.orange ?? symbols.yellow ?? 0, 'number'),
-    input('Red', 'cond-red', symbols.red ?? 0, 'number'),
+    '<div class="dice-cond-group">' +
+      input('White', 'cond-white', symbols.white ?? 0, 'number') +
+      `<label class="check-or" title="White OR Orange"><input class="cond-or-white-orange" type="checkbox" ${orWhiteOrange ? 'checked' : ''} />or</label>` +
+      input('Orange', 'cond-orange', symbols.orange ?? symbols.yellow ?? 0, 'number') +
+      `<label class="check-or" title="Orange OR Red"><input class="cond-or-orange-red" type="checkbox" ${orOrangeRed ? 'checked' : ''} />or</label>` +
+      input('Red', 'cond-red', symbols.red ?? 0, 'number') +
+    '</div>',
     input('Suite', 'cond-suite', condition.suite || ''),
     input('Length', 'cond-length', condition.length ?? '', 'number'),
     input('Value', 'cond-value', condition.value ?? '', 'number'),
@@ -941,7 +1122,8 @@ function actionCard(data, index, isDefense) {
     input('Draw', 'effect-draw', data.drawCards ?? 0, 'number'),
     input('Discard', 'effect-discard', data.discardCards ?? 0, 'number'),
     input('Top deck discard', 'effect-topdeck', data.topDeckToDiscard ?? 0, 'number'),
-    input('Tokens', 'effect-tokens', (data.tokens || []).join(', ')),
+    input('Nb', 'effect-nb', resolveTokenCountDisplay(data), 'number'),
+    input('Tokens', 'effect-tokens', [...new Set(data.tokens || [])].join(', ')),
     textarea('Formulas', 'effect-formulas', (data.formulas || []).join('\n'), 3),
   ].join('');
   renderExtra(node.querySelector('.extra-roll-body'), data.extraRoll || null);
@@ -979,7 +1161,8 @@ function outcomeRow(outcome) {
       ${input('Steal HP', 'out-stealhp', outcome.stealHp ?? 0, 'number')}
       ${input('Steal CP', 'out-stealcp', outcome.stealCp ?? 0, 'number')}
       ${check('Undef', 'out-undef', !!outcome.undefendable)}
-      ${input('Tokens', 'out-tokens', (outcome.tokens || []).join(', '))}
+      ${input('Nb', 'out-nb', resolveTokenCountDisplay(outcome), 'number')}
+      ${input('Tokens', 'out-tokens', [...new Set(outcome.tokens || [])].join(', '))}
       <button type="button" class="danger small">X</button>
     </div>
     <label class="wide-label">Label<input class="out-label" type="text" value="${escapeAttr(outcome.label || '')}" /></label>
@@ -994,35 +1177,65 @@ function readCondition(card) {
   const condition = { type };
   if (type === 'symbols') {
     condition.symbols = {
-      white: intVal(card.querySelector('.cond-white').value),
-      orange: intVal(card.querySelector('.cond-orange').value),
-      red: intVal(card.querySelector('.cond-red').value),
+      white: intVal(card.querySelector('.cond-white')?.value),
+      orange: intVal(card.querySelector('.cond-orange')?.value),
+      red: intVal(card.querySelector('.cond-red')?.value),
     };
+    if (card.querySelector('.cond-or-white-orange')?.checked) {
+      condition.orWhiteOrange = true;
+    }
+    if (card.querySelector('.cond-or-orange-red')?.checked) {
+      condition.orOrangeRed = true;
+    }
   }
   if (type === 'suite') {
     condition.suite = card.querySelector('.cond-suite').value.trim();
     condition.length = intVal(card.querySelector('.cond-length').value);
   }
   if (type === 'number') condition.value = intVal(card.querySelector('.cond-value').value);
-  if (card.querySelector('.cond-repeat').checked) condition.repeat = true;
+  if (card.querySelector('.cond-repeat')?.checked) condition.repeat = true;
   return condition;
 }
 function readCommon(card) {
-  return {
+  const rawTokens = csv(card.querySelector('.effect-tokens')?.value);
+  const nbVal = card.querySelector('.effect-nb')?.value?.trim();
+  let tokenCount;
+  let finalTokens = rawTokens;
+  if (rawTokens.length > 0) {
+    const parsedNb = intVal(nbVal, 1);
+    const count = parsedNb > 0 ? parsedNb : 1;
+    if (count > 1) {
+      tokenCount = count;
+      if (rawTokens.length === 1) {
+        finalTokens = Array(count).fill(rawTokens[0]);
+      }
+    }
+  } else {
+    finalTokens = [];
+    tokenCount = undefined;
+  }
+  const cond = readCondition(card);
+  const res = {
     align: card.querySelector('.effect-align')?.value || 'left',
-    condition: readCondition(card),
+    condition: cond,
     label: card.querySelector('.effect-label').value.trim(),
     damage: intVal(card.querySelector('.effect-damage').value),
     undefendable: card.querySelector('.effect-undef').checked,
+    prevent: intVal(card.querySelector('.effect-prevent')?.value),
+    returnDamage: intVal(card.querySelector('.effect-return')?.value),
     stealHp: intVal(card.querySelector('.effect-stealhp').value),
     stealCp: intVal(card.querySelector('.effect-stealcp').value),
     heal: intVal(card.querySelector('.effect-heal').value),
     drawCards: intVal(card.querySelector('.effect-draw').value),
     discardCards: intVal(card.querySelector('.effect-discard').value),
-    tokens: csv(card.querySelector('.effect-tokens').value),
+    tokenCount: tokenCount,
+    tokens: finalTokens,
     formulas: card.querySelector('.effect-formulas').value.split(/[,\n]/).map((line) => line.trim()).filter(Boolean),
     notes: card.querySelector('.notes-field').value.split('\n').map((line) => line.trim()).filter(Boolean),
   };
+  if (cond.orWhiteOrange) res.orWhiteOrange = true;
+  if (cond.orOrangeRed) res.orOrangeRed = true;
+  return res;
 }
 function readActionCard(card) {
   const data = readCommon(card);
@@ -1051,16 +1264,36 @@ function readExtra(card) {
     rollText: card.querySelector('.extra-rolltext').value.trim(),
     finalText: card.querySelector('.extra-finaltext').value.trim() || undefined,
     displayRows: readDisplayRows(card),
-    outcomes: [...card.querySelectorAll('.outcome-row')].map((row) => ({
-      align: row.querySelector('.out-align').value || undefined,
-      face: row.querySelector('.out-face').value,
-      label: row.querySelector('.out-label').value.trim(),
-      damage: intVal(row.querySelector('.out-damage').value),
-      undefendable: row.querySelector('.out-undef').checked,
-      stealHp: intVal(row.querySelector('.out-stealhp').value),
-      stealCp: intVal(row.querySelector('.out-stealcp').value),
-      tokens: csv(row.querySelector('.out-tokens').value),
-    })),
+    outcomes: [...card.querySelectorAll('.outcome-row')].map((row) => {
+      const rawTokens = csv(row.querySelector('.out-tokens')?.value);
+      const nbVal = row.querySelector('.out-nb')?.value?.trim();
+      let tokenCount;
+      let tokens = rawTokens;
+      if (rawTokens.length > 0) {
+        const parsedNb = intVal(nbVal, 1);
+        const count = parsedNb > 0 ? parsedNb : 1;
+        if (count > 1) {
+          tokenCount = count;
+          if (rawTokens.length === 1) {
+            tokens = Array(count).fill(rawTokens[0]);
+          }
+        }
+      } else {
+        tokens = [];
+        tokenCount = undefined;
+      }
+      return {
+        align: row.querySelector('.out-align').value || undefined,
+        face: row.querySelector('.out-face').value,
+        label: row.querySelector('.out-label').value.trim(),
+        damage: intVal(row.querySelector('.out-damage').value),
+        undefendable: row.querySelector('.out-undef').checked,
+        stealHp: intVal(row.querySelector('.out-stealhp').value),
+        stealCp: intVal(row.querySelector('.out-stealcp').value),
+        tokenCount: tokenCount > 1 ? tokenCount : undefined,
+        tokens,
+      };
+    }),
   };
 }
 function conditionDisplayItems(condition = {}) {
@@ -1105,7 +1338,6 @@ function effectDisplayItems(effect = {}, { defense = false } = {}) {
   if (effect.drawCards) items.push(`Draw ${effect.drawCards}`);
   if (effect.discardCards) items.push(`Discard ${effect.discardCards}`);
   if (effect.topDeckToDiscard) items.push(`Top ${effect.topDeckToDiscard} discard`);
-  if (effect.formulas) items.push(...effect.formulas);
   if (effect.extraRoll?.dice) items.push('Roll', `${effect.extraRoll.dice}x`, '{die:white}');
   if (effect.notes) items.push(...effect.notes);
   return items;
@@ -1265,12 +1497,28 @@ function conditionalRulePreview(rule = {}) {
   return '<div class="preview-row conditional-preview"><div>⚙ Conditional</div><div>' + body + '</div></div>';
 }
 function conditionHtml(condition = {}) {
-  if (condition.type === 'suite') return `<span class="token-chip">${condition.suite || 'suite'} ${condition.length || ''}</span>`;
-  if (condition.type === 'number') return `<span class="die white">${condition.value ?? '?'}</span>`;
-  if (condition.type === 'any') return '<span class="token-chip">Any</span>';
-  if (condition.type === 'text') return '<span class="token-chip">Text rule</span>';
+  const prefix = condition.repeat ? '<span style="font-weight:900; font-size:16px; margin-right:4px;">x</span>' : '';
+  if (condition.type === 'suite') return `${prefix}<span class="token-chip">${condition.suite || 'suite'} ${condition.length || ''}</span>`;
+  if (condition.type === 'number') return `${prefix}<span class="die white">${condition.value ?? '?'}</span>`;
+  if (condition.type === 'any') return `${prefix}<span class="token-chip">Any</span>`;
+  if (condition.type === 'text') return `${prefix}<span class="token-chip">Text rule</span>`;
   const symbols = condition.symbols || {};
-  return `<div class="dice-line">${dice('white', symbols.white)}${dice('orange', symbols.orange)}${dice('red', symbols.red)}</div>`;
+  const orWO = condition.orWhiteOrange || symbols.orWhiteOrange;
+  const orOR = condition.orOrangeRed || symbols.orOrangeRed;
+  const parts = [];
+  const w = dice('white', symbols.white);
+  const o = dice('orange', symbols.orange ?? symbols.yellow);
+  const r = dice('red', symbols.red);
+  if (w) parts.push(w);
+  if (orWO && w && o) {
+    parts.push('<span class="die-or">or</span>');
+  }
+  if (o) parts.push(o);
+  if (orOR && o && r) {
+    parts.push('<span class="die-or">or</span>');
+  }
+  if (r) parts.push(r);
+  return `<div class="dice-line">${prefix}${parts.join('')}</div>`;
 }
 function dice(face, count = 0) {
   return Array.from({ length: intVal(count) }).map(() => `<span class="die ${face}">${face[0].toUpperCase()}</span>`).join('');
@@ -1285,17 +1533,37 @@ function tokenImageHtml(name) {
 }
 function displayItemHtml(item) {
   const text = String(item || '');
-  const match = text.match(/^\{([^:}]+):([^}]+)\}$/);
+  const match = text.match(/^\{([^:}]+)(?::([^}]+))?\}$/);
   if (!match) return '<span>' + escapeText(text) + '</span>';
   const kind = match[1].toLowerCase();
-  const value = match[2];
-  if (kind === 'die') return dice(value, 1) || '<span class="die white">D</span>';
-  if (kind === 'damage') return '<span class="badge damage">' + escapeText(value) + '</span>';
-  if (kind === 'undef') return '<span class="badge undef">' + escapeText(value) + '</span>';
-  if (kind === 'prevent') return '<span class="badge prevent">' + escapeText(value) + '</span>';
-  if (kind === 'heal') return '<span class="badge heal">' + escapeText(value) + '</span>';
+  const value = (match[2] ?? '').trim();
+  if (kind === 'die') {
+    if (['white', 'orange', 'red', 'yellow'].includes(value.toLowerCase())) {
+      return dice(value.toLowerCase() === 'yellow' ? 'orange' : value.toLowerCase(), 1);
+    }
+    return dice('white', 1) || '<span class="die white">D</span>';
+  }
+  if (kind === 'damage' || kind === 'dmg') return '<span class="badge damage">' + escapeText(value) + '</span>';
+  if (kind === 'undef' || kind === 'imparable') return '<span class="badge undef">' + escapeText(value) + '</span>';
+  if (kind === 'prevent' || kind === 'block' || kind === 'shield' || kind === 'bouclier') {
+    if (value === '1/2' || value === 'half') return '<span class="badge prevent" style="font-size:10px;">½</span>';
+    return '<span class="badge prevent">' + escapeText(value || '0') + '</span>';
+  }
+  if (kind === 'half_prevent' || kind === 'half_shield' || kind === 'half_block') {
+    return '<span class="badge prevent" style="font-size:10px;">½</span>';
+  }
+  if (kind === 'heal' || kind === 'life' || kind === 'vie' || kind === 'soin') return '<span class="badge heal">+' + escapeText(value) + '</span>';
+  if (kind === 'cp') return '<span class="token-chip">Steal ' + escapeText(value) + ' CP</span>';
   if (kind === 'token') return '<span class="token-chip">' + tokenImageHtml(value) + escapeText(value) + '</span>';
   return '<span>' + escapeText(text) + '</span>';
+}
+function renderFormattedInlineBadge(text = '') {
+  const str = String(text || '').trim();
+  if (!str) return '';
+  const formatted = str.replaceAll(/\{([a-zA-Z0-9_-]+)(?::([^}]+))?\}/g, (match, tag, val) => {
+    return displayItemHtml(`{${tag}:${val || ''}}`);
+  });
+  return `<span class="token-chip note-chip">${formatted}</span>`;
 }
 function displayRowsHtml(rows = []) {
   if (!rows.length) return '<em>No display rows.</em>';
@@ -1317,7 +1585,16 @@ function renderDisplayRowsPreviews() {
 }
 function effectHtml(effect = {}) {
   const bits = [];
-  if (effect.tokens) bits.push(...effect.tokens.map((token) => `<span class="token-chip">${tokenImageHtml(token)}${token}</span>`));
+  if (effect.tokens && effect.tokens.length) {
+    const counts = {};
+    for (const token of effect.tokens) {
+      counts[token] = (counts[token] || 0) + 1;
+    }
+    for (const [token, count] of Object.entries(counts)) {
+      const prefix = count > 1 ? `${count} x ` : '';
+      bits.push(`<span class="token-chip">${prefix}${tokenImageHtml(token)}${escapeText(token)}</span>`);
+    }
+  }
   if (effect.damage) bits.push(`<span class="badge ${effect.undefendable ? 'undef' : 'damage'}">${effect.damage}</span>`);
   if (effect.prevent) bits.push(`<span class="badge prevent">${effect.prevent}</span>`);
   if (effect.returnDamage) bits.push(`<span class="badge ${effect.undefendable ? 'undef' : 'damage'}">↩${effect.returnDamage}</span>`);
@@ -1327,7 +1604,9 @@ function effectHtml(effect = {}) {
   if (effect.drawCards) bits.push(`<span class="token-chip">Draw ${effect.drawCards}</span>`);
   if (effect.discardCards) bits.push(`<span class="token-chip">Discard ${effect.discardCards}</span>`);
   if (effect.topDeckToDiscard) bits.push(`<span class="token-chip">Top ${effect.topDeckToDiscard} discard</span>`);
-  if (effect.formulas) bits.push(...effect.formulas.map((formula) => `<span class="token-chip">${formula}</span>`));
+  if (effect.notes && effect.notes.length) {
+    bits.push(...effect.notes.map((note) => renderFormattedInlineBadge(note)));
+  }
   if (effect.extraRoll?.dice) {
     bits.push(`<span class="token-chip">Roll ${effect.extraRoll.dice} die</span>`);
     if (effect.extraRoll.displayRows?.length) {
@@ -1576,8 +1855,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const checkboxes = $('tokenCheckboxes').querySelectorAll('input[type="checkbox"]:checked');
       const selected = Array.from(checkboxes).map(cb => cb.value);
       activeTokenInput.value = selected.join(', ');
-      activeTokenInput.dispatchEvent(new Event('change'));
-      activeTokenInput.dispatchEvent(new Event('input'));
+
+      const parentCard = activeTokenInput.closest('.action-card, .outcome-row');
+      if (parentCard) {
+        const nbInput = parentCard.querySelector('.effect-nb, .out-nb');
+        if (nbInput) {
+          if (selected.length > 0 && !nbInput.value.trim()) {
+            nbInput.value = '1';
+          } else if (selected.length === 0) {
+            nbInput.value = '';
+          }
+          nbInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+
+      activeTokenInput.dispatchEvent(new Event('change', { bubbles: true }));
+      activeTokenInput.dispatchEvent(new Event('input', { bubbles: true }));
     }
     $('tokenModal').style.display = 'none';
     activeTokenInput = null;
@@ -1595,12 +1888,14 @@ document.addEventListener('DOMContentLoaded', () => {
       setDirty('enemy');
     }
   });
-  $('validateBtn').onclick = () => {
-    if (!selectedProfile) return;
-    selectedProfile.validated = !selectedProfile.validated;
-    setDirty('enemy');
-    renderLists();
-  };
+  if ($('validateAtkBtn')) $('validateAtkBtn').onclick = toggleValidateAtk;
+  if ($('validateDefBtn')) $('validateDefBtn').onclick = toggleValidateDef;
+  if ($('validateBtn')) {
+    $('validateBtn').onclick = () => {
+      toggleValidateAtk();
+      toggleValidateDef();
+    };
+  }
   if ($('cleanLegacyTextBtn')) {
     $('cleanLegacyTextBtn').onclick = () => {
       if (!selectedProfile) return;

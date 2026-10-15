@@ -54,6 +54,11 @@ bool _isDecrepifyToken(String t) => _isDecrepifyAlteration(t);
 bool _isDiceCubeToken(String t) => _isDiceCubeAlteration(t);
 bool _isEntangleToken(String t) => _isEntangleAlteration(t);
 
+bool _isLifeSiphonToken(String t) {
+  final k = _normalizeTokenKey(_tokenClean(t));
+  return k == 'siphonvital' || k == 'lifesiphon' || k == 'siphon';
+}
+
 bool _isShadowsToken(String t) {
   final k = _normalizeTokenKey(t);
   return k == 'shadows' || k == 'shadow' || k == 'ombre';

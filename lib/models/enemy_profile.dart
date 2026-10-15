@@ -46,6 +46,7 @@ class EnemyProfile {
     this.passives = const [],
     this.defenseDisplayRows = const [],
     this.passiveDisplayRows = const [],
+    this.defenseEffects = const [],
   });
 
   final String key;
@@ -75,6 +76,47 @@ class EnemyProfile {
 
   /// Optional authored passive display rows parsed from root passiveDisplayRows.
   final List<DisplayRow> passiveDisplayRows;
+
+  /// Structured defense effects parsed from defensePlan.effects.
+  final List<EnemyDefenseEffect> defenseEffects;
+}
+
+class EnemyDefenseEffect {
+  const EnemyDefenseEffect({
+    this.white = 0,
+    this.orange = 0,
+    this.red = 0,
+    this.repeat = false,
+    this.prevent = 0,
+    this.returnDamage = 0,
+    this.undefendable = false,
+    this.stealHp = 0,
+    this.stealCp = 0,
+    this.heal = 0,
+    this.tokens = const [],
+    this.label,
+    this.orWhiteOrange = false,
+    this.orOrangeRed = false,
+    this.notes = const [],
+    this.formulas = const [],
+  });
+
+  final int white;
+  final int orange;
+  final int red;
+  final bool repeat;
+  final int prevent;
+  final int returnDamage;
+  final bool undefendable;
+  final int stealHp;
+  final int stealCp;
+  final int heal;
+  final List<String> tokens;
+  final String? label;
+  final bool orWhiteOrange;
+  final bool orOrangeRed;
+  final List<String> notes;
+  final List<String> formulas;
 }
 
 enum MinionAttackStyle { symbols, suite, none }
@@ -130,6 +172,10 @@ class SymbolGoalEffect {
     this.extraRoll,
     this.align = 'left',
     this.formulas = const [],
+    this.repeat = false,
+    this.orWhiteOrange = false,
+    this.orOrangeRed = false,
+    this.notes = const [],
   });
 
   final int damage;
@@ -143,6 +189,10 @@ class SymbolGoalEffect {
   final String? label2;
   final String? label3;
   final List<String> formulas;
+  final bool repeat;
+  final bool orWhiteOrange;
+  final bool orOrangeRed;
+  final List<String> notes;
 
   /// Optional additional dice roll triggered when this goal's attack
   /// succeeds. Parsed from the JSON `attackPlan.actions[].extraRoll` block.

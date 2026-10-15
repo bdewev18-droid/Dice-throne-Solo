@@ -109,7 +109,7 @@ http
       urlPath = urlPath.slice(basePath.length);
     }
     const relativePath = urlPath.replace(/^\/+/, '');
-    if (relativePath === 'assets/docs/enemy_profiles.json') {
+    if (relativePath === 'assets/docs/enemy_profiles.json' || relativePath === 'docs/enemy_profiles.json') {
       const livePath = path.resolve(__dirname, '..', 'docs', 'enemy_profiles.json');
       if (fs.existsSync(livePath)) {
         sendFile(response, livePath);
@@ -174,6 +174,24 @@ http
       const liveSimPath = path.resolve(__dirname, '..', 'web', 'simulation', simRel);
       if (fs.existsSync(liveSimPath) && !fs.statSync(liveSimPath).isDirectory()) {
         sendFile(response, liveSimPath);
+        return;
+      }
+    }
+
+    // Serve web/admin directly so edits are immediate without rebuilding
+    if (relativePath === 'admin') {
+      response.writeHead(301, { Location: `${basePath}/admin/` });
+      response.end();
+      return;
+    }
+    if (relativePath.startsWith('admin/')) {
+      let admRel = relativePath.slice('admin/'.length);
+      if (!admRel || admRel.endsWith('/')) {
+        admRel = path.join(admRel, 'index.html');
+      }
+      const liveAdmPath = path.resolve(__dirname, '..', 'web', 'admin', admRel);
+      if (fs.existsSync(liveAdmPath) && !fs.statSync(liveAdmPath).isDirectory()) {
+        sendFile(response, liveAdmPath);
         return;
       }
     }
