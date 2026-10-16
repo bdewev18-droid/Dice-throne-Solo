@@ -35,6 +35,9 @@ Directives de Nina :
 3. **Pas de Double Validation Superflue** : Si `flutter test test/fight_logic_test.dart` passe, ne pas lancer `dart analyze` complet en arrière-plan.
 4. **Builds Ciblés** : Se concentrer immédiatement sur la modification et n'exécuter que les commandes strictement requises pour le packaging final (`set-version.ps1`, recette, `verify-fast.ps1`) sans temps d'attente parasite.
 
+## Langue de l'Application & Règle In-App
+Tous les textes ajoutés dans l'application (UI, popins, boutons, logs de combat, messages d'état, dialogues) doivent OBLIGATOIREMENT être en anglais. Si la demande ou les spécifications de l'utilisateur sont en français, les convertir et traduire systématiquement en anglais dans le code et les fichiers de données.
+
 ## Langue
-Tu dois toujours me parler en français.
+Tu dois toujours me parler en français dans le chat.
 

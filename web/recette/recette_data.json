@@ -1,6 +1,443 @@
 {
   "versions": [
     {
+      "version": "1.4.62",
+      "buildNumber": 374,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Hydre Féroce : Restauration complète du profil (3 jetons Chaos initiaux, Défense Unique de Régénération des Têtes à 8 PV, attaque Plurimorsure à 2 rouges et passif Regrowth)",
+      "prompts": [
+        "hydre feroce, peux tu reprendre le dev de de 1.4.59 +371 car je ne vois rien du tout (la défense est vide, pas de chaos en début de partie, l'attaque n'est pas bonne...) , peut être que le fichier json a été écrasé entre 2 car je le modifie."
+      ],
+      "features": [
+        "Restauration Complète du Profil (violet-violet-011) : initialTokens restaurés avec 3 Chaos (['Chaos', 'Chaos', 'Chaos']), PV max à 8, CP à 10 et cardAsset assets/violet/violet-011.png",
+        "Défense Unique Rétablie : defensePlan configuré avec condition 'any', formule 'reviveOnZeroHpWithChaos(8)' et note complète de résurrection (8 PV par tête)",
+        "Attaque Plurimorsure Clarifiée : goal fixé à 2 dés rouges (conformément à la carte officielle), formule 'damage = 6 + 3 * tokens(Chaos)' (6 de base + 3 par tête = 15 dégâts au départ), suppression de l'action parasite à 0 dégât",
+        "Passif de Repousse des Têtes : popin interactive anglaise HydraRegrowthDialog déclenchée en fin de phase offensive sur 6 au D6 (dé rouge)",
+        "Résurrection Sécurisée : déclenchement de checkAndApplyHydraRevival en combat ainsi que lors d'un ajustement manuel des PV à 0 dans l'éditeur",
+        "Synchronisation Totale : mise à jour identique de docs/enemy_profiles.json, docs/assets/docs/ et Dice-throne-Solo/assets/docs/"
+      ],
+      "tags": [
+        "Combat",
+        "HydreFeroce",
+        "ProfileRestoration",
+        "ChaosTokens",
+        "UniqueDefense"
+      ],
+      "author": "Antigravity",
+      "title": "Fierce Hydra: Full Profile & Unique Defense Restoration"
+    },
+    {
+      "version": "1.4.61",
+      "buildNumber": 373,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Berserker Enragé : formule et mécanique de défense 'gainTokenIfDamaged = Chaos' (0 dé de défense, gain d'un jeton Chaos si et seulement si l'attaquant inflige au moins 1 dégât)",
+      "prompts": [
+        "Berserker enragé, Sa défense est simple, il gagne juste un token Choas, sans lancer de dès, mais que s'il y a au moins 1 dégat de fait par l'attaquant."
+      ],
+      "features": [
+        "Berserker Enragé (orange-orange-007) : défense sans dé (defenseDice: 0) configurée avec la formule 'gainTokenIfDamaged = Chaos' et libellé 'Berserk Rage'",
+        "Formule 'gainTokenIfDamaged = Chaos' : implémentée dans defense_formula_evaluator.dart avec gestion du champ grantedEnemyTokens dans DefenseFormulaResult",
+        "Évaluation dynamique & temps réel : mise à jour automatique des jetons ennemis prévisionnels lors de la modification de l'attaque entrante (+/-) et synchronisation stricte lors de la résolution finale (netDamage >= 1)",
+        "Back-Office Admin (v1.7.25) : ajout de la formule 'gainTokenIfDamaged = Chaos' au catalogue Formulas Index (FORMULAS_CATALOG)",
+        "Localisation In-App : notes et logs de défense rédigés exclusivement en anglais ('Defense: took damage, gains 1 Chaos.') conformément à la règle in-app",
+        "Tests unitaires : 51/51 tests passés avec succès dans fight_logic_test.dart"
+      ],
+      "tags": [
+        "Combat",
+        "BerserkerEnrage",
+        "ChaosTokens",
+        "DefenseFormula",
+        "Admin"
+      ],
+      "author": "Antigravity",
+      "title": "Berserker Enragé: Zero-Dice Conditional Chaos Defense"
+    },
+    {
+      "version": "1.4.60",
+      "buildNumber": 372,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Traduction intégrale de la page de Fuite et des messages in-app en anglais, et apprentissage de la directive permanente de langue in-app",
+      "prompts": [
+        "il faut traduire cette page d'après le combat avec le gobelin en anglais. /learn tous les textes que tu ajoutes dans cette app doivent être en anglais, au besoin convertit ce que j'ai écris en Français en anglais."
+      ],
+      "features": [
+        "Page de Résolution de Fuite ('Escaped!') : titre, texte d'explication ('...fled during defense! The battle ends immediately. You continue the adventure without loot or Victory Points.') et boutons ('Continue Adventure', 'Review Battle Log') traduits en anglais",
+        "Logs de Combat en Anglais : traduction intégrale des messages de combat et d'aventure pour la fuite ('fled the battle: combat ends immediately without victory, loot or points') et pour la régénération de l'Hydre",
+        "Règle Globale In-App (/learn) : intégration permanente dans AGENTS.md exigeant que tout texte ajouté in-app soit exclusivement en anglais",
+        "Tests unitaires : 50/50 tests validés avec succès dans fight_logic_test.dart"
+      ],
+      "tags": [
+        "Combat",
+        "Translation",
+        "EnglishLocalization",
+        "FleeMechanic",
+        "AGENTS"
+      ],
+      "author": "Antigravity",
+      "title": "English In-App Localization & Learn Rule Implementation"
+    },
+    {
+      "version": "1.4.59",
+      "buildNumber": 371,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Hydre Féroce : 3 têtes initiales (Chaos), régénération de 8 PV par tête lors de la mort (Défense Unique), bonus de +3 dégâts par tête et popin passive en anglais (Hydra Regrowth sur D6 = 6)",
+      "prompts": [
+        "l'hydre féroce est très spéciale, Au début du jeu, elle commence avec 3 têtes d'hydre, représentées par des jetons chaos. Elle commance avec 8 points de vie. Dès qu'elle perd les 8 points de vie, alors elle revient à la vie (8 points de vie) s'il reste un jeton chaos. Donc pour la battre, c'est 3 fois 8 points de vie et on termine la dernière tête de 8 points de vie mais sans jeton chaos, elle meurt. Les jetons chaos peuvent être retirés via des cartes. Donc la régles c'est tant qu'il y a un jeton chaos, elle revient à la vie avec 8 points de vie. Passif, elle a un passif qui est qu'à la fin de la phase offensif de l'hydre, on affiche une popin qui contient un jet de dès (entre le moment où le OK de l'attaque se termine et avant d'entamer le tour d'attaque du hero). Si sur le lancé de dè, le resultat est 6 alors, on ajoute un chaos à l'hydre (une nouvelle tête). créer la popin et indiquer cela en anglais. Phase d'attaque, sur le dès rouge, elle inflige 6 dégats + 3 dégats par tête / jetons choas en sa possession. Donc sur la première attaque avec 3 jetons chaos, ca fait 15 dégats si les 3 jetons sont encore là. Je te paramétre ce personnage assez particulier."
+      ],
+      "features": [
+        "Hydre Féroce (violet-violet-011) : profil configuré avec 8 PV, 10 PC, initialTokens ['Chaos', 'Chaos', 'Chaos'] et attaque Plurimorsure (2 rouges)",
+        "Défense Unique (Régénération des Têtes) : lorsque l'Hydre tombe à 0 PV alors qu'il lui reste au moins 1 jeton Chaos, consomme 1 Chaos et régénère immédiatement 8 PV (s'applique même contre une Capacité Ultime)",
+        "Bonus d'Attaque Chaos : Plurimorsure inflige 6 dégâts de base + 3 dégâts par jeton Chaos possédé (ex. 15 dégâts avec 3 têtes)",
+        "Popin Passive 'Hydra Regrowth' (en anglais) : se déclenche à la fin de la phase offensive de l'Hydre, lance 1 dé et ajoute +1 tête (jeton Chaos) sur un résultat de 6 (rouge)",
+        "Affichage Dock & Visualisation : ligne de token Chaos adaptée affichant le nombre réel de têtes et le bonus exact de dégâts (+X DMG)",
+        "Admin Web (v1.7.24) : ajout des formules d'attaque et de défense de l'Hydre au catalogue Formulas Index",
+        "Tests unitaires & widgets : 50/50 tests validés avec succès dans fight_logic_test.dart"
+      ],
+      "tags": [
+        "Combat",
+        "HydreFeroce",
+        "ChaosTokens",
+        "PassiveRegrowth",
+        "UniqueDefense",
+        "Admin"
+      ],
+      "author": "Antigravity",
+      "title": "Fierce Hydra: Chaos Heads, Regeneration, Attack Bonus & English Regrowth Dialog"
+    },
+    {
+      "version": "1.4.58",
+      "buildNumber": 370,
+      "date": "2026-10-16",
+      "commit": "local-dev",
+      "summary": "Pillard Gobelin : vol de 1 CP + 1 dégât imparable (D6 <= 5) ou fuite du combat sans victoire ni récompense (D6 == 6), et consolidation des formules combinées",
+      "prompts": [
+        "régle/formule pour le pillard gobelin : sur le résulat du jet défensif, de 1 à 5 le pillard vol 1 CP et fait 1 dégats imparrable. sur 6 il prend la fuite, prendre la fuite c'est arrêter le combat sur son jet défensif, (ne pas prendre les dégats) , ne pas gagner le loot et continuer l'aventure sans la victoire, ca ne donne pas les points de victoire à la fin pour le calcule."
+      ],
+      "features": [
+        "Pillard Gobelin (violet-violet-012) : formules 'if D6 <= 5: stealCp = 1 & returnDamage = 1 (undef)' et 'fleeIfD6 == 6'",
+        "Mécanique de Fuite Minion : arrêt immédiat du combat, annulation des dégâts et tokens subis par le minion, aucun loot ni PV au score final de l'aventure, progression maintenue sur la carte",
+        "Panneau de Résolution dédié : affichage du panneau 'Fuite !' avec explication claire, bouton 'Continuer l'aventure' et consultation du journal de combat",
+        "Consolidation de l'évaluateur de formules : propagation des préfixes conditionnels pour formules combinées ('&') et support unitaire ou combiné de stealCp et returnDamage",
+        "Admin Web (v1.7.23) : ajout de la formule 'Pillard Gobelin - Vol & Fuite' au catalogue Formulas Index",
+        "Tests unitaires : 48/48 tests validés avec succès dans fight_logic_test.dart"
+      ],
+      "tags": [
+        "Combat",
+        "PillardGobelin",
+        "DefenseFormulas",
+        "FleeMechanic",
+        "AdventureProgression",
+        "Admin"
+      ],
+      "author": "Antigravity",
+      "title": "Pillard Gobelin: Defense Steal, Return Damage & Battle Flee Mechanic"
+    },
+    {
+      "version": "1.4.57",
+      "buildNumber": 369,
+      "date": "2026-10-16",
+      "commit": "local-dev",
+      "summary": "Formules de défense configurables et mécaniques génériques pour Horde de Gobelins, The Ashen King, Renégate Véreuse et Wyverne",
+      "prompts": [
+        "bon, il reste une 10 aines de monstre à configurer avec tous des spécificités, à voir si on les codes en dur ou dans l'admin via des formules. horde de Gobelins a une défense spéciale, il capte les dégats à unmaximum de 6, impossible de faire plus. On pourrait bloquer la zone atk du hero à 6, après le + est non actif. The ashen king , sa défense est d'infligé un token \"burn\" sur un symbole orange, si le joueur a atteint la limite de stack de burn, alors il prendra 2 dégats à la place. renégate Véreuse, Sur 2 symboles rouges, renegate ignore tous les dégats, pour tout autre résultat alors la renégate vole 2 CP au hero. wyverne, son dès de défense, si le résultat est 5 ou 6 alors l'attaque échoue (aussi bien les dégats que les tokens)"
+      ],
+      "features": [
+        "Horde de Gobelins : formule 'damageCap = 6' plafonnant les dégâts subis à 6 max et désactivation dynamique du bouton '+' du compteur d'ATK héros avec tooltip 'Plafond atteint'",
+        "The Ashen King : formule 'burnOrDamageIfMax = 2' infligeant le token Burn ou 2 dégâts imparables si le stack max de 1 Burn est déjà atteint par le héros",
+        "Renégate Véreuse : gestion de l'exclusivité stricte - 2 rouges ignorent tous les dégâts subis, tout autre tirage vole 2 CP au héros (sans cumul erroné)",
+        "Wyverne : formule 'attackFailsIfD6 >= 5' provoquant l'échec total de l'attaque du héros sur un jet de 5 ou 6 (0 dégât et annulation de tous les tokens/altérations)",
+        "Admin Web (v1.7.22) : ajout des 3 formules au catalogue 'Formulas Index' avec description, syntaxe et exemples",
+        "Tests unitaires : 46/46 tests passés avec succès dans fight_logic_test.dart"
+      ],
+      "tags": [
+        "Combat",
+        "DefenseFormulas",
+        "HordeDeGobelins",
+        "TheAshenKing",
+        "RenegateVereuse",
+        "Wyverne",
+        "Admin"
+      ],
+      "author": "Antigravity",
+      "title": "Generic Defense Formulas for Gobelins, Ashen King, Renégate & Wyverne"
+    },
+    {
+      "version": "1.4.56",
+      "buildNumber": 368,
+      "date": "2026-10-16",
+      "commit": "local-dev",
+      "summary": "Synchronisation stricte des formules de défense sur le dé de combat réel (Épée Fantôme, Lame Maudite, Elfe Agile) et résolution simultanée dégâts/soin",
+      "prompts": [
+        "épée fantome, j'ai eu un jet de dès à 4 et j'ai renvoyé 3 dégats ? ca devrait être 2. l'app interprête bien les choses ? Elfe agile aussi ca ne fonctionne pas bien, entre l'atk du hero et le jet qui heal le résultat n'est pas bon?. Lame maudite, sur un 5 en jet de dès la prévention fut 2, alors que c'esr 3avec l'arrondie. Idem pour le retour de dégats qui fut 2 et ca devait être 3 (arrondie)"
+      ],
+      "features": [
+        "Épée Fantôme : utilisation stricte de la valeur du dé de défense lancé (firstDieValue). Sur un jet de 4, renvoie exactement 2 dégâts (4 / 2 = 2)",
+        "Lame Maudite : calcul exact sur le dé de défense à 5, prévenant 3 dégâts et renvoyant 3 dégâts (arrondi au supérieur de 5 / 2 = 3)",
+        "Elfe Agile : soin défensif indexé fidèlement sur la valeur du dé lancé à l'écran, sans tirage de dé aléatoire secret divergent",
+        "Résolution simultanée ATK / Soin défensif : calcul net sans clamp intermédiaire faussé (oldEnemyHealth - netDamage + enemyHeal)",
+        "Affichage clair du soin défensif dans le journal de combat et dans le récapitulatif d'attaque du héros (Outcome message)",
+        "Suite complète des 42 tests unitaires validée à 100%"
+      ],
+      "tags": [
+        "Combat",
+        "DefenseDice",
+        "EpeeFantome",
+        "LameMaudite",
+        "ElfeAgile",
+        "Heal",
+        "Fix"
+      ],
+      "author": "Antigravity",
+      "title": "Exact Defense Die Resolution & Simultaneous Combat Health Update"
+    },
+    {
+      "version": "1.4.55",
+      "buildNumber": 367,
+      "date": "2026-10-16",
+      "commit": "local-dev",
+      "summary": "Compatibilité universelle des formules de défense (syntaxe naturelle et formelle) pour Épée Fantôme, Atlas, Lame Maudite et non-cumul exclusif de Harpie Cornue",
+      "prompts": [
+        "épée fantome, les dégats ne sont pas faits au niveau de la formule. Atlas ca ne fonctionne pas non plus, Bref toutes les dernières formules et peut être d'avant ne fonctionne pas bien."
+      ],
+      "features": [
+        "Tolérance universelle du parser de formules de défense : prise en charge transparente des libellés naturels ('Roll D6: return 1/2 D6 (undef)', 'Prevent defense roll value', 'Roll D6: prevent 1/2 D6 & return 1/2 D6 (undef)') et mathématiques",
+        "Épée Fantôme : application effective du jet de D6 et des dégâts en retour (arrondis au supérieur) infligés au héros avec traçabilité dans le journal de combat",
+        "Atlas : prise en compte automatique de la prévention totale basée sur la valeur du dé de défense",
+        "Lame Maudite : exécution synchrone de la formule combinée (prévention 1/2 D6 et riposte 1/2 D6)",
+        "Harpie Cornue : configuration exclusive validée évitant tout cumul erroné des paliers de défense",
+        "Validation de la suite complète des 42 tests unitaires de logique de combat",
+        "Mise à niveau de l'admin web vers la version 1.7.21"
+      ],
+      "tags": [
+        "Combat",
+        "DefenseFormulas",
+        "EpeeFantome",
+        "Atlas",
+        "LameMaudite",
+        "HarpieCornue",
+        "Fix"
+      ],
+      "author": "Antigravity",
+      "title": "Universal Defense Formulas Parser & Combat Resolution"
+    },
+    {
+      "version": "1.4.54",
+      "buildNumber": 366,
+      "date": "2026-10-16",
+      "commit": "local-dev",
+      "summary": "Catalogue exhaustif et interactif des formules de combat dans l'onglet Formulas Index du Back Office Admin",
+      "prompts": [
+        "ajoute toutes les formules dans la partie Formulas index"
+      ],
+      "features": [
+        "Référencement complet de toutes les formules de combat supportées (Prévention, Riposte, Formules combinées, Soin, Passif, Attaque)",
+        "Affichage interactif avec nom clair, syntaxe exacte, badge de catégorie, description détaillée et exemples chiffrés",
+        "Boutons de copie rapide et clic direct sur les formules avec feedback visuel",
+        "Association automatique avec les profils ennemis utilisant chaque formule dans le JSON",
+        "Barre de recherche en temps réel par mot-clé, syntaxe, monstre ou catégorie",
+        "Mise à niveau de l'admin web vers la version 1.7.20"
+      ],
+      "tags": [
+        "Admin",
+        "Formulas",
+        "Index",
+        "Documentation",
+        "Search",
+        "Copy"
+      ],
+      "author": "Antigravity",
+      "title": "Comprehensive Formulas Index Catalog in Admin"
+    },
+    {
+      "version": "1.4.53",
+      "buildNumber": 365,
+      "date": "2026-10-16",
+      "commit": "local-dev",
+      "summary": "Formules de défense étendues : dé additionnel (dégâts en retour 1/2, prévention 1/2, formule combinée) et prévention du total du jet défensif",
+      "prompts": [
+        "nouvelle formule si elle n'hesite pas encore : pour la défense, On lance un dès additionnel et le minion infligé la moitié du résultat en dégats (retour damage, et arrondis au chiffre supérieur).",
+        "Nouvelle formule qui en combine 2. Je veux la formule juste au dessus, avec la moitié du resultat du dès en damage. Mais on combile aussi avec le fait que le minion prévient la moitié du résultat en prévention de dégats. Donc sur un 5 en jet de dès additionnel, le minion inflige 3 dégats et prévient 3 sur sa défense.",
+        "formule n°3 : Le minion prévient le total de la valeur du dès (jet défensif)"
+      ],
+      "features": [
+        "Formule 1 : returnDamage = ceil(rollD6() / 2) (dé additionnel lancé, inflige la moitié du résultat arrondi au supérieur en dégâts directs indéfendables)",
+        "Formule 2 (Combinée) : returnDamage = ceil(rollD6() / 2) & prevent = ceil(rollD6() / 2) (partage du même jet de dé additionnel : ex. sur un 5, inflige 3 dégâts et prévient 3 dégâts)",
+        "Formule 3 : prevent = defenseDieValue (prévient la valeur totale du dé issu du jet de défense) et variante prevent = rollD6() (dé additionnel)",
+        "Support syntaxique multi-expressions (séparateurs ';' et '&') et tolérance aux variantes (d6, defensedie, jetdefensif)",
+        "Affichage des badges dédiés dans EnemyRulesPanel et validation par tests unitaires automatisés"
+      ],
+      "tags": [
+        "Combat",
+        "Defense",
+        "Formulas",
+        "D6",
+        "ReturnDamage",
+        "Prevent",
+        "Combined"
+      ],
+      "author": "Antigravity",
+      "title": "Extended Defense Formulas (Roll D6 Damage/Prevent & Defense Die Value)"
+    },
+    {
+      "version": "1.4.52",
+      "buildNumber": 364,
+      "date": "2026-10-16",
+      "commit": "local-dev",
+      "summary": "Formule de défense générique : dé additionnel D6 de soin et répartition 50/50 si 2 sbires en vie",
+      "prompts": [
+        "on va ajouter des spécificités mais je veux qu'on les codes via les formules. Je veux qu'on crée une formule: lors de la défens du minon, on lance un dès additonnel; le minion gagne la valeur du lancé en santé. cas spécifique, s'il y a 2 ennemmies à battre (scénario en difficile en map minion sur la fin des branches, avec 2 sbires à combattre) Dans ce cas où il y a 2 ennemies (encore en vie) alors le résultat du dès se divise en 2 et chaque sbire gagne la moitié."
+      ],
+      "features": [
+        "Nouvelle formule de défense dynamique supportée : heal = rollD6() (et variantes d6, minionHeal, soin)",
+        "Lancer automatique d'un dé additionnel D6 pour le soin du minion lors de la défense",
+        "Prise en charge du combat double sbire (_hasDualEnemies) : si 2 sbires sont encore en vie, le résultat du dé est divisé en 2 (arrondi supérieur) et chaque sbire gagne sa part en PV",
+        "Application complète dans la boucle de combat, gestion d'historique (undo/redo), affichage dans les règles de monstre et résumé IA Chat",
+        "Tests unitaires automatisés validant le soin solo et le partage à 2 sbires"
+      ],
+      "tags": [
+        "Combat",
+        "Defense",
+        "Formulas",
+        "D6",
+        "Heal",
+        "Dual Minions"
+      ],
+      "author": "Antigravity",
+      "title": "Defense Formula Heal Roll D6 & Dual Minion Split"
+    },
+    {
+      "version": "1.4.51",
+      "buildNumber": 363,
+      "date": "2026-10-16",
+      "commit": "local-dev",
+      "summary": "Unification monobloc blanche du dock IA Chat (suppression de l'interstice noir entre message et flèches)",
+      "prompts": [
+        "j'aimerais que toute la zone du bas soit banche dans l'IA chat, je vois une séparation entre AI chat et les boutons avec du noir."
+      ],
+      "features": [
+        "Intégration directe des boutons flèches dans le conteneur du chat via la propriété trailing",
+        "Suppression du gap noir de 8dp entre le chat et la colonne de boutons",
+        "Suppression de l'interstice noir entre les flèches haut/bas, remplacé par une fine ligne de séparation (#E5DED0)",
+        "Conteneur monobloc unifié à fond blanc pur (Colors.white) avec bordure subtile et coins arrondis (12dp)",
+        "Flèches violettes (#8F43FF) directement intégrées dans le même bloc blanc avec ripple Material épuré"
+      ],
+      "tags": [
+        "UX",
+        "Chat",
+        "Design",
+        "Dock",
+        "Unified",
+        "Nina"
+      ],
+      "author": "Antigravity & Nina",
+      "title": "Unified Monobloc IA Chat Dock"
+    },
+    {
+      "version": "1.4.50",
+      "buildNumber": 362,
+      "date": "2026-10-16",
+      "commit": "local-dev",
+      "summary": "Refonte UX IA Chat (fond parchemin noble, flèches violettes épurées) & harmonisation sémantique Gain / Lose",
+      "prompts": [
+        "si on met 'lose' coté front quand dans l'admin 'lose hp' est renseigné, alors il faut mettre 'gain' quand 'heal' est renseigné dans l'admin.",
+        "dans IA chat, je veux que le background d'IA chat soit blanc, et les textes blancs passent en noir. Les 2 boutons fléches sur le coté, je veux qu'on supprime l'effet bouton. je veux un fond blanc identique. les fléches passent en violet. Option 1 validée (Parchemin noble beige)."
+      ],
+      "features": [
+        "Harmonisation front : affichage du label 'gain' sur le badge de soin (_HealBadge) en symétrie avec 'lose'",
+        "Fond du chat de combat modernisé avec un parchemin noble (#F5F0E8) et bordure douce (#DCD4C5)",
+        "Textes du chat IA passés en anthracite profond (#1C1B19) pour un contraste optimal",
+        "Nom du héros stylisé en ambre noble (#B45309) avec ombre douce garantissant un contraste WCAG AA sur fond clair",
+        "Suppression de l'effet boîte violette des boutons flèches latéraux, remplacé par des flèches violettes (#8F43FF) sur fond parchemin fusionné avec la zone de texte"
+      ],
+      "tags": [
+        "UX",
+        "Chat",
+        "Design",
+        "Gain",
+        "Heal",
+        "Nina"
+      ],
+      "author": "Antigravity & Nina",
+      "title": "Noble Parchment IA Chat & Gain Semantic Badge"
+    },
+    {
+      "version": "1.4.49",
+      "buildNumber": 361,
+      "date": "2026-10-16",
+      "commit": "local-dev",
+      "summary": "Paliers exclusifs de défense (option Exclusive dans l'admin, résolution non cumulée pour Harpie Cornue)",
+      "prompts": [
+        "sur le minion harpie cornu, au niveau de la défense, sur un symbole orange on prévient la moitiée des dégats, ok sur 2 symboles, on ignore tous les dégats. Ca fonctionne bien sauf quand on a les 2 symboles, alors l'app cumulle les 2. Donc si l'attaquant attaque avec 6, la défense est de 9.... Corriger cela soit pour ce minion, soit avec une case dans l'admin, j eveux eviter le code spécifique."
+      ],
+      "features": [
+        "Case 'Exclusive (tier / highest match)' ajoutée dans l'Admin v1.7.18 pour les effets de défense",
+        "Modèle EnemyDefenseEffect enrichi avec la propriété exclusive",
+        "Algorithme générique de filtrage filterActiveDefenseEffects qui sélectionne le palier exclusif le plus exigeant sans cumuler les paliers inférieurs",
+        "Attribution de exclusive: true sur la Harpie Cornue : 1 orange = demi-prévention (ex: 3 sur 6), 2 oranges = ignore tous les dégâts (6 sur 6, sans cumul à 9)"
+      ],
+      "tags": [
+        "Defense",
+        "Exclusive",
+        "Tiers",
+        "Admin",
+        "Fix"
+      ],
+      "author": "Antigravity",
+      "title": "Exclusive Defense Tiers Support"
+    },
+    {
+      "version": "1.4.48",
+      "buildNumber": 360,
+      "date": "2026-10-16",
+      "commit": "local-dev",
+      "summary": "Résolution des formules de défense des monstres (ignoreAllIncomingDamage, prevent half) et champ Lose HP",
+      "prompts": [
+        "dans l'admin, où il y a steal , gain, ruturn, damage heal, je veux un nouveau champ 'lost heal' ou lose heal",
+        "la formule 'ignoreAllIncomingDamage = true' ne semble plus fonctionner. Je l'ai testé en recette sur mort murmurrante",
+        "la formule 'prevent = ceil(incomingDamage / 2)' ne fonctionne plus pour elfe flétrie et les autres monstre"
+      ],
+      "features": [
+        "Nouveau champ Lose HP dans l'Admin v1.7.17 et badge dédié LoseHpBadge",
+        "Évaluateur dynamique de formules de défense (DefenseFormulaEvaluator) prenant en charge ignoreAllIncomingDamage, prevent half, return half, et return half D6",
+        "Application correcte de la défense pour Mort Murmurante, Elfe Flétri, Harpie Cornue, Banshie Hurlante, etc.",
+        "Fallback visuel propre dans le panneau des règles ennemies quand les notes sont absentes"
+      ],
+      "tags": [
+        "Defense",
+        "Formulas",
+        "LoseHp",
+        "Combat",
+        "Fix"
+      ],
+      "author": "Antigravity",
+      "title": "Defense Formulas & Lose HP Support"
+    },
+    {
+      "version": "1.4.47",
+      "buildNumber": 359,
+      "date": "2026-10-16",
+      "commit": "local-dev",
+      "summary": "Build web local avec prévisualisation",
+      "prompts": [
+        "buildweb local avec preview"
+      ],
+      "features": [
+        "Génération du build web local de production",
+        "Lancement du serveur de prévisualisation locale"
+      ],
+      "tags": [
+        "Build",
+        "Web",
+        "Preview"
+      ],
+      "author": "Antigravity",
+      "title": "Build Web Local & Preview"
+    },
+    {
       "version": "1.4.46",
       "buildNumber": 358,
       "date": "2026-10-15",

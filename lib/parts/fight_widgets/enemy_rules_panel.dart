@@ -819,8 +819,11 @@ class MinionAttackSummary extends StatelessWidget {
       if (effect.stealHp > 0) {
         badges.add(LifeStealBadge(value: effect.stealHp, color: color));
       }
+      if (effect.loseHp > 0) {
+        badges.add(LoseHpBadge(value: effect.loseHp, color: color));
+      }
       if (effect.heal > 0) {
-        badges.add(_HealBadge(value: effect.heal));
+        badges.add(_HealBadge(value: effect.heal, color: color));
       }
       if (effect.damage > 0) {
         badges.add(
@@ -1401,16 +1404,20 @@ class MinionAttackSummary extends StatelessWidget {
                     if (effect.stealHp > 0) {
                       result.add(LifeStealBadge(value: effect.stealHp, color: enemy.rank.color));
                     }
+                    if (effect.loseHp > 0) {
+                      result.add(LoseHpBadge(value: effect.loseHp, color: enemy.rank.color));
+                    }
                     if (effect.stealCp > 0) {
                       result.add(CpStealBadge(value: effect.stealCp, color: enemy.rank.color));
                     }
                     if (effect.heal > 0) {
-                      result.add(_HealBadge(value: effect.heal));
+                      result.add(_HealBadge(value: effect.heal, color: enemy.rank.color));
                     }
                   }
 
                   final hasOtherEffects = effect != null &&
                       (effect.stealHp > 0 ||
+                          effect.loseHp > 0 ||
                           effect.stealCp > 0 ||
                           effect.heal > 0 ||
                           effect.heroTokens.isNotEmpty ||
@@ -1574,7 +1581,7 @@ class _NaxarusAttackSummary extends StatelessWidget {
           detail: _naraxusAttackDetails[1]!,
           result: [
             TokenBadge(label: '-TOK', color: enemy.rank.color),
-            const _HealBadge(value: 4),
+            _HealBadge(value: 4, color: enemy.rank.color),
             const DamageBadge(value: 3, imparable: true),
           ],
         ),
@@ -1989,6 +1996,113 @@ List<Widget> _buildDefenseEffectsWidgets(EnemyNode enemy) {
         ),
       );
     }
+    if (eff.notes.isEmpty && eff.formulas.isNotEmpty) {
+      for (final f in eff.formulas) {
+        final clean = f.replaceAll(' ', '').toLowerCase();
+        if (clean.contains('prevent=ceil(incomingdamage/2)')) {
+          rightWidgets.add(const _HalfPreventBadge());
+        } else if (clean.contains('ignoreallincomingdamage')) {
+          rightWidgets.add(
+            InlineTokenText(
+              'Ignore all incoming damage',
+              color: enemy.rank.color,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xffcbd8cc),
+              ),
+            ),
+          );
+        } else if (clean.contains('returndamage=ceil(incomingdamage/2)')) {
+          rightWidgets.add(
+            InlineTokenText(
+              'Return 1/2 incoming damage',
+              color: enemy.rank.color,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xffcbd8cc),
+              ),
+            ),
+          );
+        } else if (clean.contains('returndamage=ceil(defensedievalue/2)')) {
+          rightWidgets.add(
+            InlineTokenText(
+              'Return 1/2 D6 damage (undef)',
+              color: enemy.rank.color,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xffcbd8cc),
+              ),
+            ),
+          );
+        } else if (isPreventRollD6HalfFormula(clean) && isReturnDamageRollD6Formula(clean)) {
+          rightWidgets.add(
+            InlineTokenText(
+              'Roll D6: prevent 1/2 D6 & return 1/2 D6 (undef)',
+              color: enemy.rank.color,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xffcbd8cc),
+              ),
+            ),
+          );
+        } else if (isReturnDamageRollD6Formula(clean)) {
+          rightWidgets.add(
+            InlineTokenText(
+              'Roll D6: return 1/2 D6 (undef)',
+              color: enemy.rank.color,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xffcbd8cc),
+              ),
+            ),
+          );
+        } else if (isPreventRollD6HalfFormula(clean)) {
+          rightWidgets.add(
+            InlineTokenText(
+              'Roll D6: prevent 1/2 D6',
+              color: enemy.rank.color,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xffcbd8cc),
+              ),
+            ),
+          );
+        } else if (isPreventDefenseDieValueFormula(clean)) {
+          rightWidgets.add(
+            InlineTokenText(
+              'Prevent defense roll value',
+              color: enemy.rank.color,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xffcbd8cc),
+              ),
+            ),
+          );
+        } else if (isPreventRollD6FullFormula(clean)) {
+          rightWidgets.add(
+            InlineTokenText(
+              'Roll D6: prevent D6 damage',
+              color: enemy.rank.color,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xffcbd8cc),
+              ),
+            ),
+          );
+        } else if (isHealRollD6DefenseFormula(clean)) {
+          rightWidgets.add(
+            InlineTokenText(
+              'Roll D6: heal D6 HP (split if 2 minions)',
+              color: enemy.rank.color,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xffcbd8cc),
+              ),
+            ),
+          );
+        }
+      }
+    }
     if (eff.prevent > 0) {
       rightWidgets.add(PreventBadge(value: eff.prevent));
     }
@@ -2003,11 +2117,14 @@ List<Widget> _buildDefenseEffectsWidgets(EnemyNode enemy) {
     if (eff.stealHp > 0) {
       rightWidgets.add(LifeStealBadge(value: eff.stealHp, color: enemy.rank.color));
     }
+    if (eff.loseHp > 0) {
+      rightWidgets.add(LoseHpBadge(value: eff.loseHp, color: enemy.rank.color));
+    }
     if (eff.stealCp > 0) {
       rightWidgets.add(CpStealBadge(value: eff.stealCp, color: enemy.rank.color));
     }
     if (eff.heal > 0) {
-      rightWidgets.add(_HealBadge(value: eff.heal));
+      rightWidgets.add(_HealBadge(value: eff.heal, color: enemy.rank.color));
     }
 
     list.add(

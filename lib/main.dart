@@ -31,11 +31,15 @@ part 'parts/fight_widgets/dice_panel.dart';
 part 'parts/fight_widgets/token_animation_dialog.dart';
 part 'parts/fight_widgets/turn_phase_panel.dart';
 part 'parts/fight_widgets/ninjitsu_choice_dialog.dart';
+part 'parts/fight_widgets/lose_hp_badge.dart';
+part 'parts/fight_widgets/hydra_regrowth_dialog.dart';
 part 'parts/fight_logic/token_combat_helpers.dart';
+part 'parts/fight_logic/defense_formula_evaluator.dart';
+part 'parts/fight_logic/hydra_logic.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.4.46';
+const String appVersionLabel = 'Version 1.4.62';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -1342,6 +1346,7 @@ class EnemyNode {
   final List<String> alterations = [];
   final Set<String> maskedPopinTokens = <String>{};
   bool defeated = false;
+  bool fled = false;
   bool current = false;
 
   String get previewAsset {
@@ -1659,6 +1664,23 @@ class AdventureState {
       }
     }
 
+    if (health <= 0) {
+      _endAdventure(false);
+    } else if (enemies.every((enemy) => enemy.defeated)) {
+      _endAdventure(true);
+    }
+    _refreshAvailability();
+  }
+
+  /// Records that an enemy has fled the battle without being defeated.
+  /// Marks the encounter step as passed so adventure progression continues,
+  /// but awards no victory points to [score] and generates no loot.
+  void recordEnemyFled(EnemyNode enemy) {
+    if (!enemy.defeated) {
+      enemy.fled = true;
+      enemy.defeated = true;
+      log('${enemy.label} fled the battle: combat ends immediately without victory, loot or points.');
+    }
     if (health <= 0) {
       _endAdventure(false);
     } else if (enemies.every((enemy) => enemy.defeated)) {

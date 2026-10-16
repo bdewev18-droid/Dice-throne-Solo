@@ -292,6 +292,7 @@ function defaultAction() {
     damage: 0,
     undefendable: false,
     stealHp: 0,
+    loseHp: 0,
     stealCp: 0,
     heal: 0,
     drawCards: 0,
@@ -315,6 +316,7 @@ function defaultDefense() {
     returnDamage: 0,
     undefendable: false,
     stealHp: 0,
+    loseHp: 0,
     stealCp: 0,
     heal: 0,
     drawCards: 0,
@@ -962,7 +964,7 @@ function renderDefense() {
 function defaultConditionalRule() {
   return {
     condition: { type: 'sameValue', count: 3 },
-    effect: { heroTokens: [], minionTokens: [], damage: null, damageFormula: null, undefendable: false, lifeSteal: 0, cpSteal: 0, note: '' },
+    effect: { heroTokens: [], minionTokens: [], damage: null, damageFormula: null, undefendable: false, lifeSteal: 0, loseHp: 0, cpSteal: 0, note: '' },
     displayRows: [],
     exclusive: true,
     minRollCount: 0,
@@ -1003,6 +1005,7 @@ function conditionalRuleCard(data, index) {
       select('Damage formula', 'eff-damageformula', effect.damageFormula || '', ['', 'cp', 'cp+cpSteal']) +
       check('Undefendable', 'eff-undef', !!effect.undefendable) +
       input('Life steal', 'eff-lifesteal', effect.lifeSteal ?? 0, 'number') +
+      input('Lose HP', 'eff-losehp', effect.loseHp ?? 0, 'number') +
       input('CP steal', 'eff-cpsteal', effect.cpSteal ?? 0, 'number') +
       textarea('Note', 'eff-note', effect.note || '', 2) +
       '</div>',
@@ -1065,6 +1068,7 @@ function readConditionalRuleCard(card) {
     damageFormula: damageFormula || null,
     undefendable: card.querySelector('.eff-undef').checked,
     lifeSteal: intVal(card.querySelector('.eff-lifesteal').value),
+    loseHp: intVal(card.querySelector('.eff-losehp').value),
     cpSteal: intVal(card.querySelector('.eff-cpsteal').value),
     note: card.querySelector('.eff-note').value.trim(),
   };
@@ -1108,6 +1112,7 @@ function actionCard(data, index, isDefense) {
     input('Length', 'cond-length', condition.length ?? '', 'number'),
     input('Value', 'cond-value', condition.value ?? '', 'number'),
     check('Repeat per symbol', 'cond-repeat', !!condition.repeat),
+    check('Exclusive (tier / highest match)', 'cond-exclusive', !!(condition.exclusive ?? data.exclusive)),
   ].join('');
   node.querySelector('.effect-grid').innerHTML = [
     select('Align', 'effect-align', data.align || 'left', ['left', 'center']),
@@ -1117,6 +1122,7 @@ function actionCard(data, index, isDefense) {
     input('Prevent', 'effect-prevent', data.prevent ?? 0, 'number'),
     input('Return dmg', 'effect-return', data.returnDamage ?? 0, 'number'),
     input('Steal HP', 'effect-stealhp', data.stealHp ?? 0, 'number'),
+    input('Lose HP', 'effect-losehp', data.loseHp ?? 0, 'number'),
     input('Steal CP', 'effect-stealcp', data.stealCp ?? 0, 'number'),
     input('Heal', 'effect-heal', data.heal ?? 0, 'number'),
     input('Draw', 'effect-draw', data.drawCards ?? 0, 'number'),
@@ -1159,6 +1165,7 @@ function outcomeRow(outcome) {
       ${select('Face', 'out-face', outcome.face || 'white', ['white', 'orange', 'red', 'any'])}
       ${input('Dmg', 'out-damage', outcome.damage ?? 0, 'number')}
       ${input('Steal HP', 'out-stealhp', outcome.stealHp ?? 0, 'number')}
+      ${input('Lose HP', 'out-losehp', outcome.loseHp ?? 0, 'number')}
       ${input('Steal CP', 'out-stealcp', outcome.stealCp ?? 0, 'number')}
       ${check('Undef', 'out-undef', !!outcome.undefendable)}
       ${input('Nb', 'out-nb', resolveTokenCountDisplay(outcome), 'number')}
@@ -1194,6 +1201,7 @@ function readCondition(card) {
   }
   if (type === 'number') condition.value = intVal(card.querySelector('.cond-value').value);
   if (card.querySelector('.cond-repeat')?.checked) condition.repeat = true;
+  if (card.querySelector('.cond-exclusive')?.checked) condition.exclusive = true;
   return condition;
 }
 function readCommon(card) {
@@ -1224,6 +1232,7 @@ function readCommon(card) {
     prevent: intVal(card.querySelector('.effect-prevent')?.value),
     returnDamage: intVal(card.querySelector('.effect-return')?.value),
     stealHp: intVal(card.querySelector('.effect-stealhp').value),
+    loseHp: intVal(card.querySelector('.effect-losehp').value),
     stealCp: intVal(card.querySelector('.effect-stealcp').value),
     heal: intVal(card.querySelector('.effect-heal').value),
     drawCards: intVal(card.querySelector('.effect-draw').value),
@@ -1235,6 +1244,7 @@ function readCommon(card) {
   };
   if (cond.orWhiteOrange) res.orWhiteOrange = true;
   if (cond.orOrangeRed) res.orOrangeRed = true;
+  if (cond.exclusive) res.exclusive = true;
   return res;
 }
 function readActionCard(card) {
@@ -1289,6 +1299,7 @@ function readExtra(card) {
         damage: intVal(row.querySelector('.out-damage').value),
         undefendable: row.querySelector('.out-undef').checked,
         stealHp: intVal(row.querySelector('.out-stealhp').value),
+        loseHp: intVal(row.querySelector('.out-losehp').value),
         stealCp: intVal(row.querySelector('.out-stealcp').value),
         tokenCount: tokenCount > 1 ? tokenCount : undefined,
         tokens,
@@ -1333,6 +1344,7 @@ function effectDisplayItems(effect = {}, { defense = false } = {}) {
   if (defense && effect.prevent) items.push(`{prevent:${effect.prevent}}`);
   if (defense && effect.returnDamage) items.push(`{${effect.undefendable ? 'undef' : 'damage'}:${effect.returnDamage}}`);
   if (effect.stealHp) items.push('Steal', `{heal:${effect.stealHp}}`);
+  if (effect.loseHp) items.push('Lose', `{losehp:${effect.loseHp}}`);
   if (effect.stealCp) items.push(`Steal ${effect.stealCp} CP`);
   if (effect.heal) items.push(`{heal:${effect.heal}}`);
   if (effect.drawCards) items.push(`Draw ${effect.drawCards}`);
@@ -1553,6 +1565,7 @@ function displayItemHtml(item) {
     return '<span class="badge prevent" style="font-size:10px;">½</span>';
   }
   if (kind === 'heal' || kind === 'life' || kind === 'vie' || kind === 'soin') return '<span class="badge heal">+' + escapeText(value) + '</span>';
+  if (kind === 'losehp' || kind === 'lose_hp' || kind === 'losehealth' || kind === 'loselife' || kind === 'pertevie') return '<span class="badge losehp">-' + escapeText(value) + '</span>';
   if (kind === 'cp') return '<span class="token-chip">Steal ' + escapeText(value) + ' CP</span>';
   if (kind === 'token') return '<span class="token-chip">' + tokenImageHtml(value) + escapeText(value) + '</span>';
   return '<span>' + escapeText(text) + '</span>';
@@ -1599,6 +1612,7 @@ function effectHtml(effect = {}) {
   if (effect.prevent) bits.push(`<span class="badge prevent">${effect.prevent}</span>`);
   if (effect.returnDamage) bits.push(`<span class="badge ${effect.undefendable ? 'undef' : 'damage'}">↩${effect.returnDamage}</span>`);
   if (effect.stealHp) bits.push(`<span class="badge heal">S${effect.stealHp}</span>`);
+  if (effect.loseHp) bits.push(`<span class="badge losehp">-${effect.loseHp} HP</span>`);
   if (effect.stealCp && !effect.label2) bits.push(`<span class="token-chip">Steal ${effect.stealCp} CP</span>`);
   if (effect.heal) bits.push(`<span class="badge heal">+${effect.heal}</span>`);
   if (effect.drawCards) bits.push(`<span class="token-chip">Draw ${effect.drawCards}</span>`);
@@ -1711,6 +1725,204 @@ function validateTokens() {
     input.classList.toggle('invalid', !allValid);
   });
 }
+const SUPPORTED_FORMULAS = [
+  // --- DEFENSE : PRÉVENTION ---
+  {
+    category: 'Défense - Prévention',
+    name: 'Ignorer tous les dégâts entrants',
+    syntax: 'ignoreAllIncomingDamage = true',
+    aliases: ['ignoreAllIncomingDamage=true'],
+    description: 'Annule l\'intégralité des dégâts entrants infligés par l\'attaque adverse, même si celle-ci est indéfendable.',
+    example: 'Attaque entrante: 12 dégâts ➔ Dégâts subis: 0 (totalement ignoré).'
+  },
+  {
+    category: 'Défense - Prévention',
+    name: 'Prévenir la moitié des dégâts entrants',
+    syntax: 'prevent = ceil(incomingDamage / 2)',
+    aliases: ['prevent = ceil(incomingDamage/2)'],
+    description: 'Prévient la moitié des dégâts entrants de l\'attaque du héros (arrondi supérieur).',
+    example: 'Attaque entrante: 5 dégâts ➔ Prévenu: 3 dégâts (2 subis).'
+  },
+  {
+    category: 'Défense - Prévention',
+    name: 'Prévenir la valeur faciale du jet défensif',
+    syntax: 'prevent = defenseDieValue',
+    aliases: ['prevent = defensedie', 'prevent = jetdefensif', 'prevent = d6value'],
+    description: 'Prévient un montant de dégâts égal à la valeur faciale du dé de défense lancé dans l\'arène.',
+    example: 'Dé de défense: 4 ➔ Prévenu: 4 dégâts.'
+  },
+  {
+    category: 'Défense - Prévention',
+    name: 'Prévenir la moitié d\'un dé additionnel D6',
+    syntax: 'prevent = ceil(rollD6() / 2)',
+    aliases: ['prevent = ceil(d6 / 2)', 'prevent = rollD6() / 2', 'prevent = ceil(rolld6()/2)'],
+    description: 'Lance un dé D6 additionnel lors de la défense et prévient la moitié du résultat (arrondi supérieur).',
+    example: 'Dé D6: 5 ➔ Prévenu: 3 dégâts.'
+  },
+  {
+    category: 'Défense - Prévention',
+    name: 'Prévenir le total d\'un dé additionnel D6',
+    syntax: 'prevent = rollD6()',
+    aliases: ['prevent = d6', 'prevent = rollAdditionalDie()'],
+    description: 'Lance un dé D6 additionnel lors de la défense et prévient la valeur totale obtenue.',
+    example: 'Dé D6: 6 ➔ Prévenu: 6 dégâts.'
+  },
+
+  // --- DEFENSE : RIPOSTES (DÉGÂTS EN RETOUR) ---
+  {
+    category: 'Défense - Riposte (Dégâts en retour)',
+    name: 'Riposte de la moitié des dégâts entrants',
+    syntax: 'returnDamage = ceil(incomingDamage / 2)',
+    aliases: ['returnDamage = ceil(incomingDamage/2)'],
+    description: 'Renvoie au héros attaquant la moitié des dégâts entrants reçus (arrondi supérieur).',
+    example: 'Attaque entrante: 6 dégâts ➔ Renvoie: 3 dégâts au héros.'
+  },
+  {
+    category: 'Défense - Riposte (Dégâts en retour)',
+    name: 'Riposte de la moitié du jet défensif',
+    syntax: 'returnDamage = ceil(defenseDieValue / 2)',
+    aliases: ['returnDamage = ceil(defensedie / 2)', 'returnDamage = ceil(defenseDieValue/2)'],
+    description: 'Renvoie au héros la moitié de la valeur du dé de défense lancé (arrondi supérieur) en dégâts directs indéfendables.',
+    example: 'Dé de défense: 5 ➔ Renvoie 3 dégâts indéfendables au héros.'
+  },
+  {
+    category: 'Défense - Riposte (Dégâts en retour)',
+    name: 'Riposte de la moitié d\'un dé additionnel D6',
+    syntax: 'returnDamage = ceil(rollD6() / 2)',
+    aliases: ['returnDamage = ceil(d6 / 2)', 'returnDamage = rollD6() / 2', 'returnDamage = ceil(rolld6()/2)'],
+    description: 'Lance un dé D6 additionnel lors de la défense et inflige la moitié du résultat en dégâts directs indéfendables au héros.',
+    example: 'Dé D6: 5 ➔ Renvoie 3 dégâts indéfendables au héros.'
+  },
+
+  // --- DEFENSE : COMBINÉE ---
+  {
+    category: 'Défense - Formule Combinée',
+    name: 'Dé additionnel D6 : Riposte 1/2 & Prévention 1/2',
+    syntax: 'returnDamage = ceil(rollD6() / 2) & prevent = ceil(rollD6() / 2)',
+    aliases: ['prevent = ceil(rollD6() / 2); returnDamage = ceil(rollD6() / 2)'],
+    description: 'Lance un dé D6 additionnel unique partagé : prévient la moitié du dé ET inflige la moitié du dé en riposte directe indéfendable.',
+    example: 'Dé D6: 5 ➔ Prévenu: 3 dégâts & Riposte: 3 dégâts au héros.'
+  },
+
+  // --- DEFENSE : SOIN ---
+  {
+    category: 'Défense - Soin',
+    name: 'Soin au dé additionnel D6 (Partage 50/50 à 2 sbires)',
+    syntax: 'heal = rollD6()',
+    aliases: ['heal = d6', 'minionHeal = rollD6()', 'soin = rollD6()'],
+    description: 'Lance un dé D6 additionnel : le sbire gagne la valeur en PV. En mode difficile si 2 sbires sont encore en vie, le dé est divisé par 2 (arrondi sup.) et chaque sbire gagne cette moitié en PV.',
+    example: 'Dé D6: 5 ➔ 1 sbire: +5 PV / 2 sbires en vie: +3 PV chacun.'
+  },
+
+  // --- DEFENSE : CAPACITÉ ---
+  {
+    category: 'Défense - Capacité Passive',
+    name: 'Déclencher la capacité passive en défense',
+    syntax: 'activatePassiveAbility = true',
+    aliases: ['activatePassiveAbility = true'],
+    description: 'Active la règle passive défensive spéciale du monstre (ex. Viseer).',
+    example: 'Déclenche la règle passive après la résolution défensive.'
+  },
+
+  // --- DEFENSE : PLAFOND DE DÉGÂTS ---
+  {
+    category: 'Défense - Plafond de Dégâts',
+    name: 'Plafond de dégâts subis par attaque',
+    syntax: 'damageCap = 6',
+    aliases: ['damageCap = 6', 'maxIncomingDamage = 6'],
+    description: 'Plafonne les dégâts subis par le monstre à un maximum de X par attaque (ex. Horde de Gobelins). Bloque également le compteur ATK du héros à X et prévient tout surplus.',
+    example: 'damageCap = 6 ➔ Une attaque de 10 dégâts est ramenée à 6 dégâts subis au maximum.'
+  },
+
+  // --- DEFENSE : ALTÉRATION & DÉGÂTS CONDITIONNELS ---
+  {
+    category: 'Défense - Altération Conditionnelle',
+    name: 'Inflige Brûlure ou dégâts directs si stack max atteint',
+    syntax: 'burnOrDamageIfMax = 2',
+    aliases: ['burnOrDamageIfMax = 2', 'tokenOrDamageIfMax = 2'],
+    description: 'Inflige le statut Brûlure au joueur. Si le joueur possède déjà le maximum de stacks de Brûlure (1), lui inflige 2 dégâts indéfendables directs à la place (ex. The Ashen King).',
+    example: 'Héros sans Brûlure ➔ Reçoit Brûlure. Héros avec 1 Brûlure ➔ Reçoit 2 dégâts indéfendables.'
+  },
+
+  // --- DEFENSE : ESQUIVE TOTALE ---
+  {
+    category: 'Défense - Esquive Totale',
+    name: 'Attaque échoue complètement sur seuil de dé',
+    syntax: 'attackFailsIfD6 >= 5',
+    aliases: ['attackFailsIfD6 >= 5', 'evadeAllOnD6 >= 5'],
+    description: 'Si le dé de défense (ou dé additionnel) est supérieur ou égal au seuil X (ex: 5 ou 6 pour Wyverne), l\'attaque du héros échoue complètement : 0 dégât subi et aucun jeton/altération appliqué.',
+    example: 'Dé de défense: 5 ou 6 ➔ L\'attaque du héros échoue (0 dégât, aucun token appliqué).'
+  },
+
+  // --- DEFENSE : RIXE & FUITE ---
+  {
+    category: 'Défense - Fuite & Rixe',
+    name: 'Rixe (1-5) ou Fuite (6)',
+    syntax: 'if D6 <= 5: stealCp = 1 & returnDamage = 1 (undef); fleeIfD6 == 6',
+    aliases: ['fleeIfD6 == 6', 'stealCp = 1 & returnDamage = 1 (undef) if D6 <= 5', 'fleeOnD6 == 6'],
+    description: 'Sur 1 à 5 au dé défensif, le monstre vole 1 CP et inflige 1 dégât imparable au héros. Sur un 6, il prend la fuite : esquive tous les dégâts, aucun loot et arrêt immédiat du combat sans points de victoire (ex. Pillard Gobelin).',
+    example: 'Dé de défense: 3 ➔ Vole 1 CP & 1 dégât imparable. Dé de défense: 6 ➔ Fuite immédiate du combat.'
+  },
+
+  // --- ATTAQUE : FORMULES DE DÉGÂTS ---
+  {
+    category: 'Attaque - Formules de Dégâts',
+    name: 'Dégâts basés sur les CP actuels du sbire',
+    syntax: 'cp',
+    aliases: ['cp'],
+    description: 'Inflige un montant de dégâts égal au nombre de CP actuels du sbire au moment de l\'attaque (ex. Rat de la Rue).',
+    example: 'Sbire avec 4 CP ➔ Inflige 4 dégâts.'
+  },
+  {
+    category: 'Attaque - Formules de Dégâts',
+    name: 'Dégâts basés sur les CP après vol de CP',
+    syntax: 'cp+cpSteal',
+    aliases: ['cp+cpSteal'],
+    description: 'Inflige un montant de dégâts égal aux CP du sbire calculés après avoir volé les CP du héros (ex. Rat de la Rue).',
+    example: 'Sbire à 2 CP volant 2 CP ➔ Total: 4 CP ➔ Inflige 4 dégâts.'
+  },
+  {
+    category: 'Attaque - Formules de Dégâts',
+    name: 'Hydre Féroce - Dégâts par Tête (Chaos)',
+    syntax: 'damage = 6 + 3 * tokens(Chaos)',
+    aliases: ['damage = 6 + 3 * chaos', '6 + 3 * tokens(Chaos)'],
+    description: 'Inflige 6 dégâts de base + 3 dégâts supplémentaires par Tête / jeton Chaos en possession de l\'Hydre au moment de l\'attaque (ex. Hydre Féroce).',
+    example: 'Hydre avec 3 jetons Chaos ➔ 6 + (3 * 3) = 15 dégâts.'
+  },
+  {
+    category: 'Défense - Mécaniques Uniques',
+    name: 'Hydre Féroce - Défense Unique & Régénération (Chaos)',
+    syntax: 'reviveOnZeroHpWithChaos(8)',
+    aliases: ['hydraRevival', 'reviveWithChaos'],
+    description: 'Défense Unique : Si la Santé de l\'Hydre est réduite à 0 alors qu\'il reste des Têtes (jetons Chaos), retire 1 Tête et réinitialise sa Santé à 8 PV (s\'applique même contre une Capacité Ultime).',
+    example: 'Hydre à 0 PV avec 2 Chaos ➔ Consomme 1 Chaos (reste 1) et régénère 8 PV.'
+  },
+  {
+    category: 'Défense - Altération Conditionnelle',
+    name: 'Gain de jeton si au moins 1 dégât subi',
+    syntax: 'gainTokenIfDamaged = Chaos',
+    aliases: ['gainTokenIfDamaged = Chaos', 'gainTokenIfDamage = Chaos', 'gainTokenOnDamage = Chaos'],
+    description: 'Le sbire gagne 1 jeton (ex. Chaos) sans lancer de dé, si et seulement si l\'attaquant lui inflige au moins 1 dégât (ex. Berserker Enragé).',
+    example: 'Dégâts infligés >= 1 ➔ Le sbire gagne 1 jeton Chaos. Dégâts = 0 ➔ Aucun jeton gagné.'
+  }
+];
+
+window.copyFormulaText = function(btn, text) {
+  if (navigator?.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      const old = btn.textContent;
+      btn.textContent = '✓ Copié !';
+      btn.style.borderColor = '#6ed188';
+      btn.style.color = '#6ed188';
+      setTimeout(() => {
+        btn.textContent = old;
+        btn.style.borderColor = '';
+        btn.style.color = '';
+      }, 1500);
+    });
+  }
+};
+
 function formulaRefs() {
   const refs = new Map();
   for (const profile of sourceData?.profiles || []) {
@@ -1719,25 +1931,177 @@ function formulaRefs() {
         for (const formula of item.formulas || []) {
           const key = String(formula || '').trim();
           if (!key) continue;
-          if (!refs.has(key)) refs.set(key, []);
-          refs.get(key).push(profile.name + ' (' + kind + ')');
+          const cleanKey = key.replaceAll(' ', '').toLowerCase();
+          if (!refs.has(cleanKey)) refs.set(cleanKey, { original: key, profiles: [] });
+          const entry = profile.name + ' (' + kind + ')';
+          if (!refs.get(cleanKey).profiles.includes(entry)) {
+            refs.get(cleanKey).profiles.push(entry);
+          }
+        }
+        if (item.damageFormula) {
+          const key = String(item.damageFormula).trim();
+          const cleanKey = key.replaceAll(' ', '').toLowerCase();
+          if (!refs.has(cleanKey)) refs.set(cleanKey, { original: key, profiles: [] });
+          const entry = profile.name + ' (' + kind + ')';
+          if (!refs.get(cleanKey).profiles.includes(entry)) {
+            refs.get(cleanKey).profiles.push(entry);
+          }
         }
       }
     };
     scan(profile.attackPlan?.actions || [], 'attack');
     scan(profile.defensePlan?.effects || [], 'defense');
+    for (const rule of profile.attackPlan?.conditionalRules || []) {
+      if (rule.effect?.damageFormula) {
+        const key = String(rule.effect.damageFormula).trim();
+        const cleanKey = key.replaceAll(' ', '').toLowerCase();
+        if (!refs.has(cleanKey)) refs.set(cleanKey, { original: key, profiles: [] });
+        const entry = profile.name + ' (attack)';
+        if (!refs.get(cleanKey).profiles.includes(entry)) {
+          refs.get(cleanKey).profiles.push(entry);
+        }
+      }
+    }
   }
   return refs;
 }
+
 function renderFormulaList() {
   const root = $('formulaList');
   if (!root) return;
   const refs = formulaRefs();
-  if (!refs.size) { root.innerHTML = '<em>No formulas found.</em>'; return; }
-  root.innerHTML = [...refs.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([formula, profiles]) => '<div class="formula-card"><code>' + escapeText(formula) + '</code><span>' + profiles.map(escapeText).join(', ') + '</span></div>')
-    .join('');
+  const search = String($('formulaSearch')?.value || '').trim().toLowerCase();
+
+  // Find matching profiles for each supported formula
+  const supportedWithMatches = SUPPORTED_FORMULAS.map((item) => {
+    const matches = new Set();
+    const candidates = [item.syntax, ...(item.aliases || [])];
+    for (const cand of candidates) {
+      const cleanCand = cand.replaceAll(' ', '').toLowerCase();
+      for (const [cleanKey, data] of refs.entries()) {
+        if (cleanKey === cleanCand || cleanKey.includes(cleanCand) || cleanCand.includes(cleanKey)) {
+          for (const p of data.profiles) matches.add(p);
+        }
+      }
+    }
+    return { ...item, profiles: [...matches] };
+  });
+
+  // Track which database keys were matched
+  const matchedCleanKeys = new Set();
+  supportedWithMatches.forEach((item) => {
+    const candidates = [item.syntax, ...(item.aliases || [])];
+    for (const cand of candidates) {
+      const cleanCand = cand.replaceAll(' ', '').toLowerCase();
+      for (const [cleanKey] of refs.entries()) {
+        if (cleanKey === cleanCand || cleanKey.includes(cleanCand) || cleanCand.includes(cleanKey)) {
+          matchedCleanKeys.add(cleanKey);
+        }
+      }
+    }
+  });
+
+  // Filter by search query
+  const filteredSupported = supportedWithMatches.filter((item) => {
+    if (!search) return true;
+    const hay = [
+      item.name,
+      item.syntax,
+      item.category,
+      item.description,
+      ...(item.aliases || []),
+      ...(item.profiles || [])
+    ].join(' ').toLowerCase();
+    return hay.includes(search);
+  });
+
+  // Group by category
+  const categories = [];
+  filteredSupported.forEach((item) => {
+    let cat = categories.find((c) => c.title === item.category);
+    if (!cat) {
+      cat = { title: item.category, items: [] };
+      categories.push(cat);
+    }
+    cat.items.push(item);
+  });
+
+  const cardsHtml = categories.map((cat) => {
+    const itemsHtml = cat.items.map((item) => {
+      const escapedSyntax = escapeText(item.syntax);
+      const profilesText = item.profiles.length
+        ? '<span style="color:#7ee787;">✓ Utilisé par : ' + item.profiles.map(escapeText).join(', ') + '</span>'
+        : '<span style="color:#667366;font-style:italic;">○ Non utilisé actuellement (disponible)</span>';
+      const aliasesHtml = item.aliases && item.aliases.length
+        ? '<div class="formula-aliases"><span>Variantes :</span> ' + item.aliases.map((a) => '<code>' + escapeText(a) + '</code>').join(' ') + '</div>'
+        : '';
+
+      return `
+        <div class="formula-card">
+          <div class="formula-head">
+            <span class="formula-name">${escapeText(item.name)}</span>
+            <span class="formula-badge">${escapeText(cat.title.split(' - ')[0])}</span>
+          </div>
+          <div class="formula-code-row">
+            <code title="Cliquer pour copier" onclick="copyFormulaText(this, '${escapedSyntax}')">${escapedSyntax}</code>
+            <button type="button" class="formula-copy-btn" onclick="copyFormulaText(this, '${escapedSyntax}')">Copier</button>
+          </div>
+          <div class="formula-desc">${escapeText(item.description)}</div>
+          <div class="formula-example">Exemple : ${escapeText(item.example)}</div>
+          ${aliasesHtml}
+          <div class="formula-profiles"><strong>Sbires :</strong> ${profilesText}</div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="formula-category-section">
+        <div class="formula-category-title">${escapeText(cat.title)}</div>
+        <div style="display:grid;gap:10px;">${itemsHtml}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Unlisted formulas found in profiles
+  const customEntries = [...refs.entries()].filter(([cleanKey]) => !matchedCleanKeys.has(cleanKey));
+  let customHtml = '';
+  if (customEntries.length) {
+    const customCards = customEntries
+      .filter(([cleanKey, data]) => {
+        if (!search) return true;
+        const hay = (data.original + ' ' + data.profiles.join(' ')).toLowerCase();
+        return hay.includes(search);
+      })
+      .map(([cleanKey, data]) => `
+        <div class="formula-card" style="border-style:dashed;">
+          <div class="formula-head">
+            <span class="formula-name">Formule personnalisée / locale</span>
+            <span class="formula-badge" style="background:#2a1e11;color:#ffb340;border-color:#5c3e1e;">JSON Custom</span>
+          </div>
+          <div class="formula-code-row">
+            <code>${escapeText(data.original)}</code>
+            <button type="button" class="formula-copy-btn" onclick="copyFormulaText(this, '${escapeText(data.original)}')">Copier</button>
+          </div>
+          <div class="formula-profiles"><strong>Utilisé par :</strong> <span style="color:#7ee787;">${data.profiles.map(escapeText).join(', ')}</span></div>
+        </div>
+      `).join('');
+
+    if (customCards) {
+      customHtml = `
+        <div class="formula-category-section" style="margin-top:16px;">
+          <div class="formula-category-title" style="color:#79c0ff;border-color:#2a4060;">Autres formules détectées dans le fichier JSON</div>
+          <div style="display:grid;gap:10px;">${customCards}</div>
+        </div>
+      `;
+    }
+  }
+
+  if (!cardsHtml && !customHtml) {
+    root.innerHTML = '<em style="color:#728074;padding:12px;display:block;">Aucune formule ne correspond à votre recherche.</em>';
+    return;
+  }
+
+  root.innerHTML = cardsHtml + customHtml;
 }
 function tokenRefs(name) {
   const needle = String(name || '').toLowerCase();
@@ -1938,6 +2302,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tab.dataset.tab === 'tokens') renderTokenAdmin();
     };
   });
+  $('formulaSearch')?.addEventListener('input', renderFormulaList);
   bindBasics();
   updateDownloadButtons();
   loadDefault();

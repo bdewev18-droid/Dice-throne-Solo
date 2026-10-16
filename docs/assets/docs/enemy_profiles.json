@@ -1,5 +1,5 @@
 {
-  "version": "1.1.31",
+  "version": "1.1.63",
   "schemaVersion": 2,
   "note": "Enemy profiles source of truth. Defense display and automation should use defensePlan, not duplicated defense text.",
   "diceSymbols": {
@@ -39,6 +39,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 1,
             "heal": 0,
             "drawCards": 0,
@@ -62,6 +63,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -70,7 +72,9 @@
             "formulas": [
               "ignoreAllIncomingDamage = true"
             ],
-            "notes": []
+            "notes": [
+              "Ignore all incoming damage"
+            ]
           }
         ],
         "notes": [
@@ -96,6 +100,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 1,
             "heal": 0,
             "drawCards": 0,
@@ -120,6 +125,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 1,
             "heal": 0,
             "drawCards": 0,
@@ -145,6 +151,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 2,
             "heal": 0,
             "drawCards": 0,
@@ -174,6 +181,7 @@
               "damageFormula": "cp+cpSteal",
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 2,
               "note": "Large suite: Rat steals 2 CP, then deals damage equal to its CP."
             },
@@ -196,6 +204,7 @@
               "damageFormula": "cp+cpSteal",
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 1,
               "note": "Small suite: Rat steals 1 CP, then deals damage equal to its CP."
             },
@@ -218,6 +227,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 1,
               "note": "Micro suite: Rat steals 1 CP."
             },
@@ -273,6 +283,7 @@
             "prevent": 3,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -303,6 +314,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -326,6 +338,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -349,6 +362,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 1,
             "heal": 0,
             "drawCards": 0,
@@ -376,6 +390,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 1,
               "note": "Large suite: steal 1 CP."
             },
@@ -428,6 +443,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -479,6 +495,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -505,6 +522,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -531,6 +549,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -560,6 +579,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": ""
             },
@@ -582,8 +602,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -621,6 +641,7 @@
             "prevent": 0,
             "returnDamage": 1,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -644,6 +665,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -685,6 +707,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -716,6 +739,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": "Validated attack: hero discards 1 random card."
             },
@@ -731,8 +755,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -772,6 +796,7 @@
             "prevent": 3,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -826,6 +851,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -852,6 +878,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -878,6 +905,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -904,6 +932,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -933,6 +962,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": ""
             },
@@ -948,8 +978,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -990,6 +1020,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1041,6 +1072,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1067,6 +1099,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1093,6 +1126,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1122,6 +1156,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": ""
             },
@@ -1144,8 +1179,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -1184,6 +1219,7 @@
             "prevent": 0,
             "returnDamage": 1,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1210,6 +1246,7 @@
             "prevent": 0,
             "returnDamage": 1,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1236,6 +1273,7 @@
             "prevent": 1,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1287,6 +1325,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1313,6 +1352,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1339,6 +1379,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1358,8 +1399,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -1397,6 +1438,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1405,7 +1447,9 @@
             "formulas": [
               "prevent = ceil(incomingDamage / 2)"
             ],
-            "notes": []
+            "notes": [
+              "Prevent {half_shield}"
+            ]
           }
         ],
         "notes": [],
@@ -1429,6 +1473,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1452,6 +1497,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1475,6 +1521,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1506,6 +1553,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": "Large suite: hero receives Ronces."
             },
@@ -1521,8 +1569,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -1559,7 +1607,10 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 1,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1568,9 +1619,7 @@
             "formulas": [
               "stealHp is applied per matching symbol"
             ],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "notes": []
           }
         ],
         "notes": [],
@@ -1600,7 +1649,10 @@
             "label": "",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1622,6 +1674,7 @@
                   "damage": 5,
                   "undefendable": true,
                   "stealHp": 0,
+                  "loseHp": 0,
                   "stealCp": 0,
                   "tokens": []
                 },
@@ -1631,6 +1684,7 @@
                   "damage": 6,
                   "undefendable": true,
                   "stealHp": 0,
+                  "loseHp": 0,
                   "stealCp": 0,
                   "tokens": []
                 },
@@ -1640,6 +1694,7 @@
                   "damage": 0,
                   "undefendable": false,
                   "stealHp": 4,
+                  "loseHp": 0,
                   "stealCp": 0,
                   "tokens": []
                 }
@@ -1655,8 +1710,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -1692,7 +1747,10 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1701,9 +1759,9 @@
             "formulas": [
               "prevent = ceil(incomingDamage / 2)"
             ],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "notes": [
+              "Prevent {half_shield}"
+            ]
           }
         ],
         "notes": [],
@@ -1743,7 +1801,10 @@
             "label": "Descente en Pique",
             "damage": 4,
             "undefendable": true,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1767,7 +1828,10 @@
             "label": "",
             "damage": 5,
             "undefendable": true,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1791,7 +1855,10 @@
             "label": "",
             "damage": 6,
             "undefendable": true,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1811,8 +1878,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -1846,7 +1913,10 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 1,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1855,9 +1925,7 @@
             "formulas": [
               "prevent is applied per matching symbol"
             ],
-            "notes": [],
-            "prevent": 1,
-            "returnDamage": 0
+            "notes": []
           }
         ],
         "notes": [],
@@ -1887,7 +1955,10 @@
             "label": "Rocalanche",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -1926,6 +1997,7 @@
               "damageFormula": null,
               "undefendable": true,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": "Passive: failed offensive roll, Roc deals 1 undefendable damage."
             },
@@ -1963,8 +2035,8 @@
       ],
       "defense": "",
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -1997,7 +2069,10 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -2006,9 +2081,7 @@
               "Poison"
             ],
             "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "notes": []
           }
         ],
         "notes": [],
@@ -2043,7 +2116,10 @@
             "label": "Baiser Venimeux",
             "damage": 6,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -2067,7 +2143,10 @@
             "label": "",
             "damage": 6,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -2101,6 +2180,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": "Validated attack: hero receives Poison."
             },
@@ -2116,8 +2196,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -2148,6 +2228,8 @@
             },
             "label": "",
             "undefendable": true,
+            "prevent": 0,
+            "returnDamage": 1,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -2155,9 +2237,7 @@
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 1
+            "notes": []
           },
           {
             "align": "left",
@@ -2166,6 +2246,8 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 1,
+            "returnDamage": 0,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -2173,9 +2255,7 @@
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": [],
-            "prevent": 1,
-            "returnDamage": 0
+            "notes": []
           }
         ],
         "notes": [],
@@ -2205,6 +2285,8 @@
             "label": "Frappe Spirituelle",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -2224,6 +2306,8 @@
             "label": "Forme Ours",
             "damage": 6,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -2245,6 +2329,8 @@
             "label": "Forme Elan",
             "damage": 6,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -2356,9 +2442,9 @@
       ],
       "defense": "",
       "passiveDisplayRows": [],
-      "validated": true,
+      "validated": false,
       "validatedAtk": true,
-      "validatedDef": true
+      "validatedDef": false
     },
     {
       "key": "vert-vert-015",
@@ -2390,6 +2476,8 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -2399,9 +2487,7 @@
             "formulas": [
               "returnDamage = ceil(incomingDamage / 2)"
             ],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "notes": []
           }
         ],
         "notes": [],
@@ -2441,6 +2527,8 @@
             "label": "Abnegation",
             "damage": 5,
             "undefendable": true,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -2491,6 +2579,8 @@
             "label": "",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
             "stealCp": 1,
             "heal": 0,
@@ -2515,6 +2605,8 @@
             "label": "",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -2535,9 +2627,9 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
+      "validated": false,
       "validatedAtk": true,
-      "validatedDef": true
+      "validatedDef": false
     },
     {
       "key": "vert-vert-016",
@@ -2563,16 +2655,17 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 1,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": [],
-            "prevent": 1,
-            "returnDamage": 0
+            "notes": []
           },
           {
             "align": "left",
@@ -2586,16 +2679,17 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "notes": []
           }
         ],
         "notes": [],
@@ -2625,7 +2719,10 @@
             "label": "Flightonte du Maitre",
             "damage": 5,
             "undefendable": true,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -2645,8 +2742,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -2679,16 +2776,17 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 2,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 2
+            "notes": []
           }
         ],
         "notes": [],
@@ -2718,7 +2816,10 @@
             "label": "Claquement de Crocs",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -2741,6 +2842,7 @@
                   "damage": 0,
                   "undefendable": false,
                   "stealHp": 0,
+                  "loseHp": 0,
                   "stealCp": 0,
                   "tokens": [
                     "Knockdown"
@@ -2758,8 +2860,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -2793,7 +2895,10 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -2802,9 +2907,7 @@
               "Knockdown"
             ],
             "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "notes": []
           },
           {
             "align": "left",
@@ -2818,16 +2921,17 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 2,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": [],
-            "prevent": 2,
-            "returnDamage": 0
+            "notes": []
           }
         ],
         "notes": [],
@@ -2867,7 +2971,10 @@
             "label": "Belier",
             "damage": 5,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -2893,7 +3000,10 @@
             "label": "",
             "damage": 6,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -2919,7 +3029,10 @@
             "label": "",
             "damage": 7,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -2941,8 +3054,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -2977,6 +3090,7 @@
             "prevent": 3,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3016,6 +3130,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3045,6 +3160,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": "Validated attack: hero discards 1 random card."
             },
@@ -3060,8 +3176,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -3097,6 +3213,7 @@
             "prevent": 0,
             "returnDamage": 1,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3115,6 +3232,7 @@
             "prevent": 1,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3145,6 +3263,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3168,6 +3287,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3191,6 +3311,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3212,8 +3333,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -3250,6 +3371,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3266,19 +3388,22 @@
               "type": "text"
             },
             "label": "",
-            "undefendable": true,
+            "undefendable": false,
             "prevent": 0,
-            "returnDamage": 1,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [
-              "returnDamage = currentChaos + orangeSymbols"
+              "then return 1 undefendable damage per Chaos"
             ],
-            "notes": []
+            "notes": [
+              "Deals {undef:1} x {token:Chaos}"
+            ]
           }
         ],
         "notes": [],
@@ -3311,6 +3436,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3333,6 +3459,7 @@
                   "damage": 0,
                   "undefendable": false,
                   "stealHp": 0,
+                  "loseHp": 0,
                   "stealCp": 0,
                   "tokens": [
                     "Chaos"
@@ -3345,6 +3472,7 @@
                   "damage": 0,
                   "undefendable": false,
                   "stealHp": 0,
+                  "loseHp": 0,
                   "stealCp": 0,
                   "tokens": [
                     "Blind"
@@ -3357,6 +3485,7 @@
                   "damage": 0,
                   "undefendable": false,
                   "stealHp": 0,
+                  "loseHp": 0,
                   "stealCp": 0,
                   "tokens": []
                 }
@@ -3372,8 +3501,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -3410,6 +3539,7 @@
             "prevent": 2,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3433,6 +3563,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3484,6 +3615,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3510,6 +3642,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3538,6 +3671,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3559,8 +3693,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -3597,6 +3731,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 1,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3638,6 +3773,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 2,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3667,6 +3803,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 2,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": "Validated attack: steals 2 HP."
             },
@@ -3682,8 +3819,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -3719,6 +3856,7 @@
             "prevent": 1,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3760,6 +3898,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3779,8 +3918,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -3818,6 +3957,7 @@
             "prevent": 4,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3869,6 +4009,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3895,6 +4036,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3921,6 +4063,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -3955,6 +4098,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": ""
             },
@@ -3977,8 +4121,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -4015,6 +4159,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -4030,25 +4175,25 @@
           {
             "align": "left",
             "condition": {
-              "type": "number",
-              "value": 0
+              "type": "text"
             },
             "label": "",
             "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "tokens": [
-              "Chaos"
-            ],
+            "tokens": [],
             "formulas": [
               "then return 1 undefendable damage per Chaos"
             ],
-            "notes": []
+            "notes": [
+              "Deals {undef:1} x {token:Chaos}"
+            ]
           }
         ],
         "notes": [],
@@ -4081,6 +4226,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -4103,6 +4249,7 @@
                   "damage": 0,
                   "undefendable": false,
                   "stealHp": 0,
+                  "loseHp": 0,
                   "stealCp": 0,
                   "tokens": [
                     "Chaos"
@@ -4115,6 +4262,7 @@
                   "damage": 0,
                   "undefendable": false,
                   "stealHp": 0,
+                  "loseHp": 0,
                   "stealCp": 0,
                   "tokens": [
                     "Hex"
@@ -4127,6 +4275,7 @@
                   "damage": 0,
                   "undefendable": false,
                   "stealHp": 0,
+                  "loseHp": 0,
                   "stealCp": 0,
                   "tokens": []
                 }
@@ -4142,8 +4291,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -4177,6 +4326,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 1,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -4202,6 +4352,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -4253,6 +4404,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 3,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -4281,6 +4433,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 4,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -4307,6 +4460,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 5,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -4347,8 +4501,8 @@
       "passives": [],
       "defense": "",
       "passiveDisplayRows": [],
-      "validated": true,
-      "validatedAtk": true,
+      "validated": false,
+      "validatedAtk": false,
       "validatedDef": true
     },
     {
@@ -5201,6 +5355,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5247,6 +5402,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5267,7 +5423,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "bleu-bleu-011",
@@ -5304,6 +5463,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 1,
             "heal": 0,
             "drawCards": 0,
@@ -5327,6 +5487,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5335,7 +5496,9 @@
             "formulas": [
               "ignoreAllIncomingDamage = true"
             ],
-            "notes": []
+            "notes": [
+              "Ignore all incoming damage"
+            ]
           }
         ],
         "notes": [],
@@ -5359,6 +5522,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5384,6 +5548,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5405,6 +5570,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5423,7 +5589,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "bleu-bleu-012",
@@ -5453,15 +5622,18 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [
-              "returnDamage = ceil(defenseDieValue / 2)"
+              "returnDamage = ceil(rollD6() / 2)"
             ],
-            "notes": []
+            "notes": [
+              "Deals damage equal to half of the defense die roll."
+            ]
           }
         ],
         "notes": [],
@@ -5504,6 +5676,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5532,6 +5705,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": "Si 3 chiffres identiques, deals Parasite."
             },
@@ -5553,7 +5727,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "bleu-bleu-013",
@@ -5588,6 +5765,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5596,7 +5774,9 @@
             "formulas": [
               "prevent = ceil(incomingDamage / 2)"
             ],
-            "notes": []
+            "notes": [
+              "prevent {half_shield}"
+            ]
           }
         ],
         "notes": [],
@@ -5620,6 +5800,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5643,6 +5824,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5668,6 +5850,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5686,7 +5869,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "bleu-bleu-014",
@@ -5721,6 +5907,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5729,7 +5916,9 @@
             "formulas": [
               "ignoreAllIncomingDamage = true"
             ],
-            "notes": []
+            "notes": [
+              "Ignore all incoming damage"
+            ]
           }
         ],
         "notes": [],
@@ -5777,6 +5966,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -5805,6 +5995,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": "Si a single opponent, deals Silence."
             },
@@ -5826,7 +6017,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "bleu-bleu-015",
@@ -6300,7 +6494,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "bleu-bleu-018",
@@ -6331,11 +6528,13 @@
                 "red": 0
               }
             },
+            "exclusive": true,
             "label": "",
             "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -6356,11 +6555,13 @@
                 "red": 0
               }
             },
+            "exclusive": true,
             "label": "",
             "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -6369,7 +6570,9 @@
             "formulas": [
               "ignoreAllIncomingDamage = true"
             ],
-            "notes": []
+            "notes": [
+              "Ignore all incoming damage"
+            ]
           }
         ],
         "notes": [],
@@ -6417,6 +6620,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -6435,7 +6639,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "bleu-bleu-019",
@@ -6462,16 +6669,21 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "formulas": [
+              "heal = rollD6()"
+            ],
+            "notes": [
+              "Heals HP equal to the defense die roll."
+            ]
           }
         ],
         "notes": [],
@@ -6501,7 +6713,10 @@
             "label": "Velocite Magique",
             "damage": 6,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -6520,7 +6735,10 @@
             "label": "Debut de tour",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -6539,7 +6757,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "bleu-bleu-020",
@@ -6948,7 +7169,8 @@
                 "white": 0,
                 "orange": 1,
                 "red": 0
-              }
+              },
+              "repeat": true
             },
             "label": "",
             "undefendable": false,
@@ -7043,7 +7265,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "bleu-bleu-023",
@@ -7288,7 +7513,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-001",
@@ -7323,8 +7551,9 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 1,
             "stealCp": 0,
-            "heal": -1,
+            "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
@@ -7338,44 +7567,24 @@
               "symbols": {
                 "white": 0,
                 "orange": 1,
-                "red": 0
-              }
-            },
-            "label": "",
-            "undefendable": false,
-            "prevent": 0,
-            "returnDamage": 0,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 1,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": []
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "symbols",
-              "symbols": {
-                "white": 0,
-                "orange": 0,
                 "red": 1
-              }
+              },
+              "orOrangeRed": true
             },
             "label": "",
             "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 1,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": []
+            "notes": [],
+            "orOrangeRed": true
           }
         ],
         "notes": [],
@@ -7408,6 +7617,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -7446,7 +7656,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-002",
@@ -7469,43 +7682,41 @@
           {
             "align": "left",
             "condition": {
-              "type": "text"
+              "type": "any"
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "number",
-              "value": 0
-            },
-            "label": "",
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "formulas": [
+              "attackFailsIfD6 >= 5"
+            ],
+            "notes": [
+              "On {die:5}or{die:6}: The hero's attack fails."
+            ]
           }
         ],
-        "notes": [],
-        "displayRows": []
+        "notes": [
+          "Lance 1 dé de défense. Si le résultat est 5 ou 6, l'attaque du héros échoue complètement (aucun dégât et aucun jeton/altération appliqué)."
+        ],
+        "displayRows": [
+          {
+            "align": "left",
+            "items": [
+              "{die:any}",
+              "≥ 5",
+              "➔",
+              "Attaque échoue (0 dégât, 0 token)"
+            ]
+          }
+        ]
       },
       "attackPlan": {
         "style": "symbols",
@@ -7546,7 +7757,10 @@
             "label": "Brasier",
             "damage": 7,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -7570,7 +7784,10 @@
             "label": "Blanc",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -7596,7 +7813,10 @@
             "label": "Jaune",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -7622,7 +7842,10 @@
             "label": "Rouge",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -7643,7 +7866,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-003",
@@ -7810,6 +8036,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -7818,7 +8045,9 @@
             "formulas": [
               "prevent = ceil(incomingDamage / 2)"
             ],
-            "notes": []
+            "notes": [
+              "Prevent {half_shield}"
+            ]
           }
         ],
         "notes": [],
@@ -7842,6 +8071,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -7865,6 +8095,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -7890,6 +8121,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -7908,7 +8140,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-005",
@@ -8350,7 +8585,7 @@
             "label": "",
             "undefendable": false,
             "prevent": 0,
-            "returnDamage": 1,
+            "returnDamage": 0,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -8368,9 +8603,9 @@
               "type": "text"
             },
             "label": "",
-            "undefendable": true,
+            "undefendable": false,
             "prevent": 0,
-            "returnDamage": 1,
+            "returnDamage": 0,
             "stealHp": 0,
             "stealCp": 0,
             "heal": 0,
@@ -8378,9 +8613,11 @@
             "discardCards": 0,
             "tokens": [],
             "formulas": [
-              "returnDamage = currentChaos + orangeSymbols"
+              "then return 1 undefendable damage per Chaos"
             ],
-            "notes": []
+            "notes": [
+              "Deals {undef:1} x {token:Chaos}"
+            ]
           }
         ],
         "notes": [],
@@ -8459,7 +8696,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-009",
@@ -8798,13 +9038,18 @@
       "maxHealth": 8,
       "cp": 10,
       "cardAsset": "assets/violet/violet-011.png",
-      "initialTokens": [],
+      "initialTokens": [
+        "Chaos",
+        "Chaos",
+        "Chaos"
+      ],
       "rewardChests": 1,
       "rewardRank": "orange",
       "attacks": [
-        "Plurimorsure: 2 rouges = 6 damage + 3 par tete.",
-        "Fin de rollsr offensif: rolls 1 de; sur rouge gains 1 tete."
+        "Plurimorsure: deals 6 base damage + 3 damage per Head ({token:Chaos}).",
+        "Passive: at the end of the Offensive Roll Phase, roll 1 die: on 6 (Red), gains 1 new Head ({token:Chaos})."
       ],
+      "defense": "Unique Defense: If Health is reduced to 0 while Heads ({token:Chaos}) remain, removes 1 Head and resets Health to 8 HP. Applies even against Ultimate Abilities.",
       "defenseDice": 0,
       "defensePlan": {
         "dice": 0,
@@ -8812,23 +9057,30 @@
           {
             "align": "left",
             "condition": {
-              "type": "text"
+              "type": "any"
             },
-            "label": "",
+            "label": "Unique Defense: Head Regeneration",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "formulas": [
+              "reviveOnZeroHpWithChaos(8)"
+            ],
+            "notes": [
+              "If Health is reduced to 0 while Heads ({token:Chaos}) remain, removes 1 Head and resets Health to 8 HP. Applies even against Ultimate Abilities."
+            ]
           }
         ],
-        "notes": [],
+        "notes": [
+          "Unique Defense: If Health is reduced to 0 while Heads ({token:Chaos}) remain, removes 1 Head and resets Health to 8 HP. Applies even against Ultimate Abilities."
+        ],
         "displayRows": []
       },
       "attackPlan": {
@@ -8838,11 +9090,6 @@
             "white": 0,
             "orange": 0,
             "red": 2
-          },
-          {
-            "white": 0,
-            "orange": 0,
-            "red": 1
           }
         ],
         "name": "Hydre Feroce",
@@ -8860,49 +9107,44 @@
             "label": "Plurimorsure",
             "damage": 6,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "topDeckToDiscard": 0,
-            "extraRoll": null
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "symbols",
-              "symbols": {
-                "white": 0,
-                "orange": 0,
-                "red": 1
-              }
-            },
-            "label": "Fin de rollsr offensif",
-            "damage": 0,
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": [],
+            "formulas": [
+              "damage = 6 + 3 * tokens(Chaos)"
+            ],
+            "notes": [
+              "Deals 6 damage + 3 per Head ({token:Chaos})."
+            ],
             "topDeckToDiscard": 0,
             "extraRoll": null
           }
         ],
         "conditionalRules": [],
-        "passives": [],
-        "notes": [],
+        "passives": [
+          {
+            "timing": "endOfOffensiveRoll",
+            "text": "At the end of the Offensive Roll Phase, roll 1 die: on 6 (Red), gains 1 new Head ({token:Chaos})."
+          }
+        ],
+        "notes": [
+          "Plurimorsure: deals 6 base damage + 3 damage per Head ({token:Chaos}).",
+          "Passive: at the end of the Offensive Roll Phase, roll 1 die: on 6 (Red), gains 1 new Head ({token:Chaos})."
+        ],
         "displayRows": []
       },
-      "defense": "",
-      "passives": [],
+      "passives": [
+        {
+          "timing": "endOfOffensiveRoll",
+          "text": "At the end of the Offensive Roll Phase, roll 1 die: on 6 (Red), gains 1 new Head ({token:Chaos})."
+        }
+      ],
       "passiveDisplayRows": []
     },
     {
@@ -8930,34 +9172,21 @@
             },
             "label": "",
             "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 1,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": [],
             "prevent": 0,
-            "returnDamage": 1
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "text"
-            },
-            "label": "",
-            "undefendable": false,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "formulas": [
+              "if D6 <= 5: stealCp = 1 & returnDamage = 1 (undef); fleeIfD6 == 6"
+            ],
+            "notes": [
+              "On {die:1} to {die:5}  deals {undef:1} and steals 1 CP. On {die:6} : flee"
+            ]
           }
         ],
         "notes": [],
@@ -8987,7 +9216,10 @@
             "label": "La Rixe ou la Fuite",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -9006,7 +9238,10 @@
             "label": "1-3",
             "damage": 4,
             "undefendable": true,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -9025,7 +9260,10 @@
             "label": "4-6",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -9044,7 +9282,10 @@
             "label": "Offensive failure",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -9063,7 +9304,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-013",
@@ -9270,7 +9514,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-014",
@@ -9435,7 +9682,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-015",
@@ -9578,7 +9828,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-016",
@@ -9610,16 +9863,17 @@
             },
             "label": "",
             "undefendable": true,
+            "prevent": 0,
+            "returnDamage": 1,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 1
+            "notes": []
           },
           {
             "align": "left",
@@ -9628,37 +9882,17 @@
               "symbols": {
                 "white": 0,
                 "orange": 1,
-                "red": 0
-              },
-              "repeat": true
-            },
-            "label": "",
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "prevent": 2,
-            "returnDamage": 0
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "symbols",
-              "symbols": {
-                "white": 0,
-                "orange": 0,
                 "red": 1
               },
+              "orOrangeRed": true,
               "repeat": true
             },
             "label": "",
             "undefendable": false,
+            "prevent": 2,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -9666,8 +9900,7 @@
             "tokens": [],
             "formulas": [],
             "notes": [],
-            "prevent": 2,
-            "returnDamage": 0
+            "orOrangeRed": true
           }
         ],
         "notes": [],
@@ -9702,7 +9935,10 @@
             "label": "Combat Fervent",
             "damage": 7,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -9726,7 +9962,10 @@
             "label": "",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 2,
             "drawCards": 0,
@@ -9745,7 +9984,10 @@
             "label": "Echec",
             "damage": 0,
             "undefendable": true,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 1,
             "drawCards": 0,
@@ -9764,7 +10006,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-017",
@@ -9793,18 +10038,21 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [
-              "returnDamage = ceil(defenseDieValue / 2)"
+              "Roll D6: prevent 1/2 D6 & return 1/2 D6 (undef)"
             ],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "notes": [
+              "Deals damage and prevents damage equal to half of the Defense die roll."
+            ]
           }
         ],
         "notes": [],
@@ -9844,7 +10092,10 @@
             "label": "Lame Corrompue",
             "damage": 8,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -9873,6 +10124,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": "Si 3 chiffres identiques, gains Back Strike."
             },
@@ -9894,7 +10146,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-018",
@@ -10066,7 +10321,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-019",
@@ -10260,40 +10518,17 @@
               "type": "symbols",
               "symbols": {
                 "white": 1,
-                "orange": 0,
-                "red": 0
-              }
-            },
-            "label": "",
-            "undefendable": false,
-            "prevent": 0,
-            "returnDamage": 0,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [
-              "Bleed"
-            ],
-            "formulas": [],
-            "notes": []
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "symbols",
-              "symbols": {
-                "white": 0,
                 "orange": 1,
                 "red": 0
-              }
+              },
+              "orWhiteOrange": true
             },
             "label": "",
             "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -10302,7 +10537,8 @@
               "Bleed"
             ],
             "formulas": [],
-            "notes": []
+            "notes": [],
+            "orWhiteOrange": true
           },
           {
             "align": "left",
@@ -10319,6 +10555,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -10372,6 +10609,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -10401,6 +10639,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": "Si 3 chiffres identiques, deals Bleed + Silence."
             },
@@ -10422,7 +10661,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "violet-violet-021",
@@ -10635,13 +10877,15 @@
                 "white": 0,
                 "orange": 0,
                 "red": 2
-              }
+              },
+              "exclusive": true
             },
             "label": "",
             "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -10650,28 +10894,38 @@
             "formulas": [
               "ignoreAllIncomingDamage = true"
             ],
-            "notes": []
+            "notes": [
+              "Ignore all incoming damage"
+            ],
+            "exclusive": true
           },
           {
             "align": "left",
             "condition": {
-              "type": "any"
+              "type": "any",
+              "exclusive": true
             },
             "label": "",
             "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 2,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": []
+            "notes": [
+              "Any other result:"
+            ],
+            "exclusive": true
           }
         ],
-        "notes": [],
+        "notes": [
+          "2 symboles rouges : ignore tous les dégâts subis. Pour tout autre résultat : vole 2 CP au héros."
+        ],
         "displayRows": []
       },
       "attackPlan": {
@@ -10692,6 +10946,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -10717,6 +10972,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -10776,7 +11032,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "orange-orange-002",
@@ -10816,6 +11075,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -10824,7 +11084,9 @@
             "formulas": [
               "ignoreAllIncomingDamage = true"
             ],
-            "notes": []
+            "notes": [
+              "Ignore all incoming damage"
+            ]
           }
         ],
         "notes": [],
@@ -10872,6 +11134,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -10898,6 +11161,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -10924,6 +11188,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -10950,6 +11215,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -10978,6 +11244,7 @@
               "damageFormula": null,
               "undefendable": false,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": "Si a single opponent est engage, deals aussi Wither et Silence."
             },
@@ -10999,7 +11266,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "orange-orange-003",
@@ -11032,13 +11302,18 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": [],
-            "notes": []
+            "formulas": [
+              "Prevent defense roll value"
+            ],
+            "notes": [
+              "Prevents damage equal to defense die roll."
+            ]
           }
         ],
         "notes": [],
@@ -11062,6 +11337,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -11085,6 +11361,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -11110,6 +11387,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -11128,7 +11406,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "orange-orange-004",
@@ -11338,24 +11619,40 @@
           {
             "align": "left",
             "condition": {
-              "type": "text"
+              "type": "any"
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "formulas": [
+              "damageCap = 6"
+            ],
+            "notes": [
+              "Damage taken by the horde is capped at a maximum of {damage:6} per attack."
+            ]
           }
         ],
-        "notes": [],
-        "displayRows": []
+        "notes": [
+          "Dégâts subis plafonnés à un maximum de 6 par attaque."
+        ],
+        "displayRows": [
+          {
+            "align": "center",
+            "items": [
+              "{shield}",
+              "Max 6 dégâts subis",
+              "{damage:6}"
+            ]
+          }
+        ]
       },
       "attackPlan": {
         "style": "symbols",
@@ -11376,7 +11673,10 @@
             "label": "Nuee",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -11403,6 +11703,7 @@
               "damageFormula": null,
               "undefendable": true,
               "lifeSteal": 0,
+              "loseHp": 0,
               "cpSteal": 0,
               "note": "Si les damage sont lowers ou equal a 5, cette attaque becomes imparable."
             },
@@ -11441,7 +11742,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "orange-orange-006",
@@ -11583,23 +11887,30 @@
           {
             "align": "left",
             "condition": {
-              "type": "text"
+              "type": "any"
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "formulas": [
+              "gainTokenIfDamaged = Chaos"
+            ],
+            "notes": [
+              "If at least 1 damage is dealt by the attacker, gains 1 {token:Chaos}."
+            ]
           }
         ],
-        "notes": [],
+        "notes": [
+          "If at least 1 damage is dealt by the attacker, gains 1 {token:Chaos}."
+        ],
         "displayRows": []
       },
       "attackPlan": {
@@ -11621,7 +11932,10 @@
             "label": "Colere Dechainee",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -11640,7 +11954,10 @@
             "label": "",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -11676,7 +11993,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "orange-orange-008",
@@ -11960,38 +12280,38 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "text"
-            },
-            "label": "",
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 2
+            "formulas": [
+              "burnOrDamageIfMax = 2"
+            ],
+            "notes": [
+              "Deals {token:Burn}. If opponent is already at Stack Limit, deals {undef:2} instead"
+            ]
           }
         ],
-        "notes": [],
-        "displayRows": []
+        "notes": [
+          "1 symbole orange inflige Brûlure. Si le héros a déjà atteint la limite de Brûlure (1 stack), inflige 2 dégâts imparables à la place."
+        ],
+        "displayRows": [
+          {
+            "align": "left",
+            "items": [
+              "{die:orange}",
+              "➔",
+              "{token:Burn}",
+              "/",
+              "{undef:2}"
+            ]
+          }
+        ]
       },
       "attackPlan": {
         "style": "symbols",
@@ -12027,7 +12347,10 @@
             "label": "Profane Command",
             "damage": 7,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12051,7 +12374,10 @@
             "label": "Profane Command",
             "damage": 9,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12075,7 +12401,10 @@
             "label": "Profane Command",
             "damage": 13,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12094,7 +12423,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "orange-orange-011",
@@ -12298,7 +12630,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": false,
+      "validatedDef": true,
+      "validated": false
     },
     {
       "key": "green-fallback",
@@ -12408,16 +12743,17 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 1,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": [],
-            "prevent": 1,
-            "returnDamage": 0
+            "notes": []
           },
           {
             "align": "left",
@@ -12426,16 +12762,17 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 3,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": [],
-            "prevent": 3,
-            "returnDamage": 0
+            "notes": []
           },
           {
             "align": "left",
@@ -12445,16 +12782,17 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 5,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": [],
-            "prevent": 5,
-            "returnDamage": 0
+            "notes": []
           }
         ],
         "notes": [],
@@ -12474,7 +12812,10 @@
             "label": "Swoop",
             "damage": 3,
             "undefendable": true,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 4,
             "drawCards": 0,
@@ -12494,7 +12835,10 @@
             "label": "Ember Spark",
             "damage": 8,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12514,7 +12858,10 @@
             "label": "Gashing Bite",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12544,7 +12891,10 @@
             "label": "Hoarding",
             "damage": 9,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12564,7 +12914,10 @@
             "label": "Thundering Roar",
             "damage": 8,
             "undefendable": true,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12584,7 +12937,10 @@
             "label": "Dragon's Might",
             "damage": 10,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12610,7 +12966,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": true,
+      "validatedDef": true,
+      "validated": true
     },
     {
       "key": "blue-generic",
@@ -12637,16 +12996,17 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "notes": []
           }
         ],
         "notes": [],
@@ -12665,7 +13025,10 @@
             "label": "Precise strike",
             "damage": 4,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12684,7 +13047,10 @@
             "label": "Pressure",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12703,7 +13069,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": true,
+      "validatedDef": true,
+      "validated": true
     },
     {
       "key": "violet-generic",
@@ -12730,16 +13099,17 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
             "formulas": [],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "notes": []
           }
         ],
         "notes": [],
@@ -12758,7 +13128,10 @@
             "label": "Mystic slash",
             "damage": 5,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12777,7 +13150,10 @@
             "label": "Weaken",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12796,7 +13172,10 @@
       },
       "defense": "",
       "passives": [],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": true,
+      "validatedDef": true,
+      "validated": true
     },
     {
       "key": "viseer",
@@ -12831,7 +13210,10 @@
             },
             "label": "",
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12840,9 +13222,7 @@
             "formulas": [
               "activatePassiveAbility = true"
             ],
-            "notes": [],
-            "prevent": 0,
-            "returnDamage": 0
+            "notes": []
           }
         ],
         "notes": [
@@ -12863,7 +13243,10 @@
             "label": "",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12882,7 +13265,10 @@
             "label": "",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12939,20 +13325,23 @@
         "dice": 4,
         "effects": [
           {
+            "align": "left",
             "condition": {
-              "type": "text",
-              "text": "Blocks 4 damage and counters"
+              "type": "text"
             },
+            "label": "",
+            "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
-            "undefendable": false,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [],
-            "formulas": []
+            "formulas": [],
+            "notes": []
           }
         ],
         "notes": [],
@@ -12964,46 +13353,61 @@
         "name": "Level 4 Minion",
         "actions": [
           {
+            "align": "left",
             "condition": {
               "type": "text"
             },
             "label": "Boss rage",
             "damage": 8,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           },
           {
+            "align": "left",
             "condition": {
               "type": "text"
             },
             "label": "Counter",
             "damage": 0,
             "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "topDeckToDiscard": 0,
             "tokens": [],
             "formulas": [],
-            "extraRoll": null,
-            "notes": []
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
           }
         ],
         "conditionalRules": [],
         "passives": [],
-        "notes": []
-      }
+        "notes": [],
+        "displayRows": []
+      },
+      "defense": "",
+      "passives": [],
+      "passiveDisplayRows": [],
+      "validatedAtk": true,
+      "validatedDef": true,
+      "validated": true
     }
   ]
 }

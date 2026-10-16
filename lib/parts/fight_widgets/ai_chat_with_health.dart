@@ -1,4 +1,4 @@
-﻿part of '../../main.dart';
+part of '../../main.dart';
 
 class _DualEnemyTargetButtons extends StatelessWidget {
   const _DualEnemyTargetButtons({
@@ -86,6 +86,7 @@ class _AiChatWithHealth extends StatefulWidget {
     required this.onHeroCpSaved,
     required this.onEnemyHpSaved,
     required this.onEnemyCpSaved,
+    this.trailing,
   });
 
   final String message;
@@ -116,6 +117,7 @@ class _AiChatWithHealth extends StatefulWidget {
   final ValueChanged<int> onEnemyHpSaved;
   final ValueChanged<int> onEnemyCpSaved;
   final bool isRollPhase;
+  final Widget? trailing;
 
   @override
   State<_AiChatWithHealth> createState() => _AiChatWithHealthState();
@@ -191,17 +193,15 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
         : _isHeroTarget(target)
         ? heroAccent
         : widget.enemyColor;
-    final chat = Container(
-      width: double.infinity,
+    final chat = Padding(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.35)),
       child: SingleChildScrollView(
         reverse: true,
         child: RichText(
           text: TextSpan(
             style: DefaultTextStyle.of(
               context,
-            ).style.copyWith(height: 1.25, color: Colors.white),
+            ).style.copyWith(height: 1.25, color: const Color(0xff1c1b19)),
             children: _chatSpans(
               widget.message,
               heroName: widget.heroName,
@@ -257,11 +257,23 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
           ),
         ),
       );
-      final chatRow = SizedBox(
+      final chatRow = Container(
         height: chatHeight,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xffdcd4c5), width: 1),
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [Expanded(child: chat)],
+          children: [
+            Expanded(child: chat),
+            if (widget.trailing != null) ...[
+              Container(width: 1, color: const Color(0xffe5ded0)),
+              widget.trailing!,
+            ],
+          ],
         ),
       );
       if (target == null) {
@@ -295,12 +307,22 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
         ],
       );
     }
-    return SizedBox(
+    return Container(
       height: 150,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xffdcd4c5), width: 1),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(child: chat),
+          if (widget.trailing != null) ...[
+            Container(width: 1, color: const Color(0xffe5ded0)),
+            widget.trailing!,
+          ],
           if (_target != null) ...[
             const SizedBox(width: 6),
             SizedBox(
@@ -810,16 +832,17 @@ class _CompactRoundIconButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.color,
-    required this.onPressed,
+    this.onPressed,
   });
 
   final IconData icon;
   final String tooltip;
   final Color color;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
+    final isEnabled = onPressed != null;
     return Tooltip(
       message: tooltip,
       child: Material(
@@ -833,10 +856,17 @@ class _CompactRoundIconButton extends StatelessWidget {
             height: 34,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: color, width: 1.4),
+              border: Border.all(
+                color: isEnabled ? color : color.withOpacity(0.4),
+                width: 1.4,
+              ),
             ),
             alignment: Alignment.center,
-            child: Icon(icon, size: 18, color: Colors.white),
+            child: Icon(
+              icon,
+              size: 18,
+              color: isEnabled ? Colors.white : Colors.white38,
+            ),
           ),
         ),
       ),

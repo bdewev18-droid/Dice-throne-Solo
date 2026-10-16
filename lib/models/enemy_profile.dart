@@ -91,6 +91,7 @@ class EnemyDefenseEffect {
     this.returnDamage = 0,
     this.undefendable = false,
     this.stealHp = 0,
+    this.loseHp = 0,
     this.stealCp = 0,
     this.heal = 0,
     this.tokens = const [],
@@ -99,6 +100,7 @@ class EnemyDefenseEffect {
     this.orOrangeRed = false,
     this.notes = const [],
     this.formulas = const [],
+    this.exclusive = false,
   });
 
   final int white;
@@ -109,6 +111,7 @@ class EnemyDefenseEffect {
   final int returnDamage;
   final bool undefendable;
   final int stealHp;
+  final int loseHp;
   final int stealCp;
   final int heal;
   final List<String> tokens;
@@ -117,6 +120,7 @@ class EnemyDefenseEffect {
   final bool orOrangeRed;
   final List<String> notes;
   final List<String> formulas;
+  final bool exclusive;
 }
 
 enum MinionAttackStyle { symbols, suite, none }
@@ -162,6 +166,7 @@ class SymbolGoalEffect {
     this.damage = 0,
     this.undefendable = false,
     this.stealHp = 0,
+    this.loseHp = 0,
     this.stealCp = 0,
     this.heal = 0,
     this.heroTokens = const [],
@@ -181,6 +186,7 @@ class SymbolGoalEffect {
   final int damage;
   final bool undefendable;
   final int stealHp;
+  final int loseHp;
   final int stealCp;
   final int heal;
   final List<String> heroTokens;
@@ -228,6 +234,7 @@ class ExtraRollOutcome {
     this.damage = 0,
     this.undefendable = false,
     this.stealHp = 0,
+    this.loseHp = 0,
     this.stealCp = 0,
     this.tokens = const [],
     this.align,
@@ -238,6 +245,7 @@ class ExtraRollOutcome {
   final int damage;
   final bool undefendable;
   final int stealHp;
+  final int loseHp;
   final int stealCp;
   final List<String> tokens;
   final String? align;
@@ -386,6 +394,7 @@ class ConditionalEffect {
     this.damageFormula,
     this.undefendable = false,
     this.lifeSteal = 0,
+    this.loseHp = 0,
     this.cpSteal = 0,
     this.note,
   });
@@ -402,6 +411,7 @@ class ConditionalEffect {
   final String? damageFormula;
   final bool undefendable;
   final int lifeSteal;
+  final int loseHp;
   final int cpSteal;
   final String? note;
 }
@@ -507,6 +517,7 @@ class MinionPassive {
         damage: _asInt(effectsJson['damage']),
         undefendable: effectsJson['undefendable'] as bool? ?? false,
         stealHp: _asInt(effectsJson['stealHp']),
+        loseHp: _asInt(effectsJson['loseHp'] ?? effectsJson['loseHealth']),
         stealCp: _asInt(effectsJson['stealCp']),
         heal: _asInt(effectsJson['heal']),
         heroTokens: _asStringList(effectsJson['tokens']),
@@ -543,6 +554,7 @@ class MinionPassiveEffect {
     this.damage = 0,
     this.undefendable = false,
     this.stealHp = 0,
+    this.loseHp = 0,
     this.stealCp = 0,
     this.heal = 0,
     this.heroTokens = const [],
@@ -551,6 +563,7 @@ class MinionPassiveEffect {
   final int damage;
   final bool undefendable;
   final int stealHp;
+  final int loseHp;
   final int stealCp;
   final int heal;
   final List<String> heroTokens;

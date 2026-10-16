@@ -2,6 +2,7 @@ import 'package:dice_throne_survie/data/enemy_profile_repository.dart';
 import 'package:dice_throne_survie/game_engine.dart';
 import 'package:dice_throne_survie/main.dart';
 import 'package:dice_throne_survie/models/enemy_profile.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -658,5 +659,760 @@ void main() {
       expect(effect.orOrangeRed, isTrue);
       expect(effect.tokens.length, 2);
     });
+
+    test('EnemyDefenseEffect and SymbolGoalEffect support loseHp (unpreventable life loss)', () {
+      const defEffect = EnemyDefenseEffect(
+        white: 2,
+        loseHp: 2,
+      );
+      expect(defEffect.loseHp, equals(2));
+
+      const atkEffect = SymbolGoalEffect(
+        damage: 4,
+        loseHp: 1,
+      );
+      expect(atkEffect.loseHp, equals(1));
+      expect(atkEffect.damage, equals(4));
+
+      const outcome = ExtraRollOutcome(
+        face: ExtraRollFace.white,
+        loseHp: 3,
+      );
+      expect(outcome.loseHp, equals(3));
+
+      const condEffect = ConditionalEffect(
+        loseHp: 2,
+      );
+      expect(condEffect.loseHp, equals(2));
+
+      // Verifying health deduction logic without healing
+      final adventure = AdventureState(
+        config: SurvivalConfig(mode: SurvivalMode.mediumFixed, targetScore: SurvivalMode.mediumFixed.defaultTarget),
+        hero: HeroType.barbare,
+      );
+      adventure.health = 30;
+      final enemy = adventure.enemies.first;
+      enemy.health = 20;
+      final initialEnemyHp = enemy.health;
+
+      final loseHpAmount = 3;
+      adventure.setHeroHealth(adventure.health - loseHpAmount, source: 'Life loss');
+
+      // Hero loses exactly loseHpAmount, enemy health is unchanged
+      expect(adventure.health, equals(27));
+      expect(enemy.health, equals(initialEnemyHp));
+    });
+
+    test('evaluateDefenseFormulas parses ignoreAllIncomingDamage, prevent half, and return half', () {
+      // 1. ignoreAllIncomingDamage
+      final resIgnore = evaluateDefenseFormulas(
+        formulas: ['ignoreAllIncomingDamage = true'],
+        incomingDamage: 12,
+      );
+      expect(resIgnore.matched, isTrue);
+      expect(resIgnore.ignoreAllIncomingDamage, isTrue);
+      expect(resIgnore.prevented, equals(12));
+
+      // 2. prevent = ceil(incomingDamage / 2) with odd damage (7 -> 4)
+      final resPreventOdd = evaluateDefenseFormulas(
+        formulas: ['prevent = ceil(incomingDamage / 2)'],
+        incomingDamage: 7,
+      );
+      expect(resPreventOdd.matched, isTrue);
+      expect(resPreventOdd.prevented, equals(4));
+
+      // 3. prevent = ceil(incomingDamage / 2) with even damage (8 -> 4)
+      final resPreventEven = evaluateDefenseFormulas(
+        formulas: ['prevent = ceil(incomingDamage / 2)'],
+        incomingDamage: 8,
+      );
+      expect(resPreventEven.matched, isTrue);
+      expect(resPreventEven.prevented, equals(4));
+
+      // 4. returnDamage = ceil(incomingDamage / 2) (9 -> 5)
+      final resReturn = evaluateDefenseFormulas(
+        formulas: ['returnDamage = ceil(incomingDamage / 2)'],
+        incomingDamage: 9,
+      );
+      expect(resReturn.matched, isTrue);
+      expect(resReturn.returnDamage, equals(5));
+
+      // 5. returnDamage = ceil(defenseDieValue / 2) with D6 = 5 -> 3
+      final resDieReturn = evaluateDefenseFormulas(
+        formulas: ['returnDamage = ceil(defenseDieValue / 2)'],
+        incomingDamage: 5,
+        firstDieValue: 5,
+      );
+      expect(resDieReturn.matched, isTrue);
+      expect(resDieReturn.returnDamage, equals(3));
+      expect(resDieReturn.returnDamageUndefendable, isTrue);
+    });
+
+    test('Mort Murmurante and Elfe Fletri profiles have defense formulas loaded', () {
+      final mort = EnemyProfileRepository.byKey('orange-orange-002');
+      expect(mort, isNotNull);
+      expect(mort!.name, equals('Mort Murmurante'));
+      expect(mort.defenseEffects.length, equals(1));
+      expect(mort.defenseEffects.first.red, equals(1));
+      expect(mort.defenseEffects.first.formulas, contains('ignoreAllIncomingDamage = true'));
+
+      final elfe = EnemyProfileRepository.byKey('bleu-bleu-013');
+      expect(elfe, isNotNull);
+      expect(elfe!.name, equals('Elfe Fletri'));
+      expect(elfe.defenseEffects.length, equals(1));
+      expect(elfe.defenseEffects.first.orange, equals(2));
+      expect(elfe.defenseEffects.first.formulas, contains('prevent = ceil(incomingDamage / 2)'));
+    });
+
+    test('filterActiveDefenseEffects picks highest tier exclusive effect without stacking', () {
+      const tier1 = EnemyDefenseEffect(
+        orange: 1,
+        formulas: ['prevent = ceil(incomingDamage / 2)'],
+        exclusive: true,
+      );
+      const tier2 = EnemyDefenseEffect(
+        orange: 2,
+        formulas: ['ignoreAllIncomingDamage = true'],
+        exclusive: true,
+      );
+      const independent = EnemyDefenseEffect(
+        red: 1,
+        tokens: ['Poison'],
+      );
+
+      // Roll matches both tier1 and tier2 plus independent:
+      final matched = [
+        const MatchedDefenseEffect(effect: tier1, count: 1),
+        const MatchedDefenseEffect(effect: tier2, count: 1),
+        const MatchedDefenseEffect(effect: independent, count: 1),
+      ];
+
+      final filtered = filterActiveDefenseEffects(matched);
+      expect(filtered.length, equals(2));
+      expect(filtered.any((m) => m.effect == tier2), isTrue);
+      expect(filtered.any((m) => m.effect == tier1), isFalse);
+      expect(filtered.any((m) => m.effect == independent), isTrue);
+    });
+
+    test('Harpie Cornue defense effects are exclusive and do not stack when 2 orange symbols are rolled', () {
+      final harpie = EnemyProfileRepository.byKey('bleu-bleu-018');
+      expect(harpie, isNotNull);
+      expect(harpie!.name, equals('Harpie Cornue'));
+      expect(harpie.defenseEffects.length, equals(2));
+      expect(harpie.defenseEffects[0].orange, equals(1));
+      expect(harpie.defenseEffects[0].exclusive, isTrue);
+      expect(harpie.defenseEffects[1].orange, equals(2));
+      expect(harpie.defenseEffects[1].exclusive, isTrue);
+
+      // Simulation with 2 orange rolled and 6 incoming damage:
+      final matched = [
+        MatchedDefenseEffect(effect: harpie.defenseEffects[0], count: 1),
+        MatchedDefenseEffect(effect: harpie.defenseEffects[1], count: 1),
+      ];
+      final active = filterActiveDefenseEffects(matched);
+      expect(active.length, equals(1));
+      expect(active.first.effect.orange, equals(2));
+
+      // Defense formula resolution on the active effect only:
+      final res = evaluateDefenseFormulas(
+        formulas: active.first.effect.formulas,
+        incomingDamage: 6,
+        count: active.first.count,
+      );
+      expect(res.ignoreAllIncomingDamage, isTrue);
+      expect(res.prevented, equals(6)); // exactly 6, not 9
+    });
+
+    test('Defense formula heal = rollD6() heals single minion or splits between 2 minions', () {
+      expect(isHealRollD6DefenseFormula('heal = rollD6()'), isTrue);
+      expect(isHealRollD6DefenseFormula('heal = d6'), isTrue);
+      expect(isHealRollD6DefenseFormula('minionHeal = rollD6()'), isTrue);
+      expect(isHealRollD6DefenseFormula('soin = rollD6()'), isTrue);
+      expect(isHealRollD6DefenseFormula('prevent = 2'), isFalse);
+
+      // Single minion scenario (hasDualEnemies = false):
+      final singleRes = evaluateDefenseFormulas(
+        formulas: ['heal = rollD6()'],
+        incomingDamage: 6,
+        hasDualEnemies: false,
+        rollD6: () => 5,
+      );
+      expect(singleRes.matched, isTrue);
+      expect(singleRes.enemyHeal, equals(5));
+      expect(singleRes.secondaryEnemyHeal, equals(0));
+      expect(singleRes.additionalDieRoll, equals(5));
+
+      // Dual minions alive scenario (hasDualEnemies = true):
+      // D6 roll = 5 => ceil(5 / 2) = 3 for each minion
+      final dualResOdd = evaluateDefenseFormulas(
+        formulas: ['heal = rollD6()'],
+        incomingDamage: 6,
+        hasDualEnemies: true,
+        rollD6: () => 5,
+      );
+      expect(dualResOdd.matched, isTrue);
+      expect(dualResOdd.enemyHeal, equals(3));
+      expect(dualResOdd.secondaryEnemyHeal, equals(3));
+      expect(dualResOdd.additionalDieRoll, equals(5));
+
+      // D6 roll = 6 => ceil(6 / 2) = 3 for each minion
+      final dualResEven = evaluateDefenseFormulas(
+        formulas: ['heal = rollD6()'],
+        incomingDamage: 6,
+        hasDualEnemies: true,
+        rollD6: () => 6,
+      );
+      expect(dualResEven.matched, isTrue);
+      expect(dualResEven.enemyHeal, equals(3));
+      expect(dualResEven.secondaryEnemyHeal, equals(3));
+      expect(dualResEven.additionalDieRoll, equals(6));
+    });
+
+    test('Formula 1: returnDamage = ceil(rollD6() / 2) rolls extra D6 and returns half rounded up', () {
+      expect(isReturnDamageRollD6Formula('returnDamage = ceil(rollD6() / 2)'), isTrue);
+      expect(isReturnDamageRollD6Formula('returnDamage = ceil(d6 / 2)'), isTrue);
+      expect(isReturnDamageRollD6Formula('returnDamage = rollD6() / 2'), isTrue);
+      expect(isReturnDamageRollD6Formula('returnDamage = ceil(defenseDieValue / 2)'), isFalse);
+
+      final res5 = evaluateDefenseFormulas(
+        formulas: ['returnDamage = ceil(rollD6() / 2)'],
+        incomingDamage: 6,
+        rollD6: () => 5,
+      );
+      expect(res5.matched, isTrue);
+      expect(res5.returnDamage, equals(3));
+      expect(res5.returnDamageUndefendable, isTrue);
+      expect(res5.additionalDieRoll, equals(5));
+
+      final res4 = evaluateDefenseFormulas(
+        formulas: ['returnDamage = ceil(d6 / 2)'],
+        incomingDamage: 6,
+        rollD6: () => 4,
+      );
+      expect(res4.returnDamage, equals(2));
+      expect(res4.returnDamageUndefendable, isTrue);
+
+      final res1 = evaluateDefenseFormulas(
+        formulas: ['returnDamage = ceil(rollD6() / 2)'],
+        incomingDamage: 6,
+        rollD6: () => 1,
+      );
+      expect(res1.returnDamage, equals(1));
+    });
+
+    test('Formula 2 (Combined): rolls single extra D6, returns half damage and prevents half damage', () {
+      expect(isPreventRollD6HalfFormula('prevent = ceil(rollD6() / 2)'), isTrue);
+      expect(isPreventRollD6HalfFormula('prevent = ceil(d6 / 2)'), isTrue);
+
+      // Case A: 2 formulas in the list
+      final resList = evaluateDefenseFormulas(
+        formulas: [
+          'returnDamage = ceil(rollD6() / 2)',
+          'prevent = ceil(rollD6() / 2)',
+        ],
+        incomingDamage: 6,
+        rollD6: () => 5,
+      );
+      expect(resList.matched, isTrue);
+      expect(resList.additionalDieRoll, equals(5)); // rolled exactly once
+      expect(resList.returnDamage, equals(3));
+      expect(resList.prevented, equals(3));
+      expect(resList.returnDamageUndefendable, isTrue);
+
+      // Case B: combined in a single string separated by &
+      final resSingleString = evaluateDefenseFormulas(
+        formulas: ['returnDamage = ceil(rollD6() / 2) & prevent = ceil(rollD6() / 2)'],
+        incomingDamage: 6,
+        rollD6: () => 5,
+      );
+      expect(resSingleString.matched, isTrue);
+      expect(resSingleString.additionalDieRoll, equals(5));
+      expect(resSingleString.returnDamage, equals(3));
+      expect(resSingleString.prevented, equals(3));
+
+      // Case C: roll of 2 gives 1 damage and 1 prevented
+      final res2 = evaluateDefenseFormulas(
+        formulas: ['returnDamage = ceil(d6 / 2)', 'prevent = ceil(d6 / 2)'],
+        incomingDamage: 6,
+        rollD6: () => 2,
+      );
+      expect(res2.returnDamage, equals(1));
+      expect(res2.prevented, equals(1));
+    });
+
+    test('Formula 3: prevent = defenseDieValue prevents the defense roll total', () {
+      expect(isPreventDefenseDieValueFormula('prevent = defenseDieValue'), isTrue);
+      expect(isPreventDefenseDieValueFormula('prevent = defensedie'), isTrue);
+      expect(isPreventDefenseDieValueFormula('prevent = jetdefensif'), isTrue);
+      expect(isPreventRollD6FullFormula('prevent = rollD6()'), isTrue);
+
+      // Value from the defense die in the arena:
+      final resFromDefenseDie = evaluateDefenseFormulas(
+        formulas: ['prevent = defenseDieValue'],
+        incomingDamage: 6,
+        firstDieValue: 4,
+      );
+      expect(resFromDefenseDie.matched, isTrue);
+      expect(resFromDefenseDie.prevented, equals(4));
+
+      final resDefenseDie6 = evaluateDefenseFormulas(
+        formulas: ['prevent = jetdefensif'],
+        incomingDamage: 6,
+        firstDieValue: 6,
+      );
+      expect(resDefenseDie6.prevented, equals(6));
+
+      // Extra roll variant:
+      final resFromExtraRoll = evaluateDefenseFormulas(
+        formulas: ['prevent = rollD6()'],
+        incomingDamage: 6,
+        rollD6: () => 4,
+      );
+      expect(resFromExtraRoll.matched, isTrue);
+      expect(resFromExtraRoll.prevented, equals(4));
+      expect(resFromExtraRoll.additionalDieRoll, equals(4));
+    });
+
+    test('Real database formulas for Epee Fantome, Atlas, and Lame Maudite evaluate correctly', () {
+      // Epee Fantome database formula with a defense die roll of 4:
+      // Half of 4 = 2 (not 3)
+      final epeeRes4 = evaluateDefenseFormulas(
+        formulas: ['Roll D6: return 1/2 D6 (undef)'],
+        incomingDamage: 6,
+        firstDieValue: 4,
+      );
+      expect(epeeRes4.matched, isTrue);
+      expect(epeeRes4.returnDamage, equals(2));
+      expect(epeeRes4.returnDamageUndefendable, isTrue);
+      expect(epeeRes4.additionalDieRoll, equals(4));
+
+      // Epee Fantome with defense die roll of 5:
+      // Half of 5 rounded up = 3
+      final epeeRes5 = evaluateDefenseFormulas(
+        formulas: ['Roll D6: return 1/2 D6 (undef)'],
+        incomingDamage: 6,
+        firstDieValue: 5,
+      );
+      expect(epeeRes5.matched, isTrue);
+      expect(epeeRes5.returnDamage, equals(3));
+      expect(epeeRes5.additionalDieRoll, equals(5));
+
+      // Atlas database formula: "Prevent defense roll value"
+      final atlasRes = evaluateDefenseFormulas(
+        formulas: ['Prevent defense roll value'],
+        incomingDamage: 6,
+        firstDieValue: 4,
+      );
+      expect(atlasRes.matched, isTrue);
+      expect(atlasRes.prevented, equals(4));
+
+      // Lame Maudite with defense die roll of 5:
+      // prevent ceil(5 / 2) = 3 and return ceil(5 / 2) = 3 (not 2!)
+      final lameRes5 = evaluateDefenseFormulas(
+        formulas: ['Roll D6: prevent 1/2 D6 & return 1/2 D6 (undef)'],
+        incomingDamage: 6,
+        firstDieValue: 5,
+      );
+      expect(lameRes5.matched, isTrue);
+      expect(lameRes5.returnDamage, equals(3));
+      expect(lameRes5.prevented, equals(3));
+      expect(lameRes5.returnDamageUndefendable, isTrue);
+      expect(lameRes5.additionalDieRoll, equals(5));
+
+      // Elfe Agile database formula: "heal = rollD6()" with defense die roll of 4:
+      // heals exactly 4
+      final elfeRes4 = evaluateDefenseFormulas(
+        formulas: ['heal = rollD6()'],
+        incomingDamage: 6,
+        firstDieValue: 4,
+      );
+      expect(elfeRes4.matched, isTrue);
+      expect(elfeRes4.enemyHeal, equals(4));
+      expect(elfeRes4.additionalDieRoll, equals(4));
+    });
+
+    test('Horde de Gobelins: damageCap = 6 limits incoming damage to 6', () {
+      expect(parseDamageCap('damageCap = 6'), equals(6));
+      expect(parseDamageCap('maxIncomingDamage = 6'), equals(6));
+
+      // Over cap: incoming 10 => excess 4 prevented, net is 6
+      final resOver = evaluateDefenseFormulas(
+        formulas: ['damageCap = 6'],
+        incomingDamage: 10,
+      );
+      expect(resOver.matched, isTrue);
+      expect(resOver.damageCap, equals(6));
+      expect(resOver.prevented, equals(4));
+
+      // Under or equal cap: incoming 5 => 0 prevented
+      final resUnder = evaluateDefenseFormulas(
+        formulas: ['damageCap = 6'],
+        incomingDamage: 5,
+      );
+      expect(resUnder.matched, isTrue);
+      expect(resUnder.damageCap, equals(6));
+      expect(resUnder.prevented, equals(0));
+    });
+
+    test('The Ashen King: burnOrDamageIfMax = 2 inflicts Burn or deals 2 undefendable damage if at max Burn', () {
+      expect(isBurnOrDamageIfMaxFormula('burnOrDamageIfMax = 2'), isTrue);
+      expect(parseBurnOrDamageAmount('burnOrDamageIfMax = 2'), equals(2));
+
+      // Case 1: Hero has 0 Burn tokens => receives 'Burn'
+      final resNoBurn = evaluateDefenseFormulas(
+        formulas: ['burnOrDamageIfMax = 2'],
+        incomingDamage: 6,
+        heroTokens: [],
+      );
+      expect(resNoBurn.matched, isTrue);
+      expect(resNoBurn.grantedHeroTokens, equals(['Burn']));
+      expect(resNoBurn.returnDamage, equals(0));
+
+      // Case 2: Hero already has 1 Burn (maxStack) => takes 2 undefendable damage
+      final resWithBurn = evaluateDefenseFormulas(
+        formulas: ['burnOrDamageIfMax = 2'],
+        incomingDamage: 6,
+        heroTokens: ['Burn'],
+      );
+      expect(resWithBurn.matched, isTrue);
+      expect(resWithBurn.grantedHeroTokens, isEmpty);
+      expect(resWithBurn.returnDamage, equals(2));
+      expect(resWithBurn.returnDamageUndefendable, isTrue);
+    });
+
+    test('Renegate Vereuse: 2 red ignores all damage, otherwise steals 2 CP via filterActiveDefenseEffects', () {
+      final effect2Red = EnemyDefenseEffect(
+        red: 2,
+        formulas: ['ignoreAllIncomingDamage = true'],
+        exclusive: true,
+      );
+      final effectFallback = EnemyDefenseEffect(
+        stealCp: 2,
+        exclusive: true,
+      );
+
+      // Scenario A: Roll has 2 red => only effect2Red triggers, stealCp is filtered out
+      final matchedA = [
+        MatchedDefenseEffect(effect: effect2Red, count: 1),
+        MatchedDefenseEffect(effect: effectFallback, count: 1),
+      ];
+      final activeA = filterActiveDefenseEffects(matchedA);
+      expect(activeA.length, equals(1));
+      expect(activeA.first.effect.formulas, contains('ignoreAllIncomingDamage = true'));
+      expect(activeA.first.effect.stealCp, equals(0));
+
+      // Scenario B: Roll has < 2 red => only effectFallback triggers
+      final matchedB = [
+        MatchedDefenseEffect(effect: effectFallback, count: 1),
+      ];
+      final activeB = filterActiveDefenseEffects(matchedB);
+      expect(activeB.length, equals(1));
+      expect(activeB.first.effect.stealCp, equals(2));
+    });
+
+    test('Wyverne: attackFailsIfD6 >= 5 completely negates attack on 5 or 6, fails on 1-4', () {
+      expect(isAttackFailsOnD6Formula('attackFailsIfD6 >= 5'), isTrue);
+      expect(parseAttackFailsThreshold('attackFailsIfD6 >= 5'), equals(5));
+
+      // D6 roll of 5 => attack fails completely
+      final res5 = evaluateDefenseFormulas(
+        formulas: ['attackFailsIfD6 >= 5'],
+        incomingDamage: 8,
+        firstDieValue: 5,
+      );
+      expect(res5.matched, isTrue);
+      expect(res5.attackFailed, isTrue);
+      expect(res5.ignoreAllIncomingDamage, isTrue);
+      expect(res5.prevented, equals(8));
+
+      // D6 roll of 6 => attack fails completely
+      final res6 = evaluateDefenseFormulas(
+        formulas: ['attackFailsIfD6 >= 5'],
+        incomingDamage: 8,
+        firstDieValue: 6,
+      );
+      expect(res6.matched, isTrue);
+      expect(res6.attackFailed, isTrue);
+      expect(res6.ignoreAllIncomingDamage, isTrue);
+      expect(res6.prevented, equals(8));
+
+      // D6 roll of 4 => defense failed
+      final res4 = evaluateDefenseFormulas(
+        formulas: ['attackFailsIfD6 >= 5'],
+        incomingDamage: 8,
+        firstDieValue: 4,
+      );
+      expect(res4.matched, isTrue);
+      expect(res4.attackFailed, isFalse);
+      expect(res4.ignoreAllIncomingDamage, isFalse);
+      expect(res4.prevented, equals(0));
+    });
+
+    test('Pillard Gobelin: 1-5 steals 1 CP & deals 1 undef damage, 6 flees battle', () {
+      final formulas = [
+        'if D6 <= 5: stealCp = 1 & returnDamage = 1 (undef)',
+        'fleeIfD6 == 6',
+      ];
+      expect(isStealCpAndReturnDamageFormula(formulas[0]), isTrue);
+      expect(isFleeFormula(formulas[1]), isTrue);
+      expect(parseD6RangeMax(formulas[0]), equals(5));
+      expect(parseStealCpValue(formulas[0]), equals(1));
+      expect(parseReturnDamageValue(formulas[0]), equals(1));
+      expect(parseFleeThreshold(formulas[1]), equals(6));
+
+      // Scenario 1: Defense die = 3 (between 1 and 5)
+      // Steals 1 CP, returns 1 undefendable damage, does NOT flee
+      final res3 = evaluateDefenseFormulas(
+        formulas: formulas,
+        incomingDamage: 7,
+        firstDieValue: 3,
+      );
+      expect(res3.matched, isTrue);
+      expect(res3.stealCp, equals(1));
+      expect(res3.returnDamage, equals(1));
+      expect(res3.returnDamageUndefendable, isTrue);
+      expect(res3.enemyFled, isFalse);
+      expect(res3.attackFailed, isFalse);
+      expect(res3.ignoreAllIncomingDamage, isFalse);
+
+      // Scenario 2: Defense die = 5 (upper boundary)
+      // Steals 1 CP, returns 1 undefendable damage, does NOT flee
+      final res5 = evaluateDefenseFormulas(
+        formulas: formulas,
+        incomingDamage: 7,
+        firstDieValue: 5,
+      );
+      expect(res5.matched, isTrue);
+      expect(res5.stealCp, equals(1));
+      expect(res5.returnDamage, equals(1));
+      expect(res5.enemyFled, isFalse);
+
+      // Scenario 3: Defense die = 6 (flee)
+      // Flees battle, hero attack fails completely (0 damage, no tokens), no stealCp/returnDamage
+      final res6 = evaluateDefenseFormulas(
+        formulas: formulas,
+        incomingDamage: 7,
+        firstDieValue: 6,
+      );
+      expect(res6.matched, isTrue);
+      expect(res6.enemyFled, isTrue);
+      expect(res6.attackFailed, isTrue);
+      expect(res6.ignoreAllIncomingDamage, isTrue);
+      expect(res6.prevented, equals(7));
+      expect(res6.stealCp, equals(0));
+      expect(res6.returnDamage, equals(0));
+    });
+
+    test('AdventureState.recordEnemyFled: marks enemy fled and defeated but does NOT add victory score', () {
+      final adventure = AdventureState(
+        hero: HeroType.barbare,
+        config: SurvivalConfig(
+          mode: SurvivalMode.mediumFixed,
+          targetScore: SurvivalMode.mediumFixed.defaultTarget,
+        ),
+      );
+      final initialScore = adventure.score;
+      final targetEnemy = adventure.enemies.firstWhere((e) => e.rank == EnemyRank.violet);
+
+      expect(targetEnemy.fled, isFalse);
+      expect(targetEnemy.defeated, isFalse);
+
+      adventure.recordEnemyFled(targetEnemy);
+
+      expect(targetEnemy.fled, isTrue);
+      expect(targetEnemy.defeated, isTrue);
+      // Crucial: adventure score must NOT receive victory points
+      expect(adventure.score, equals(initialScore));
+      expect(adventure.logs.first, contains('fled the battle'));
+    });
+
+    test('Hydre Féroce: 3 Chaos heads, +3 DMG per head, revives with 8 HP per Chaos consumed', () {
+      final hydra = EnemyNode(
+        id: 111,
+        label: 'Hydre Féroce',
+        rank: EnemyRank.violet,
+        maxHealth: 8,
+        cp: 10,
+        attacks: ['Plurimorsure'],
+        defense: 'Défense Unique',
+        defenseDice: 0,
+        attackPlan: const MinionAttackPlan.none(),
+        cardAsset: 'assets/violet/violet-011.png',
+        profileKey: 'violet-violet-011',
+        initialTokens: ['Chaos', 'Chaos', 'Chaos'],
+      );
+
+      expect(isHydraEnemy(hydra), isTrue);
+      expect(getHydraChaosCount(hydra), equals(3));
+      // Base attack is 6; 3 heads add 3 * 3 = 9 DMG -> total 15 DMG
+      expect(calculateHydraAttackBonus(hydra), equals(9));
+
+      // 1st death: 8 HP lost -> consumes 1 Chaos, revives at 8 HP (2 Chaos left)
+      hydra.health = 0;
+      final logs = <String>[];
+      final revived1 = checkAndApplyHydraRevival(hydra, onLog: logs.add);
+      expect(revived1, isTrue);
+      expect(hydra.health, equals(8));
+      expect(getHydraChaosCount(hydra), equals(2));
+      expect(calculateHydraAttackBonus(hydra), equals(6));
+      expect(logs.last, contains('2 head(s) remaining'));
+
+      // 2nd death: 8 HP lost -> consumes 1 Chaos, revives at 8 HP (1 Chaos left)
+      hydra.health = 0;
+      final revived2 = checkAndApplyHydraRevival(hydra, onLog: logs.add);
+      expect(revived2, isTrue);
+      expect(hydra.health, equals(8));
+      expect(getHydraChaosCount(hydra), equals(1));
+      expect(calculateHydraAttackBonus(hydra), equals(3));
+      expect(logs.last, contains('1 head(s) remaining'));
+
+      // 3rd death: 8 HP lost -> consumes 1 Chaos, revives at 8 HP (0 Chaos left)
+      hydra.health = 0;
+      final revived3 = checkAndApplyHydraRevival(hydra, onLog: logs.add);
+      expect(revived3, isTrue);
+      expect(hydra.health, equals(8));
+      expect(getHydraChaosCount(hydra), equals(0));
+      expect(calculateHydraAttackBonus(hydra), equals(0));
+      expect(logs.last, contains('0 head(s) remaining'));
+
+      // 4th death (Final): 8 HP lost, 0 Chaos left -> fails to revive, remains at 0 HP
+      hydra.health = 0;
+      final revived4 = checkAndApplyHydraRevival(hydra, onLog: logs.add);
+      expect(revived4, isFalse);
+      expect(hydra.health, equals(0));
+      expect(logs.last, contains('All heads have been severed'));
+    });
+
+    testWidgets('HydraRegrowthDialog renders in English and handles roll outcomes', (tester) async {
+      final hydra = EnemyNode(
+        id: 111,
+        label: 'Hydre Féroce',
+        rank: EnemyRank.violet,
+        maxHealth: 8,
+        cp: 10,
+        attacks: ['Plurimorsure'],
+        defense: 'Défense Unique',
+        defenseDice: 0,
+        attackPlan: const MinionAttackPlan.none(),
+        cardAsset: 'assets/violet/violet-011.png',
+        profileKey: 'violet-violet-011',
+        initialTokens: ['Chaos', 'Chaos', 'Chaos'],
+      );
+      final adventure = AdventureState(
+        hero: HeroType.barbare,
+        config: SurvivalConfig(
+          mode: SurvivalMode.mediumFixed,
+          targetScore: SurvivalMode.mediumFixed.defaultTarget,
+        ),
+      );
+
+      // Subtest A: Roll a 6 -> Success, gains a head
+      bool? resultA;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (ctx) => ElevatedButton(
+              onPressed: () async {
+                resultA = await showDialog<bool>(
+                  context: ctx,
+                  builder: (dCtx) => HydraRegrowthDialog(
+                    enemy: hydra,
+                    adventure: adventure,
+                    rollDie: () => 6,
+                  ),
+                );
+              },
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('HYDRA REGROWTH'), findsOneWidget);
+      expect(find.textContaining('At the end of the Offensive Roll Phase'), findsOneWidget);
+      expect(find.textContaining('3 Heads'), findsOneWidget);
+      expect(find.text('ROLL DIE'), findsOneWidget);
+
+      await tester.tap(find.text('ROLL DIE'));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Rolled 6 (Red)!'), findsOneWidget);
+      expect(find.text('CONTINUE TO HERO TURN'), findsOneWidget);
+
+      await tester.tap(find.text('CONTINUE TO HERO TURN'));
+      await tester.pumpAndSettle();
+      expect(resultA, isTrue);
+
+      // Subtest B: Roll a 3 -> No head grew
+      bool? resultB;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (ctx) => ElevatedButton(
+              onPressed: () async {
+                resultB = await showDialog<bool>(
+                  context: ctx,
+                  builder: (dCtx) => HydraRegrowthDialog(
+                    enemy: hydra,
+                    adventure: adventure,
+                    rollDie: () => 3,
+                  ),
+                );
+              },
+              child: const Text('Open 2'),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open 2'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('ROLL DIE'));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Rolled 3: No new head grew'), findsOneWidget);
+      await tester.tap(find.text('CONTINUE TO HERO TURN'));
+      await tester.pumpAndSettle();
+      expect(resultB, isFalse);
+    });
+
+    test('Berserker Enragé defense: gainTokenIfDamaged = Chaos gives 1 Chaos only if incoming damage >= 1', () {
+      final formulas = ['gainTokenIfDamaged = Chaos'];
+
+      // Scenario 1: incomingDamage >= 1 (e.g. 5) -> gains 1 Chaos
+      final resDamage = evaluateDefenseFormulas(
+        formulas: formulas,
+        incomingDamage: 5,
+      );
+      expect(resDamage.matched, isTrue);
+      expect(resDamage.grantedEnemyTokens, equals(['Chaos']));
+      expect(resDamage.notes, contains('Defense: took damage, gains 1 Chaos.'));
+
+      // Scenario 2: incomingDamage == 0 -> no Chaos gained
+      final resZero = evaluateDefenseFormulas(
+        formulas: formulas,
+        incomingDamage: 0,
+      );
+      expect(resZero.matched, isTrue);
+      expect(resZero.grantedEnemyTokens, isEmpty);
+      expect(resZero.notes, contains('Defense: no damage taken, gains no Chaos.'));
+
+      // Scenario 3: incomingDamage == 1 -> gains 1 Chaos
+      final resOne = evaluateDefenseFormulas(
+        formulas: formulas,
+        incomingDamage: 1,
+      );
+      expect(resOne.matched, isTrue);
+      expect(resOne.grantedEnemyTokens, equals(['Chaos']));
+    });
   });
 }
+
+
+

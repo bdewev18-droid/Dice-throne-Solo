@@ -49,7 +49,9 @@ class _FightStepSnapshot {
     required this.returnDamage,
     required this.returnDamageUndefendable,
     required this.lifeSteal,
+    required this.loseHp,
     required this.enemyHeal,
+    this.secondaryEnemyHeal = 0,
     required this.cpSteal,
     required this.heroAttackCount,
     required this.heroAttackTotal,
@@ -88,7 +90,9 @@ class _FightStepSnapshot {
   final int returnDamage;
   final bool returnDamageUndefendable;
   final int lifeSteal;
+  final int loseHp;
   final int enemyHeal;
+  final int secondaryEnemyHeal;
   final int cpSteal;
   final int heroAttackCount;
   final int heroAttackTotal;
@@ -255,8 +259,12 @@ class _FightPageState extends State<FightPage> {
   int _battleReturnDamage = 0;
   bool _battleReturnDamageUndefendable = false;
   int _battleLifeSteal = 0;
+  int _battleLoseHp = 0;
   int _battleEnemyHeal = 0;
+  int _battleSecondaryEnemyHeal = 0;
   int _battleCpSteal = 0;
+  bool _battleAttackFailedCompletely = false;
+  bool _battleEnemyFled = false;
   bool _discipleSummonLevel3 = false;
   int _heroAttackCount = 0;
   int _heroAttackTotal = 0;
@@ -321,12 +329,20 @@ class _FightPageState extends State<FightPage> {
       _hasDualEnemies && _phase == CombatPhase.heroUpkeep;
 
   bool get _allFightEnemiesDefeated {
+    if (checkAndApplyHydraRevival(_primaryEnemy, onLog: widget.adventure.log)) {
+      return false;
+    }
     final secondary = _secondaryEnemy;
+    if (secondary != null &&
+        checkAndApplyHydraRevival(secondary, onLog: widget.adventure.log)) {
+      return false;
+    }
     return _primaryEnemy.health <= 0 &&
         (secondary == null || secondary.health <= 0);
   }
 
   bool get _isResolutionMode =>
+      _battleEnemyFled ||
       widget.adventure.health <= 0 ||
       (_isNaraxus && enemy.health <= 0) ||
       _allFightEnemiesDefeated;
@@ -588,6 +604,7 @@ class _FightPageState extends State<FightPage> {
                           adventure: widget.adventure,
                           enemy: _primaryEnemy,
                           allFightEnemiesDefeated: _allFightEnemiesDefeated,
+                          enemyFled: _battleEnemyFled,
                           onHistory: () {
                             widget.onGameOverHistory?.call();
                           },
@@ -601,6 +618,14 @@ class _FightPageState extends State<FightPage> {
                           onRewardFinished: () {
                             widget.adventure.completeCombat(_primaryEnemy);
                             if (_secondaryEnemy != null) {
+                              widget.adventure.completeCombat(_secondaryEnemy!);
+                            }
+                            widget.onChanged();
+                            Navigator.of(context).pop(true);
+                          },
+                          onFledFinished: () {
+                            widget.adventure.recordEnemyFled(_primaryEnemy);
+                            if (_secondaryEnemy != null && _secondaryEnemy!.health <= 0) {
                               widget.adventure.completeCombat(_secondaryEnemy!);
                             }
                             widget.onChanged();
@@ -858,7 +883,9 @@ class _FightPageState extends State<FightPage> {
                     returnDamage: _battleReturnDamage,
                     returnDamageUndefendable: _battleReturnDamageUndefendable,
                     lifeSteal: _battleLifeSteal,
+                    loseHp: _battleLoseHp,
                     enemyHeal: _battleEnemyHeal,
+                    secondaryEnemyHeal: _battleSecondaryEnemyHeal,
                     cpSteal: _battleCpSteal,
                     heroTokens: _battleHeroTokens,
                     minionTokens: _battleMinionTokens,
@@ -876,20 +903,27 @@ class _FightPageState extends State<FightPage> {
                         setState(() => _defenseOnlyCardsUnlocked = true),
                     onAttackChanged: (delta) => setState(() {
                       if (_blindingLightZeroDamage) return;
+                      final cap = resolveEnemyDamageCap(enemy);
                       if (_blindingLightRoll == 2 || _blindingLightRoll == 3) {
-                        _blindingLightBaseAttack =
-                            (_blindingLightBaseAttack + delta).clamp(0, 99);
+                        final nextBase = (_blindingLightBaseAttack + delta).clamp(0, cap ?? 99);
+                        _blindingLightBaseAttack = nextBase;
                         _blindingLightReducedDamage =
                             (_blindingLightBaseAttack / 2.0).ceil();
                         _battleAttackValue =
                             (_blindingLightBaseAttack -
                                     _blindingLightReducedDamage)
-                                .clamp(0, 99);
+                                .clamp(0, cap ?? 99);
                       } else {
+                        if (delta > 0 && cap != null && _battleAttackValue >= cap) {
+                          return;
+                        }
                         _battleAttackValue = (_battleAttackValue + delta).clamp(
                           0,
-                          99,
+                          cap ?? 99,
                         );
+                      }
+                      if (enemy.defenseDice == 0) {
+                        _refreshBattleResolutionFromDice();
                       }
                     }),
                     onDefenseChanged: (delta) => setState(() {
@@ -1155,10 +1189,13 @@ class _FightPageState extends State<FightPage> {
                         : 0,
                     minionChaosDamage: (_phase == CombatPhase.minionAttack &&
                             (enemy.profileKey == 'vert-vert-021' ||
-                                enemy.profileKey == 'bleu-bleu-003'))
-                        ? enemy.alterations
-                            .where((t) => t.toLowerCase() == 'chaos')
-                            .length
+                                enemy.profileKey == 'bleu-bleu-003' ||
+                                isHydraEnemy(enemy)))
+                        ? (isHydraEnemy(enemy)
+                            ? calculateHydraAttackBonus(enemy)
+                            : enemy.alterations
+                                .where((t) => t.toLowerCase() == 'chaos')
+                                .length)
                         : 0,
                     onNext: _handleNextStep,
                   ),
@@ -1909,6 +1946,9 @@ class _FightPageState extends State<FightPage> {
       _influenceRollReduction = 0;
       _resetBattleResolution();
       _configureDiceForPhase(autoRollAttack: false);
+      if (phase == CombatPhase.hero && enemy.defenseDice == 0) {
+        _refreshBattleResolutionFromDice();
+      }
     });
     final headerText = switch (phase) {
       CombatPhase.heroUpkeep =>
@@ -2519,7 +2559,9 @@ class _FightPageState extends State<FightPage> {
       returnDamage: _battleReturnDamage,
       returnDamageUndefendable: _battleReturnDamageUndefendable,
       lifeSteal: _battleLifeSteal,
+      loseHp: _battleLoseHp,
       enemyHeal: _battleEnemyHeal,
+      secondaryEnemyHeal: _battleSecondaryEnemyHeal,
       cpSteal: _battleCpSteal,
       heroAttackCount: _heroAttackCount,
       heroAttackTotal: _heroAttackTotal,
@@ -2581,7 +2623,9 @@ class _FightPageState extends State<FightPage> {
       _battleReturnDamage = snapshot.returnDamage;
       _battleReturnDamageUndefendable = snapshot.returnDamageUndefendable;
       _battleLifeSteal = snapshot.lifeSteal;
+      _battleLoseHp = snapshot.loseHp;
       _battleEnemyHeal = snapshot.enemyHeal;
+      _battleSecondaryEnemyHeal = snapshot.secondaryEnemyHeal;
       _battleCpSteal = snapshot.cpSteal;
       _heroAttackCount = snapshot.heroAttackCount;
       _heroAttackTotal = snapshot.heroAttackTotal;
@@ -4407,14 +4451,17 @@ class _FightPageState extends State<FightPage> {
     mod += _ninjitsuDamageBonus;
     mod += _minionAutoHonorBonus;
 
-    // Chaos token bonus (+1 per Chaos) for Mage Lézard and Mage de l'Entropie
-    if (_phase == CombatPhase.minionAttack &&
-        (enemy.profileKey == 'vert-vert-021' ||
-            enemy.profileKey == 'bleu-bleu-003')) {
-      final chaosCount = enemy.alterations
-          .where((t) => t.toLowerCase() == 'chaos')
-          .length;
-      mod += chaosCount;
+    // Chaos token bonus: +1 per Chaos for Mage Lézard & Mage de l'Entropie, +3 per Chaos for Hydre Féroce
+    if (_phase == CombatPhase.minionAttack) {
+      if (enemy.profileKey == 'vert-vert-021' ||
+          enemy.profileKey == 'bleu-bleu-003') {
+        final chaosCount = enemy.alterations
+            .where((t) => t.toLowerCase() == 'chaos')
+            .length;
+        mod += chaosCount;
+      } else if (isHydraEnemy(enemy)) {
+        mod += calculateHydraAttackBonus(enemy);
+      }
     }
 
     // Auto-apply damage bonus for minion
@@ -5068,8 +5115,11 @@ class _FightPageState extends State<FightPage> {
     _battleReturnDamage = 0;
     _battleReturnDamageUndefendable = false;
     _battleLifeSteal = 0;
+    _battleLoseHp = 0;
     _battleEnemyHeal = 0;
     _battleCpSteal = 0;
+    _battleAttackFailedCompletely = false;
+    _battleEnemyFled = false;
     _discipleSummonLevel3 = false;
     _battleHeroTokens.clear();
     _battleMinionTokens.clear();
@@ -5128,7 +5178,7 @@ class _FightPageState extends State<FightPage> {
 
   void _resolveMinionDefenseFromDice() {
     final rolled = _activeDice.where((die) => die.value != null).toList();
-    if (rolled.isEmpty) {
+    if (rolled.isEmpty && enemy.defenseDice > 0) {
       return;
     }
     final counts = _symbolCounts();
@@ -5139,7 +5189,11 @@ class _FightPageState extends State<FightPage> {
     var returnDamage = 0;
     var returnDamageUndefendable = false;
     var lifeSteal = 0;
+    var loseHp = 0;
+    var enemyHeal = 0;
+    var secondaryEnemyHeal = 0;
     var cpSteal = 0;
+    var ignoreAllDamage = false;
     final notes = <String>[];
     final heroTokens = <String>[];
     final minionTokens = <String>[];
@@ -5384,6 +5438,7 @@ class _FightPageState extends State<FightPage> {
         }
       default:
         if (enemy.defenseEffects.isNotEmpty) {
+          final matchedEffects = <MatchedDefenseEffect>[];
           for (final eff in enemy.defenseEffects) {
             bool matches = false;
             int count = 1;
@@ -5422,33 +5477,94 @@ class _FightPageState extends State<FightPage> {
                   count = factors.isEmpty ? 1 : factors.reduce(min);
                 }
               }
-            } else if (eff.prevent > 0 || eff.returnDamage > 0 || eff.stealHp > 0) {
+            } else if (eff.prevent > 0 ||
+                eff.returnDamage > 0 ||
+                eff.stealHp > 0 ||
+                eff.loseHp > 0 ||
+                eff.stealCp > 0 ||
+                eff.heal > 0 ||
+                eff.tokens.isNotEmpty ||
+                eff.formulas.isNotEmpty) {
               matches = true;
             }
 
             if (matches && count > 0) {
-              if (eff.prevent > 0) {
-                prevented += eff.prevent * count;
-                notes.add('Defense: ${eff.prevent * count} damage prevented.');
+              matchedEffects.add(MatchedDefenseEffect(effect: eff, count: count));
+            }
+          }
+
+          final activeEffects = filterActiveDefenseEffects(matchedEffects);
+          for (final matched in activeEffects) {
+            final eff = matched.effect;
+            final count = matched.count;
+            if (eff.prevent > 0) {
+              prevented += eff.prevent * count;
+              notes.add('Defense: ${eff.prevent * count} damage prevented.');
+            }
+            if (eff.returnDamage > 0) {
+              returnDamage += eff.returnDamage * count;
+              if (eff.undefendable) returnDamageUndefendable = true;
+              notes.add('Defense: ${eff.returnDamage * count} damage returned.');
+            }
+            if (eff.stealHp > 0) {
+              lifeSteal += eff.stealHp * count;
+              notes.add('Defense: steals ${eff.stealHp * count} HP.');
+            }
+            if (eff.loseHp > 0) {
+              loseHp += eff.loseHp * count;
+              notes.add('Defense: hero loses ${eff.loseHp * count} HP.');
+            }
+            if (eff.stealCp > 0) {
+              cpSteal += eff.stealCp * count;
+              notes.add('Defense: steals ${eff.stealCp * count} CP.');
+            }
+            for (final t in eff.tokens) {
+              for (var i = 0; i < count; i++) {
+                heroTokens.add(t);
               }
-              if (eff.returnDamage > 0) {
-                returnDamage += eff.returnDamage * count;
-                if (eff.undefendable) returnDamageUndefendable = true;
-                notes.add('Defense: ${eff.returnDamage * count} damage returned.');
-              }
-              if (eff.stealHp > 0) {
-                lifeSteal += eff.stealHp * count;
-                notes.add('Defense: steals ${eff.stealHp * count} HP.');
-              }
-              if (eff.stealCp > 0) {
-                cpSteal += eff.stealCp * count;
-                notes.add('Defense: steals ${eff.stealCp * count} CP.');
-              }
-              for (final t in eff.tokens) {
-                for (var i = 0; i < count; i++) {
-                  heroTokens.add(t);
+              notes.add('Defense: gives $t to the hero.');
+            }
+            if (eff.heal > 0) {
+              enemyHeal += eff.heal * count;
+              notes.add('Defense: ${eff.heal * count} HP healed.');
+            }
+            if (eff.formulas.isNotEmpty) {
+              final formRes = evaluateDefenseFormulas(
+                formulas: eff.formulas,
+                incomingDamage: _battleAttackValue,
+                count: count,
+                firstDieValue: rolled.isNotEmpty ? (rolled.first.value ?? 0) : 0,
+                hasDualEnemies: _hasDualEnemies,
+                heroTokens: widget.adventure.alterations,
+                rollD6: () => _random.nextInt(6) + 1,
+              );
+              if (formRes.matched) {
+                prevented += formRes.prevented;
+                returnDamage += formRes.returnDamage;
+                if (formRes.returnDamageUndefendable) {
+                  returnDamageUndefendable = true;
                 }
-                notes.add('Defense: gives $t to the hero.');
+                if (formRes.ignoreAllIncomingDamage) {
+                  ignoreAllDamage = true;
+                }
+                if (formRes.attackFailed) {
+                  _battleAttackFailedCompletely = true;
+                  ignoreAllDamage = true;
+                }
+                if (formRes.enemyFled) {
+                  _battleEnemyFled = true;
+                  _battleAttackFailedCompletely = true;
+                  ignoreAllDamage = true;
+                }
+                if (formRes.activatePassive) {
+                  _viseerDefensePassivePending = true;
+                }
+                cpSteal += formRes.stealCp;
+                enemyHeal += formRes.enemyHeal;
+                secondaryEnemyHeal += formRes.secondaryEnemyHeal;
+                heroTokens.addAll(formRes.grantedHeroTokens);
+                minionTokens.addAll(formRes.grantedEnemyTokens);
+                notes.addAll(formRes.notes);
               }
             }
           }
@@ -5457,11 +5573,20 @@ class _FightPageState extends State<FightPage> {
         }
     }
 
+    if (ignoreAllDamage) {
+      _battleAttackUndefendable = false;
+      prevented = _battleAttackValue;
+    }
+
     if (prevented == 0 &&
         returnDamage == 0 &&
         lifeSteal == 0 &&
+        loseHp == 0 &&
+        enemyHeal == 0 &&
+        secondaryEnemyHeal == 0 &&
         heroTokens.isEmpty &&
         minionTokens.isEmpty &&
+        !ignoreAllDamage &&
         !(enemy.profileKey == 'viseer' && red > 0)) {
       notes.add('Defense roll failed.');
     }
@@ -5477,6 +5602,7 @@ class _FightPageState extends State<FightPage> {
         cpSteal: cpSteal,
         heroTokens: heroTokens,
         minionTokens: minionTokens,
+        ignoreAllDamage: ignoreAllDamage,
       ),
     );
 
@@ -5492,7 +5618,9 @@ class _FightPageState extends State<FightPage> {
     _battleReturnDamageUndefendable =
         _battleReturnDamage > 0 && returnDamageUndefendable;
     _battleLifeSteal = lifeSteal.clamp(0, 99);
-    _battleEnemyHeal = 0;
+    _battleLoseHp = loseHp.clamp(0, 99);
+    _battleEnemyHeal = enemyHeal.clamp(0, 99);
+    _battleSecondaryEnemyHeal = secondaryEnemyHeal.clamp(0, 99);
     _battleCpSteal = cpSteal.clamp(0, 99);
     _battleHeroTokens
       ..clear()
@@ -5532,6 +5660,7 @@ class _FightPageState extends State<FightPage> {
     required int cpSteal,
     required List<String> heroTokens,
     required List<String> minionTokens,
+    bool ignoreAllDamage = false,
   }) {
     final hasEffect =
         prevented > 0 ||
@@ -5540,6 +5669,7 @@ class _FightPageState extends State<FightPage> {
         cpSteal > 0 ||
         heroTokens.isNotEmpty ||
         minionTokens.isNotEmpty ||
+        ignoreAllDamage ||
         (enemy.profileKey == 'viseer' &&
             rolled.any((die) => die.symbol == DieSymbol.red));
     if (!hasEffect) {
@@ -5623,6 +5753,7 @@ class _FightPageState extends State<FightPage> {
     var attack = result?.value ?? 0;
     var attackUndefendable = result?.imparable ?? false;
     var lifeSteal = 0;
+    var loseHp = 0;
     var cpSteal = 0;
 
     if (enemy.attackPlan.style == MinionAttackStyle.symbols) {
@@ -5630,11 +5761,15 @@ class _FightPageState extends State<FightPage> {
       final eff = goal?.effect;
       if (eff != null) {
         lifeSteal += eff.stealHp;
+        loseHp += eff.loseHp;
         cpSteal += eff.stealCp;
         heroTokens.addAll(eff.heroTokens);
         minionTokens.addAll(eff.minionTokens);
         if (eff.stealHp > 0) {
           notes.add('Attack: steals ${eff.stealHp} HP.');
+        }
+        if (eff.loseHp > 0) {
+          notes.add('Attack: hero loses ${eff.loseHp} HP.');
         }
         if (eff.stealCp > 0) {
           notes.add('Attack: steals ${eff.stealCp} CP.');
@@ -5655,11 +5790,15 @@ class _FightPageState extends State<FightPage> {
       final eff = enemy.attackPlan.suiteEffects[rawLen];
       if (eff != null) {
         lifeSteal += eff.stealHp;
+        loseHp += eff.loseHp;
         cpSteal += eff.stealCp;
         heroTokens.addAll(eff.heroTokens);
         minionTokens.addAll(eff.minionTokens);
         if (eff.stealHp > 0) {
           notes.add('Attack: steals ${eff.stealHp} HP.');
+        }
+        if (eff.loseHp > 0) {
+          notes.add('Attack: hero loses ${eff.loseHp} HP.');
         }
         if (eff.stealCp > 0) {
           notes.add('Attack: steals ${eff.stealCp} CP.');
@@ -5757,6 +5896,7 @@ class _FightPageState extends State<FightPage> {
       attack: attack,
       attackUndefendable: attackUndefendable,
       lifeSteal: lifeSteal,
+      loseHp: loseHp,
       cpSteal: cpSteal,
       heroTokens: heroTokens,
       minionTokens: minionTokens,
@@ -5783,6 +5923,7 @@ class _FightPageState extends State<FightPage> {
     _battleAttackValue = acc.attack.clamp(0, 99);
     _battleAttackUndefendable = acc.attackUndefendable;
     _battleLifeSteal = acc.lifeSteal.clamp(0, 99);
+    _battleLoseHp = acc.loseHp.clamp(0, 99);
     _battleEnemyHeal = 0;
     _battleCpSteal = acc.cpSteal.clamp(0, 99);
     _battleHeroTokens
@@ -6037,6 +6178,9 @@ class _FightPageState extends State<FightPage> {
     }
     if (effect.lifeSteal != 0) {
       acc.lifeSteal = effect.lifeSteal;
+    }
+    if (effect.loseHp != 0) {
+      acc.loseHp = effect.loseHp;
     }
     if (effect.cpSteal != 0) {
       acc.cpSteal = effect.cpSteal;
@@ -6782,17 +6926,57 @@ class _FightPageState extends State<FightPage> {
       final netDamage =
           ((_phase == CombatPhase.minionAttack && _shadowsActive) ||
               (_phase == CombatPhase.hero && _minionShadowsActive) ||
-              _smokeBombSuccess)
+              _smokeBombSuccess ||
+              _battleAttackFailedCompletely ||
+              _battleEnemyFled)
           ? 0
           : rawDamage;
       riposteDamage = netDamage;
       if (_phase == CombatPhase.hero) {
+        if (_battleAttackFailedCompletely || _battleEnemyFled) {
+          _battleHeroTokens.clear();
+          _battleMinionTokens.clear();
+        } else {
+          for (final eff in enemy.defenseEffects) {
+            for (final formula in eff.formulas) {
+              if (isGainTokenIfDamagedFormula(formula)) {
+                final token = parseGainTokenName(formula);
+                if (netDamage >= 1) {
+                  if (!_battleMinionTokens.contains(token)) {
+                    _battleMinionTokens.add(token);
+                  }
+                } else {
+                  _battleMinionTokens.remove(token);
+                }
+              }
+            }
+          }
+        }
         final oldEnemyHealth = enemy.health;
-        enemy.health = (enemy.health - netDamage).clamp(0, 99);
+        final netHealthAfterAttackAndHeal =
+            (oldEnemyHealth - netDamage + _battleEnemyHeal).clamp(
+          0,
+          enemy.maxHealth,
+        );
+        enemy.health = netHealthAfterAttackAndHeal;
+        bool hydraRevived = false;
+        if (enemy.health <= 0 && isHydraEnemy(enemy)) {
+          hydraRevived = checkAndApplyHydraRevival(
+            enemy,
+            onLog: (msg) {
+              widget.adventure.log(msg);
+            },
+          );
+        }
 
         final buffer = StringBuffer();
         buffer.writeln('### Hero Roll Phase');
         buffer.writeln('ATK: $effectiveAttack [ATK]');
+        if (_battleEnemyFled) {
+          buffer.writeln('[DEF] ${enemy.label} fled: battle ends without loot or victory points!');
+        } else if (_battleAttackFailedCompletely) {
+          buffer.writeln('[DEF] Attack failed completely: defense roll negated all damage and tokens!');
+        }
         if (_heroSneakAttackActive) {
           buffer.writeln(
             '[TOKEN] Sneak Attack modifier: +$_heroSneakAttackBonus',
@@ -6811,8 +6995,11 @@ class _FightPageState extends State<FightPage> {
           buffer.writeln('DEF blocked: $effectiveDefense [DEF]');
         }
         buffer.writeln('Damage taken by enemy: $netDamage');
+        if (_battleEnemyHeal > 0) {
+          buffer.writeln('[HP] Enemy defense heal: +$_battleEnemyHeal HP');
+        }
         if (oldEnemyHealth != enemy.health) {
-          buffer.writeln('[HP] Enemy HP: $oldEnemyHealth âž” ${enemy.health}');
+          buffer.writeln('[HP] Enemy HP: $oldEnemyHealth ➔ ${enemy.health}');
         }
 
         if (_heroBarbedVineDamagePending > 0) {
@@ -6843,6 +7030,9 @@ class _FightPageState extends State<FightPage> {
             widget.adventure.health - _battleReturnDamage,
             source: 'Reflect damage',
           );
+          buffer.writeln(
+            '[HP] Hero loses $_battleReturnDamage HP (Return damage)',
+          );
         }
         if (_battleLifeSteal > 0) {
           widget.adventure.setHeroHealth(
@@ -6855,17 +7045,27 @@ class _FightPageState extends State<FightPage> {
             enemy.maxHealth,
           );
           buffer.writeln(
-            '[HP] Enemy HP: $oldEnemyHealthAfterDamage âž” ${enemy.health} (Lifesteal)',
+            '[HP] Enemy HP: $oldEnemyHealthAfterDamage ➔ ${enemy.health} (Lifesteal)',
           );
         }
-        if (_battleEnemyHeal > 0) {
-          final oldEnemyHealthAfterDamage = enemy.health;
-          enemy.health = (enemy.health + _battleEnemyHeal).clamp(
-            0,
-            enemy.maxHealth,
+        if (_battleLoseHp > 0) {
+          widget.adventure.setHeroHealth(
+            widget.adventure.health - _battleLoseHp,
+            source: 'Life loss',
           );
           buffer.writeln(
-            '[HP] Enemy HP: $oldEnemyHealthAfterDamage âž” ${enemy.health} (Heal)',
+            '[HP] Hero loses $_battleLoseHp HP (Life loss from defense)',
+          );
+        }
+        if (_battleSecondaryEnemyHeal > 0 &&
+            _secondaryEnemy != null &&
+            _secondaryEnemy!.health > 0) {
+          final oldSecHealth = _secondaryEnemy!.health;
+          _secondaryEnemy!.health = (_secondaryEnemy!.health +
+                  _battleSecondaryEnemyHeal)
+              .clamp(0, _secondaryEnemy!.maxHealth);
+          buffer.writeln(
+            '[HP] ${_secondaryEnemy!.label} HP: $oldSecHealth ➔ ${_secondaryEnemy!.health} (Heal +$_battleSecondaryEnemyHeal)',
           );
         }
 
@@ -6886,20 +7086,35 @@ class _FightPageState extends State<FightPage> {
 
         widget.adventure.log(buffer.toString().trim());
 
-        if (effectiveAttack == 0) {
+        if (_battleEnemyFled) {
           _lastBattleOutcomeMessage =
-              '${widget.adventure.hero.label} attack failed.';
+              '${enemy.label} fled the battle!\n'
+              '❤️ ${enemy.label} HP: $oldEnemyHealthBeforeBattle (no damage taken)';
+        } else if (_battleAttackFailedCompletely) {
+          _lastBattleOutcomeMessage =
+              '${widget.adventure.hero.label} attack failed completely (dodged by ${enemy.label}).\n'
+              '❤️ ${enemy.label} HP: $oldEnemyHealthBeforeBattle ➔ ${enemy.health}';
+        } else if (effectiveAttack == 0) {
+          _lastBattleOutcomeMessage =
+               '${widget.adventure.hero.label} attack failed.';
         } else {
           _lastBattleOutcomeMessage =
               '${widget.adventure.hero.label} dealt $effectiveAttack damage. '
               '${_battleAttackUndefendable ? 'This attack is undefendable. ' : ''}${wasDefenderStunned ? '${enemy.label} was stunned and could not defend.\n' : '${enemy.label} prevented $effectiveDefense damage.\n'}'
               'Net damage: deals $netDamage damage.'
+              '${_battleEnemyHeal > 0 ? ' ${enemy.label} heals $_battleEnemyHeal HP.' : ''}'
               '${_battleReturnDamage > 0 ? ' Return damage: $_battleReturnDamage.' : ''}'
               '${_battleLifeSteal > 0 ? ' Steals $_battleLifeSteal health.' : ''}'
+              '${_battleLoseHp > 0 ? ' Hero loses $_battleLoseHp health.' : ''}'
               '${_battleHeroTokens.isNotEmpty ? ' Hero receives ${_battleHeroTokens.join(', ')}.' : ''}'
               '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_battleMinionTokens.join(', ')}.' : ''}'
               '${_battleCpSteal > 0 ? ' ${enemy.label} steals $_battleCpSteal CP.' : ''}'
               '\n❤️ ${enemy.label} HP: $oldEnemyHealthBeforeBattle ➔ ${enemy.health}';
+        }
+        if (hydraRevived) {
+          final heads = getHydraChaosCount(enemy);
+          _lastBattleOutcomeMessage =
+              '${_lastBattleOutcomeMessage ?? ''}\n🐉 ${enemy.label}: A head was severed! Revives with 8 HP ($heads head(s) remaining).';
         }
         _heroAttackCount++;
         _heroAttackTotal += _battleAttackValue;
@@ -7106,7 +7321,16 @@ class _FightPageState extends State<FightPage> {
             enemy.maxHealth,
           );
           buffer.writeln(
-            '[HP] Enemy HP: $oldEnemyHealth âž” ${enemy.health} (Lifesteal)',
+            '[HP] Enemy HP: $oldEnemyHealth ➔ ${enemy.health} (Lifesteal)',
+          );
+        }
+        if (_battleLoseHp > 0) {
+          widget.adventure.setHeroHealth(
+            widget.adventure.health - _battleLoseHp,
+            source: 'Life loss',
+          );
+          buffer.writeln(
+            '[HP] Hero loses $_battleLoseHp HP (Life loss)',
           );
         }
         if (_battleEnemyHeal > 0) {
@@ -7116,7 +7340,18 @@ class _FightPageState extends State<FightPage> {
             enemy.maxHealth,
           );
           buffer.writeln(
-            '[HP] Enemy HP: $oldEnemyHealth âž” ${enemy.health} (Heal)',
+            '[HP] Enemy HP: $oldEnemyHealth ➔ ${enemy.health} (Heal)',
+          );
+        }
+        if (_battleSecondaryEnemyHeal > 0 &&
+            _secondaryEnemy != null &&
+            _secondaryEnemy!.health > 0) {
+          final oldSecHealth = _secondaryEnemy!.health;
+          _secondaryEnemy!.health = (_secondaryEnemy!.health +
+                  _battleSecondaryEnemyHeal)
+              .clamp(0, _secondaryEnemy!.maxHealth);
+          buffer.writeln(
+            '[HP] ${_secondaryEnemy!.label} HP: $oldSecHealth ➔ ${_secondaryEnemy!.health} (Heal +$_battleSecondaryEnemyHeal)',
           );
         }
         if (_battleCpSteal > 0) {
@@ -7224,6 +7459,7 @@ class _FightPageState extends State<FightPage> {
             '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_battleMinionTokens.join(', ')}.' : ''}'
             '${_battleEnemyHeal > 0 ? ' ${enemy.label} heals $_battleEnemyHeal HP.' : ''}'
             '${_battleLifeSteal > 0 ? ' ${enemy.label} steals $_battleLifeSteal health.' : ''}'
+            '${_battleLoseHp > 0 ? ' ${widget.adventure.hero.label} loses $_battleLoseHp health.' : ''}'
             '${_battleCpSteal > 0 ? ' ${enemy.label} steals $_battleCpSteal CP.' : ''}'
             '${shouldSummonLevel3 ? ' Disciple leaves: a random level 3 minion engages.' : ''}'
             '\n❤️ ${widget.adventure.hero.label} HP: $oldHeroHealthBeforeBattle ➔ ${widget.adventure.health}';
@@ -7350,11 +7586,40 @@ class _FightPageState extends State<FightPage> {
         );
         await _triggerDelayedPoisonIfNeeded(forHero: false);
       }
+      if (!_isResolutionMode && isHydraEnemy(enemy) && enemy.health > 0) {
+        await _triggerHydraRegrowthPopin(enemy);
+      }
     }
     if (_isResolutionMode) {
       return;
     }
     _setPhase(nextPhase);
+  }
+
+  Future<void> _triggerHydraRegrowthPopin(EnemyNode hydra) async {
+    final headGrown = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => HydraRegrowthDialog(
+        enemy: hydra,
+        adventure: widget.adventure,
+      ),
+    );
+
+    if (headGrown == true) {
+      setState(() {
+        hydra.alterations.add('Chaos');
+        final totalHeads = getHydraChaosCount(hydra);
+        widget.adventure.log(
+          '🐉 [FIERCE HYDRA] Regrowth Passive: rolled 6! The Hydra regrows 1 head (+1 Chaos token, total: $totalHeads heads).',
+        );
+        widget.onChanged();
+      });
+    } else {
+      widget.adventure.log(
+        '🐉 [FIERCE HYDRA] Regrowth Passive: did not roll a 6, no head regrows this turn.',
+      );
+    }
   }
 
   bool _isStunToken(String label) {
@@ -9515,8 +9780,15 @@ List<InlineSpan> _chatSpans(
           TextSpan(
             text: token,
             style: const TextStyle(
-              color: heroAccent,
+              color: Color(0xffb45309),
               fontWeight: FontWeight.w900,
+              shadows: [
+                Shadow(
+                  color: Color(0x28000000),
+                  offset: Offset(0, 0.5),
+                  blurRadius: 1,
+                ),
+              ],
             ),
           ),
         );
@@ -9862,6 +10134,7 @@ class _BattleCounter extends StatelessWidget {
     required this.onChanged,
     this.modifier,
     this.isLocked = false,
+    this.canIncrement = true,
   });
 
   final String label;
@@ -9870,6 +10143,7 @@ class _BattleCounter extends StatelessWidget {
   final Color color;
   final ValueChanged<int> onChanged;
   final bool isLocked;
+  final bool canIncrement;
 
   @override
   Widget build(BuildContext context) {
@@ -9935,12 +10209,19 @@ class _BattleCounter extends StatelessWidget {
               ],
             ),
           ),
-          if (!isLocked)
+          if (!isLocked && canIncrement)
             _CompactRoundIconButton(
               icon: Icons.add,
               tooltip: 'Add',
               color: color,
               onPressed: () => onChanged(1),
+            )
+          else if (!isLocked && !canIncrement)
+            _CompactRoundIconButton(
+              icon: Icons.add,
+              tooltip: 'Plafond atteint',
+              color: Colors.grey,
+              onPressed: null,
             )
           else
             const SizedBox(width: 28),
@@ -11389,6 +11670,9 @@ class _ExtraRollAttackSummary extends StatelessWidget {
     if (outcome.stealHp > 0) {
       badges.add(LifeStealBadge(value: outcome.stealHp, color: color));
     }
+    if (outcome.loseHp > 0) {
+      badges.add(LoseHpBadge(value: outcome.loseHp, color: color));
+    }
     if (outcome.stealCp > 0) {
       badges.add(CpStealBadge(value: outcome.stealCp, color: color));
     }
@@ -11861,7 +12145,7 @@ class InlineTokenText extends StatelessWidget {
 
 /// Regex for visual effect shortcodes inside authored text.
 final RegExp _visualShortcodeRegex = RegExp(
-  r'\{(damage|dmg|undef|imparable|prevent|block|shield|bouclier|half_prevent|half_shield|half_block|heal|life|vie|soin|cp|die|dice)(?::([^}]+))?\}',
+  r'\{(damage|dmg|undef|imparable|prevent|block|shield|bouclier|half_prevent|half_shield|half_block|heal|life|vie|soin|losehp|lose_hp|losehealth|loselife|pertevie|cp|die|dice)(?::([^}]+))?\}',
   caseSensitive: false,
 );
 
@@ -11997,6 +12281,7 @@ List<InlineSpan> _buildSpans(
         'damage' || 'dmg' => DamageBadge(value: amount, imparable: false),
         'prevent' || 'block' || 'shield' || 'bouclier' => PreventBadge(value: amount),
         'heal' || 'life' || 'vie' || 'soin' => _HealBadge(value: amount),
+        'losehp' || 'lose_hp' || 'losehealth' || 'loselife' || 'pertevie' => LoseHpBadge(value: amount, color: color),
         _ => _InlineChatBadge(label: amount.toString(), color: Colors.white),
       };
       matches.add(
@@ -12212,6 +12497,11 @@ class _PassiveLine extends StatelessWidget {
       if (effect.stealHp > 0) {
         badges.add(
           LifeStealBadge(value: effect.stealHp, color: Colors.redAccent),
+        );
+      }
+      if (effect.loseHp > 0) {
+        badges.add(
+          LoseHpBadge(value: effect.loseHp, color: Colors.redAccent),
         );
       }
       if (effect.heal > 0) {
@@ -12764,17 +13054,30 @@ class CpStealBadge extends StatelessWidget {
 }
 
 class _HealBadge extends StatelessWidget {
-  const _HealBadge({required this.value});
+  const _HealBadge({required this.value, this.color});
 
   final int value;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    return _EffectImageBadge(
-      value: '+$value',
-      asset: 'assets/illustration/soin.webp',
-      textColor: Colors.white,
-      size: 30,
+    final effectiveColor = color ?? const Color(0xff43a047);
+    return Wrap(
+      spacing: 5,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          'gain',
+          style: TextStyle(color: effectiveColor, fontWeight: FontWeight.w900),
+        ),
+        _EffectImageBadge(
+          value: '+$value',
+          asset: 'assets/illustration/soin.webp',
+          textColor: Colors.white,
+          size: 28,
+          fontSize: 12,
+        ),
+      ],
     );
   }
 }
@@ -12983,6 +13286,7 @@ class _ConditionalAccumulators {
     required this.attack,
     required this.attackUndefendable,
     required this.lifeSteal,
+    required this.loseHp,
     required this.cpSteal,
     required this.heroTokens,
     required this.minionTokens,
@@ -12995,6 +13299,7 @@ class _ConditionalAccumulators {
   int attack;
   bool attackUndefendable;
   int lifeSteal;
+  int loseHp;
   int cpSteal;
   final List<String> heroTokens;
   final List<String> minionTokens;
@@ -13572,6 +13877,9 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
           widget.adventure.log(
             '[HP] ${widget.enemy.label} HP: $oldHealth âž” ${widget.enemy.health} (Manual Adjustment)',
           );
+        }
+        if (widget.enemy.health <= 0 && isHydraEnemy(widget.enemy)) {
+          checkAndApplyHydraRevival(widget.enemy, onLog: widget.adventure.log);
         }
         if (widget.phase == CombatPhase.hero &&
             widget.enemy.health < oldHealth &&

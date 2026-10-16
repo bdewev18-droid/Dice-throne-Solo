@@ -15,7 +15,9 @@ class CombatAiChatDock extends StatefulWidget {
     required this.returnDamage,
     required this.returnDamageUndefendable,
     required this.lifeSteal,
+    this.loseHp = 0,
     required this.enemyHeal,
+    this.secondaryEnemyHeal = 0,
     required this.cpSteal,
     required this.heroTokens,
     required this.minionTokens,
@@ -247,7 +249,9 @@ class CombatAiChatDock extends StatefulWidget {
   final int returnDamage;
   final bool returnDamageUndefendable;
   final int lifeSteal;
+  final int loseHp;
   final int enemyHeal;
+  final int secondaryEnemyHeal;
   final int cpSteal;
   final List<String> heroTokens;
   final List<String> minionTokens;
@@ -337,7 +341,9 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
     final returnDamage = widget.returnDamage;
     final returnDamageUndefendable = widget.returnDamageUndefendable;
     final lifeSteal = widget.lifeSteal;
+    final loseHp = widget.loseHp;
     final enemyHeal = widget.enemyHeal;
+    final secondaryEnemyHeal = widget.secondaryEnemyHeal;
     final cpSteal = widget.cpSteal;
     final heroTokens = widget.heroTokens;
     final minionTokens = widget.minionTokens;
@@ -609,7 +615,13 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
             ? 'Returns $returnDamage undefendable damage (${adventure.health} ➔ ${max(0, adventure.health - returnDamage)} HP)'
             : 'Returns $returnDamage damage (${adventure.health} ➔ ${max(0, adventure.health - returnDamage)} HP)',
       if (lifeSteal > 0) 'Steals $lifeSteal health',
-      if (enemyHeal > 0 && !enemyCpInfinity) 'Enemy heals: $enemyHeal',
+      if (loseHp > 0) 'Target loses $loseHp health',
+      if (enemyHeal > 0 && !enemyCpInfinity)
+        secondaryEnemy != null
+            ? '${enemy.label} heals: $enemyHeal'
+            : 'Enemy heals: $enemyHeal',
+      if (secondaryEnemyHeal > 0 && secondaryEnemy != null && !enemyCpInfinity)
+        '${secondaryEnemy.label} heals: $secondaryEnemyHeal',
       if (cpSteal > 0) 'CP steal: $cpSteal',
       if (enemy.profileKey != 'naraxus') ...notes,
     ];
@@ -1814,9 +1826,12 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
                     ownerWidget: tokenOwnerAvatar('Chaos'),
                     tokenLabel: 'Chaos',
                     tokenAsset: 'assets/token/Chaos.webp',
-                    text: widget.minionChaosDamage > 1
-                        ? 'Chaos x${widget.minionChaosDamage}'
-                        : 'Chaos',
+                    text: () {
+                      final count = widget.enemy.alterations
+                          .where((t) => t.toLowerCase() == 'chaos')
+                          .length;
+                      return count > 1 ? 'Chaos x$count' : 'Chaos';
+                    }(),
                     isActive: true,
                     activeText: 'Active (+${widget.minionChaosDamage} DMG)',
                     showUseButton: false,
@@ -2446,6 +2461,8 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
                               ? Colors.greenAccent
                               : attackColor,
                           isLocked: blindingLightZeroDamage,
+                          canIncrement: resolveEnemyDamageCap(enemy) == null ||
+                              attackValue < resolveEnemyDamageCap(enemy)!,
                           onChanged: blindingLightZeroDamage
                               ? (_) {}
                               : onAttackChanged,
@@ -2627,14 +2644,10 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
           ),
           if (!_isCollapsed) ...[
             const SizedBox(height: 8),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: !aiMode
-                        ? const SizedBox.shrink()
-                        : _AiChatWithHealth(
+            if (!aiMode)
+              const SizedBox.shrink()
+            else
+              _AiChatWithHealth(
                             isRollPhase:
                                 phase == CombatPhase.hero ||
                                 phase == CombatPhase.minionAttack,
@@ -2744,60 +2757,53 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
                               }
                               onChanged();
                             },
-                          ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: SizedBox(
-                      width: 52,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: FilledButton(
-                              onPressed: widget.showUndo ? widget.onUndo : null,
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xff8f43ff),
-                                disabledBackgroundColor: Colors.white10,
-                                disabledForegroundColor: Colors.white24,
-                                foregroundColor: Colors.white,
-                                padding: EdgeInsets.zero,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Icon(Icons.arrow_back),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Expanded(
-                            child: _IntroPulse(
-                              active: widget.phase == CombatPhase.intro,
-                              child: FilledButton(
-                                onPressed: widget.canAdvancePhase
-                                    ? widget.onNext
-                                    : null,
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: const Color(0xff8f43ff),
-                                  disabledBackgroundColor: Colors.white10,
-                                  disabledForegroundColor: Colors.white24,
-                                  foregroundColor: Colors.white,
-                                  padding: EdgeInsets.zero,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                            trailing: SizedBox(
+                              width: 48,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: widget.showUndo ? widget.onUndo : null,
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.arrow_back,
+                                            size: 24,
+                                            color: widget.showUndo
+                                                ? const Color(0xff8f43ff)
+                                                : const Color(0xff8f43ff).withValues(alpha: 0.25),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                child: const Icon(Icons.arrow_forward),
+                                  Container(height: 1, color: const Color(0xffe5ded0)),
+                                  Expanded(
+                                    child: _IntroPulse(
+                                      active: widget.phase == CombatPhase.intro,
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: widget.canAdvancePhase ? widget.onNext : null,
+                                          child: Center(
+                                            child: Icon(
+                                              Icons.arrow_forward,
+                                              size: 24,
+                                              color: widget.canAdvancePhase
+                                                  ? const Color(0xff8f43ff)
+                                                  : const Color(0xff8f43ff).withValues(alpha: 0.25),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ],
           if (onFinish != null) ...[
             const SizedBox(height: 10),

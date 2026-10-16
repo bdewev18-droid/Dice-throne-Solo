@@ -9,6 +9,8 @@ class _CombatResolutionPanel extends StatelessWidget {
     required this.onHomepage,
     required this.onRewardFinished,
     required this.onReview,
+    this.enemyFled = false,
+    this.onFledFinished,
   });
 
   final AdventureState adventure;
@@ -18,6 +20,8 @@ class _CombatResolutionPanel extends StatelessWidget {
   final VoidCallback onHomepage;
   final VoidCallback onRewardFinished;
   final VoidCallback onReview;
+  final bool enemyFled;
+  final VoidCallback? onFledFinished;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +31,10 @@ class _CombatResolutionPanel extends StatelessWidget {
 
     final String title;
     final Color titleColor;
-    if (heroDead && enemyDead) {
+    if (enemyFled) {
+      title = 'Escaped!';
+      titleColor = const Color(0xffffb800);
+    } else if (heroDead && enemyDead) {
       title = 'Tie!';
       titleColor = Colors.orange;
     } else if (heroDead) {
@@ -54,7 +61,74 @@ class _CombatResolutionPanel extends StatelessWidget {
             ),
           ),
         ),
-        if (heroDead && enemyDead && isNaraxus)
+        if (enemyFled) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Text(
+              '${enemy.label} fled during defense!\n'
+              'The battle ends immediately. You continue the adventure without loot or Victory Points.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Colors.white70,
+                height: 1.4,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(32, 16, 32, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FilledButton.icon(
+                  onPressed: onFledFinished,
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text(
+                    'Continue Adventure',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xff8f43ff),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: onReview,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff2d2342),
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    side: const BorderSide(
+                      color: Color(0xff8f43ff),
+                      width: 1.5,
+                    ),
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Review Battle Log',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else if (heroDead && enemyDead && isNaraxus)
           const Padding(
             padding: EdgeInsets.only(bottom: 16),
             child: Text(
@@ -63,13 +137,13 @@ class _CombatResolutionPanel extends StatelessWidget {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
-        if (!heroDead && enemyDead && !isNaraxus && allFightEnemiesDefeated)
+        if (!enemyFled && !heroDead && enemyDead && !isNaraxus && allFightEnemiesDefeated)
           RewardPanel(
             adventure: adventure,
             enemy: enemy,
             onFinished: onRewardFinished,
           )
-        else
+        else if (!enemyFled)
           Padding(
             padding: const EdgeInsets.all(32),
             child: Column(

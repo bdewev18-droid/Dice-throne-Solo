@@ -190,6 +190,7 @@ class EnemyProfileJson {
           damage: _intValue(action['damage'], fallback: 0),
           undefendable: action['undefendable'] as bool? ?? false,
           stealHp: _intValue(action['stealHp'], fallback: 0),
+          loseHp: _intValue(action['loseHp'] ?? action['loseHealth'], fallback: 0),
           stealCp: _intValue(action['stealCp'], fallback: 0),
           heal: _intValue(action['heal'], fallback: 0),
           heroTokens: _stringList(action['tokens']),
@@ -360,6 +361,7 @@ class EnemyProfileJson {
       damage: _intValue(raw['damage'], fallback: 0),
       undefendable: raw['undefendable'] as bool? ?? false,
       stealHp: _intValue(raw['stealHp'], fallback: 0),
+      loseHp: _intValue(raw['loseHp'] ?? raw['loseHealth'], fallback: 0),
       stealCp: _intValue(raw['stealCp'], fallback: 0),
       tokens: _stringList(raw['tokens']),
       align: raw['align'] as String?,
@@ -394,6 +396,7 @@ class EnemyProfileJson {
           damage: _intValue(action['damage'], fallback: 0),
           undefendable: action['undefendable'] as bool? ?? false,
           stealHp: _intValue(action['stealHp'], fallback: 0),
+          loseHp: _intValue(action['loseHp'] ?? action['loseHealth'], fallback: 0),
           stealCp: _intValue(action['stealCp'], fallback: 0),
           heal: _intValue(action['heal'], fallback: 0),
           heroTokens: _stringList(action['tokens']),
@@ -504,6 +507,7 @@ class EnemyProfileJson {
       final returnDamage = _intValue(entry['returnDamage'] ?? entry['damage'], fallback: 0);
       final undefendable = entry['undefendable'] as bool? ?? false;
       final stealHp = _intValue(entry['stealHp'], fallback: 0);
+      final loseHp = _intValue(entry['loseHp'] ?? entry['loseHealth'], fallback: 0);
       final stealCp = _intValue(entry['stealCp'], fallback: 0);
       final heal = _intValue(entry['heal'], fallback: 0);
       final tokens = _stringList(entry['tokens']);
@@ -518,6 +522,7 @@ class EnemyProfileJson {
           false;
       final notes = _stringList(entry['notes'] ?? entry['note']);
       final formulas = _stringList(entry['formulas'] ?? entry['formula']);
+      final exclusive = cond['exclusive'] as bool? ?? entry['exclusive'] as bool? ?? false;
 
       list.add(EnemyDefenseEffect(
         white: white,
@@ -528,6 +533,7 @@ class EnemyProfileJson {
         returnDamage: returnDamage,
         undefendable: undefendable,
         stealHp: stealHp,
+        loseHp: loseHp,
         stealCp: stealCp,
         heal: heal,
         tokens: tokens,
@@ -536,6 +542,7 @@ class EnemyProfileJson {
         orOrangeRed: orOrangeRed,
         notes: notes,
         formulas: formulas,
+        exclusive: exclusive,
       ));
     }
     return List<EnemyDefenseEffect>.unmodifiable(list);
@@ -675,6 +682,7 @@ class EnemyProfileJson {
           : null,
       undefendable: value['undefendable'] as bool? ?? false,
       lifeSteal: _intValue(value['lifeSteal'] ?? value['stealHp'], fallback: 0),
+      loseHp: _intValue(value['loseHp'] ?? value['loseHealth'], fallback: 0),
       cpSteal: _intValue(value['cpSteal'] ?? value['stealCp'], fallback: 0),
       note: (value['note'] as String?)?.trim() ??
           ((fallbackText != null && fallbackText.isNotEmpty)
