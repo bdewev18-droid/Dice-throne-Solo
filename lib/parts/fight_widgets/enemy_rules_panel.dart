@@ -61,6 +61,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
     super.initState();
     _showAttack = widget.phase == CombatPhase.minionAttack;
     _showDefense = widget.phase == CombatPhase.hero;
+    _showPassive = widget.phase == CombatPhase.minionUpkeep;
   }
 
   @override
@@ -71,18 +72,25 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
       _druidFormPreview = null;
       _showAttack = widget.phase == CombatPhase.minionAttack;
       _showDefense = widget.phase == CombatPhase.hero;
-      _showPassive = false;
+      _showPassive = widget.phase == CombatPhase.minionUpkeep;
     }
     if (oldWidget.phase != widget.phase) {
       if (widget.phase == CombatPhase.hero) {
         _showAttack = false;
         _showDefense = true;
+        _showPassive = false;
       } else if (widget.phase == CombatPhase.minionAttack) {
         _showAttack = true;
         _showDefense = false;
+        _showPassive = false;
+      } else if (widget.phase == CombatPhase.minionUpkeep) {
+        _showAttack = false;
+        _showDefense = false;
+        _showPassive = true;
       } else {
         _showAttack = false;
         _showDefense = false;
+        _showPassive = false;
       }
     }
   }
@@ -177,11 +185,6 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
               children: [const SizedBox(height: 8), attackContent],
             ),
           ),
-        if (!widget.showOnlyAttack)
-          _RulesBackgroundBand(
-            asset: 'assets/defense_background_feline_shadow.png',
-            child: defenseContent,
-          ),
         if (!widget.showOnlyDefense && _hasPassiveContent)
           _RulesBackgroundBand(
             asset: 'assets/passive_background_umbra.png',
@@ -189,7 +192,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
               label: 'Passive',
               icon: Icons.auto_awesome,
               color: enemy.rank.color,
-              trailing: const SizedBox(width: 4),
+              trailing: const SizedBox.shrink(),
               expanded: widget.aiMode ? _showPassive : true,
               onTap: () => setState(() {
                 if (!widget.aiMode) {
@@ -207,6 +210,14 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                         color: enemy.rank.color,
                       ),
                     )
+                  else if (enemy.profileKey != null &&
+                      (EnemyProfileRepository.byKey(enemy.profileKey!)?.passiveDisplayRows.isNotEmpty ?? false))
+                    ...(EnemyProfileRepository.byKey(enemy.profileKey!)!.passiveDisplayRows).map(
+                      (row) => _ExtraRollDisplayRow(
+                        row: row,
+                        color: enemy.rank.color,
+                      ),
+                    )
                   else
                     for (final passive in _displayedPassives)
                       Padding(
@@ -219,21 +230,27 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
               ),
             ),
           ),
+        if (!widget.showOnlyAttack)
+          _RulesBackgroundBand(
+            asset: 'assets/defense_background_feline_shadow.png',
+            child: defenseContent,
+          ),
       ],
     );
   }
 
   bool get _hasPassiveContent {
+    if (enemy.passiveDisplayRows.isNotEmpty || _displayedPassives.isNotEmpty) {
+      return true;
+    }
     final key = enemy.profileKey;
     if (key != null) {
       final profile = EnemyProfileRepository.byKey(key);
-      if (profile != null &&
-          profile.passives.isEmpty &&
-          profile.passiveDisplayRows.isEmpty) {
-        return false;
+      if (profile != null) {
+        return profile.passiveDisplayRows.isNotEmpty || profile.passives.isNotEmpty;
       }
     }
-    return enemy.passiveDisplayRows.isNotEmpty || _displayedPassives.isNotEmpty;
+    return false;
   }
 
   /// Passives rendered by the generic zone. Profiles that already have a
@@ -241,16 +258,22 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
   /// excluded so the passive is not shown twice.
   List<MinionPassive> get _displayedPassives {
     const covered = <String>{
-      'vert-vert-012', // Roc â€” dedicated view
-      'vert-vert-014', // Druide Tenebreux â€” dedicated view
-      'bleu-bleu-004', // Mage de Sang â€” dedicated view
-      'viseer', // Viseer â€” dedicated view
+      'viseer', // Viseer — dedicated view
     };
     final key = enemy.profileKey;
     if (key != null && covered.contains(key)) {
       return const [];
     }
-    return enemy.passives;
+    if (enemy.passives.isNotEmpty) {
+      return enemy.passives;
+    }
+    if (key != null) {
+      final profile = EnemyProfileRepository.byKey(key);
+      if (profile != null && profile.passives.isNotEmpty) {
+        return profile.passives;
+      }
+    }
+    return const [];
   }
 
   void _openSettings(BuildContext context) {
@@ -584,6 +607,7 @@ class _RulesBackgroundBand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       decoration: BoxDecoration(
@@ -628,6 +652,7 @@ class _CollapsibleRulesLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 160),
+      width: double.infinity,
       decoration: BoxDecoration(
         color: expanded
             ? Colors.black.withValues(alpha: 0.10)
@@ -635,6 +660,7 @@ class _CollapsibleRulesLine extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           InkWell(
             onTap: onTap,
@@ -645,16 +671,20 @@ class _CollapsibleRulesLine extends StatelessWidget {
                 children: [
                   Icon(icon, color: Colors.white, size: 18),
                   const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.w900,
-                      ),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                  Flexible(child: trailing),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: trailing,
+                    ),
+                  ),
                   const SizedBox(width: 6),
                   Icon(
                     expanded ? Icons.expand_less : Icons.expand_more,
@@ -808,10 +838,10 @@ class MinionAttackSummary extends StatelessWidget {
     if (effect != null) {
       final badges = <Widget>[];
       for (final token in effect.minionTokens) {
-        badges.add(InlineTokenText(token, color: color));
+        badges.add(TokenBadge(label: token, color: color));
       }
       for (final token in effect.heroTokens) {
-        badges.add(InlineTokenText(token, color: Colors.deepOrangeAccent));
+        badges.add(TokenBadge(label: token, color: Colors.deepOrangeAccent));
       }
       if (effect.stealCp > 0 && effect.label2 == null) {
         badges.add(CpStealBadge(value: effect.stealCp, color: color));
@@ -1082,30 +1112,6 @@ class MinionAttackSummary extends StatelessWidget {
             result: [DamageBadge(value: 6, imparable: true)],
           );
         }
-        if (enemy.profileKey == 'bleu-bleu-002') {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _AttackResultLine(
-                goal: SymbolGoal(yellow: 3),
-                result: [DamageBadge(value: 4, imparable: true)],
-              ),
-              const _AttackResultLine(
-                goal: SymbolGoal(yellow: 4),
-                result: [DamageBadge(value: 5, imparable: true)],
-              ),
-              const _AttackResultLine(
-                goal: SymbolGoal(yellow: 5),
-                result: [DamageBadge(value: 6, imparable: true)],
-              ),
-              const InlineTokenText(
-                'If the attack succeeds and 3 values are identical: Eboulissement.',
-                color: Color(0xffcbd8cc),
-                style: TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
-              ),
-            ],
-          );
-        }
         if (enemy.profileKey == 'bleu-bleu-003') {
           final goal = _extraRollGoalFor(enemy);
           final extraRoll = _extraRollFor(enemy);
@@ -1136,14 +1142,6 @@ class MinionAttackSummary extends StatelessWidget {
                 goal: const SymbolGoal(yellow: 5),
                 result: [LifeStealBadge(value: 5, color: enemy.rank.color)],
               ),
-              const SizedBox(height: 6),
-              const _PassiveNote(
-                child: InlineTokenText(
-                  'Passive: at upkeep, gains 1 Chaos. At 3 Chaos, spends them to steal 3 health.',
-                  color: Color(0xffcbd8cc),
-                  style: TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
-                ),
-              ),
             ],
           );
         }
@@ -1157,18 +1155,6 @@ class MinionAttackSummary extends StatelessWidget {
               extraRoll: extraRoll,
               color: enemy.rank.color,
               actionAlign: goal.effect?.align ?? 'left',
-              passiveNote: _PassiveNote(
-                child: Row(
-                  children: [
-                    const Text(
-                      'Passive: ',
-                      style: TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                    const Text('if the offensive roll fails, '),
-                    DamageBadge(value: 1, imparable: true),
-                  ],
-                ),
-              ),
             );
           }
           return const SizedBox.shrink();
@@ -1205,24 +1191,6 @@ class MinionAttackSummary extends StatelessWidget {
                   ),
                   const DamageBadge(value: 6, imparable: false),
                 ],
-              ),
-              const SizedBox(height: 6),
-              const _PassiveNote(
-                child: Wrap(
-                  spacing: 5,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      'Passive: at each Druid upkeep, roll 1',
-                      style: TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
-                    ),
-                    _CubeIcon(size: 18),
-                    Text(
-                      '. On 1-3: Bear Form. On 4-6: Elk Form.',
-                      style: TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
-                    ),
-                  ],
-                ),
               ),
             ],
           );
@@ -1376,18 +1344,21 @@ class MinionAttackSummary extends StatelessWidget {
                         ),
                       );
                     }
-                    final tokenCounts = <String, int>{};
-                    for (final token in effect.heroTokens) {
-                      tokenCounts[token] = (tokenCounts[token] ?? 0) + 1;
-                    }
-                    for (final entry in tokenCounts.entries) {
-                      result.add(
-                        TokenBadge(
-                          label: entry.key,
-                          color: enemy.rank.color,
-                          count: entry.value,
-                        ),
-                      );
+                    final hasNotes = effect.notes.isNotEmpty;
+                    if (!hasNotes) {
+                      final tokenCounts = <String, int>{};
+                      for (final token in effect.heroTokens) {
+                        tokenCounts[token] = (tokenCounts[token] ?? 0) + 1;
+                      }
+                      for (final entry in tokenCounts.entries) {
+                        result.add(
+                          TokenBadge(
+                            label: entry.key,
+                            color: enemy.rank.color,
+                            count: entry.value,
+                          ),
+                        );
+                      }
                     }
                     for (final note in effect.notes) {
                       result.add(
@@ -1401,20 +1372,23 @@ class MinionAttackSummary extends StatelessWidget {
                         ),
                       );
                     }
-                    if (effect.stealHp > 0) {
-                      result.add(LifeStealBadge(value: effect.stealHp, color: enemy.rank.color));
-                    }
-                    if (effect.loseHp > 0) {
-                      result.add(LoseHpBadge(value: effect.loseHp, color: enemy.rank.color));
-                    }
-                    if (effect.stealCp > 0) {
-                      result.add(CpStealBadge(value: effect.stealCp, color: enemy.rank.color));
-                    }
-                    if (effect.heal > 0) {
-                      result.add(_HealBadge(value: effect.heal, color: enemy.rank.color));
+                    if (!hasNotes) {
+                      if (effect.stealHp > 0) {
+                        result.add(LifeStealBadge(value: effect.stealHp, color: enemy.rank.color));
+                      }
+                      if (effect.loseHp > 0) {
+                        result.add(LoseHpBadge(value: effect.loseHp, color: enemy.rank.color));
+                      }
+                      if (effect.stealCp > 0) {
+                        result.add(CpStealBadge(value: effect.stealCp, color: enemy.rank.color));
+                      }
+                      if (effect.heal > 0) {
+                        result.add(_HealBadge(value: effect.heal, color: enemy.rank.color));
+                      }
                     }
                   }
 
+                  final hasNotes = effect != null && effect.notes.isNotEmpty;
                   final hasOtherEffects = effect != null &&
                       (effect.stealHp > 0 ||
                           effect.loseHp > 0 ||
@@ -1424,7 +1398,7 @@ class MinionAttackSummary extends StatelessWidget {
                           effect.notes.isNotEmpty ||
                           (effect.label != null && effect.label!.isNotEmpty));
 
-                  if (damage != null && (damage.value > 0 || !hasOtherEffects)) {
+                  if (!hasNotes && damage != null && (damage.value > 0 || !hasOtherEffects)) {
                     result.add(
                       DamageBadge(
                         value: damage.value, plusValue: minionChaosDamage,
@@ -1560,11 +1534,21 @@ Widget _hintTokenLine(String prefix, String tokenLabel, Color color) {
   );
 }
 
-SymbolGoal _strongestSymbolGoal(EnemyNode enemy) {
-  return enemy.attackPlan.goals.isEmpty
-      ? const SymbolGoal()
-      : enemy.attackPlan.goals.last;
+SymbolGoal strongestSymbolGoal(EnemyNode enemy) {
+  if (enemy.attackPlan.goals.isEmpty) return const SymbolGoal();
+  SymbolGoal best = enemy.attackPlan.goals.first;
+  var bestWeight = best.white + best.yellow + best.red;
+  for (final g in enemy.attackPlan.goals.skip(1)) {
+    final w = g.white + g.yellow + g.red;
+    if (w > bestWeight) {
+      best = g;
+      bestWeight = w;
+    }
+  }
+  return best;
 }
+
+SymbolGoal _strongestSymbolGoal(EnemyNode enemy) => strongestSymbolGoal(enemy);
 
 class _NaxarusAttackSummary extends StatelessWidget {
   const _NaxarusAttackSummary({required this.enemy});
@@ -1971,18 +1955,21 @@ List<Widget> _buildDefenseEffectsWidgets(EnemyNode enemy) {
         ),
       );
     }
-    final tokenCounts = <String, int>{};
-    for (final token in eff.tokens) {
-      tokenCounts[token] = (tokenCounts[token] ?? 0) + 1;
-    }
-    for (final entry in tokenCounts.entries) {
-      rightWidgets.add(
-        TokenBadge(
-          label: entry.key,
-          color: enemy.rank.color,
-          count: entry.value,
-        ),
-      );
+    final hasNotes = eff.notes.isNotEmpty;
+    if (!hasNotes) {
+      final tokenCounts = <String, int>{};
+      for (final token in eff.tokens) {
+        tokenCounts[token] = (tokenCounts[token] ?? 0) + 1;
+      }
+      for (final entry in tokenCounts.entries) {
+        rightWidgets.add(
+          TokenBadge(
+            label: entry.key,
+            color: enemy.rank.color,
+            count: entry.value,
+          ),
+        );
+      }
     }
     for (final note in eff.notes) {
       rightWidgets.add(
@@ -2103,28 +2090,30 @@ List<Widget> _buildDefenseEffectsWidgets(EnemyNode enemy) {
         }
       }
     }
-    if (eff.prevent > 0) {
-      rightWidgets.add(PreventBadge(value: eff.prevent));
-    }
-    if (eff.returnDamage > 0) {
-      rightWidgets.add(
-        DamageBadge(
-          value: eff.returnDamage,
-          imparable: eff.undefendable,
-        ),
-      );
-    }
-    if (eff.stealHp > 0) {
-      rightWidgets.add(LifeStealBadge(value: eff.stealHp, color: enemy.rank.color));
-    }
-    if (eff.loseHp > 0) {
-      rightWidgets.add(LoseHpBadge(value: eff.loseHp, color: enemy.rank.color));
-    }
-    if (eff.stealCp > 0) {
-      rightWidgets.add(CpStealBadge(value: eff.stealCp, color: enemy.rank.color));
-    }
-    if (eff.heal > 0) {
-      rightWidgets.add(_HealBadge(value: eff.heal, color: enemy.rank.color));
+    if (!hasNotes) {
+      if (eff.prevent > 0) {
+        rightWidgets.add(PreventBadge(value: eff.prevent));
+      }
+      if (eff.returnDamage > 0) {
+        rightWidgets.add(
+          DamageBadge(
+            value: eff.returnDamage,
+            imparable: eff.undefendable,
+          ),
+        );
+      }
+      if (eff.stealHp > 0) {
+        rightWidgets.add(LifeStealBadge(value: eff.stealHp, color: enemy.rank.color));
+      }
+      if (eff.loseHp > 0) {
+        rightWidgets.add(LoseHpBadge(value: eff.loseHp, color: enemy.rank.color));
+      }
+      if (eff.stealCp > 0) {
+        rightWidgets.add(CpStealBadge(value: eff.stealCp, color: enemy.rank.color));
+      }
+      if (eff.heal > 0) {
+        rightWidgets.add(_HealBadge(value: eff.heal, color: enemy.rank.color));
+      }
     }
 
     list.add(

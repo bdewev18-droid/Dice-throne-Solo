@@ -1351,7 +1351,42 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.w900),
               ),
-              trailing: selected ? const Icon(Icons.check) : null,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: profile.isFullyValidated
+                          ? const Color(0xff1b4332)
+                          : const Color(0xff4a3000),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: profile.isFullyValidated
+                            ? const Color(0xff2d6a4f)
+                            : const Color(0xffd48b00),
+                      ),
+                    ),
+                    child: Text(
+                      profile.isFullyValidated ? '✓ Valid' : 'WIP',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: profile.isFullyValidated
+                            ? const Color(0xff74c69d)
+                            : const Color(0xffffba08),
+                      ),
+                    ),
+                  ),
+                  if (selected) ...[
+                    const SizedBox(width: 8),
+                    const Icon(Icons.check, size: 18),
+                  ],
+                ],
+              ),
               onTap: () => Navigator.of(context).pop(profile),
             );
           },

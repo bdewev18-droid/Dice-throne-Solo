@@ -1411,6 +1411,145 @@ void main() {
       expect(resOne.matched, isTrue);
       expect(resOne.grantedEnemyTokens, equals(['Chaos']));
     });
+
+    testWidgets('InlineTokenText renders HpBadge for {hp:8} and {hp:0}', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: InlineTokenText(
+              'Reset Health to {hp:8} or {hp:0}',
+              color: Colors.green,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(HpBadge), findsNWidgets(2));
+      expect(find.text('8'), findsOneWidget);
+      expect(find.text('0'), findsOneWidget);
+    });
+
+    test('Disciple profile has primary goal (2 whites + 3 oranges) with 5 undefendable damage', () {
+      final profile = EnemyProfileRepository.byKey('vert-vert-015');
+      expect(profile, isNotNull);
+      expect(profile!.attackPlan.goals.isNotEmpty, isTrue);
+      final goal = profile.attackPlan.goals.first;
+      expect(goal.white, equals(2));
+      expect(goal.yellow, equals(3));
+      expect(goal.red, equals(0));
+      expect(goal.effect?.damage, equals(5));
+      expect(goal.effect?.undefendable, isTrue);
+    });
+
+    test('strongestSymbolGoal picks goal with highest dice count', () {
+      final node = EnemyNode(
+        id: 99,
+        label: 'Test',
+        rank: EnemyRank.green,
+        maxHealth: 10,
+        cp: 0,
+        attacks: const [],
+        defense: '',
+        defenseDice: 1,
+        cardAsset: '',
+        initialTokens: const [],
+        attackPlan: const MinionAttackPlan.symbols([
+          SymbolGoal(white: 2, yellow: 3),
+          SymbolGoal(yellow: 1),
+        ]),
+      );
+      final strongest = strongestSymbolGoal(node);
+      expect(strongest.white, equals(2));
+      expect(strongest.yellow, equals(3));
+    });
+
+    test('EnemyProfileRepository.byRank with validatedOnly filters out unvalidated profiles', () {
+      final allGreen = EnemyProfileRepository.byRank(EnemyRank.green, validatedOnly: false);
+      final validGreen = EnemyProfileRepository.byRank(EnemyRank.green, validatedOnly: true);
+      expect(allGreen.isNotEmpty, isTrue);
+      expect(validGreen.isNotEmpty, isTrue);
+      expect(validGreen.every((p) => p.isFullyValidated), isTrue);
+      expect(validGreen.length, lessThanOrEqualTo(allGreen.length));
+    });
+
+    test('EnemyProfile isFullyValidated recognizes validatedAtk and validatedDef', () {
+      final valid = EnemyProfile(
+        key: 'v1',
+        name: 'V1',
+        rank: EnemyRank.green,
+        maxHealth: 10,
+        cp: 0,
+        cardAsset: '',
+        attacks: const [],
+        defense: '',
+        defenseDice: 1,
+        attackPlan: const MinionAttackPlan.none(),
+        validated: true,
+      );
+      final validByParts = EnemyProfile(
+        key: 'v2',
+        name: 'V2',
+        rank: EnemyRank.green,
+        maxHealth: 10,
+        cp: 0,
+        cardAsset: '',
+        attacks: const [],
+        defense: '',
+        defenseDice: 1,
+        attackPlan: const MinionAttackPlan.none(),
+        validated: false,
+        validatedAtk: true,
+        validatedDef: true,
+      );
+      final invalid = EnemyProfile(
+        key: 'v3',
+        name: 'V3',
+        rank: EnemyRank.green,
+        maxHealth: 10,
+        cp: 0,
+        cardAsset: '',
+        attacks: const [],
+        defense: '',
+        defenseDice: 1,
+        attackPlan: const MinionAttackPlan.none(),
+        validated: false,
+        validatedAtk: true,
+        validatedDef: false,
+      );
+      expect(valid.isFullyValidated, isTrue);
+      expect(validByParts.isFullyValidated, isTrue);
+      expect(invalid.isFullyValidated, isFalse);
+    });
+
+    test('EnemyProfileRepository.byRank with validatedOnly filters out unvalidated profiles across all ranks', () {
+      for (final rank in [EnemyRank.green, EnemyRank.violet, EnemyRank.blue, EnemyRank.orange]) {
+        final all = EnemyProfileRepository.byRank(rank, validatedOnly: false);
+        final valid = EnemyProfileRepository.byRank(rank, validatedOnly: true);
+        expect(valid.every((p) => p.isFullyValidated), isTrue);
+        expect(valid.length, lessThanOrEqualTo(all.length));
+      }
+    });
+
+    test('Roc vert-vert-012 profile and node have passives populated', () {
+      final profile = EnemyProfileRepository.byKey('vert-vert-012');
+      expect(profile, isNotNull);
+      expect(profile!.passives.isNotEmpty, isTrue);
+
+      final node = EnemyNode(
+        id: 1,
+        label: 'Roc',
+        rank: EnemyRank.green,
+        maxHealth: 15,
+        cp: 2,
+        cardAsset: '',
+        attacks: const [],
+        defense: '',
+        defenseDice: 1,
+        attackPlan: const MinionAttackPlan.none(),
+      );
+      node.applyProfile(profile);
+      expect(node.passives.isNotEmpty, isTrue);
+    });
   });
 }
 

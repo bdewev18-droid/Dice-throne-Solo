@@ -32,6 +32,7 @@ part 'parts/fight_widgets/token_animation_dialog.dart';
 part 'parts/fight_widgets/turn_phase_panel.dart';
 part 'parts/fight_widgets/ninjitsu_choice_dialog.dart';
 part 'parts/fight_widgets/lose_hp_badge.dart';
+part 'parts/fight_widgets/hp_badge.dart';
 part 'parts/fight_widgets/hydra_regrowth_dialog.dart';
 part 'parts/fight_logic/token_combat_helpers.dart';
 part 'parts/fight_logic/defense_formula_evaluator.dart';
@@ -39,7 +40,7 @@ part 'parts/fight_logic/hydra_logic.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.4.62';
+const String appVersionLabel = 'Version 1.4.71';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -900,17 +901,23 @@ String _tokenShortLabel(String label) {
 }
 
 List<EnemyProfile> _recipeProfilesFor(EnemyRank rank) {
-  final profiles = _profilesForRank(rank);
+  final profiles = _profilesForRank(rank, validatedOnly: false);
   profiles.sort(
     (a, b) => _recipeProfileCode(a).compareTo(_recipeProfileCode(b)),
   );
   return profiles;
 }
 
-List<EnemyProfile> _profilesForRank(EnemyRank rank) {
-  final jsonProfiles = EnemyProfileRepository.byRank(rank);
+List<EnemyProfile> _profilesForRank(EnemyRank rank, {bool validatedOnly = false}) {
+  final jsonProfiles = EnemyProfileRepository.byRank(rank, validatedOnly: validatedOnly);
   if (jsonProfiles.isNotEmpty) {
     return jsonProfiles;
+  }
+  if (validatedOnly) {
+    final allProfiles = EnemyProfileRepository.byRank(rank, validatedOnly: false);
+    if (allProfiles.isNotEmpty) {
+      return allProfiles;
+    }
   }
   return fallbackProfilesForRank(rank);
 }
@@ -1453,6 +1460,7 @@ class EnemyNode {
     defense = profile.defense;
     defenseDice = profile.defenseDice;
     attackPlan = profile.attackPlan;
+    passives = profile.passives;
     defenseDisplayRows = profile.defenseDisplayRows;
     passiveDisplayRows = profile.passiveDisplayRows;
     defenseEffects = profile.defenseEffects;

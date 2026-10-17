@@ -47,6 +47,9 @@ class EnemyProfile {
     this.defenseDisplayRows = const [],
     this.passiveDisplayRows = const [],
     this.defenseEffects = const [],
+    this.validated = false,
+    this.validatedAtk = false,
+    this.validatedDef = false,
   });
 
   final String key;
@@ -63,6 +66,18 @@ class EnemyProfile {
   final int rewardChests;
   final EnemyRank? rewardRank;
   final List<EnemyRank> rewardRanks;
+
+  /// Validation status flags (e.g. from back-office admin).
+  final bool validated;
+  final bool validatedAtk;
+  final bool validatedDef;
+
+  /// Whether the minion is 100% validated (both attack and defense approved).
+  /// Fixed bosses (Viseer, Naraxus) are always considered valid.
+  bool get isFullyValidated =>
+      rank == EnemyRank.viseer ||
+      rank == EnemyRank.naraxus ||
+      (validated || (validatedAtk && validatedDef));
 
   /// Passive abilities declared for this profile, parsed from the JSON
   /// `passives` array (root) merged with `attackPlan.passives`. Each entry

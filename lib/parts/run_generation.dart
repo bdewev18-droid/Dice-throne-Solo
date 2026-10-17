@@ -5,13 +5,19 @@ List<EnemyNode> _generateEnemies(SurvivalConfig config) {
   final random = Random();
   final profilePools = {
     for (final rank in EnemyRank.values)
-      rank: [..._profilesForRank(rank)]..shuffle(random),
+      rank: [..._profilesForRank(rank, validatedOnly: true)]..shuffle(random),
   };
 
   EnemyProfile? nextProfile(EnemyRank rank) {
     final pool = profilePools[rank];
     if (pool == null || pool.isEmpty) {
-      return null;
+      final refilled = [..._profilesForRank(rank, validatedOnly: true)]
+        ..shuffle(random);
+      if (refilled.isEmpty) {
+        return null;
+      }
+      pool?.addAll(refilled);
+      return pool?.removeLast() ?? refilled.first;
     }
     return pool.removeLast();
   }

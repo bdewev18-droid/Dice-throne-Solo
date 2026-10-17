@@ -829,7 +829,7 @@ class _FightPageState extends State<FightPage> {
                             ),
                           ],
                         ],
-                        if (_specialAttackReady && !_aiMode) ...[
+                        if ((_specialAttackReady || _shouldResolveSpecialAttack()) && !_aiMode) ...[
                           const SizedBox(height: 12),
                           ImageActionButton(
                             label: 'Next',
@@ -2770,11 +2770,36 @@ class _FightPageState extends State<FightPage> {
 
   List<GameDie> get _activeDice => _dice.take(_visibleDiceCount).toList();
 
+  bool get _hasCurrentActionExtraRoll {
+    if (_phase != CombatPhase.minionAttack) return false;
+    for (final goal in enemy.attackPlan.goals) {
+      if (goal.effect?.extraRoll != null && _symbolGoalMet(goal)) {
+        return true;
+      }
+    }
+    if (enemy.attackPlan.style == MinionAttackStyle.suite) {
+      final values = _activeDice
+          .map((die) => die.effectiveValue)
+          .whereType<int>()
+          .toList();
+      final len = _bestSuiteLength(values);
+      for (var l = len; l >= 3; l--) {
+        final effect = enemy.attackPlan.suiteEffects[l];
+        if (effect?.extraRoll != null) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   bool get _showAiExtraDicePhase {
     if (_diceAnimationPending) {
       return false;
     }
-    if (!_aiMode || _rollCount == 0) {
+    final hasRolledOrEdited =
+        _rollCount > 0 || _activeDice.any((die) => die.value != null);
+    if (!_aiMode || !hasRolledOrEdited) {
       return false;
     }
     if (_phase == CombatPhase.hero) {
@@ -2783,7 +2808,7 @@ class _FightPageState extends State<FightPage> {
     if (_phase != CombatPhase.minionAttack) {
       return false;
     }
-    if (_specialAttackReady) {
+    if (_specialAttackReady || _shouldResolveSpecialAttack()) {
       return true;
     }
     if (_isNaraxus) {
@@ -2792,6 +2817,9 @@ class _FightPageState extends State<FightPage> {
         return false;
       }
       return value == 3 || value == 6;
+    }
+    if (enemy.profileKey == 'oni-delirant') {
+      return _symbolGoalMet(const SymbolGoal(yellow: 4));
     }
     if (enemy.profileKey == 'vert-vert-012') {
       return _symbolGoalMet(const SymbolGoal(yellow: 4));
@@ -2808,7 +2836,8 @@ class _FightPageState extends State<FightPage> {
     if (enemy.profileKey == 'bleu-bleu-003') {
       return _symbolGoalMet(const SymbolGoal(yellow: 2, red: 1));
     }
-    return _attackNeedsExtraDice(enemy) && _currentAttackGoalMet();
+    return _hasCurrentActionExtraRoll ||
+        (_attackNeedsExtraDice(enemy) && _currentAttackGoalMet());
   }
 
   bool get _showDruidFormRollPanel => _needsDruidFormRoll;
@@ -5007,6 +5036,28 @@ class _FightPageState extends State<FightPage> {
     if (enemy.profileKey == 'bleu-bleu-003') {
       return 1;
     }
+    if (enemy.profileKey == 'oni-delirant') {
+      return 1;
+    }
+    for (final goal in enemy.attackPlan.goals) {
+      final extraRoll = goal.effect?.extraRoll;
+      if (extraRoll != null && _symbolGoalMet(goal)) {
+        return extraRoll.dice;
+      }
+    }
+    if (enemy.attackPlan.style == MinionAttackStyle.suite) {
+      final values = _activeDice
+          .map((die) => die.effectiveValue)
+          .whereType<int>()
+          .toList();
+      final len = _bestSuiteLength(values);
+      for (var l = len; l >= 3; l--) {
+        final effect = enemy.attackPlan.suiteEffects[l];
+        if (effect?.extraRoll != null) {
+          return effect!.extraRoll!.dice;
+        }
+      }
+    }
     return _extraDiceCountFor(enemy);
   }
 
@@ -5022,6 +5073,9 @@ class _FightPageState extends State<FightPage> {
     if (_isNaraxus && _dice.first.value == 6) {
       return "Dragon's Might extra roll";
     }
+    if (enemy.profileKey == 'oni-delirant') {
+      return 'Onisima extra roll';
+    }
     if (enemy.profileKey == 'vert-vert-012') {
       return 'Rocalanche extra roll';
     }
@@ -5036,6 +5090,27 @@ class _FightPageState extends State<FightPage> {
     }
     if (enemy.profileKey == 'bleu-bleu-003') {
       return 'Sorcellerie Chaotique extra roll';
+    }
+    for (final goal in enemy.attackPlan.goals) {
+      final extraRoll = goal.effect?.extraRoll;
+      if (extraRoll != null && _symbolGoalMet(goal)) {
+        final label = goal.effect?.label ?? '';
+        if (label.isNotEmpty) return '$label extra roll';
+      }
+    }
+    if (enemy.attackPlan.style == MinionAttackStyle.suite) {
+      final values = _activeDice
+          .map((die) => die.effectiveValue)
+          .whereType<int>()
+          .toList();
+      final len = _bestSuiteLength(values);
+      for (var l = len; l >= 3; l--) {
+        final effect = enemy.attackPlan.suiteEffects[l];
+        if (effect?.extraRoll != null) {
+          final label = effect!.label ?? '';
+          if (label.isNotEmpty) return '$label extra roll';
+        }
+      }
     }
     return '${enemy.label} extra roll';
   }
@@ -5173,6 +5248,7 @@ class _FightPageState extends State<FightPage> {
       _resolveMinionDefenseFromDice();
     } else if (_phase == CombatPhase.minionAttack) {
       _resolveMinionAttackFromDice();
+      _specialAttackReady = _shouldResolveSpecialAttack();
     }
   }
 
@@ -5952,11 +6028,6 @@ class _FightPageState extends State<FightPage> {
         if (!_isMinionSilenced && _bestSuiteLength(values) >= 5) {
           acc.cpSteal = 1;
           acc.notes.add('Large suite: steal 1 CP.');
-        }
-      case 'elfe-du-chaos':
-        if (!_isMinionSilenced && _bestSuiteLength(values) >= 5) {
-          acc.heroTokens.add('Ronces');
-          acc.notes.add('Large suite: hero receives Ronces.');
         }
       case 'archer-de-lombre':
         if (hasThreeSameValue) {
@@ -7827,7 +7898,7 @@ class _FightPageState extends State<FightPage> {
   }
 
   void _replaceCurrentEnemyWithRandomLevel3() {
-    final profiles = _profilesForRank(EnemyRank.violet);
+    final profiles = _profilesForRank(EnemyRank.violet, validatedOnly: true);
     if (profiles.isEmpty) {
       widget.adventure.log(
         'Disciple red effect failed: no level 3 profiles available.',
@@ -9401,9 +9472,13 @@ class _FightPageState extends State<FightPage> {
   }
 
   bool _shouldResolveSpecialAttack() {
-    return enemy.profileKey == 'oni-delirant' &&
-        _phase == CombatPhase.minionAttack &&
-        _symbolGoalMet(const SymbolGoal(yellow: 4));
+    if (_phase != CombatPhase.minionAttack) {
+      return false;
+    }
+    if (enemy.profileKey == 'oni-delirant') {
+      return _symbolGoalMet(const SymbolGoal(yellow: 4));
+    }
+    return _hasCurrentActionExtraRoll;
   }
 
   Future<void> _resolveSpecialAttack() async {
@@ -12145,7 +12220,7 @@ class InlineTokenText extends StatelessWidget {
 
 /// Regex for visual effect shortcodes inside authored text.
 final RegExp _visualShortcodeRegex = RegExp(
-  r'\{(damage|dmg|undef|imparable|prevent|block|shield|bouclier|half_prevent|half_shield|half_block|heal|life|vie|soin|losehp|lose_hp|losehealth|loselife|pertevie|cp|die|dice)(?::([^}]+))?\}',
+  r'\{(hp|pv|damage|dmg|undef|imparable|prevent|block|shield|bouclier|half_prevent|half_shield|half_block|heal|life|vie|soin|losehp|lose_hp|losehealth|loselife|pertevie|cp|die|dice)(?::([^}]+))?\}',
   caseSensitive: false,
 );
 
@@ -12258,6 +12333,21 @@ List<InlineSpan> _buildSpans(
       }
       final amount = int.tryParse(rawValue);
       if (amount == null) {
+        if (tag == 'hp' || tag == 'pv') {
+          matches.add(
+            _TokenMatch(
+              match.start,
+              match.end,
+              null,
+              null,
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 2),
+                child: HpBadge(value: 0),
+              ),
+            ),
+          );
+          continue;
+        }
         if (tag == 'shield' || tag == 'bouclier' || tag == 'prevent' || tag == 'block') {
           matches.add(
             _TokenMatch(
@@ -12277,6 +12367,7 @@ List<InlineSpan> _buildSpans(
         continue;
       }
       final Widget widget = switch (tag) {
+        'hp' || 'pv' => HpBadge(value: amount),
         'undef' || 'imparable' => DamageBadge(value: amount, imparable: true),
         'damage' || 'dmg' => DamageBadge(value: amount, imparable: false),
         'prevent' || 'block' || 'shield' || 'bouclier' => PreventBadge(value: amount),
@@ -12377,20 +12468,7 @@ List<InlineSpan> _buildSpans(
           child: InkWell(
             onTap: () => showTokenDetails(context, rule),
             borderRadius: BorderRadius.circular(4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TokenBadge(label: rule.label, color: color),
-                const SizedBox(width: 4),
-                Text(
-                  rule.label,
-                  style: effective.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
+            child: TokenBadge(label: rule.label, color: color),
           ),
         ),
       );
@@ -13383,9 +13461,6 @@ _AttackDamage? _damageForSymbolGoal(EnemyNode enemy, SymbolGoal goal) {
   }
   if (key == 'vert-vert-014') {
     return const _AttackDamage(6);
-  }
-  if (key == 'vert-vert-015') {
-    return const _AttackDamage(6, imparable: true);
   }
   if (key == 'vert-vert-018') {
     if (goal.white == 2 && goal.yellow == 1 && goal.red == 0) {

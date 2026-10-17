@@ -1148,7 +1148,7 @@ function renderExtra(root, extra) {
     `<label class="wide-label">Roll text<textarea class="extra-rolltext" rows="2">${escapeText(extra?.rollText || '')}</textarea></label>`,
     `<label class="wide-label">Final text<textarea class="extra-finaltext" rows="2">${escapeText(extra?.finalText || '')}</textarea></label>`,
     `<label class="wide-label">Display rows JSON<textarea class="extra-displayrows" rows="7" placeholder='[{"align":"center","items":["{die:orange}","{die:orange}","{die:red}"]},{"align":"right","items":["{damage:7}","+ nb","{token:Chaos}"]}]'>${escapeText(JSON.stringify(extra?.displayRows || [], null, 2))}</textarea></label>`,
-    '<p class="hint mini-hint">Use align: left, center or right. Items accept {die:any}, {die:white}, {die:orange}, {die:red}, {damage:7}, {undef:7}, {prevent:2}, {heal:4}, {token:Chaos}.</p>',
+    '<p class="hint mini-hint">Use align: left, center or right. Items accept {die:any}, {die:white}, {die:orange}, {die:red}, {hp:8}, {damage:7}, {undef:7}, {prevent:2}, {heal:4}, {token:Chaos}.</p>',
     '<div class="outcome-list"></div>',
     '<button type="button" class="ghost-btn add-outcome">Add outcome</button>',
   ].join('');
@@ -1674,26 +1674,86 @@ function updateTabDots() {
   }
   const pasDot = $('passiveDot');
   if (pasDot) {
-    const hasPas = (selectedProfile.attackPlan?.passives?.length || 0) > 0;
+    const hasPas = (selectedProfile.attackPlan?.passives?.length || 0) > 0 || (selectedProfile.passives?.length || 0) > 0;
     pasDot.classList.toggle('active', hasPas);
   }
+}
+
+function ensureProfilePassivesList() {
+  if (!selectedProfile) return [];
+  if (!selectedProfile.attackPlan) selectedProfile.attackPlan = {};
+  if (!Array.isArray(selectedProfile.attackPlan.passives)) {
+    selectedProfile.attackPlan.passives = [];
+  }
+  if (selectedProfile.attackPlan.passives.length === 0 && Array.isArray(selectedProfile.passives) && selectedProfile.passives.length > 0) {
+    selectedProfile.attackPlan.passives = selectedProfile.passives.map((p) => {
+      if (p && typeof p === 'object') return JSON.parse(JSON.stringify(p));
+      return {
+        text: String(p || ''),
+        tokens: [],
+        effects: {
+          damage: 0,
+          undefendable: false,
+          stealHp: 0,
+          stealCp: 0,
+          heal: 0,
+          drawCards: 0,
+          discardCards: 0,
+          topDeckToDiscard: 0,
+          tokens: [],
+          formulas: []
+        }
+      };
+    });
+  }
+  return selectedProfile.attackPlan.passives;
 }
 
 function renderPassiveRules() {
   const root = $('passiveRules');
   if (!root) return;
   root.innerHTML = '';
-  (selectedProfile.attackPlan?.passives || []).forEach((text, index) => {
+  const passivesList = ensureProfilePassivesList();
+  passivesList.forEach((item, index) => {
     const row = document.createElement('div');
     row.style.display = 'flex';
     row.style.gap = '8px';
     const input = document.createElement('textarea');
-    input.value = text;
+    const textVal = typeof item === 'string' ? item : (item && typeof item === 'object' ? (item.text || '') : '');
+    input.value = textVal;
     input.rows = 2;
     input.style.flex = '1';
     input.className = 'notes-field';
+    input.placeholder = 'Passive rule text (e.g. Passive: start of turn...)';
     input.oninput = () => {
-      selectedProfile.attackPlan.passives[index] = input.value;
+      const current = selectedProfile.attackPlan.passives[index];
+      if (current && typeof current === 'object') {
+        current.text = input.value;
+      } else {
+        selectedProfile.attackPlan.passives[index] = {
+          text: input.value,
+          tokens: [],
+          effects: {
+            damage: 0,
+            undefendable: false,
+            stealHp: 0,
+            stealCp: 0,
+            heal: 0,
+            drawCards: 0,
+            discardCards: 0,
+            topDeckToDiscard: 0,
+            tokens: [],
+            formulas: []
+          }
+        };
+      }
+      if (Array.isArray(selectedProfile.passives) && selectedProfile.passives[index]) {
+        if (typeof selectedProfile.passives[index] === 'object') {
+          selectedProfile.passives[index].text = input.value;
+        } else {
+          selectedProfile.passives[index] = input.value;
+        }
+      }
       setDirty('enemy');
       updateTabDots();
     };
@@ -1703,6 +1763,9 @@ function renderPassiveRules() {
     rm.style.height = 'fit-content';
     rm.onclick = () => {
       selectedProfile.attackPlan.passives.splice(index, 1);
+      if (Array.isArray(selectedProfile.passives) && selectedProfile.passives.length > index) {
+        selectedProfile.passives.splice(index, 1);
+      }
       setDirty('enemy');
       renderPassiveRules();
       updateTabDots();
@@ -2276,10 +2339,26 @@ document.addEventListener('DOMContentLoaded', () => {
   
   $('addPassiveRuleBtn').onclick = () => {
     if (!selectedProfile) return;
-    selectedProfile.attackPlan.passives ||= [];
-    selectedProfile.attackPlan.passives.push("");
+    ensureProfilePassivesList();
+    selectedProfile.attackPlan.passives.push({
+      text: '',
+      tokens: [],
+      effects: {
+        damage: 0,
+        undefendable: false,
+        stealHp: 0,
+        stealCp: 0,
+        heal: 0,
+        drawCards: 0,
+        discardCards: 0,
+        topDeckToDiscard: 0,
+        tokens: [],
+        formulas: []
+      }
+    });
     renderPassiveRules();
     setDirty('enemy');
+    updateTabDots();
   };
 
   $('enemySearch').oninput = renderLists;

@@ -51,6 +51,10 @@ http
           if (fs.existsSync(path.dirname(enemyProfilesAssetsPath))) {
             fs.writeFileSync(enemyProfilesAssetsPath, content);
           }
+          const buildWebAssetsPath = path.resolve(__dirname, '..', 'build', 'web', 'assets', 'docs', 'enemy_profiles.json');
+          if (fs.existsSync(path.dirname(buildWebAssetsPath))) {
+            fs.writeFileSync(buildWebAssetsPath, content);
+          }
           
           response.writeHead(200, {
             'Content-Type': 'application/json',
@@ -192,6 +196,15 @@ http
       const liveAdmPath = path.resolve(__dirname, '..', 'web', 'admin', admRel);
       if (fs.existsSync(liveAdmPath) && !fs.statSync(liveAdmPath).isDirectory()) {
         sendFile(response, liveAdmPath);
+        return;
+      }
+    }
+
+    // Serve docs/enemy_profiles.json directly so preview is always live
+    if (relativePath === 'assets/docs/enemy_profiles.json') {
+      const liveJsonPath = path.resolve(__dirname, '..', 'docs', 'enemy_profiles.json');
+      if (fs.existsSync(liveJsonPath)) {
+        sendFile(response, liveJsonPath);
         return;
       }
     }

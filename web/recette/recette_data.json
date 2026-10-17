@@ -1,6 +1,229 @@
 {
   "versions": [
     {
+      "version": "1.4.71",
+      "buildNumber": 383,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Alignement à l'extrême droite du chevron de la zone Passive. Dépliage automatique du passif en phase Minion Upkeep. Correction de l'affichage [object Object] dans l'onglet Passif de l'admin.",
+      "prompts": [
+        "Alignement des curseurs qui déplie et replie n'est pas bon pour la zone descriptions passive. D'ailleurs en phase d'upkeep du minion, le passif est toujours ouvert.",
+        "ou puis je modifier les textes des passfis ? dans l'onglet passif j'ai un champs avec Objet / objet dedans entre crochet."
+      ],
+      "features": [
+        "Alignement parfait des chevrons de repli/dépli : dans _CollapsibleRulesLine, le trailing est maintenant contenu dans un Expanded avec alignement à droite, assurant que le chevron de Passive est rigoureusement aligné sur le bord droit comme Attack et Defense",
+        "Phase Minion Upkeep : _showPassive s'active automatiquement dès l'entrée en minionUpkeep (et se replie lors des phases hero / minionAttack tout en restant dépliable manuellement au clic)",
+        "Back Office Admin : correction du bug [object Object] dans renderPassiveRules() en extrayant text.text || text et en préservant la structure d'objet JSON sans la casser lors de la saisie ou de l'ajout"
+      ],
+      "tags": [
+        "UI",
+        "PassiveChevron",
+        "MinionUpkeep",
+        "BackOfficeAdmin",
+        "PassivesEditor"
+      ],
+      "author": "Antigravity",
+      "title": "Passive Chevron Right Alignment, Minion Upkeep Auto-Expand & Admin Passives Fix"
+    },
+    {
+      "version": "1.4.70",
+      "buildNumber": 382,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Suppression des noms textuels après l'icône des tokens dans toutes les zones de description (ATK / DEF / Passif). Suppression du label parasite 'Bane' sur Dark Specter.",
+      "prompts": [
+        "je veux qu'on supprime les textes après l'image des tokens dans les zones de descriptions atk/defense/passif. Je ne veux pas voir hex, silence, entangle etc sur tous les monstres.",
+        "Je ne comprends où est le mot 'bane' sur la ligne micro (cf image), je cherche à le supprimer."
+      ],
+      "features": [
+        "Nettoyage visuel global des jetons : suppression du libellé textuel accolé aux images de tokens dans `InlineTokenText` (affichage pur de l'image du jeton avec conservation du clic interactif et tooltip)",
+        "Affichage direct via `TokenBadge` sur les lignes de suites (`_buildSuiteResult`) garantissant un rendu sans texte résiduel ('Hex', 'Silence', 'Entangle' masqués)",
+        "Dark Specter (`bleu-bleu-008`) : suppression du label d'action 'Bane' dans `attackPlan.actions[0].label`"
+      ],
+      "tags": [
+        "UI",
+        "TokenDisplay",
+        "DarkSpecter",
+        "CleanLayout",
+        "SuiteEffects"
+      ],
+      "author": "Antigravity",
+      "title": "Clean Token Images (No Trailing Text) & Dark Specter Bane Cleanup"
+    },
+    {
+      "version": "1.4.69",
+      "buildNumber": 381,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Roc : Restauration de la zone Passif (copie des passifs dans applyProfile et fallback repository). Archer Aveugle : Suppression du doublon hardcodé Eboulissement.",
+      "prompts": [
+        "tjs pas de ligne de passif pour ROc malgré le travail sur la 1.4.67+379",
+        "Archer aveugle, j'ai 2 fois le texte et je ne vois rien dans d'admin uniquement le display rows Json pour l'attaque mais je ne trouve pas l'autre texte à supprimer qui est au dessus."
+      ],
+      "features": [
+        "Roc & tous les minions : correction de `EnemyNode.applyProfile` pour assigner correctement `passives = profile.passives` lors de la sélection ou transition de combat",
+        "Sécurisation de `_hasPassiveContent` et `_displayedPassives` dans `EnemyRulesPanel` avec fallback sur `EnemyProfileRepository` en cas de liste locale non transmise",
+        "Archer Aveugle (`bleu-bleu-002`) : suppression du bloc hardcodé obsolète dans `EnemyRulesPanel` qui injectait en doublon le texte figé 'If the attack succeeds and 3 values are identical: Eboulissement.'",
+        "L'attaque d'Archer Aveugle passe désormais 100% dynamiquement par ses objectifs d'attaque et sa règle conditionnelle Blind issue de l'admin"
+      ],
+      "tags": [
+        "Roc",
+        "ArcherAveugle",
+        "PassiveZone",
+        "ApplyProfile",
+        "BugFix"
+      ],
+      "author": "Antigravity",
+      "title": "Roc Passive Restoration & Blind Archer Text Cleanup"
+    },
+    {
+      "version": "1.4.68",
+      "buildNumber": 380,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Tirage au sort de la MAP : seuls les minions 100% validés (ou validés Atk + Def) sont éligibles. Menu développeur étendu avec badges Valid / WIP",
+      "prompts": [
+        "tu vas ajouter une fonctionnalitée. Si le minion n'est pas 100% validé, tu ne le fais pas apparaitre dans le tirage au sort de la MAP. le minion reste visible via le menu de présecltion pour le mode développeur, mais hors débeloppeur dans le jeu classique non. Je fois faire en sorte de valider certain violet, bleu et orange pour que le jeu soit jouable."
+      ],
+      "features": [
+        "Ajout de `validated`, `validatedAtk` et `validatedDef` dans le modèle `EnemyProfile` et `EnemyProfileRepository`",
+        "Getter `isFullyValidated` : un minion est considéré 100% validé s'il a `validated == true` OU (`validatedAtk == true && validatedDef == true`) (boss Naxarus et Viseer toujours validés)",
+        "Génération de la map (`_generateEnemies`) et invocations aléatoires filtrées avec `validatedOnly: true`",
+        "Rechargement dynamique automatique du pool de tirage par rang si le nombre de monstres requis sur la map excède le nombre de profils validés disponibles",
+        "Menu de sélection développeur / recette (`RecipeEnemySelectionPage`) conservant tous les monstres avec badge visuel '✓ Valid' ou 'WIP'"
+      ],
+      "tags": [
+        "MapGeneration",
+        "ValidationFilter",
+        "RecipeSelection",
+        "EnemyProfiles"
+      ],
+      "author": "Antigravity",
+      "title": "Map Minion Pool: Fully Validated Minions Only & Dev Recipe Badges"
+    },
+    {
+      "version": "1.4.67",
+      "buildNumber": 379,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Roc : Zone Passif standardisée entre Attack et Defense. Disciple : Nettoyage des goals parasites et suppression du dégât hardcodé à 6",
+      "prompts": [
+        "roc, le passif est dans un conditonal rules, il fonctionne bien, mais coté design on avait ajouté une zone entre description atk et description défense pour la description du passif. Pourquoi est=elle avec l'attaque ? un vieux codage ? Tous les passifs doivent être dans une zone passif dédiée entre l'attaque et la défense?",
+        "Disciple, la target de dès c'est 2 blanc et 3 jaunes, à mettre dans la zone haute de la description de l'attaque, je n'ai qu'un dès rouge en target, c'est faux. J'ai testé un combat, je me vois infliger 6 dégats imparrables par le disciple alors même que sa target de jet n'a pas été atteinte (manque un dès jaune) et même avec un dès jauen, c'est 5 dégats imparrable, d'ou vient le 6 ?"
+      ],
+      "features": [
+        "Roc, Druide et Mage de Sang : suppression des encarts passifs incrustés directement dans la boîte d'attaque et intégration dans la zone Passif dédiée entre l'Attaque et la Défense",
+        "Positionnement de la zone Passif standardisée entre l'Attaque et la Défense dans EnemyRulesPanel",
+        "Disciple (vert-vert-015) : suppression des actions et objectifs parasites (1 orange, 1 rouge) dans enemy_profiles.json qui correspondaient aux faces de l'extraRoll",
+        "Disciple : suppression du hardcode erroné de 6 dégâts dans _damageForSymbolGoal (application des 5 dégâts imparables authentiques d'Abnegation uniquement quand 2 blancs et 3 oranges sont réunis)",
+        "Affichage de la cible d'attaque (AttackObjectiveInline) fiabilisé via strongestSymbolGoal pour toujours cibler l'attaque majeure"
+      ],
+      "tags": [
+        "Roc",
+        "Disciple",
+        "PassiveZone",
+        "AttackObjective",
+        "CombatLogic"
+      ],
+      "author": "Antigravity",
+      "title": "Roc & Disciple: Dedicated Passive Zone, Clean Goals & Accurate Damage"
+    },
+    {
+      "version": "1.4.66",
+      "buildNumber": 378,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Oni Délirant et attaques à jet additionnel : déclenchement dynamique de la phase de dé additionnel dès la modification des dés",
+      "prompts": [
+        "Oni délirant (et autre monstyre avec une condition pour réussir leur attaque) Il faut 4 oranges, je les ai eu au bout des 3 jets ! le jet additionnel est bien? Si j'en ai une partie (2 ou 3 oranges) et que j'en modifie pour en avoir 4 alors le jet additionnel ne se met pas, on a louper la tempo pour qu'il apparaisse."
+      ],
+      "features": [
+        "Réévaluation dynamique instantanée des conditions de jet additionnel (_showAiExtraDicePhase, _shouldResolveSpecialAttack) lors de la modification manuelle des dés (_selectFace / _refreshBattleResolutionFromDice)",
+        "Support générique de tous les monstres à jet additionnel via les objectifs d'attaque (SymbolGoal.effect.extraRoll et suiteEffects) et prise en charge explicite d'Oni Délirant",
+        "Affichage immédiat du panneau de dé additionnel dès que les 4 symboles orange sont réunis, quel que soit le moment ou le nombre de relances"
+      ],
+      "tags": [
+        "OniDelirant",
+        "CombatLogic",
+        "ExtraDice",
+        "DiceModification"
+      ],
+      "author": "Antigravity",
+      "title": "Oni Delirant: Dynamic Extra Dice Phase on Manual Die Selection"
+    },
+    {
+      "version": "1.4.65",
+      "buildNumber": 377,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Elfe du Chaos : suppression du doublon de Ronces (switch legacy) et service live du JSON dans le serveur preview",
+      "prompts": [
+        "elf du chaos, j ai supprimé la conditional rules en atk. Si el json en preview est bien le 1.1.69 lorsque j ai la grande suite, l app inflige 2 ronces, alors que le nb de token est à 1. le conditional rules pouvait engendrer cela, mais plus maintenant ? je ne comprends pas ?"
+      ],
+      "features": [
+        "Suppression du doublon historique dans _applyLegacyConditionalSwitch pour elfe-du-chaos (la grande suite donne désormais exactement 1 seule Ronse comme configuré dans le JSON)",
+        "Mise à jour du serveur de prévisualisation local pour servir en direct les modifications de docs/enemy_profiles.json sans attendre de rebuild"
+      ],
+      "tags": [
+        "ElfeDuChaos",
+        "CombatLogic",
+        "BarbedVine",
+        "SuiteAttack"
+      ],
+      "author": "Antigravity",
+      "title": "Chaos Elf: Fix Double Barbed Vine on Large Suite & Live JSON Preview"
+    },
+    {
+      "version": "1.4.64",
+      "buildNumber": 376,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Shortcode {hp:X}, masquage des symboles automatiques si note présente, et alignement droite du chevron passif",
+      "prompts": [
+        "tu peux créer un shortcodes avec les HP, {hp:8} c est un coeur avec le chiffre dedans...",
+        "Zone description ATK, j ai le 6 dégats qui s affiche à la fin issue de la saisie dans l admin. Mais j ai aussi Note qui s affiche, je pense qu on doit faire la régle si note est saisie alors les symboles automatiques ne doivent pas être visible.",
+        "La ligne passif a un curseur qui n est pas aligné sur la droite pour déplier et replier le zone passif entre l atk et def (description) aligner les curseurs."
+      ],
+      "features": [
+        "Nouveau shortcode {hp:X} et {pv:X} avec le widget dédié HpBadge (coeur stylisé avec valeur)",
+        "Masquage automatique des symboles (badges de dégâts, tokens, lifesteal, gain CP...) dès qu une note d effet est rédigée pour éviter tout doublon",
+        "Alignement parfait à droite du chevron de dépliement/repliement pour la boîte Passive avec Attack et Defense",
+        "Support et documentation du shortcode {hp:8} dans le Back Office Admin (v1.7.26)"
+      ],
+      "tags": [
+        "UI",
+        "Shortcodes",
+        "HpBadge",
+        "HydreFeroce",
+        "Alignment",
+        "EnemyRules"
+      ],
+      "author": "Antigravity",
+      "title": "HP Shortcode, Note Overrides Auto Badges & Passive Chevron Alignment"
+    },
+    {
+      "version": "1.4.63",
+      "buildNumber": 375,
+      "date": "2026-10-17",
+      "commit": "local-dev",
+      "summary": "Build Web Local & Démarrage du serveur de prévisualisation",
+      "prompts": [
+        "build local web avec preview"
+      ],
+      "features": [
+        "Incrémentation de version vers 1.4.63+375",
+        "Génération du build Web release local",
+        "Lancement du serveur HTTP de prévisualisation locale"
+      ],
+      "tags": [
+        "Build",
+        "Web",
+        "Preview"
+      ],
+      "author": "Antigravity",
+      "title": "Local Web Build & Preview Server"
+    },
+    {
       "version": "1.4.62",
       "buildNumber": 374,
       "date": "2026-10-17",

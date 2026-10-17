@@ -1,5 +1,5 @@
 {
-  "version": "1.1.63",
+  "version": "1.1.69",
   "schemaVersion": 2,
   "note": "Enemy profiles source of truth. Defense display and automation should use defensePlan, not duplicated defense text.",
   "diceSymbols": {
@@ -452,7 +452,9 @@
             "formulas": [
               "returnDamage = ceil(defenseDieValue / 2)"
             ],
-            "notes": []
+            "notes": [
+              "Deals damage equal to half of the defense die roll."
+            ]
           }
         ],
         "notes": [],
@@ -489,7 +491,7 @@
                 "red": 0
               }
             },
-            "label": "3 white symbols",
+            "label": "",
             "damage": 5,
             "undefendable": false,
             "prevent": 0,
@@ -516,7 +518,7 @@
                 "red": 0
               }
             },
-            "label": "4 white symbols",
+            "label": "",
             "damage": 6,
             "undefendable": false,
             "prevent": 0,
@@ -543,7 +545,7 @@
                 "red": 0
               }
             },
-            "label": "5 white symbols",
+            "label": "",
             "damage": 7,
             "undefendable": false,
             "prevent": 0,
@@ -564,7 +566,7 @@
         "conditionalRules": [
           {
             "condition": {
-              "type": "sameSymbol",
+              "type": "sameValue",
               "negate": false,
               "and": [],
               "count": 4,
@@ -587,7 +589,7 @@
               {
                 "align": "left",
                 "items": [
-                  "If you roll 4 matching symbols, gain the {token:Back Strike}."
+                  "If you roll 4 matching values, gain the {token:Back Strike}."
                 ]
               }
             ],
@@ -602,8 +604,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": false,
-      "validatedAtk": false,
+      "validated": true,
+      "validatedAtk": true,
       "validatedDef": true
     },
     {
@@ -755,8 +757,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": false,
-      "validatedAtk": false,
+      "validated": true,
+      "validatedAtk": true,
       "validatedDef": true
     },
     {
@@ -845,7 +847,7 @@
                 "red": 0
               }
             },
-            "label": "2 orange symbols",
+            "label": "",
             "damage": 5,
             "undefendable": false,
             "prevent": 0,
@@ -872,7 +874,7 @@
                 "red": 0
               }
             },
-            "label": "3 orange symbols",
+            "label": "",
             "damage": 6,
             "undefendable": false,
             "prevent": 0,
@@ -899,7 +901,7 @@
                 "red": 0
               }
             },
-            "label": "4 orange symbols",
+            "label": "",
             "damage": 7,
             "undefendable": false,
             "prevent": 0,
@@ -926,7 +928,7 @@
                 "red": 0
               }
             },
-            "label": "5 orange symbols",
+            "label": "",
             "damage": 8,
             "undefendable": false,
             "prevent": 0,
@@ -978,8 +980,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": false,
-      "validatedAtk": false,
+      "validated": true,
+      "validatedAtk": true,
       "validatedDef": true
     },
     {
@@ -1066,7 +1068,7 @@
                 "red": 0
               }
             },
-            "label": "3 white symbols",
+            "label": "",
             "damage": 4,
             "undefendable": false,
             "prevent": 0,
@@ -1093,7 +1095,7 @@
                 "red": 0
               }
             },
-            "label": "4 white symbols",
+            "label": "",
             "damage": 5,
             "undefendable": false,
             "prevent": 0,
@@ -1120,7 +1122,7 @@
                 "red": 0
               }
             },
-            "label": "5 white symbols",
+            "label": "",
             "damage": 6,
             "undefendable": false,
             "prevent": 0,
@@ -1179,8 +1181,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": false,
-      "validatedAtk": false,
+      "validated": true,
+      "validatedAtk": true,
       "validatedDef": true
     },
     {
@@ -1319,7 +1321,7 @@
                 "red": 0
               }
             },
-            "label": "3 white symbols",
+            "label": "",
             "damage": 5,
             "undefendable": false,
             "prevent": 0,
@@ -1346,7 +1348,7 @@
                 "red": 0
               }
             },
-            "label": "4 white symbols",
+            "label": "",
             "damage": 6,
             "undefendable": false,
             "prevent": 0,
@@ -1373,7 +1375,7 @@
                 "red": 0
               }
             },
-            "label": "5 white symbols",
+            "label": "",
             "damage": 7,
             "undefendable": false,
             "prevent": 0,
@@ -1399,8 +1401,8 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validated": false,
-      "validatedAtk": false,
+      "validated": true,
+      "validatedAtk": true,
       "validatedDef": true
     },
     {
@@ -1535,33 +1537,7 @@
             "extraRoll": null
           }
         ],
-        "conditionalRules": [
-          {
-            "condition": {
-              "type": "suite",
-              "negate": false,
-              "and": [],
-              "minLength": 5,
-              "inner": null
-            },
-            "effect": {
-              "heroTokens": [
-                "Ronces"
-              ],
-              "minionTokens": [],
-              "damage": null,
-              "damageFormula": null,
-              "undefendable": false,
-              "lifeSteal": 0,
-              "loseHp": 0,
-              "cpSteal": 0,
-              "note": "Large suite: hero receives Ronces."
-            },
-            "displayRows": [],
-            "exclusive": true,
-            "minRollCount": 0
-          }
-        ],
+        "conditionalRules": [],
         "passives": [],
         "notes": [],
         "displayRows": []
@@ -3383,7 +3359,7 @@
             "notes": []
           },
           {
-            "align": "left",
+            "align": "center",
             "condition": {
               "type": "text"
             },
@@ -4173,7 +4149,7 @@
             "notes": []
           },
           {
-            "align": "left",
+            "align": "center",
             "condition": {
               "type": "text"
             },
@@ -9046,7 +9022,7 @@
       "rewardChests": 1,
       "rewardRank": "orange",
       "attacks": [
-        "Plurimorsure: deals 6 base damage + 3 damage per Head ({token:Chaos}).",
+        "Deals 6 base damage + 3 damage per Head ({token:Chaos}).",
         "Passive: at the end of the Offensive Roll Phase, roll 1 die: on 6 (Red), gains 1 new Head ({token:Chaos})."
       ],
       "defense": "Unique Defense: If Health is reduced to 0 while Heads ({token:Chaos}) remain, removes 1 Head and resets Health to 8 HP. Applies even against Ultimate Abilities.",
@@ -9059,7 +9035,7 @@
             "condition": {
               "type": "any"
             },
-            "label": "Unique Defense: Head Regeneration",
+            "label": "",
             "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
@@ -9074,7 +9050,7 @@
               "reviveOnZeroHpWithChaos(8)"
             ],
             "notes": [
-              "If Health is reduced to 0 while Heads ({token:Chaos}) remain, removes 1 Head and resets Health to 8 HP. Applies even against Ultimate Abilities."
+              "If Health is reduced to {hp:0} while Heads ({token:Chaos}) remain, removes 1 Head and resets Health to {hp:8}. Applies even against Ultimate Abilities."
             ]
           }
         ],
@@ -9104,7 +9080,7 @@
                 "red": 2
               }
             },
-            "label": "Plurimorsure",
+            "label": "",
             "damage": 6,
             "undefendable": false,
             "prevent": 0,
@@ -9120,7 +9096,7 @@
               "damage = 6 + 3 * tokens(Chaos)"
             ],
             "notes": [
-              "Deals 6 damage + 3 per Head ({token:Chaos})."
+              "Deals {damage:6} + {damage:3} per Head chaos."
             ],
             "topDeckToDiscard": 0,
             "extraRoll": null
@@ -9145,7 +9121,10 @@
           "text": "At the end of the Offensive Roll Phase, roll 1 die: on 6 (Red), gains 1 new Head ({token:Chaos})."
         }
       ],
-      "passiveDisplayRows": []
+      "passiveDisplayRows": [],
+      "validatedAtk": true,
+      "validatedDef": true,
+      "validated": true
     },
     {
       "key": "violet-violet-012",

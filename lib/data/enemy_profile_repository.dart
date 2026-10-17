@@ -30,8 +30,12 @@ class EnemyProfileRepository {
   static String get jsonVersion => _jsonVersion;
   static bool get isLoaded => _profiles.isNotEmpty;
 
-  static List<EnemyProfile> byRank(EnemyRank rank) {
-    return _profiles.where((profile) => profile.rank == rank).toList();
+  static List<EnemyProfile> byRank(EnemyRank rank, {bool validatedOnly = false}) {
+    return _profiles
+        .where((profile) =>
+            profile.rank == rank &&
+            (!validatedOnly || profile.isFullyValidated))
+        .toList();
   }
 
   static EnemyProfile? byKey(String key) {
@@ -81,6 +85,9 @@ class EnemyProfileJson {
       defenseDisplayRows: _defenseDisplayRowsFromJson(json['defensePlan']),
       passiveDisplayRows: _displayRowsFromJson(json['passiveDisplayRows']),
       defenseEffects: _defenseEffectsFromJson(json['defensePlan']),
+      validated: json['validated'] as bool? ?? false,
+      validatedAtk: json['validatedAtk'] as bool? ?? false,
+      validatedDef: json['validatedDef'] as bool? ?? false,
     );
   }
 
