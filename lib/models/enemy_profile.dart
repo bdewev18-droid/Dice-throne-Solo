@@ -50,6 +50,7 @@ class EnemyProfile {
     this.validated = false,
     this.validatedAtk = false,
     this.validatedDef = false,
+    this.sourcePack = 'dta',
   });
 
   final String key;
@@ -72,12 +73,54 @@ class EnemyProfile {
   final bool validatedAtk;
   final bool validatedDef;
 
+  /// Minion origin expansion pack ('dta', 'promo', 'santa', 'community').
+  final String sourcePack;
+
   /// Whether the minion is 100% validated (both attack and defense approved).
   /// Fixed bosses (Viseer, Naraxus) are always considered valid.
   bool get isFullyValidated =>
       rank == EnemyRank.viseer ||
       rank == EnemyRank.naraxus ||
       (validated || (validatedAtk && validatedDef));
+
+  /// High-resolution preview artwork asset for bestiary and action cards.
+  String get previewAsset {
+    if (key == 'naraxus') {
+      return 'assets/enemy_previews/naraxus.webp';
+    }
+    if (key == 'kaelen-voss') {
+      return 'assets/enemy_previews/kaelen-voss.webp';
+    }
+    if (key == 'viseer') {
+      return 'assets/enemy_previews/orange-viseer.webp';
+    }
+    if (key == 'rat-de-la-rue') {
+      return 'assets/enemy_previews/rat-de-la-rue.webp';
+    }
+    final filename = cardAsset.split('/').last;
+    final base = filename.split('.').first.toLowerCase();
+    final greenLegacyPreview = switch (base) {
+      'enemy_green_fairy' => 'vert-001',
+      'enemy_green_ronin' => 'vert-002',
+      'enemy_green_goblin_enchanter' => 'vert-003',
+      'enemy_green_shadow_archer' => 'vert-004',
+      'enemy_green_feline_shadow' => 'vert-005',
+      'enemy_green_lost_fencer' => 'vert-006',
+      'enemy_green_chaos_elf' => 'vert-007',
+      'enemy_green_raving_oni' => 'vert-008',
+      _ => null,
+    };
+    if (greenLegacyPreview != null) {
+      return 'assets/enemy_previews/$greenLegacyPreview.webp';
+    }
+    if (base.startsWith('bleu-') ||
+        base.startsWith('vert-') ||
+        base.startsWith('violet-') ||
+        base.startsWith('orange-')) {
+      return 'assets/enemy_previews/$base.webp';
+    }
+    return cardAsset;
+  }
 
   /// Passive abilities declared for this profile, parsed from the JSON
   /// `passives` array (root) merged with `attackPlan.passives`. Each entry
@@ -184,6 +227,7 @@ class SymbolGoalEffect {
     this.loseHp = 0,
     this.stealCp = 0,
     this.heal = 0,
+    this.discardCards = 0,
     this.heroTokens = const [],
     this.minionTokens = const [],
     this.label,
@@ -204,6 +248,7 @@ class SymbolGoalEffect {
   final int loseHp;
   final int stealCp;
   final int heal;
+  final int discardCards;
   final List<String> heroTokens;
   final List<String> minionTokens;
   final String? label;
@@ -251,6 +296,7 @@ class ExtraRollOutcome {
     this.stealHp = 0,
     this.loseHp = 0,
     this.stealCp = 0,
+    this.discardCards = 0,
     this.tokens = const [],
     this.align,
   });
@@ -262,6 +308,7 @@ class ExtraRollOutcome {
   final int stealHp;
   final int loseHp;
   final int stealCp;
+  final int discardCards;
   final List<String> tokens;
   final String? align;
 }
@@ -520,11 +567,23 @@ class MinionAttackPlan {
 /// fields used by the attack/defense plans so the engine can apply it
 /// deterministically without parsing the text.
 class MinionPassive {
-  const MinionPassive({required this.text, this.timing, this.effect});
+  const MinionPassive({
+    required this.text,
+    this.timing,
+    this.type,
+    this.target,
+    this.impact,
+    this.customText,
+    this.effect,
+  });
 
   factory MinionPassive.fromJson(Map<String, dynamic> json) {
     final text = (json['text'] as String?)?.trim() ?? '';
     final timing = (json['timing'] as String?)?.trim();
+    final type = (json['type'] as String?)?.trim();
+    final target = (json['target'] as String?)?.trim();
+    final impact = (json['impact'] as String?)?.trim();
+    final customText = (json['customText'] as String?)?.trim();
     final effectsJson = json['effects'];
     MinionPassiveEffect? effect;
     if (effectsJson is Map<String, dynamic>) {
@@ -538,11 +597,23 @@ class MinionPassive {
         heroTokens: _asStringList(effectsJson['tokens']),
       );
     }
-    return MinionPassive(text: text, timing: timing, effect: effect);
+    return MinionPassive(
+      text: text,
+      timing: timing,
+      type: type,
+      target: target,
+      impact: impact,
+      customText: customText,
+      effect: effect,
+    );
   }
 
   final String text;
   final String? timing;
+  final String? type;
+  final String? target;
+  final String? impact;
+  final String? customText;
   final MinionPassiveEffect? effect;
 
   @override
@@ -572,6 +643,7 @@ class MinionPassiveEffect {
     this.loseHp = 0,
     this.stealCp = 0,
     this.heal = 0,
+    this.discardCards = 0,
     this.heroTokens = const [],
   });
 
@@ -581,5 +653,6 @@ class MinionPassiveEffect {
   final int loseHp;
   final int stealCp;
   final int heal;
+  final int discardCards;
   final List<String> heroTokens;
 }

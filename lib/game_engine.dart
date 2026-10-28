@@ -117,6 +117,27 @@ class _UpkeepContext {
 
 typedef _TokenHandler = void Function(_UpkeepContext ctx);
 
+bool _tokenMatches(String a, String b) {
+  final la = a.trim().toLowerCase().replaceAll(' ', '').replaceAll('-', '').replaceAll("'", '');
+  final lb = b.trim().toLowerCase().replaceAll(' ', '').replaceAll('-', '').replaceAll("'", '');
+  if (la == lb) return true;
+  const bleedVariants = {'bleed', 'hemorragie', 'hémorragie', 'hã©morragie', 'saignement'};
+  if (bleedVariants.contains(la) && bleedVariants.contains(lb)) return true;
+  const tb1Variants = {'timebomb1', 'bombearetardement1', 'bombeàretardement1', 'bombeã retardement1'};
+  if (tb1Variants.contains(la) && tb1Variants.contains(lb)) return true;
+  const tb2Variants = {'timebomb2', 'timebomb', 'bombearetardement2', 'bombeàretardement2', 'bombeã retardement2', 'bombearetardement', 'bombeàretardement'};
+  if (tb2Variants.contains(la) && tb2Variants.contains(lb)) return true;
+  const knockdownVariants = {'knockdown', 'aterre', 'àterre', 'ã€terre', 'ã terre'};
+  if (knockdownVariants.contains(la) && knockdownVariants.contains(lb)) return true;
+  const pbVariants = {'phoenixburn', 'brulureduphenix', 'brûlureduphénix', 'brã»lureduphã©nix'};
+  if (pbVariants.contains(la) && pbVariants.contains(lb)) return true;
+  const coalVariants = {'coal', 'charbon'};
+  if (coalVariants.contains(la) && coalVariants.contains(lb)) return true;
+  const naniteVariants = {'nanite', 'nanites'};
+  if (naniteVariants.contains(la) && naniteVariants.contains(lb)) return true;
+  return false;
+}
+
 class GameEngine {
   static bool Function(String)? isPositiveToken;
 
@@ -352,7 +373,7 @@ class GameEngine {
     );
     final seen = <String>{};
     for (final token in tokens) {
-      if (skipTokens.contains(token)) continue;
+      if (skipTokens.any((s) => _tokenMatches(s, token))) continue;
       if (seen.add(token)) {
         _upkeepHandlers[token]?.call(ctx);
       }
@@ -384,7 +405,7 @@ class GameEngine {
     );
     final seen = <String>{};
     for (final token in tokens) {
-      if (skipTokens.contains(token)) continue;
+      if (skipTokens.any((s) => _tokenMatches(s, token))) continue;
       if (seen.add(token)) {
         if (token == 'Cursed Doubloon' && isPirate) continue;
         _upkeepHandlers[token]?.call(ctx);

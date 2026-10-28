@@ -837,11 +837,26 @@ class MinionAttackSummary extends StatelessWidget {
 
     if (effect != null) {
       final badges = <Widget>[];
+      final minionTokenCounts = <String, int>{};
       for (final token in effect.minionTokens) {
-        badges.add(TokenBadge(label: token, color: color));
+        minionTokenCounts[token] = (minionTokenCounts[token] ?? 0) + 1;
       }
+      for (final entry in minionTokenCounts.entries) {
+        badges.add(TokenBadge(label: entry.key, color: color, count: entry.value));
+      }
+
+      final heroTokenCounts = <String, int>{};
       for (final token in effect.heroTokens) {
-        badges.add(TokenBadge(label: token, color: Colors.deepOrangeAccent));
+        heroTokenCounts[token] = (heroTokenCounts[token] ?? 0) + 1;
+      }
+      for (final entry in heroTokenCounts.entries) {
+        badges.add(
+          TokenBadge(
+            label: entry.key,
+            color: Colors.deepOrangeAccent,
+            count: entry.value,
+          ),
+        );
       }
       if (effect.stealCp > 0 && effect.label2 == null) {
         badges.add(CpStealBadge(value: effect.stealCp, color: color));
@@ -856,9 +871,56 @@ class MinionAttackSummary extends StatelessWidget {
         badges.add(_HealBadge(value: effect.heal, color: color));
       }
       if (effect.damage > 0) {
+        if (badges.isNotEmpty) {
+          badges.add(const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              '+',
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ));
+        }
         badges.add(
           DamageBadge(value: effect.damage, imparable: effect.undefendable),
         );
+      }
+      if (effect.notes.isNotEmpty) {
+        for (final note in effect.notes) {
+          badges.add(const SizedBox(width: 4));
+          badges.add(
+            InlineTokenText(
+              note,
+              color: color,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(0xffcbd8cc),
+              ),
+            ),
+          );
+        }
+      } else {
+        for (final formula in effect.formulas) {
+          if (formula.toLowerCase().contains('bleed on hero')) {
+            badges.add(const SizedBox(width: 4));
+            final factor = formula.contains('+2') ? '2' : '1';
+            badges.add(
+              InlineTokenText(
+                '+ $factor per {token:Bleed}',
+                color: color,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xffcbd8cc),
+                ),
+              ),
+            );
+          }
+        }
       }
       if (effect.label != null && effect.label!.isNotEmpty) {
         badges.add(const SizedBox(width: 4));
@@ -1014,7 +1076,10 @@ class MinionAttackSummary extends StatelessWidget {
             ],
           );
         }
-        if (enemy.profileKey == 'naraxus') {
+        if (enemy.profileKey == 'naraxus' ||
+            (enemy.profileKey == 'kaelen-voss' &&
+                enemy.attackPlan.style == MinionAttackStyle.none &&
+                enemy.attackPlan.displayRows.isEmpty)) {
           return _NaxarusAttackSummary(enemy: enemy);
         }
         if (enemy.profileKey == 'enchanteur-gobelin') {
@@ -1253,25 +1318,19 @@ class MinionAttackSummary extends StatelessWidget {
           }
           return const SizedBox.shrink();
         }
-        if (enemy.profileKey == 'bleu-bleu-020' ||
-            enemy.profileKey == 'bleu-bleu-009' ||
-            enemy.profileKey == 'bleu-bleu-007' ||
-            enemy.profileKey == 'bleu-bleu-006') {
-          final goal = _extraRollGoalFor(enemy);
-          final extraRoll = _extraRollFor(enemy);
-          if (goal != null && extraRoll != null) {
-            return _ExtraRollAttackSummary(
-              enemy: enemy,
-              goal: goal,
-              extraRoll: extraRoll,
-              color: enemy.rank.color,
-              actionAlign: goal.effect?.align ?? 'left',
-              directDamage: _extraRollDirectDamageFor(enemy),
-              directUndefendable:
-                  _extraRollDirectDamageFor(enemy)?.imparable ?? false,
-            );
-          }
-          return const SizedBox.shrink();
+        final generalExtraRollGoal = _extraRollGoalFor(enemy);
+        final generalExtraRoll = _extraRollFor(enemy);
+        if (generalExtraRollGoal != null && generalExtraRoll != null) {
+          return _ExtraRollAttackSummary(
+            enemy: enemy,
+            goal: generalExtraRollGoal,
+            extraRoll: generalExtraRoll,
+            color: enemy.rank.color,
+            actionAlign: generalExtraRollGoal.effect?.align ?? 'left',
+            directDamage: _extraRollDirectDamageFor(enemy),
+            directUndefendable:
+                _extraRollDirectDamageFor(enemy)?.imparable ?? false,
+          );
         }
         if (enemy.profileKey == 'vert-vert-018') {
           return Column(
@@ -1318,9 +1377,6 @@ class MinionAttackSummary extends StatelessWidget {
 
         switch (enemy.attackPlan.style) {
           case MinionAttackStyle.symbols:
-            final hasExplicitTokens = enemy.attackPlan.goals.any(
-              (g) => g.effect?.heroTokens.isNotEmpty == true,
-            );
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -1412,7 +1468,6 @@ class MinionAttackSummary extends StatelessWidget {
                     align: align,
                   );
                 }),
-                if (!hasExplicitTokens) ..._shortTokenHints(enemy),
               ],
             );
           case MinionAttackStyle.suite:
@@ -1434,7 +1489,6 @@ class MinionAttackSummary extends StatelessWidget {
                   length: 5,
                   result: _buildSuiteResult(5, enemy),
                 ),
-                ..._shortTokenHints(enemy),
               ],
             );
           case MinionAttackStyle.none:
@@ -1460,78 +1514,6 @@ class MinionAttackSummary extends StatelessWidget {
       ],
     );
   }
-
-  List<Widget> _shortTokenHints(EnemyNode enemy) {
-    final hints = <Widget>[];
-    final text = enemy.attacks.join(' ').toLowerCase();
-    if (text.contains('riposte')) {
-      hints.add(
-        _hintTokenLine(
-          'If 4 identical symbols:',
-          'Back Strike',
-          enemy.rank.color,
-        ),
-      );
-    }
-    if (text.contains('silence')) {
-      hints.add(
-        _hintTokenLine('If 3 identical values:', 'Silence', enemy.rank.color),
-      );
-    }
-    if (text.contains('hÃ©morragie')) {
-      hints.add(
-        _hintTokenLine('If 3 identical values:', 'Bleed', enemy.rank.color),
-      );
-    }
-    if (text.contains('ronces') && enemy.profileKey != 'elfe-du-chaos') {
-      hints.add(
-        _hintTokenLine('If large suite:', 'Barbed Vine', enemy.rank.color),
-      );
-    }
-    if (text.contains('poison')) {
-      hints.add(
-        _hintTokenLine('If condition met:', 'Poison', enemy.rank.color),
-      );
-    }
-    if (text.contains('parasite')) {
-      hints.add(
-        _hintTokenLine('If condition met:', 'Parasite', enemy.rank.color),
-      );
-    }
-    if ((text.contains('a terre') || text.contains('Ã  terre')) &&
-        enemy.profileKey != 'vert-vert-020') {
-      hints.add(
-        _hintTokenLine('If condition met:', 'Knockdown', enemy.rank.color),
-      );
-    }
-    if ((text.contains('enchevetrement') || text.contains('enchevÃªtrement')) &&
-        enemy.profileKey != 'vert-vert-018') {
-      hints.add(
-        _hintTokenLine('If condition met:', 'Entangle', enemy.rank.color),
-      );
-    }
-    return hints;
-  }
-}
-
-Widget _hintTokenLine(String prefix, String tokenLabel, Color color) {
-  return Padding(
-    padding: const EdgeInsets.only(top: 4),
-    child: Align(
-      alignment: Alignment.center,
-      child: Wrap(
-        spacing: 6,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(
-            prefix,
-            style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
-          ),
-          TokenBadge(label: tokenLabel, color: color),
-        ],
-      ),
-    ),
-  );
 }
 
 SymbolGoal strongestSymbolGoal(EnemyNode enemy) {
@@ -1879,7 +1861,12 @@ class MinionDefenseSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (enemy.profileKey == 'naraxus') {
+    if (enemy.profileKey == 'naraxus' ||
+        (enemy.profileKey == 'kaelen-voss' &&
+            enemy.defenseDisplayRows.isEmpty &&
+            enemy.defenseEffects.every(
+              (e) => e.white == 0 && e.orange == 0 && e.red == 0,
+            ))) {
       return const _NaxarusDefenseGrid();
     }
     // 1. Structured defense effects from admin / JSON take highest priority

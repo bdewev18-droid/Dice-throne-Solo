@@ -12,9 +12,6 @@ Pour le build web local, si le port est occupÃ©, ouvrir un autre port.
 Chaque fois que tu fais un build local (web ou autre), tu DOIS OBLIGATOIREMENT incrementer la version du projet via `.\tool\set-version.ps1 -Version X -BuildNumber Y`.
 De plus, si tu as modifiÃ© les fichiers de l'admin web (`web/admin/*`), tu DOIS incrÃ©menter manuellement la version dans `web/admin/index.html` ET ajouter un paramÃ¨tre de cache buster aux appels CSS/JS (ex: `?v=1.5.6`) pour forcer le rafraÃ®chissement.
 
-## RÃ¨gles Recette
-Ã€ chaque version, mettre Ã  jour le cache-buster dans web/recette/index.html (ex: ?v=1.x.y) et l'historique dans recette_data.json.
-
 ## Agent Spécifique: Nina (UX/UI Designer)
 Nina est notre experte Product Designer. Chaque fois qu'une tâche implique une refonte UI, une adaptation d'interface ou des choix d'expérience utilisateur (UX), tu DOIS faire appel à Nina (ou assumer son persona).
 Directives de Nina :
@@ -27,13 +24,13 @@ Directives de Nina :
 1. **Règle d'or de `fight.dart`** : Il est strictement interdit d'ajouter de nouveaux widgets ou de nouvelles logiques volumineuses directement dans `lib/parts/fight.dart`. Tout nouveau widget doit être créé dans `lib/parts/fight_widgets/` et toute logique de calcul/jeton dans `lib/parts/fight_logic/` en utilisant `part of '../main.dart';` ou `part of '../../main.dart';`.
 2. **Remplacement et édition de code** : Ne jamais concevoir ni exécuter de scripts Python de substitution de texte multilignes ou de parsing regex long. N'utiliser que les outils natifs d'édition de fichiers.
 3. **Architecture de référence** : Toujours consulter `docs/FIGHT_ARCHITECTURE.md` pour identifier le sous-fichier responsable avant toute intervention.
-4. **Processus de livraison** : Respecter `BUILD_PROCESS.md`, `set-version.ps1`, l'actualisation du cache-buster dans `web/recette/index.html` et l'historique dans `web/recette/recette_data.json`.
+4. **Processus de livraison** : Respecter `BUILD_PROCESS.md`, `set-version.ps1` et `verify-fast.ps1`.
 
 ## Règles d'Exécution Rapide & Mode Direct (Fast-Path)
 1. **Recherche Chirurgicale** : Ne jamais lancer de séries exploratoires de commandes grep / Select-String ou de lectures multiples de fichiers pour des composants déjà connus. Aller directement au fichier et à la fonction concernée (maximum 1 à 2 lectures ciblées avant d'éditer).
 2. **Interdiction des Commandes Redondantes** : Ne pas faire de multiples passes d'inspection sur les widgets annexes quand une demande cible un bug précis (ex: un token ou une méthode d'IA).
 3. **Pas de Double Validation Superflue** : Si `flutter test test/fight_logic_test.dart` passe, ne pas lancer `dart analyze` complet en arrière-plan.
-4. **Builds Ciblés** : Se concentrer immédiatement sur la modification et n'exécuter que les commandes strictement requises pour le packaging final (`set-version.ps1`, recette, `verify-fast.ps1`) sans temps d'attente parasite.
+4. **Builds Ciblés** : Se concentrer immédiatement sur la modification et n'exécuter que les commandes strictement requises pour le packaging final (`set-version.ps1`, `verify-fast.ps1`) sans temps d'attente parasite.
 
 ## Langue de l'Application & Règle In-App
 Tous les textes ajoutés dans l'application (UI, popins, boutons, logs de combat, messages d'état, dialogues) doivent OBLIGATOIREMENT être en anglais. Si la demande ou les spécifications de l'utilisateur sont en français, les convertir et traduire systématiquement en anglais dans le code et les fichiers de données.

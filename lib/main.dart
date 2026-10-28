@@ -17,6 +17,7 @@ import 'models/enemy_profile.dart';
 import 'supabase_service.dart';
 
 part 'parts/app_shell.dart';
+part 'parts/bestiary.dart';
 part 'parts/history.dart';
 part 'parts/hero_setup.dart';
 part 'parts/map.dart';
@@ -34,13 +35,16 @@ part 'parts/fight_widgets/ninjitsu_choice_dialog.dart';
 part 'parts/fight_widgets/lose_hp_badge.dart';
 part 'parts/fight_widgets/hp_badge.dart';
 part 'parts/fight_widgets/hydra_regrowth_dialog.dart';
+part 'parts/fight_widgets/discard_card_dialog.dart';
+part 'parts/fight_widgets/discard_positive_token_dialog.dart';
 part 'parts/fight_logic/token_combat_helpers.dart';
 part 'parts/fight_logic/defense_formula_evaluator.dart';
 part 'parts/fight_logic/hydra_logic.dart';
+part 'parts/fight_logic/minion_dice_strategy.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.4.71';
+const String appVersionLabel = 'Version 1.4.118';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -151,7 +155,7 @@ enum HeroType {
   benjamin(
     'Benjamin',
     'assets/personnages/benji.webp',
-    Alignment(0.0, -0.6),
+    Alignment(0.0, -0.20),
     Colors.blue,
     HeroSegment.values,
     6,
@@ -527,6 +531,30 @@ enum HeroType {
 
   String get complexityAsset => 'assets/complexity/complexity-$complexity.png';
   double get imageScale => 1;
+
+  Alignment get headAlignment {
+    return switch (this) {
+      HeroType.barbare => const Alignment(0.0, -0.58),
+      HeroType.elfeLunaire => const Alignment(0.0, -0.66),
+      HeroType.tacticien => const Alignment(0.0, -0.62),
+      HeroType.monk => const Alignment(0.0, -0.74),
+      HeroType.paladin => const Alignment(0.0, -0.66),
+      HeroType.pyromancer => const Alignment(0.0, -0.70),
+      HeroType.shadowThief => const Alignment(0.0, -0.68),
+      HeroType.spiderman => const Alignment(0.0, -0.56),
+      HeroType.benjamin => const Alignment(0.0, -0.20),
+      HeroType.ninja => const Alignment(0.0, -0.65),
+      HeroType.samurai => const Alignment(0.0, -0.62),
+      HeroType.gunslinger => const Alignment(0.0, -0.64),
+      HeroType.artificer => const Alignment(0.0, -0.62),
+      HeroType.cursedPirate => const Alignment(0.0, -0.64),
+      HeroType.vampireLord => const Alignment(0.0, -0.62),
+      HeroType.seraph => const Alignment(0.0, -0.68),
+      HeroType.huntress => const Alignment(0.0, -0.64),
+      HeroType.treant => const Alignment(0.0, -0.64),
+      _ => const Alignment(0.0, -0.64),
+    };
+  }
 }
 
 class MinionDiceDecision {
@@ -636,7 +664,9 @@ enum CombatPhase {
 }
 
 CombatPhase _firstCombatPhaseFor(EnemyNode enemy) {
-  if (enemy.profileKey == 'naraxus' ||
+  if (enemy.rank == EnemyRank.naraxus ||
+      enemy.profileKey == 'naraxus' ||
+      enemy.profileKey == 'kaelen-voss' ||
       enemy.alterations.any((a) {
         final norm = _normalizeTokenKey(a);
         return norm == 'firststrike' ||
@@ -711,14 +741,18 @@ class TokenCatalogRepository {
   static List<StatusTokenRule> _rules = const [];
   static Map<String, List<String>> _heroTokens = const {};
 
-  static Future<void> load() async {
+  static Future<void> load([String? jsonSource]) async {
+    final source = jsonSource ?? await rootBundle.loadString(
+      'assets/data/token_catalog.json',
+    );
+    loadFromJsonString(source);
+  }
+
+  static void loadFromJsonString(String source) {
     GameEngine.isPositiveToken = (String t) {
       final rule = byLabel(t);
       return rule != null && rule.kind == StatusTokenKind.positive;
     };
-    final source = await rootBundle.loadString(
-      'assets/data/token_catalog.json',
-    );
     final json = jsonDecode(source) as Map<String, dynamic>;
     final rawTokens = json['tokens'] as List<dynamic>? ?? const [];
     _rules =
@@ -901,20 +935,59 @@ String _tokenShortLabel(String label) {
 }
 
 List<EnemyProfile> _recipeProfilesFor(EnemyRank rank) {
-  final profiles = _profilesForRank(rank, validatedOnly: false);
+  final profiles = _profilesForRank(rank, validatedOnly: false, allowedPacks: null);
   profiles.sort(
     (a, b) => _recipeProfileCode(a).compareTo(_recipeProfileCode(b)),
   );
   return profiles;
 }
 
-List<EnemyProfile> _profilesForRank(EnemyRank rank, {bool validatedOnly = false}) {
-  final jsonProfiles = EnemyProfileRepository.byRank(rank, validatedOnly: validatedOnly);
+List<EnemyProfile> _profilesForRank(
+  EnemyRank rank, {
+  bool validatedOnly = false,
+  Set<String>? allowedPacks,
+  Set<String>? disabledCommunityKeys,
+}) {
+  final effectivePacks = allowedPacks ?? AppSettings.instance.activeMinionPacks;
+  final disabledKeys =
+      disabledCommunityKeys ?? AppSettings.instance.disabledCommunityEnemyKeys;
+  var jsonProfiles = EnemyProfileRepository.byRank(
+    rank,
+    validatedOnly: validatedOnly,
+    allowedPacks: effectivePacks,
+  );
+  if (rank == EnemyRank.orange) {
+    jsonProfiles = jsonProfiles.where((p) => p.key != 'viseer').toList();
+  }
+  if (disabledKeys.isNotEmpty) {
+    jsonProfiles = jsonProfiles
+        .where(
+          (p) =>
+              p.sourcePack != 'community' || !disabledKeys.contains(p.key),
+        )
+        .toList();
+  }
   if (jsonProfiles.isNotEmpty) {
     return jsonProfiles;
   }
   if (validatedOnly) {
-    final allProfiles = EnemyProfileRepository.byRank(rank, validatedOnly: false);
+    var allProfiles = EnemyProfileRepository.byRank(
+      rank,
+      validatedOnly: false,
+      allowedPacks: effectivePacks,
+    );
+    if (rank == EnemyRank.orange) {
+      allProfiles = allProfiles.where((p) => p.key != 'viseer').toList();
+    }
+    if (disabledKeys.isNotEmpty) {
+      allProfiles = allProfiles
+          .where(
+            (p) =>
+                p.sourcePack != 'community' ||
+                !disabledKeys.contains(p.key),
+          )
+          .toList();
+    }
     if (allProfiles.isNotEmpty) {
       return allProfiles;
     }
@@ -959,6 +1032,9 @@ EnemyProfile? _profileByKey(String? key) {
   final jsonProfile = EnemyProfileRepository.byKey(key);
   if (jsonProfile != null) {
     return jsonProfile;
+  }
+  if (key == 'kaelen-voss') {
+    return kaelenVossProfile;
   }
   for (final rank in EnemyRank.values) {
     final fallback = defaultProfileFor(rank);
@@ -1066,9 +1142,57 @@ class AppSettings extends ChangeNotifier {
   bool _developerMode = false;
   Set<String> _ownedHeroNames = {};
   Set<String> _favoriteHeroNames = {};
+  Set<String> _encounteredEnemyKeys = {};
+  Set<String> _defeatedEnemyKeys = {};
+  Set<String> _activeMinionPacks = {'dta'};
+  Set<String> _disabledCommunityEnemyKeys = {};
   bool _loaded = false;
 
   bool get developerMode => _developerMode;
+
+  Set<String> get activeMinionPacks => Set.unmodifiable(_activeMinionPacks);
+
+  Set<String> get disabledCommunityEnemyKeys =>
+      Set.unmodifiable(_disabledCommunityEnemyKeys);
+
+  bool isCommunityEnemyEnabled(String key) =>
+      !_disabledCommunityEnemyKeys.contains(key);
+
+  Future<void> toggleCommunityEnemyEnabled(String key) async {
+    if (_disabledCommunityEnemyKeys.contains(key)) {
+      _disabledCommunityEnemyKeys.remove(key);
+    } else {
+      _disabledCommunityEnemyKeys.add(key);
+    }
+    notifyListeners();
+    await _save();
+  }
+
+  bool isMinionPackActive(String pack) {
+    if (pack == 'dta') return true;
+    return _activeMinionPacks.contains(pack);
+  }
+
+  Future<void> setMinionPackActive(String pack, bool active) async {
+    if (pack == 'dta') return;
+    if (active) {
+      _activeMinionPacks.add(pack);
+    } else {
+      _activeMinionPacks.remove(pack);
+    }
+    notifyListeners();
+    await _save();
+  }
+
+  Set<String> get encounteredEnemyKeys => _encounteredEnemyKeys;
+
+  Set<String> get defeatedEnemyKeys => _defeatedEnemyKeys;
+
+  bool isEnemyEncountered(String? key) =>
+      key != null && _encounteredEnemyKeys.contains(key);
+
+  bool isEnemyDefeated(String? key) =>
+      key != null && _defeatedEnemyKeys.contains(key);
 
   bool ownsHero(HeroType hero) =>
       _ownedHeroNames.isEmpty || _ownedHeroNames.contains(hero.name);
@@ -1085,6 +1209,7 @@ class AppSettings extends ChangeNotifier {
       if (raw == null || raw.isEmpty) {
         _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
         _favoriteHeroNames = {};
+        _encounteredEnemyKeys = {};
         return;
       }
       final json = jsonDecode(raw) as Map<String, dynamic>;
@@ -1100,11 +1225,77 @@ class AppSettings extends ChangeNotifier {
       _favoriteHeroNames = favorites == null
           ? {}
           : favorites.map((value) => value.toString()).toSet();
+      final encountered = json['encounteredEnemies'] as List<dynamic>?;
+      _encounteredEnemyKeys = encountered == null
+          ? {}
+          : encountered.map((value) => value.toString()).toSet();
+      final defeated = json['defeatedEnemies'] as List<dynamic>?;
+      _defeatedEnemyKeys = defeated == null
+          ? {}
+          : defeated.map((value) => value.toString()).toSet();
+      final packs = json['activeMinionPacks'] as List<dynamic>?;
+      _activeMinionPacks = packs == null
+          ? {'dta'}
+          : packs.map((value) => value.toString()).toSet();
+      _activeMinionPacks.add('dta');
+      final disabledCommunity =
+          json['disabledCommunityEnemies'] as List<dynamic>?;
+      _disabledCommunityEnemyKeys = disabledCommunity == null
+          ? {}
+          : disabledCommunity.map((value) => value.toString()).toSet();
     } catch (error) {
       debugPrint('App settings load skipped: $error');
       _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
       _favoriteHeroNames = {};
+      _encounteredEnemyKeys = {};
+      _defeatedEnemyKeys = {};
+      _activeMinionPacks = {'dta'};
+      _disabledCommunityEnemyKeys = {};
     }
+  }
+
+  Future<void> markEnemyEncountered(String? key) async {
+    if (key == null || key.isEmpty || _encounteredEnemyKeys.contains(key)) {
+      return;
+    }
+    _encounteredEnemyKeys.add(key);
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> markEnemyDefeated(String? key) async {
+    if (key == null || key.isEmpty || _defeatedEnemyKeys.contains(key)) {
+      return;
+    }
+    _defeatedEnemyKeys.add(key);
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> toggleEnemyEncountered(String key) async {
+    if (key.isEmpty) {
+      return;
+    }
+    if (_encounteredEnemyKeys.contains(key)) {
+      _encounteredEnemyKeys.remove(key);
+    } else {
+      _encounteredEnemyKeys.add(key);
+    }
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> toggleEnemyDefeated(String key) async {
+    if (key.isEmpty) {
+      return;
+    }
+    if (_defeatedEnemyKeys.contains(key)) {
+      _defeatedEnemyKeys.remove(key);
+    } else {
+      _defeatedEnemyKeys.add(key);
+    }
+    notifyListeners();
+    await _save();
   }
 
   Future<void> setDeveloperMode(bool value) async {
@@ -1144,6 +1335,11 @@ class AppSettings extends ChangeNotifier {
       'developerMode': _developerMode,
       'ownedHeroes': _ownedHeroNames.toList()..sort(),
       'favoriteHeroes': _favoriteHeroNames.toList()..sort(),
+      'encounteredEnemies': _encounteredEnemyKeys.toList()..sort(),
+      'defeatedEnemies': _defeatedEnemyKeys.toList()..sort(),
+      'activeMinionPacks': _activeMinionPacks.toList()..sort(),
+      'disabledCommunityEnemies':
+          _disabledCommunityEnemyKeys.toList()..sort(),
     };
     await _storage.write(_key, jsonEncode(payload));
     if (syncProfile) {
@@ -1359,6 +1555,12 @@ class EnemyNode {
   String get previewAsset {
     if (profileKey == 'naraxus') {
       return 'assets/enemy_previews/naraxus.webp';
+    }
+    if (profileKey == 'kaelen-voss') {
+      return 'assets/enemy_previews/kaelen-voss.webp';
+    }
+    if (profileKey == 'viseer') {
+      return 'assets/enemy_previews/orange-viseer.webp';
     }
     if (profileKey == 'rat-de-la-rue') {
       return 'assets/enemy_previews/rat-de-la-rue.webp';
@@ -1662,13 +1864,14 @@ class AdventureState {
   void completeCombat(EnemyNode enemy) {
     if (!enemy.defeated && enemy.health <= 0) {
       enemy.defeated = true;
+      unawaited(AppSettings.instance.markEnemyDefeated(enemy.profileKey));
       score += enemy.rank.points;
       log('${enemy.label} defeated: +${enemy.rank.points} points.');
 
-      // Naraxus tie logic
-      if (health <= 0 && enemy.profileKey == 'naraxus') {
+      // Boss tie logic
+      if (health <= 0 && (enemy.profileKey == 'naraxus' || enemy.rank == EnemyRank.naraxus)) {
         score += 50;
-        log('Tie against Naraxus: +50 points.');
+        log('Tie against ${enemy.label}: +50 points.');
       }
     }
 

@@ -34,6 +34,7 @@ class NaraxusBattlePage extends StatefulWidget {
     required this.historyRecords,
     required this.onRecord,
     required this.onOpenHistory,
+    this.bossKey = 'naraxus',
     super.key,
   });
 
@@ -41,6 +42,7 @@ class NaraxusBattlePage extends StatefulWidget {
   final List<GameRecord> historyRecords;
   final ValueChanged<GameRecord> onRecord;
   final VoidCallback onOpenHistory;
+  final String bossKey;
 
   @override
   State<NaraxusBattlePage> createState() => _NaraxusBattlePageState();
@@ -49,6 +51,7 @@ class NaraxusBattlePage extends StatefulWidget {
 class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
   late final AdventureState _adventure = _createAdventure();
   bool _recorded = false;
+  bool _introCompleted = false;
 
   AdventureState _createAdventure() {
     final adventure = AdventureState(
@@ -58,38 +61,55 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
         targetScore: 100,
       ),
     );
-    final naraxus = EnemyNode(
+    final bossProfile =
+        _profileByKey(widget.bossKey) ??
+        (widget.bossKey == 'kaelen-voss' ? kaelenVossProfile : naraxusProfile);
+    unawaited(AppSettings.instance.markEnemyEncountered(bossProfile.key));
+    final bossNode = EnemyNode(
       id: 0,
-      label: naraxusProfile.name,
+      label: bossProfile.name,
       rank: EnemyRank.naraxus,
-      maxHealth: naraxusProfile.maxHealth,
-      cp: naraxusProfile.cp,
-      attacks: naraxusProfile.attacks,
-      defense: naraxusProfile.defense,
-      defenseDice: naraxusProfile.defenseDice,
-      attackPlan: naraxusProfile.attackPlan,
-      cardAsset: naraxusProfile.cardAsset,
-      profileKey: naraxusProfile.key,
-      initialTokens: naraxusProfile.initialTokens,
-      rewardChests: naraxusProfile.rewardChests,
-      rewardRank: naraxusProfile.rewardRank,
-      rewardRanks: naraxusProfile.rewardRanks,
-      passives: naraxusProfile.passives,
-      defenseDisplayRows: naraxusProfile.defenseDisplayRows,
-      passiveDisplayRows: naraxusProfile.passiveDisplayRows,
+      maxHealth: bossProfile.maxHealth,
+      cp: bossProfile.cp,
+      attacks: bossProfile.attacks,
+      defense: bossProfile.defense,
+      defenseDice: bossProfile.defenseDice,
+      attackPlan: bossProfile.attackPlan,
+      cardAsset: bossProfile.cardAsset,
+      profileKey: bossProfile.key,
+      initialTokens: bossProfile.initialTokens,
+      rewardChests: bossProfile.rewardChests,
+      rewardRank: bossProfile.rewardRank,
+      rewardRanks: bossProfile.rewardRanks,
+      passives: bossProfile.passives,
+      defenseDisplayRows: bossProfile.defenseDisplayRows,
+      passiveDisplayRows: bossProfile.passiveDisplayRows,
+      defenseEffects: bossProfile.defenseEffects,
     );
     adventure
       ..health = 50
       ..combatPoints = 2;
     adventure.enemies
       ..clear()
-      ..add(naraxus);
-    adventure.log('Naxarus battle started.');
+      ..add(bossNode);
+    adventure.log('${bossProfile.name} battle started.');
     return adventure;
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_introCompleted) {
+      return EnemyIntroPage(
+        adventure: _adventure,
+        enemy: _adventure.enemyById(0),
+        historyRecords: widget.historyRecords,
+        onNext: () async {
+          if (mounted) {
+            setState(() => _introCompleted = true);
+          }
+        },
+      );
+    }
     return FightPage(
       adventure: _adventure,
       historyRecords: widget.historyRecords,
@@ -112,6 +132,9 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
     if (!_recorded) {
       final naraxus = _adventure.enemyById(0);
       final success = naraxus.health <= 0;
+      if (success) {
+        unawaited(AppSettings.instance.markEnemyDefeated(naraxus.profileKey));
+      }
       widget.onRecord(
         GameRecord(
           hero: widget.hero,
@@ -122,6 +145,7 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
           bossHealthRemaining: naraxus.health,
           enemiesDefeated: success ? 1 : 0,
           duration: _adventure.elapsed,
+          isVictory: success,
         ),
       );
       _recorded = true;
@@ -481,6 +505,10 @@ class _MapPageState extends State<MapPage> {
         ..health = viseerProfile.maxHealth
         ..combatPoints = viseerProfile.cp;
     }
+    unawaited(AppSettings.instance.markEnemyEncountered(enemy.profileKey));
+    unawaited(
+      AppSettings.instance.markEnemyEncountered(secondaryEnemy?.profileKey),
+    );
     widget.onChanged();
     if (enemy.branch != null) {
       widget.adventure.lockBranch(enemy.branch!);
@@ -1475,6 +1503,7 @@ class EnemyIntroPage extends StatefulWidget {
     required this.adventure,
     required this.enemy,
     required this.onNext,
+    this.historyRecords = const [],
     this.showNext = true,
     super.key,
   });
@@ -1482,6 +1511,7 @@ class EnemyIntroPage extends StatefulWidget {
   final AdventureState adventure;
   final EnemyNode enemy;
   final Future<void> Function() onNext;
+  final List<GameRecord> historyRecords;
   final bool showNext;
 
   @override
@@ -1502,6 +1532,8 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
   @override
   Widget build(BuildContext context) {
     final enemy = widget.enemy;
+    final isNaraxus =
+        enemy.rank == EnemyRank.naraxus || enemy.profileKey == 'naraxus';
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -1512,6 +1544,24 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
             alignment: Alignment.topCenter,
           ),
           Container(color: Colors.black.withValues(alpha: 0.15)),
+          if (isNaraxus && widget.showNext)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: IconButton.filled(
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.black54,
+                      foregroundColor: Colors.white,
+                    ),
+                    tooltip: 'Back',
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.arrow_back),
+                  ),
+                ),
+              ),
+            ),
           if (!widget.showNext)
             SafeArea(
               child: Align(
@@ -1592,76 +1642,122 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                     ),
                   Align(
                     alignment: Alignment.bottomCenter,
-                    child: SizedBox(
-                      height: 114,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.56),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: enemy.rank.color),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.favorite,
-                                        color: enemy.rank.color,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        '${enemy.initialHealth} HP',
-                                        style: TextStyle(
-                                          color: enemy.rank.color,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 18),
-                                      RewardChestBadge(
-                                        rank: enemy.rewardRank,
-                                        count: enemy.rewardChests,
-                                        ranks: enemy.rewardRanks,
-                                      ),
-                                    ],
+                    child: isNaraxus
+                        ? IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: _NaxarusIntroStatsPanel(
+                                    enemy: enemy,
+                                    hero: widget.adventure.hero,
+                                    historyRecords: widget.historyRecords,
                                   ),
-                                  const SizedBox(height: 10),
-                                  EnemyObjectivePreview(enemy: enemy),
-                                ],
-                              ),
-                            ),
-                          ),
-                          if (widget.showNext) ...[
-                            const SizedBox(width: 10),
-                            SizedBox(
-                              width: 58,
-                              child: _IntroPulse(
-                                active: true,
-                                child: IconButton.filled(
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: const Color(0xff8f43ff),
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
+                                ),
+                                if (widget.showNext) ...[
+                                  const SizedBox(width: 10),
+                                  SizedBox(
+                                    width: 58,
+                                    child: _IntroPulse(
+                                      active: true,
+                                      child: IconButton.filled(
+                                        style: IconButton.styleFrom(
+                                          backgroundColor:
+                                              const Color(0xff8f43ff),
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                        tooltip: 'Start fight',
+                                        onPressed: _continueToFight,
+                                        icon: const Icon(Icons.arrow_forward),
+                                      ),
                                     ),
                                   ),
-                                  tooltip: 'Start fight',
-                                  onPressed: _continueToFight,
-                                  icon: const Icon(Icons.arrow_forward),
-                                ),
-                              ),
+                                ],
+                              ],
                             ),
-                          ],
-                        ],
-                      ),
-                    ),
+                          )
+                        : SizedBox(
+                            height: 114,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.56,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: enemy.rank.color,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.favorite,
+                                              color: enemy.rank.color,
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              '${enemy.initialHealth} HP',
+                                              style: TextStyle(
+                                                color: enemy.rank.color,
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 18),
+                                            RewardChestBadge(
+                                              rank: enemy.rewardRank,
+                                              count: enemy.rewardChests,
+                                              ranks: enemy.rewardRanks,
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 10),
+                                        EnemyObjectivePreview(enemy: enemy),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                if (widget.showNext) ...[
+                                  const SizedBox(width: 10),
+                                  SizedBox(
+                                    width: 58,
+                                    child: _IntroPulse(
+                                      active: true,
+                                      child: IconButton.filled(
+                                        style: IconButton.styleFrom(
+                                          backgroundColor:
+                                              const Color(0xff8f43ff),
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                        tooltip: 'Start fight',
+                                        onPressed: _continueToFight,
+                                        icon: const Icon(Icons.arrow_forward),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -1682,6 +1778,288 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
       enemy.alterations.removeWhere(_isFirstStrike);
     }
     widget.onNext();
+  }
+}
+
+class _NaxarusIntroStatsPanel extends StatelessWidget {
+  const _NaxarusIntroStatsPanel({
+    required this.enemy,
+    required this.hero,
+    required this.historyRecords,
+  });
+
+  final EnemyNode enemy;
+  final HeroType hero;
+  final List<GameRecord> historyRecords;
+
+  static bool _isWin(GameRecord r) => r.isVictory || r.score >= 100;
+
+  @override
+  Widget build(BuildContext context) {
+    final naxarusRuns = historyRecords
+        .where((r) => r.mode.difficulty == RunDifficulty.naraxus)
+        .toList();
+    final globalTotal = naxarusRuns.length;
+    final globalWins = naxarusRuns.where(_isWin).length;
+    final globalWinRate =
+        globalTotal == 0 ? 0 : ((globalWins / globalTotal) * 100).round();
+
+    final heroRuns = naxarusRuns.where((r) => r.hero == hero).toList();
+    final heroTotal = heroRuns.length;
+    final heroWins = heroRuns.where(_isWin).length;
+    final heroWinRate =
+        heroTotal == 0 ? 0 : ((heroWins / heroTotal) * 100).round();
+    final heroHpValues = heroRuns
+        .map((r) => r.healthRemaining)
+        .whereType<int>()
+        .where((hp) => hp > 0)
+        .toList();
+    final heroAvgHp = heroHpValues.isEmpty
+        ? null
+        : heroHpValues.fold<int>(0, (s, v) => s + v) / heroHpValues.length;
+
+    final grouped = <HeroType, List<GameRecord>>{};
+    for (final r in naxarusRuns) {
+      grouped.putIfAbsent(r.hero, () => []).add(r);
+    }
+    double avgScore(List<GameRecord> runs) =>
+        runs.isEmpty
+            ? 0
+            : runs.fold<int>(0, (sum, r) => sum + r.score) / runs.length;
+    final topEntries = grouped.entries.toList()
+      ..sort((a, b) {
+        final cmp = avgScore(b.value).compareTo(avgScore(a.value));
+        if (cmp != 0) return cmp;
+        return b.value.length.compareTo(a.value.length);
+      });
+    final top3 = topEntries.take(3).toList();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: enemy.rank.color, width: 1.5),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 1. Naxarus HP + Global Stats (No chest)
+          Row(
+            children: [
+              Icon(Icons.favorite, color: enemy.rank.color, size: 19),
+              const SizedBox(width: 5),
+              Text(
+                '${enemy.initialHealth} HP',
+                style: TextStyle(
+                  color: enemy.rank.color,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.public,
+                      size: 13,
+                      color: Color(0xffffe22d),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Global: $globalWinRate% ($globalWins/$globalTotal)',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // 2. Current Hero vs Naxarus Stats
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: hero.color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: hero.color.withValues(alpha: 0.55)),
+            ),
+            child: Row(
+              children: [
+                HeroAvatar(hero: hero, size: 28),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        hero.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        heroTotal == 0
+                            ? '0 runs • First battle vs Naxarus'
+                            : '$heroTotal run${heroTotal > 1 ? 's' : ''} • $heroWinRate% win ($heroWins/$heroTotal)'
+                                  '${heroAvgHp != null ? ' • Avg ${_formatNumber(heroAvgHp)} HP' : ''}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // 3. Top 3 Heroes from History
+          Row(
+            children: [
+              const Icon(
+                Icons.emoji_events,
+                size: 13,
+                color: Color(0xffffe22d),
+              ),
+              const SizedBox(width: 4),
+              const Text(
+                'TOP 3 VS NAXARUS',
+                style: TextStyle(
+                  color: Color(0xffffe22d),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          if (top3.isEmpty)
+            const Text(
+              'No Naxarus battles recorded yet.',
+              style: TextStyle(
+                color: Colors.white54,
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+              ),
+            )
+          else
+            Row(
+              children: [
+                for (var i = 0; i < top3.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 6),
+                  Expanded(
+                    child: _NaxarusTopHeroChip(
+                      rank: i + 1,
+                      hero: top3[i].key,
+                      runs: top3[i].value,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NaxarusTopHeroChip extends StatelessWidget {
+  const _NaxarusTopHeroChip({
+    required this.rank,
+    required this.hero,
+    required this.runs,
+  });
+
+  final int rank;
+  final HeroType hero;
+  final List<GameRecord> runs;
+
+  @override
+  Widget build(BuildContext context) {
+    final badgeColor = switch (rank) {
+      1 => const Color(0xffFFD700),
+      2 => const Color(0xffC0C0C0),
+      _ => const Color(0xffCD7F32),
+    };
+    final wins = runs.where((r) => r.isVictory || r.score >= 100).length;
+    final winRate = runs.isEmpty ? 0 : ((wins / runs.length) * 100).round();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: badgeColor.withValues(alpha: 0.65)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: badgeColor, width: 1.8),
+            ),
+            child: CircleAvatar(
+              radius: 12,
+              backgroundColor: Colors.black,
+              backgroundImage: AssetImage(hero.asset),
+            ),
+          ),
+          const SizedBox(width: 5),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '#$rank $winRate%',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: badgeColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  '${runs.length} game${runs.length > 1 ? 's' : ''}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

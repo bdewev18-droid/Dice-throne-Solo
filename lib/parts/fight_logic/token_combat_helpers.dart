@@ -238,3 +238,37 @@ String _tokenUpkeepSummary({
   }
   return lines.join('\n');
 }
+
+/// Enforces stack limit (maxStack) for all status tokens in the list.
+/// Excess tokens above rule.maxStack are removed from the end.
+void enforceTokenStackLimits(List<String> targetList) {
+  final counts = <String, int>{};
+  final toRemove = <int>[];
+  for (var i = 0; i < targetList.length; i++) {
+    final t = targetList[i];
+    final rule = TokenCatalogRepository.byLabel(t);
+    final max = rule?.maxStack ?? 99;
+    final k = _normalizeTokenKey(t);
+    final count = (counts[k] ?? 0) + 1;
+    counts[k] = count;
+    if (count > max) {
+      toRemove.add(i);
+    }
+  }
+  for (final i in toRemove.reversed) {
+    targetList.removeAt(i);
+  }
+}
+
+/// Adds tokens to the target list while strictly respecting each token's maxStack.
+void addTokensWithStackLimit(List<String> targetList, Iterable<String> newTokens) {
+  for (final t in newTokens) {
+    final rule = TokenCatalogRepository.byLabel(t);
+    final max = rule?.maxStack ?? 99;
+    final k = _normalizeTokenKey(t);
+    final current = targetList.where((x) => _normalizeTokenKey(x) == k).length;
+    if (current < max) {
+      targetList.add(t);
+    }
+  }
+}

@@ -230,6 +230,14 @@ bool isGainTokenIfDamagedFormula(String rawFormula) {
       (clean.contains('gaintoken') && clean.contains('damage'));
 }
 
+/// Checks if a formula returns undefendable damage per Chaos token (e.g. Devin de Mort "then return 1 undefendable damage per Chaos").
+bool isReturnDamagePerChaosFormula(String rawFormula) {
+  final clean = rawFormula.replaceAll(' ', '').toLowerCase();
+  return clean.contains('perchaos') ||
+      (clean.contains('return') && clean.contains('chaos')) ||
+      (clean.contains('returndamage') && clean.contains('chaos'));
+}
+
 /// Parses the token name to gain from a formula (defaults to 'Chaos').
 String parseGainTokenName(String rawFormula) {
   final clean = rawFormula.replaceAll(' ', '');
@@ -350,6 +358,7 @@ DefenseFormulaResult evaluateDefenseFormulas({
   int firstDieValue = 0,
   bool hasDualEnemies = false,
   List<String> heroTokens = const [],
+  List<String> enemyTokens = const [],
   int Function()? rollD6,
 }) {
   if (formulas.isEmpty || count <= 0) {
@@ -525,6 +534,16 @@ DefenseFormulaResult evaluateDefenseFormulas({
             ? 'Defense: D6 ($roll <= $maxRange). Steals $parsedCp CP.'
             : 'Defense: steals $parsedCp CP.');
       }
+      matched = true;
+      continue;
+    }
+
+    if (isReturnDamagePerChaosFormula(clean)) {
+      final chaosCount = enemyTokens.where((t) => t.toLowerCase() == 'chaos').length;
+      final total = 1 * chaosCount * count;
+      returnDamage += total;
+      returnDamageUndefendable = true;
+      notes.add('Defense: returns $total undefendable damage ($chaosCount Chaos).');
       matched = true;
       continue;
     }

@@ -90,7 +90,7 @@ const rankLabels = {
   violet: 'Violet',
   orange: 'Orange',
   viseer: 'Viseer',
-  naraxus: 'Naxarus',
+  naraxus: 'Boss',
 };
 
 let sourceData = null;
@@ -262,6 +262,8 @@ function assetUrl(asset) {
 function getPreviewAssetUrl(profile) {
   if (!profile || !profile.cardAsset) return '';
   if (profile.key === 'naraxus') return assetUrl('assets/enemy_previews/naraxus.webp');
+  if (profile.key === 'kaelen-voss') return assetUrl('assets/enemy_previews/kaelen-voss.webp');
+  if (profile.key === 'viseer') return assetUrl('assets/enemy_previews/orange-viseer.webp');
   if (profile.key === 'rat-de-la-rue') return assetUrl('assets/enemy_previews/rat-de-la-rue.webp');
   
   const filename = profile.cardAsset.split('/').pop();
@@ -350,6 +352,14 @@ function incrementSemver(ver) {
   return `${ver}.1`;
 }
 
+const IGNORED_MAP_KEYS = new Set(['green-fallback', 'blue-generic', 'violet-generic', 'orange-generic']);
+
+function sanitizeLoadedProfiles() {
+  if (sourceData?.profiles) {
+    sourceData.profiles = sourceData.profiles.filter(p => !IGNORED_MAP_KEYS.has(p.key));
+  }
+}
+
 async function loadDefault() {
   const candidates = [
     `${appBaseUrl()}/assets/docs/enemy_profiles.json`,
@@ -364,6 +374,7 @@ async function loadDefault() {
       const response = await fetch(url, { cache: 'no-store' });
       if (response.ok) {
         sourceData = await response.json();
+        sanitizeLoadedProfiles();
         setDirty('enemy', false);
         syncJsonVersionUI();
         if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
@@ -397,6 +408,7 @@ async function openLocalJson() {
   fileHandle = handle;
   const file = await handle.getFile();
   sourceData = JSON.parse(await file.text());
+  sanitizeLoadedProfiles();
   setDirty('enemy', false);
   syncJsonVersionUI();
   $('saveFileBtn').disabled = false;
@@ -641,8 +653,8 @@ function renderLists() {
       button.className = 'enemy-btn';
       if (index === selectedIndex) button.classList.add('active');
       let prefix = '';
-      if (profile.cardAsset) {
-        prefix = profile.cardAsset.split('/').pop().replace('.png', '') + ' ';
+      if (profile.rank !== 'naraxus' && profile.cardAsset) {
+        prefix = profile.cardAsset.split('/').pop().replace('.png', '').replace('.webp', '') + ' ';
       }
       const atk = isAtkValid(profile);
       const def = isDefValid(profile);
@@ -795,9 +807,13 @@ function renderEditor() {
   $('editorState').classList.remove('hidden');
   $('enemyTitle').textContent = selectedProfile.name;
   renderMeta();
-  $('cardImage').src = assetUrl(selectedProfile.cardAsset);
-  
   const previewUrl = getPreviewAssetUrl(selectedProfile);
+  if (selectedProfile.rank === 'naraxus' && previewUrl) {
+    $('cardImage').src = previewUrl;
+  } else {
+    $('cardImage').src = assetUrl(selectedProfile.cardAsset);
+  }
+  
   if (previewUrl && $('previewImage')) {
     $('previewImage').src = previewUrl;
     $('previewImage').style.display = 'block';
@@ -819,7 +835,10 @@ function renderEditor() {
   setValue('rewardChestsInput', selectedProfile.rewardChests || 0);
   setValue('rewardRankInput', selectedProfile.rewardRank || '');
   setValue('cardAssetInput', selectedProfile.cardAsset || '');
-  setValue('initialTokensInput', (selectedProfile.initialTokens || []).join(', '));
+  const uniqueInitialTokens = [...new Set(selectedProfile.initialTokens || [])];
+  setValue('initialTokensInput', uniqueInitialTokens.join(', '));
+  setValue('initialTokensNbInput', resolveInitialTokensCountDisplay(selectedProfile));
+  setValue('sourcePackInput', selectedProfile.sourcePack || 'dta');
   $('initialTokensInput').classList.add('token-input');
   
   selectedProfile.attackPlan ||= {
@@ -868,7 +887,27 @@ function collectCurrent() {
   selectedProfile.rewardChests = intVal($('rewardChestsInput').value);
   selectedProfile.rewardRank = $('rewardRankInput').value.trim() || null;
   selectedProfile.cardAsset = $('cardAssetInput').value.trim();
-  selectedProfile.initialTokens = csv($('initialTokensInput').value);
+  const rawInitialTokens = csv($('initialTokensInput').value);
+  const nbInitialVal = $('initialTokensNbInput')?.value?.trim();
+  if (rawInitialTokens.length > 0) {
+    const parsedNb = intVal(nbInitialVal, 1);
+    const count = parsedNb > 0 ? parsedNb : 1;
+    if (count > 1) {
+      selectedProfile.initialTokenCount = count;
+      if (rawInitialTokens.length === 1) {
+        selectedProfile.initialTokens = Array(count).fill(rawInitialTokens[0]);
+      } else {
+        selectedProfile.initialTokens = rawInitialTokens;
+      }
+    } else {
+      selectedProfile.initialTokenCount = 1;
+      selectedProfile.initialTokens = rawInitialTokens;
+    }
+  } else {
+    selectedProfile.initialTokens = [];
+    delete selectedProfile.initialTokenCount;
+  }
+  selectedProfile.sourcePack = $('sourcePackInput').value || 'dta';
   selectedProfile.attacks = $('attacksTextInput').value
     .split('\n')
     .map((line) => line.trim())
@@ -933,6 +972,13 @@ function resolveTokenCountDisplay(data) {
   const tokens = data?.tokens || [];
   if (!tokens.length) return '';
   if (data.tokenCount && data.tokenCount > 0) return data.tokenCount;
+  if (tokens.length > 1 && tokens.every(t => t === tokens[0])) return tokens.length;
+  return 1;
+}
+function resolveInitialTokensCountDisplay(profile) {
+  const tokens = profile?.initialTokens || [];
+  if (!tokens.length) return '';
+  if (profile.initialTokenCount && profile.initialTokenCount > 0) return profile.initialTokenCount;
   if (tokens.length > 1 && tokens.every(t => t === tokens[0])) return tokens.length;
   return 1;
 }
@@ -1387,8 +1433,8 @@ function defenseToDisplayRows(effect = {}) {
 }
 function passiveToDisplayRows(passive = {}) {
   if (typeof passive === 'string') return passive.trim() ? [{ align: 'left', items: [passive.trim()] }] : [];
-  const text = passive.text || passive.label || passive.name || '';
-  return text ? [{ align: 'left', items: [text] }] : [];
+  const text = passive.customText || passive.text || buildPassiveSentence(passive) || passive.label || '';
+  return text.trim() ? [{ align: 'left', items: [text.trim()] }] : [];
 }
 function writeGeneratedRows(inputId, rows, label) {
   const input = $(inputId);
@@ -1467,9 +1513,8 @@ function generateDefenseRows() {
 }
 function generatePassiveRows() {
   collectCurrent();
-  const rootPassives = selectedProfile?.passives || [];
-  const attackPassives = selectedProfile?.attackPlan?.passives || [];
-  const rows = [...rootPassives, ...attackPassives].flatMap(passiveToDisplayRows);
+  const passives = (selectedProfile?.attackPlan?.passives?.length ? selectedProfile.attackPlan.passives : selectedProfile?.passives) || [];
+  const rows = passives.flatMap(passiveToDisplayRows);
   writeGeneratedRows('passivesDisplayRowsInput', rows, 'Passive');
 }
 function parseDisplayRowsText(raw) {
@@ -1689,6 +1734,7 @@ function ensureProfilePassivesList() {
     selectedProfile.attackPlan.passives = selectedProfile.passives.map((p) => {
       if (p && typeof p === 'object') return JSON.parse(JSON.stringify(p));
       return {
+        type: 'custom',
         text: String(p || ''),
         tokens: [],
         effects: {
@@ -1706,73 +1752,394 @@ function ensureProfilePassivesList() {
       };
     });
   }
+
+  // Normalize each item with 3-zone fields
+  selectedProfile.attackPlan.passives.forEach((p) => {
+    if (typeof p === 'object' && p !== null) {
+      if (!p.type) {
+        const txt = (p.text || '').toLowerCase();
+        if (txt.includes('offensive roll fail') || txt.includes('offensive failure') || txt.includes('rolls offensif fail')) {
+          p.type = 'offensive_failure';
+          p.timing ||= 'offensiveRollFailed';
+        } else if (txt.includes('start of') || txt.includes('debut de son tour') || txt.includes('upkeep')) {
+          p.type = 'start_of_turn';
+          p.timing ||= 'minionUpkeep';
+        } else {
+          p.type = 'custom';
+        }
+      }
+      p.target ||= (p.type === 'offensive_failure' ? 'opponent' : 'minion');
+      if (p.impact === undefined) {
+        p.impact = p.type === 'custom' ? (p.text || '') : extractPassiveImpact(p.text, p.type);
+      }
+      p.customText ||= '';
+      p.tokens ||= [];
+      p.effects ||= {};
+    }
+  });
+
+  selectedProfile.passives = selectedProfile.attackPlan.passives;
   return selectedProfile.attackPlan.passives;
 }
 
-function renderPassiveRules() {
-  const root = $('passiveRules');
-  if (!root) return;
-  root.innerHTML = '';
-  const passivesList = ensureProfilePassivesList();
-  passivesList.forEach((item, index) => {
-    const row = document.createElement('div');
-    row.style.display = 'flex';
-    row.style.gap = '8px';
-    const input = document.createElement('textarea');
-    const textVal = typeof item === 'string' ? item : (item && typeof item === 'object' ? (item.text || '') : '');
-    input.value = textVal;
-    input.rows = 2;
-    input.style.flex = '1';
-    input.className = 'notes-field';
-    input.placeholder = 'Passive rule text (e.g. Passive: start of turn...)';
-    input.oninput = () => {
-      const current = selectedProfile.attackPlan.passives[index];
-      if (current && typeof current === 'object') {
-        current.text = input.value;
-      } else {
-        selectedProfile.attackPlan.passives[index] = {
-          text: input.value,
-          tokens: [],
-          effects: {
-            damage: 0,
-            undefendable: false,
-            stealHp: 0,
-            stealCp: 0,
-            heal: 0,
-            drawCards: 0,
-            discardCards: 0,
-            topDeckToDiscard: 0,
-            tokens: [],
-            formulas: []
-          }
-        };
-      }
-      if (Array.isArray(selectedProfile.passives) && selectedProfile.passives[index]) {
-        if (typeof selectedProfile.passives[index] === 'object') {
-          selectedProfile.passives[index].text = input.value;
-        } else {
-          selectedProfile.passives[index] = input.value;
-        }
-      }
-      setDirty('enemy');
-      updateTabDots();
-    };
-    const rm = document.createElement('button');
-    rm.className = 'danger small';
-    rm.textContent = 'Remove';
-    rm.style.height = 'fit-content';
-    rm.onclick = () => {
-      selectedProfile.attackPlan.passives.splice(index, 1);
-      if (Array.isArray(selectedProfile.passives) && selectedProfile.passives.length > index) {
-        selectedProfile.passives.splice(index, 1);
-      }
-      setDirty('enemy');
-      renderPassiveRules();
-      updateTabDots();
-    };
-    row.append(input, rm);
-    root.appendChild(row);
+function extractPassiveImpact(text = '', type = 'custom') {
+  let str = String(text || '').trim();
+  if (type === 'offensive_failure') {
+    str = str.replace(/^(passive:\s*)?(if\s+(the\s+)?offensive\s+roll(\s+phase)?\s+fails?:?\s*,?\s*)/i, '');
+    str = str.replace(/^(passive:\s*)?(si\s+(le\s+)?rolls?(\s+offensif)?\s+fails?:?\s*,?\s*)/i, '');
+    str = str.replace(/^(passif\s+failure:\s*)/i, '');
+  } else if (type === 'start_of_turn') {
+    str = str.replace(/^(passive:\s*)?(at\s+the\s+start\s+of\s+(its|the(\s+minion'?s)?)\s+turn:?\s*,?\s*)/i, '');
+    str = str.replace(/^(passive:\s*)?(au\s+debut\s+de\s+son\s+tour:?\s*,?\s*)/i, '');
+    str = str.replace(/^(passive:\s*)?(start\s+of\s+turn:?\s*,?\s*)/i, '');
+    str = str.replace(/^(passif\s+upkeep:\s*)/i, '');
+  }
+  return str.replace(/\.$/, '').trim();
+}
+
+function buildPassiveSentence(passive) {
+  if (passive.customText && passive.customText.trim()) {
+    return passive.customText.trim();
+  }
+  const impact = (passive.impact || '').trim();
+  if (passive.type === 'offensive_failure') {
+    if (!impact) return 'If the Offensive Roll Phase fails: no effect.';
+    return `If the Offensive Roll Phase fails: ${impact}${impact.endsWith('.') ? '' : '.'}`;
+  }
+  if (passive.type === 'start_of_turn') {
+    if (!impact) return 'At the start of its turn: no effect.';
+    return `At the start of its turn: ${impact}${impact.endsWith('.') ? '' : '.'}`;
+  }
+  return passive.text || impact;
+}
+
+function formatInlineHtml(text = '') {
+  const str = String(text || '').trim();
+  if (!str) return '';
+  return str.replaceAll(/\{([a-zA-Z0-9_-]+)(?::([^}]+))?\}/g, (match, tag, val) => {
+    return displayItemHtml(`{${tag}:${val || ''}}`);
   });
+}
+
+function syncPassiveEffects(passive) {
+  const textToScan = `${passive.impact || ''} ${passive.text || ''} ${passive.customText || ''}`;
+  
+  // Extract tokens from {token:Name}
+  const tokenMatches = textToScan.matchAll(/\{token:([^}]+)\}/gi);
+  const foundTokens = [];
+  for (const m of tokenMatches) {
+    if (m[1] && !foundTokens.includes(m[1].trim())) {
+      foundTokens.push(m[1].trim());
+    }
+  }
+  if (foundTokens.length > 0) {
+    passive.tokens = foundTokens;
+  }
+
+  passive.effects ||= {};
+  // Extract damage / undef
+  const dmgMatch = textToScan.match(/\{(damage|dmg|undef|imparable):(\d+)\}/i);
+  if (dmgMatch) {
+    passive.effects.damage = parseInt(dmgMatch[2], 10) || 0;
+    passive.effects.undefendable = ['undef', 'imparable'].includes(dmgMatch[1].toLowerCase());
+  }
+  // Extract heal
+  const healMatch = textToScan.match(/\{(heal|life|vie|soin):(\d+)\}/i);
+  if (healMatch) {
+    passive.effects.heal = parseInt(healMatch[2], 10) || 0;
+  }
+  // Extract stealHp
+  const stealHpMatch = textToScan.match(/\{(stealhp|steal_hp):(\d+)\}/i);
+  if (stealHpMatch) {
+    passive.effects.stealHp = parseInt(stealHpMatch[2], 10) || 0;
+  }
+  passive.effects.tokens = passive.tokens;
+}
+
+function createPassiveQuickChipsRow(input, onUpdate) {
+  const row = document.createElement('div');
+  row.className = 'passive-quick-chips';
+  const chips = [
+    { label: '+ {undef:1}', code: '{undef:1}' },
+    { label: '+ {undef:2}', code: '{undef:2}' },
+    { label: '+ {damage:2}', code: '{damage:2}' },
+    { label: '+ {heal:2}', code: '{heal:2}' },
+    { label: '+ {heal:3}', code: '{heal:3}' },
+    { label: '+ {cp:1}', code: '{cp:1}' },
+    { label: '+ {die:white}', code: '{die:white}' },
+    { label: '+ {die:orange}', code: '{die:orange}' },
+    { label: '+ {die:red}', code: '{die:red}' },
+  ];
+  chips.forEach((c) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'passive-chip-btn';
+    btn.textContent = c.label;
+    btn.onclick = () => {
+      const pos = input.selectionStart || input.value.length;
+      const text = input.value;
+      const prefix = (pos > 0 && text[pos - 1] !== ' ') ? ' ' : '';
+      const suffix = (pos < text.length && text[pos] !== ' ') ? ' ' : '';
+      input.value = text.slice(0, pos) + prefix + c.code + suffix + text.slice(pos);
+      input.focus();
+      onUpdate();
+    };
+    row.appendChild(btn);
+  });
+  return row;
+}
+
+function openTokenPickerForPassive(input, onUpdate) {
+  input._onTokenInsert = (selectedTokens) => {
+    if (selectedTokens.length > 0) {
+      const shortcodes = selectedTokens.map(s => `{token:${s}}`).join(' ');
+      const pos = input.selectionStart || input.value.length;
+      const text = input.value;
+      const prefix = (pos > 0 && text[pos - 1] !== ' ') ? ' ' : '';
+      const suffix = (pos < text.length && text[pos] !== ' ') ? ' ' : '';
+      input.value = text.slice(0, pos) + prefix + shortcodes + suffix + text.slice(pos);
+      input.focus();
+      onUpdate();
+    }
+  };
+  openTokenModal(input);
+}
+
+function renderPassiveItemCard(item, origIndex, zoneType) {
+  const card = document.createElement('div');
+  card.className = 'passive-item-card';
+
+  // Card Top
+  const top = document.createElement('div');
+  top.className = 'passive-card-top';
+
+  const badge = document.createElement('span');
+  badge.className = `passive-type-badge ${zoneType === 'offensive_failure' ? 'badge-failure' : (zoneType === 'start_of_turn' ? 'badge-start' : 'badge-custom')}`;
+  badge.textContent = zoneType === 'offensive_failure' ? 'Offensive Roll Failure' : (zoneType === 'start_of_turn' ? 'Start of Turn' : 'Custom');
+
+  const rm = document.createElement('button');
+  rm.className = 'danger small';
+  rm.type = 'button';
+  rm.textContent = 'Remove';
+  rm.onclick = () => {
+    selectedProfile.attackPlan.passives.splice(origIndex, 1);
+    selectedProfile.passives = selectedProfile.attackPlan.passives;
+    setDirty('enemy');
+    renderPassiveRules();
+    updateTabDots();
+  };
+  top.append(badge, rm);
+  card.appendChild(top);
+
+  if (zoneType === 'custom') {
+    // Custom passive layout
+    const textGroup = document.createElement('div');
+    textGroup.className = 'passive-impact-group';
+
+    const lbl = document.createElement('label');
+    lbl.textContent = 'Passive rule (text & tags)';
+
+    const textarea = document.createElement('textarea');
+    textarea.rows = 3;
+    textarea.className = 'passive-impact-input';
+    textarea.value = item.text || item.impact || '';
+    textarea.placeholder = 'e.g. Roll 1 {die:white}: on 6 ({die:red}), gains 1 new Head ({token:Chaos}).';
+
+    const tokenBtn = document.createElement('button');
+    tokenBtn.type = 'button';
+    tokenBtn.className = 'ghost-btn small';
+    tokenBtn.textContent = '🪙 Token';
+    tokenBtn.style.alignSelf = 'flex-start';
+    tokenBtn.title = 'Insert token shortcode';
+
+    const previewBox = document.createElement('div');
+    previewBox.className = 'passive-preview-box';
+
+    const updatePreview = () => {
+      item.text = textarea.value;
+      item.impact = textarea.value;
+      syncPassiveEffects(item);
+      previewBox.innerHTML = `<span class="passive-preview-label">In-Game Render</span> <div>${formatInlineHtml(item.text) || '<em>Empty passive</em>'}</div>`;
+      setDirty('enemy');
+      updateTabDots();
+    };
+
+    textarea.oninput = updatePreview;
+    tokenBtn.onclick = () => openTokenPickerForPassive(textarea, updatePreview);
+
+    const chipsRow = createPassiveQuickChipsRow(textarea, updatePreview);
+    chipsRow.prepend(tokenBtn);
+
+    textGroup.append(lbl, textarea, chipsRow, previewBox);
+    card.appendChild(textGroup);
+    updatePreview();
+    return card;
+  }
+
+  // Zone 1 & 2 Layout (Offensive Failure & Start of Turn)
+  const fieldsRow = document.createElement('div');
+  fieldsRow.className = 'passive-fields-row';
+
+  // Target group
+  const targetGroup = document.createElement('div');
+  targetGroup.className = 'passive-target-group';
+  const targetLbl = document.createElement('label');
+  targetLbl.textContent = 'Target (receives / applies)';
+  const targetSelect = document.createElement('select');
+  targetSelect.className = 'passive-target-select';
+  [
+    { val: 'opponent', label: 'Opponent (Hero)' },
+    { val: 'minion', label: 'Minion (Self)' },
+    { val: 'both', label: 'Both' },
+    { val: 'custom', label: 'Other / Custom' }
+  ].forEach((opt) => {
+    const el = document.createElement('option');
+    el.value = opt.val;
+    el.textContent = opt.label;
+    if ((item.target || (zoneType === 'offensive_failure' ? 'opponent' : 'minion')) === opt.val) el.selected = true;
+    targetSelect.appendChild(el);
+  });
+  targetGroup.append(targetLbl, targetSelect);
+
+  // Impact group
+  const impactGroup = document.createElement('div');
+  impactGroup.className = 'passive-impact-group';
+  const impactLbl = document.createElement('label');
+  impactLbl.textContent = 'Consequence (Impact with tags)';
+
+  const impactWrap = document.createElement('div');
+  impactWrap.className = 'passive-impact-wrap';
+
+  const impactInput = document.createElement('input');
+  impactInput.type = 'text';
+  impactInput.className = 'passive-impact-input';
+  impactInput.value = item.impact || '';
+  impactInput.placeholder = zoneType === 'offensive_failure'
+    ? 'e.g. deals 2 {undef:2} damage or gains {token:Shadows}'
+    : 'e.g. gains 1 {token:Chaos} or heals 3 {heal:3}';
+
+  const tokenBtn = document.createElement('button');
+  tokenBtn.type = 'button';
+  tokenBtn.className = 'ghost-btn small';
+  tokenBtn.textContent = '🪙 Token';
+  tokenBtn.title = 'Insert token shortcode';
+
+  impactWrap.append(impactInput, tokenBtn);
+
+  // Preview Box
+  const previewBox = document.createElement('div');
+  previewBox.className = 'passive-preview-box';
+
+  // Override details
+  const overrideDetails = document.createElement('details');
+  overrideDetails.className = 'passive-override-details';
+  if (item.customText) overrideDetails.open = true;
+  const summary = document.createElement('summary');
+  summary.textContent = 'Render override (custom English text)';
+  const overrideInput = document.createElement('input');
+  overrideInput.type = 'text';
+  overrideInput.value = item.customText || '';
+  overrideInput.placeholder = 'Optional: Override the generated English phrase';
+  overrideDetails.append(summary, overrideInput);
+
+  const updateAll = () => {
+    item.target = targetSelect.value;
+    item.impact = impactInput.value;
+    item.customText = overrideInput.value;
+    item.text = buildPassiveSentence(item);
+    syncPassiveEffects(item);
+    previewBox.innerHTML = `<span class="passive-preview-label">Preview</span> <div>${formatInlineHtml(item.text)}</div>`;
+    setDirty('enemy');
+    updateTabDots();
+  };
+
+  tokenBtn.onclick = () => openTokenPickerForPassive(impactInput, updateAll);
+
+  targetSelect.onchange = updateAll;
+  impactInput.oninput = updateAll;
+  overrideInput.oninput = updateAll;
+
+  // Quick chips
+  const chipsRow = createPassiveQuickChipsRow(impactInput, updateAll);
+
+  impactGroup.append(impactLbl, impactWrap, chipsRow);
+  fieldsRow.append(targetGroup, impactGroup);
+  card.append(fieldsRow, previewBox, overrideDetails);
+
+  updateAll();
+  return card;
+}
+
+function renderPassiveRules() {
+  const failureRoot = $('passiveFailureRules');
+  const startRoot = $('passiveStartOfTurnRules');
+  const customRoot = $('passiveCustomRules');
+  if (!failureRoot || !startRoot || !customRoot) return;
+
+  failureRoot.innerHTML = '';
+  startRoot.innerHTML = '';
+  customRoot.innerHTML = '';
+
+  const passivesList = ensureProfilePassivesList();
+
+  let failureCount = 0;
+  let startCount = 0;
+  let customCount = 0;
+
+  passivesList.forEach((item, index) => {
+    const type = item.type || 'custom';
+    if (type === 'offensive_failure') {
+      failureRoot.appendChild(renderPassiveItemCard(item, index, 'offensive_failure'));
+      failureCount++;
+    } else if (type === 'start_of_turn') {
+      startRoot.appendChild(renderPassiveItemCard(item, index, 'start_of_turn'));
+      startCount++;
+    } else {
+      customRoot.appendChild(renderPassiveItemCard(item, index, 'custom'));
+      customCount++;
+    }
+  });
+
+  if (failureCount === 0) {
+    failureRoot.innerHTML = '<div class="passive-empty-hint">No offensive roll failure passive. Click "+ Add failure passive" to create one.</div>';
+  }
+  if (startCount === 0) {
+    startRoot.innerHTML = '<div class="passive-empty-hint">No start-of-turn passive. Click "+ Add start-of-turn passive" to create one.</div>';
+  }
+  if (customCount === 0) {
+    customRoot.innerHTML = '<div class="passive-empty-hint">No custom passive. Click "+ Add custom passive" to create one.</div>';
+  }
+}
+
+function addPassiveItem(type) {
+  if (!selectedProfile) return;
+  ensureProfilePassivesList();
+  const newPassive = {
+    type: type,
+    timing: type === 'offensive_failure' ? 'offensiveRollFailed' : (type === 'start_of_turn' ? 'minionUpkeep' : 'custom'),
+    target: type === 'offensive_failure' ? 'opponent' : 'minion',
+    impact: '',
+    customText: '',
+    text: '',
+    tokens: [],
+    effects: {
+      damage: 0,
+      undefendable: false,
+      stealHp: 0,
+      stealCp: 0,
+      heal: 0,
+      drawCards: 0,
+      discardCards: 0,
+      topDeckToDiscard: 0,
+      tokens: [],
+      formulas: []
+    }
+  };
+  selectedProfile.attackPlan.passives.push(newPassive);
+  selectedProfile.passives = selectedProfile.attackPlan.passives;
+  renderPassiveRules();
+  setDirty('enemy');
+  updateTabDots();
 }
 
 function validateTokens() {
@@ -2263,8 +2630,9 @@ function updateRewardWarnings() {
 }
 
 function bindBasics() {
-  ['nameInput','keyInput','rankInput','hpInput','cpInput','defenseDiceInput','rewardChestsInput','rewardRankInput','cardAssetInput','initialTokensInput','attackStyleInput','attackNameInput','attacksTextInput','defenseTextInput','passivesTextInput','attacksDisplayRowsInput','defenseDisplayRowsInput','passivesDisplayRowsInput'].forEach((id) => {
+  ['nameInput','keyInput','rankInput','hpInput','cpInput','defenseDiceInput','rewardChestsInput','rewardRankInput','cardAssetInput','initialTokensNbInput','initialTokensInput','sourcePackInput','attackStyleInput','attackNameInput','attacksTextInput','defenseTextInput','passivesTextInput','attacksDisplayRowsInput','defenseDisplayRowsInput','passivesDisplayRowsInput'].forEach((id) => {
     $(id).addEventListener('input', () => { collectCurrent(); setDirty('enemy'); renderLists(); renderPreview(); renderDisplayRowsPreviews(); renderMeta(); updateRewardWarnings(); });
+    $(id).addEventListener('change', () => { collectCurrent(); setDirty('enemy'); renderLists(); renderPreview(); renderDisplayRowsPreviews(); renderMeta(); updateRewardWarnings(); });
   });
 }
 document.addEventListener('DOMContentLoaded', () => {
@@ -2281,23 +2649,41 @@ document.addEventListener('DOMContentLoaded', () => {
     if (activeTokenInput) {
       const checkboxes = $('tokenCheckboxes').querySelectorAll('input[type="checkbox"]:checked');
       const selected = Array.from(checkboxes).map(cb => cb.value);
-      activeTokenInput.value = selected.join(', ');
 
-      const parentCard = activeTokenInput.closest('.action-card, .outcome-row');
-      if (parentCard) {
-        const nbInput = parentCard.querySelector('.effect-nb, .out-nb');
-        if (nbInput) {
-          if (selected.length > 0 && !nbInput.value.trim()) {
-            nbInput.value = '1';
-          } else if (selected.length === 0) {
-            nbInput.value = '';
+      if (typeof activeTokenInput._onTokenInsert === 'function') {
+        activeTokenInput._onTokenInsert(selected);
+        activeTokenInput._onTokenInsert = null;
+      } else {
+        activeTokenInput.value = selected.join(', ');
+
+        if (activeTokenInput.id === 'initialTokensInput') {
+          const nbInput = $('initialTokensNbInput');
+          if (nbInput) {
+            if (selected.length > 0 && !nbInput.value.trim()) {
+              nbInput.value = '1';
+            } else if (selected.length === 0) {
+              nbInput.value = '';
+            }
+            nbInput.dispatchEvent(new Event('input', { bubbles: true }));
           }
-          nbInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
-      }
 
-      activeTokenInput.dispatchEvent(new Event('change', { bubbles: true }));
-      activeTokenInput.dispatchEvent(new Event('input', { bubbles: true }));
+        const parentCard = activeTokenInput.closest('.action-card, .outcome-row');
+        if (parentCard) {
+          const nbInput = parentCard.querySelector('.effect-nb, .out-nb');
+          if (nbInput) {
+            if (selected.length > 0 && !nbInput.value.trim()) {
+              nbInput.value = '1';
+            } else if (selected.length === 0) {
+              nbInput.value = '';
+            }
+            nbInput.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        }
+
+        activeTokenInput.dispatchEvent(new Event('change', { bubbles: true }));
+        activeTokenInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     }
     $('tokenModal').style.display = 'none';
     activeTokenInput = null;
@@ -2337,29 +2723,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
   
-  $('addPassiveRuleBtn').onclick = () => {
-    if (!selectedProfile) return;
-    ensureProfilePassivesList();
-    selectedProfile.attackPlan.passives.push({
-      text: '',
-      tokens: [],
-      effects: {
-        damage: 0,
-        undefendable: false,
-        stealHp: 0,
-        stealCp: 0,
-        heal: 0,
-        drawCards: 0,
-        discardCards: 0,
-        topDeckToDiscard: 0,
-        tokens: [],
-        formulas: []
-      }
-    });
-    renderPassiveRules();
-    setDirty('enemy');
-    updateTabDots();
-  };
+  $('addPassiveFailureBtn')?.addEventListener('click', () => addPassiveItem('offensive_failure'));
+  $('addPassiveStartBtn')?.addEventListener('click', () => addPassiveItem('start_of_turn'));
+  $('addPassiveCustomBtn')?.addEventListener('click', () => addPassiveItem('custom'));
+  if ($('addPassiveRuleBtn')) {
+    $('addPassiveRuleBtn').onclick = () => addPassiveItem('custom');
+  }
 
   $('enemySearch').oninput = renderLists;
   $('tokenSearch').oninput = renderTokenAdmin;

@@ -54,4 +54,4 @@ Avant de valider ou de pousser un commit :
 1. `dart analyze` pour vérifier l'absence d'erreurs statiques.
 2. `flutter test test/fight_logic_test.dart` pour s'assurer que toutes les règles de combat sont respectées.
 3. Incrémenter la version via `.\tool\set-version.ps1 -Version X.Y.Z -BuildNumber N`.
-4. Mettre à jour le cache-buster dans `web/recette/index.html` et l'historique dans `web/recette/recette_data.json`.
+4. Compiler le projet via `.\tool\verify-fast.ps1 -Target web`.

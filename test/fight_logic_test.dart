@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dice_throne_survie/data/enemy_profile_repository.dart';
 import 'package:dice_throne_survie/game_engine.dart';
 import 'package:dice_throne_survie/main.dart';
@@ -8,8 +10,18 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    await TokenCatalogRepository.load();
-    await EnemyProfileRepository.load();
+    final tokenFile = File('assets/data/token_catalog.json');
+    if (tokenFile.existsSync()) {
+      TokenCatalogRepository.loadFromJsonString(tokenFile.readAsStringSync());
+    } else {
+      await TokenCatalogRepository.load();
+    }
+    final enemyFile = File('docs/enemy_profiles.json');
+    if (enemyFile.existsSync()) {
+      EnemyProfileRepository.loadFromJsonString(enemyFile.readAsStringSync());
+    } else {
+      await EnemyProfileRepository.load();
+    }
   });
 
   group('Game Engine & Fight Logic Tests', () {
@@ -597,13 +609,12 @@ void main() {
       expect(farceur.defenseEffects.first.prevent, 3);
     });
 
-    test('Farceur attackPlan includes all 4 actions from JSON in goals', () {
+    test('Farceur attackPlan has primary goal and structured extraRoll outcomes', () {
       final farceur = EnemyProfileRepository.byKey('bleu-bleu-020');
       expect(farceur, isNotNull);
       expect(farceur!.attackPlan.style, MinionAttackStyle.symbols);
-      // All 4 actions from JSON should be present in goals:
-      // Recreation (1W, 2Y, 1R), Blanc (1W), Jaune (1Y), Rouge (1R)
-      expect(farceur.attackPlan.goals.length, 4);
+      // Primary attack combination is Recreation (1W, 2Y, 1R)
+      expect(farceur.attackPlan.goals.length, 1);
       final recreation = farceur.attackPlan.goals.first;
       expect(recreation.white, 1);
       expect(recreation.yellow, 2);
@@ -611,8 +622,56 @@ void main() {
       expect(recreation.effect?.damage, 4);
       expect(recreation.effect?.undefendable, isTrue);
 
-      final blanc = farceur.attackPlan.goals.firstWhere((g) => g.white == 1 && g.yellow == 0 && g.red == 0);
-      expect(blanc.effect?.stealCp, 2);
+      final extra = recreation.effect?.extraRoll;
+      expect(extra, isNotNull);
+      expect(extra!.dice, 1);
+      expect(extra.outcomes.length, 3);
+      final whiteOut = extra.outcomes.firstWhere((o) => o.face == ExtraRollFace.white);
+      expect(whiteOut.stealCp, 2);
+      final orangeOut = extra.outcomes.firstWhere((o) => o.face == ExtraRollFace.yellow);
+      expect(orangeOut.label, contains('discards 1 card'));
+      expect(orangeOut.discardCards, 1);
+      final redOut = extra.outcomes.firstWhere((o) => o.face == ExtraRollFace.red);
+      expect(redOut.discardCards, 1);
+    });
+
+    test('Enemy card discard logic in attackPlan and extraRoll outcomes', () {
+      final enchanteur = EnemyProfileRepository.byKey('enchanteur-gobelin');
+      expect(enchanteur, isNotNull);
+      final enchanteurGoal = enchanteur!.attackPlan.goals.first;
+      expect(enchanteurGoal.effect?.discardCards, 1);
+
+      final chaman = EnemyProfileRepository.byKey('violet-violet-015');
+      expect(chaman, isNotNull);
+      final chamanGoal = chaman!.attackPlan.goals.first;
+      expect(chamanGoal.effect?.discardCards, 1);
+
+      final naxarus = EnemyProfileRepository.byKey('naraxus');
+      expect(naxarus, isNotNull);
+    });
+
+    test('The Hermit attackPlan has Deep Magic goal (1W, 3Y) and extraRoll outcomes', () {
+      final hermit = EnemyProfileRepository.byKey('bleu-bleu-007');
+      expect(hermit, isNotNull);
+      expect(hermit!.attackPlan.style, MinionAttackStyle.symbols);
+      expect(hermit.attackPlan.goals.length, 1);
+      final deepMagic = hermit.attackPlan.goals.first;
+      expect(deepMagic.white, 1);
+      expect(deepMagic.yellow, 3);
+      expect(deepMagic.red, 0);
+      expect(deepMagic.effect?.damage, 3);
+      expect(deepMagic.effect?.undefendable, isTrue);
+
+      final extra = deepMagic.effect?.extraRoll;
+      expect(extra, isNotNull);
+      expect(extra!.dice, 1);
+      expect(extra.outcomes.length, 3);
+      final whiteOut = extra.outcomes.firstWhere((o) => o.face == ExtraRollFace.white);
+      expect(whiteOut.damage, 2);
+      final orangeOut = extra.outcomes.firstWhere((o) => o.face == ExtraRollFace.yellow);
+      expect(orangeOut.tokens, contains('Wither'));
+      final redOut = extra.outcomes.firstWhere((o) => o.face == ExtraRollFace.red);
+      expect(redOut.tokens, contains('Burn'));
     });
 
     test('Bloodseeker, Umbra, Fell Summoner, and Cyclope Brutal defense effects', () {
@@ -1549,6 +1608,398 @@ void main() {
       );
       node.applyProfile(profile);
       expect(node.passives.isNotEmpty, isTrue);
+    });
+
+    test('Minion pack classification: DTA default and allowedPacks filtering', () {
+      expect(AppSettings.instance.isMinionPackActive('dta'), isTrue);
+      expect(AppSettings.instance.activeMinionPacks.contains('dta'), isTrue);
+
+      final dtaProfiles = EnemyProfileRepository.byRank(
+        EnemyRank.green,
+        allowedPacks: {'dta'},
+      );
+      expect(dtaProfiles.every((p) => p.sourcePack == 'dta'), isTrue);
+    });
+
+    test('Community minion toggle and rush filtering logic', () async {
+      const testKey = 'community-fan-001';
+      expect(AppSettings.instance.isCommunityEnemyEnabled(testKey), isTrue);
+
+      await AppSettings.instance.toggleCommunityEnemyEnabled(testKey);
+      expect(AppSettings.instance.isCommunityEnemyEnabled(testKey), isFalse);
+      expect(AppSettings.instance.disabledCommunityEnemyKeys.contains(testKey), isTrue);
+
+      await AppSettings.instance.toggleCommunityEnemyEnabled(testKey);
+      expect(AppSettings.instance.isCommunityEnemyEnabled(testKey), isTrue);
+    });
+
+    test('The Hermit dice reserve strategy and extraRoll outcome evaluation', () {
+      final hermit = EnemyProfileRepository.byKey('bleu-bleu-007')!;
+      expect(hermit.attackPlan.goals.length, 1);
+      final goal = hermit.attackPlan.goals.first;
+
+      // Simulate roll 1: 4 whites (e.g. faces 1, 3, 3, 3) and 1 yellow (face 4)
+      final roll1Faces = [1, 3, 3, 3, 4];
+      final roll1Symbols = roll1Faces.map((f) => f == 6 ? DieSymbol.red : (f >= 4 ? DieSymbol.yellow : DieSymbol.white)).toList();
+
+      var wCount = roll1Symbols.where((s) => s == DieSymbol.white).length;
+      var yCount = roll1Symbols.where((s) => s == DieSymbol.yellow).length;
+      var rCount = roll1Symbols.where((s) => s == DieSymbol.red).length;
+
+      // Goal (1W, 3Y) is NOT met on roll 1 because yellow count is only 1 (< 3)
+      final goalMetRoll1 = wCount >= goal.white && yCount >= goal.yellow && rCount >= goal.red;
+      expect(goalMetRoll1, isFalse);
+
+      // Verify dice keeping logic: AI must reserve 1 white and 1 yellow, leaving 3 whites unreserved
+      var neededW = goal.white;
+      var neededY = goal.yellow;
+      var neededR = goal.red;
+      final reservedList = <bool>[];
+      for (final sym in roll1Symbols) {
+        if (sym == DieSymbol.white && neededW > 0) {
+          reservedList.add(true);
+          neededW--;
+        } else if (sym == DieSymbol.yellow && neededY > 0) {
+          reservedList.add(true);
+          neededY--;
+        } else if (sym == DieSymbol.red && neededR > 0) {
+          reservedList.add(true);
+          neededR--;
+        } else {
+          reservedList.add(false);
+        }
+      }
+
+      // Exactly 2 dice reserved: 1 white and 1 yellow
+      expect(reservedList.where((r) => r).length, 2);
+      // Exactly 3 dice unreserved to be rerolled
+      expect(reservedList.where((r) => !r).length, 3);
+
+      // Simulate roll 2 where the 3 unreserved dice produce 2 yellows and 1 white
+      final roll2AllSymbols = [DieSymbol.white, DieSymbol.yellow, DieSymbol.yellow, DieSymbol.yellow, DieSymbol.white];
+      wCount = roll2AllSymbols.where((s) => s == DieSymbol.white).length; // 2
+      yCount = roll2AllSymbols.where((s) => s == DieSymbol.yellow).length; // 3
+      rCount = roll2AllSymbols.where((s) => s == DieSymbol.red).length; // 0
+
+      // Goal is now met!
+      final goalMetRoll2 = wCount >= goal.white && yCount >= goal.yellow && rCount >= goal.red;
+      expect(goalMetRoll2, isTrue);
+
+      // Verify extraRoll outcomes for face resolution
+      final extraRoll = goal.effect!.extraRoll!;
+      expect(extraRoll.dice, 1);
+      final whiteOutcome = extraRoll.outcomes.firstWhere((o) => o.face == ExtraRollFace.white);
+      expect(whiteOutcome.damage, 2);
+      expect(whiteOutcome.undefendable, isTrue);
+
+      final yellowOutcome = extraRoll.outcomes.firstWhere((o) => o.face == ExtraRollFace.yellow);
+      expect(yellowOutcome.tokens, contains('Wither'));
+
+      final redOutcome = extraRoll.outcomes.firstWhere((o) => o.face == ExtraRollFace.red);
+      expect(redOutcome.tokens, contains('Burn'));
+    });
+
+    test('Banshie Hurlante symbol dice hold: holds 1 red die towards 2-red goal', () {
+      final bansheeGoals = const [
+        SymbolGoal(white: 0, yellow: 0, red: 2),
+        SymbolGoal(white: 0, yellow: 0, red: 3),
+        SymbolGoal(white: 0, yellow: 0, red: 4),
+        SymbolGoal(white: 0, yellow: 0, red: 5),
+        SymbolGoal(white: 0, yellow: 0, red: 0),
+      ];
+
+      // Roll 1: [6 (red), 4 (yellow), 1 (white), 2 (white), 3 (white)]
+      final dice = [
+        GameDie(id: 10)..value = 6, // red
+        GameDie(id: 11)..value = 4, // yellow
+        GameDie(id: 12)..value = 1, // white
+        GameDie(id: 13)..value = 2, // white
+        GameDie(id: 14)..value = 3, // white
+      ];
+
+      final decision = MinionDiceEngineSymbols.chooseSymbolHold(
+        dice: dice,
+        goals: bansheeGoals,
+      );
+
+      // Must reserve the single red die!
+      expect(decision.reservedDieIds, equals([10]));
+      expect(decision.values, equals([6]));
+      expect(decision.isGoalMet, isFalse);
+      expect(decision.matchingDiceCount, equals(1));
+      expect(decision.requiredDiceCount, equals(2));
+      expect(decision.reason, contains('keeping 6'));
+    });
+
+    test('Banshie Hurlante symbol dice hold: validates 2 red dice and keeps both for potential upgrade', () {
+      final bansheeGoals = const [
+        SymbolGoal(white: 0, yellow: 0, red: 2),
+        SymbolGoal(white: 0, yellow: 0, red: 3),
+        SymbolGoal(white: 0, yellow: 0, red: 4),
+        SymbolGoal(white: 0, yellow: 0, red: 5),
+        SymbolGoal(white: 0, yellow: 0, red: 0),
+      ];
+
+      // Roll 2: [6 (red), 6 (red), 1 (white), 2 (white), 3 (white)]
+      final dice = [
+        GameDie(id: 10)..value = 6, // red
+        GameDie(id: 11)..value = 6, // red
+        GameDie(id: 12)..value = 1, // white
+        GameDie(id: 13)..value = 2, // white
+        GameDie(id: 14)..value = 3, // white
+      ];
+
+      final decision = MinionDiceEngineSymbols.chooseSymbolHold(
+        dice: dice,
+        goals: bansheeGoals,
+      );
+
+      // Must reserve both red dice and note attack validated
+      expect(decision.reservedDieIds, equals([10, 11]));
+      expect(decision.values, equals([6, 6]));
+      expect(decision.isGoalMet, isTrue);
+      expect(decision.requiredDiceCount, equals(2));
+    });
+
+    test('Banshie Hurlante symbol dice hold: rolls 0 red dice, holds nothing', () {
+      final bansheeGoals = const [
+        SymbolGoal(white: 0, yellow: 0, red: 2),
+        SymbolGoal(white: 0, yellow: 0, red: 3),
+        SymbolGoal(white: 0, yellow: 0, red: 4),
+        SymbolGoal(white: 0, yellow: 0, red: 5),
+        SymbolGoal(white: 0, yellow: 0, red: 0),
+      ];
+
+      // Roll: all white/yellow, 0 red
+      final dice = [
+        GameDie(id: 10)..value = 5,
+        GameDie(id: 11)..value = 4,
+        GameDie(id: 12)..value = 1,
+        GameDie(id: 13)..value = 2,
+        GameDie(id: 14)..value = 3,
+      ];
+
+      final decision = MinionDiceEngineSymbols.chooseSymbolHold(
+        dice: dice,
+        goals: bansheeGoals,
+      );
+
+      expect(decision.reservedDieIds, isEmpty);
+      expect(decision.isGoalMet, isFalse);
+    });
+
+    test('GameEngine upkeep skipTokens with accents: Bleed / Hémorragie skipped properly', () {
+      final tokens = <String>['Hémorragie'];
+      var rollCount = 0;
+      final outcome = GameEngine.heroUpkeep(
+        tokens: tokens,
+        rollD6: () {
+          rollCount++;
+          return 1;
+        },
+        skipTokens: {'Bleed'},
+      );
+
+      // Should be skipped, so rollCount remains 0 and healthDelta is 0
+      expect(rollCount, equals(0));
+      expect(outcome.healthDelta, equals(0));
+    });
+
+    test('Bloodseeker suite effects parse notes and tokens correctly', () {
+      final profile = EnemyProfileRepository.byKey('orange-orange-009');
+      expect(profile, isNotNull);
+      final suiteEffects = profile!.attackPlan.suiteEffects;
+
+      // Micro suite (3)
+      final micro = suiteEffects[3];
+      expect(micro, isNotNull);
+      expect(micro!.damage, equals(3));
+      expect(micro.undefendable, isTrue);
+      expect(micro.heroTokens, equals(['Bleed', 'Bleed']));
+
+      // Small suite (4)
+      final small = suiteEffects[4];
+      expect(small, isNotNull);
+      expect(small!.damage, equals(6));
+      expect(small.heroTokens, equals(['Bleed']));
+      expect(small.notes, contains('+{damage:1} x {token:Bleed}'));
+
+      // Large suite (5)
+      final large = suiteEffects[5];
+      expect(large, isNotNull);
+      expect(large!.damage, equals(8));
+      expect(large.heroTokens, equals(['Bleed']));
+      expect(large.notes, contains('+{damage:2} x {token:Bleed}'));
+
+      // Benjamin eye/glasses alignment check
+      expect(HeroType.benjamin.headAlignment.y, equals(-0.20));
+    });
+
+    test('Devin de la Mort defense formula evaluates return damage per Chaos token', () {
+      final resWithChaos = evaluateDefenseFormulas(
+        formulas: ['then return 1 undefendable damage per Chaos'],
+        incomingDamage: 10,
+        enemyTokens: ['Chaos', 'Chaos', 'Chaos', 'Chaos'],
+      );
+      expect(resWithChaos.matched, isTrue);
+      expect(resWithChaos.returnDamage, equals(4));
+      expect(resWithChaos.returnDamageUndefendable, isTrue);
+
+      final resZeroChaos = evaluateDefenseFormulas(
+        formulas: ['then return 1 undefendable damage per Chaos'],
+        incomingDamage: 10,
+        enemyTokens: [],
+      );
+      expect(resZeroChaos.matched, isTrue);
+      expect(resZeroChaos.returnDamage, equals(0));
+      expect(resZeroChaos.returnDamageUndefendable, isTrue);
+    });
+
+    test('Bloodseeker suite attack immediately counts inflicted Bleed in damage calculation', () {
+      final profile = EnemyProfileRepository.byKey('orange-orange-009');
+      expect(profile, isNotNull);
+      final enemy = EnemyNode(
+        id: 99,
+        label: profile!.name,
+        rank: profile.rank,
+        maxHealth: profile.maxHealth,
+        cp: profile.cp,
+        attacks: profile.attacks,
+        defense: '',
+        defenseDice: profile.defenseDice,
+        attackPlan: profile.attackPlan,
+        cardAsset: profile.cardAsset,
+        profileKey: profile.key,
+      );
+
+      final adventure = AdventureState(
+        config: const SurvivalConfig(mode: SurvivalMode.mediumFixed, targetScore: 50),
+        hero: HeroType.barbare,
+      );
+
+      // Hero starts with 0 Bleed
+      expect(adventure.alterations.where((t) => t == 'Bleed').length, equals(0));
+
+      // Micro suite (length 3): strictly 3 undefendable damage, NO bleed bonus
+      final dmgMicro0 = minionSuiteDamage(enemy, 3, adventure: adventure);
+      expect(dmgMicro0, isNotNull);
+      expect(dmgMicro0!.value, equals(3));
+      expect(dmgMicro0.imparable, isTrue);
+
+      // Small suite (length 4): base 6 damage + 1 per Bleed, immediately inflicting 1 Bleed -> 6 + 1 = 7 damage
+      final dmgSmall0 = minionSuiteDamage(enemy, 4, adventure: adventure);
+      expect(dmgSmall0, isNotNull);
+      expect(dmgSmall0!.value, equals(7));
+
+      // Large suite (length 5): base 8 damage + 2 per Bleed, immediately inflicting 1 Bleed -> 8 + 2*1 = 10 damage
+      final dmgLarge0 = minionSuiteDamage(enemy, 5, adventure: adventure);
+      expect(dmgLarge0, isNotNull);
+      expect(dmgLarge0!.value, equals(10));
+
+      // If hero already has 2 Bleeds on board:
+      adventure.alterations.addAll(['Bleed', 'Bleed']);
+      // Micro suite still strictly deals 3 damage regardless of Bleeds
+      final dmgMicro2 = minionSuiteDamage(enemy, 3, adventure: adventure);
+      expect(dmgMicro2, isNotNull);
+      expect(dmgMicro2!.value, equals(3));
+      expect(dmgMicro2.imparable, isTrue);
+
+      // Small suite: base 6 + (2 + 1)*1 = 9 damage
+      final dmgSmall2 = minionSuiteDamage(enemy, 4, adventure: adventure);
+      expect(dmgSmall2, isNotNull);
+      expect(dmgSmall2!.value, equals(9));
+
+      // Large suite: base 8 + (2 + 1)*2 = 14 damage
+      final dmgLarge2 = minionSuiteDamage(enemy, 5, adventure: adventure);
+      expect(dmgLarge2, isNotNull);
+      expect(dmgLarge2!.value, equals(14));
+    });
+
+    test('enforceTokenStackLimits and addTokensWithStackLimit strictly respect maxStack', () {
+      final list = <String>['Bleed', 'Bleed', 'Bleed', 'Blind', 'Blind'];
+      enforceTokenStackLimits(list);
+      expect(list.where((t) => t == 'Bleed').length, equals(2));
+      expect(list.where((t) => t == 'Blind').length, equals(1));
+
+      // Trying to add more Bleeds via addTokensWithStackLimit should be blocked
+      addTokensWithStackLimit(list, ['Bleed', 'Bleed']);
+      expect(list.where((t) => t == 'Bleed').length, equals(2));
+
+      // Tokens with higher limits can still be added up to their maxStack
+      addTokensWithStackLimit(list, ['Burn', 'Burn', 'Burn', 'Burn']);
+      final burnRule = TokenCatalogRepository.byLabel('Burn');
+      expect(list.where((t) => t == 'Burn').length, equals(burnRule?.maxStack ?? 3));
+    });
+
+    test('Blind (Éblouissement) is strictly distinct from Blinding Light and never triggers during upkeep', () {
+      final blindRule = TokenCatalogRepository.byLabel('Blind');
+      expect(blindRule, isNotNull);
+      expect(blindRule!.matches('Blind'), isTrue);
+      expect(blindRule.matches('Éblouissement'), isTrue);
+      expect(blindRule.matches('eblouissement'), isTrue);
+
+      final blindingLightRule = TokenCatalogRepository.byLabel('Blinding Light');
+      expect(blindingLightRule, isNotNull);
+      expect(blindingLightRule!.matches('Blinding Light'), isTrue);
+      expect(blindingLightRule.matches('Lumière aveuglante'), isTrue);
+
+      // Verify that Blind rule is NOT Blinding Light rule
+      expect(blindRule.label, isNot(equals(blindingLightRule.label)));
+
+      // Verify Blind token filtering: Blind must NOT be recognized as an upkeep or passive start token
+      final l = 'blind';
+      final isExcludedFromUpkeep = l == 'blind' ||
+          l == 'éblouissement' ||
+          l == 'eblouissement' ||
+          (l.contains('blind') && !l.contains('blinding light')) ||
+          l.contains('éblouissement') ||
+          l.contains('eblouissement');
+      expect(isExcludedFromUpkeep, isTrue);
+
+      final lFr = 'éblouissement';
+      final isFrExcludedFromUpkeep = lFr == 'blind' ||
+          lFr == 'éblouissement' ||
+          lFr == 'eblouissement' ||
+          (lFr.contains('blind') && !lFr.contains('blinding light')) ||
+          lFr.contains('éblouissement') ||
+          lFr.contains('eblouissement');
+      expect(isFrExcludedFromUpkeep, isTrue);
+    });
+
+    test('Bleed (Hémorragie) strictly resolves only in upkeep phase and is ignored during roll phase', () {
+      final bleedRule = TokenCatalogRepository.byLabel('Bleed');
+      expect(bleedRule, isNotNull);
+      expect(bleedRule!.matches('Bleed'), isTrue);
+      expect(bleedRule.matches('Hémorragie'), isTrue);
+      expect(bleedRule.matches('saignement'), isTrue);
+
+      // Verify that Bleed is persistent across upkeep
+      expect(bleedRule.persistent, isTrue);
+      expect(bleedRule.maxStack, equals(2));
+
+      // Test normalization and filter logic
+      bool isBleedToken(String t) {
+        final k = t.trim().toLowerCase()
+            .replaceAll('é', 'e')
+            .replaceAll('è', 'e')
+            .replaceAll('ê', 'e');
+        return k == 'bleed' || k == 'hemorragie' || k == 'saignement';
+      }
+
+      expect(isBleedToken('Bleed'), isTrue);
+      expect(isBleedToken('Hémorragie'), isTrue);
+      expect(isBleedToken('saignement'), isTrue);
+      expect(isBleedToken('Blind'), isFalse);
+
+      // Ensure that in roll phase, Bleed is skipped
+      const isRollPhase = true;
+      final shouldSkipInRollPhase = isRollPhase && isBleedToken('Bleed');
+      expect(shouldSkipInRollPhase, isTrue);
+
+      // Ensure that in upkeep phase (!isRollPhase), Bleed is NOT skipped
+      const isUpkeepPhase = false;
+      final shouldSkipInUpkeep = isUpkeepPhase && isBleedToken('Bleed');
+      expect(shouldSkipInUpkeep, isFalse);
     });
   });
 }

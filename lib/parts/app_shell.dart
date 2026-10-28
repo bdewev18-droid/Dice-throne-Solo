@@ -215,7 +215,9 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
     return HomePage(
       activeAdventure: _activeAdventure,
       auth: _auth,
+      historyCount: _history.length,
       onHistory: () => _openHistory(context),
+      onBestiary: () => _openBestiary(context),
       onSurvival: () => _openHeroChoice(context),
       onResume: () {
         final adventure = _activeAdventure;
@@ -261,7 +263,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
         }
       },
       onStopCampaign: _stopActiveCampaign,
-      onNaraxus: () => _openNaraxusHeroChoice(context),
+      onNaraxus: () => _openBossBattle(context),
       onSignInGoogle: _signInWithGoogle,
       onSignInAnonymous: _signInAnonymously,
       onSignOut: _signOut,
@@ -347,6 +349,48 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
                     _activeAdventure = adventure;
                     _saveActiveAdventure();
                     _replaceWithMap(context, adventure, hero, config);
+                  },
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _openBestiary(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BestiaryPage(
+          historyRecords: _history,
+        ),
+      ),
+    );
+  }
+
+  void _openBossBattle(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BossBattleSelectionPage(
+          onStartBossWithHero: (bossKey) {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => HeroChoicePage(
+                  onNext: (hero) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute<void>(
+                        builder: (_) => NaraxusBattlePage(
+                          hero: hero,
+                          historyRecords: _history,
+                          onRecord: (record) => _handleAddRecord(record),
+                          onOpenHistory: () => _openHistory(
+                            appNavigatorKey.currentContext ?? context,
+                            initialDifficulty: RunDifficulty.naraxus,
+                          ),
+                        ),
+                      ),
+                    );
                   },
                 ),
               ),
@@ -472,6 +516,7 @@ class HomePage extends StatefulWidget {
     required this.activeAdventure,
     required this.auth,
     required this.onHistory,
+    required this.onBestiary,
     required this.onSurvival,
     required this.onResume,
     required this.onStopCampaign,
@@ -479,12 +524,15 @@ class HomePage extends StatefulWidget {
     required this.onSignInGoogle,
     required this.onSignInAnonymous,
     required this.onSignOut,
+    this.historyCount = 0,
     super.key,
   });
 
   final AdventureState? activeAdventure;
   final AuthSession auth;
+  final int historyCount;
   final VoidCallback onHistory;
+  final VoidCallback onBestiary;
   final VoidCallback onSurvival;
   final VoidCallback onResume;
   final VoidCallback onStopCampaign;
@@ -499,6 +547,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _showActions = false;
+  static const String _minionRushImage = 'assets/enemy_previews/violet-002.webp';
+  static const Alignment _minionRushAlignment = Alignment(0.0, -0.75);
 
   @override
   void initState() {
@@ -512,6 +562,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final validatedMonsters = EnemyProfileRepository.validatedCatalogCount;
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Stack(
@@ -570,32 +621,67 @@ class _HomePageState extends State<HomePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            ImageActionButton(
-                              label: 'History',
-                              icon: Icons.history,
-                              onPressed: widget.onHistory,
-                            ),
-                            const SizedBox(height: 20),
-                            if (widget.activeAdventure == null)
-                              ImageActionButton(
-                                label: 'Minion rush',
-                                icon: Icons.shield,
-                                badgeLabel: 'Coming soon',
-                                onPressed: AppSettings.instance.developerMode
-                                    ? widget.onSurvival
-                                    : null,
-                              )
-                            else
+                            if (widget.activeAdventure != null) ...[
                               ActiveCampaignHomeCard(
                                 adventure: widget.activeAdventure!,
                                 onResume: widget.onResume,
                                 onStop: widget.onStopCampaign,
                               ),
-                            const SizedBox(height: 20),
-                            ImageActionButton(
-                              label: 'Naraxus Battle',
-                              icon: Icons.local_fire_department,
-                              onPressed: widget.onNaraxus,
+                              const SizedBox(height: 14),
+                            ],
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: WedgeActionButton(
+                                    title: 'MINION',
+                                    titleAccent: 'RUSH',
+                                    titleAccentColor: const Color(0xffc084fc),
+                                    subtitle: '3 Game Modes',
+                                    subtitleColor: const Color(0xffffe22d),
+                                    imageAsset: _minionRushImage,
+                                    imageAlignment: _minionRushAlignment,
+                                    borderColor: const Color(0xff9b58ff),
+                                    onPressed: widget.onSurvival,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: BossBattleActionButton(
+                                    onPressed: widget.onNaraxus,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: WedgeActionButton(
+                                    title: 'HISTORY',
+                                    subtitle:
+                                        '${widget.historyCount} ${widget.historyCount <= 1 ? "Game" : "Games"}',
+                                    subtitleColor: const Color(0xffffe22d),
+                                    imageAsset: 'assets/podium.jpg',
+                                    imageAlignment: const Alignment(0.0, -0.35),
+                                    borderColor: const Color(0xffffd700),
+                                    onPressed: widget.onHistory,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: WedgeActionButton(
+                                    title: 'BESTIARY',
+                                    subtitle: '$validatedMonsters Monsters',
+                                    subtitleColor: const Color(0xffffe22d),
+                                    imageAsset:
+                                        'assets/enemy_previews/naxarus_head.png',
+                                    imageAlignment:
+                                        const Alignment(0.4, 0.0),
+                                    borderColor: const Color(0xffd51f2a),
+                                    onPressed: widget.onBestiary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -834,6 +920,7 @@ class ImageActionButton extends StatelessWidget {
     required this.onPressed,
     this.badgeLabel,
     this.color,
+    this.showIcon = true,
     super.key,
   });
 
@@ -842,6 +929,7 @@ class ImageActionButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final String? badgeLabel;
   final Color? color;
+  final bool showIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -856,7 +944,7 @@ class ImageActionButton extends StatelessWidget {
               onTap: onPressed,
               borderRadius: BorderRadius.circular(8),
               child: Ink(
-                height: 84,
+                height: 76,
                 decoration: BoxDecoration(
                   color: color ?? Colors.black.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
@@ -864,59 +952,62 @@ class ImageActionButton extends StatelessWidget {
                 ),
                 child: Opacity(
                   opacity: onPressed == null ? 0.42 : 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(icon, color: Colors.white, size: 24),
-                      const SizedBox(width: 10),
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                        ),
+                  child: Center(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (showIcon) ...[
+                            Icon(icon, color: Colors.white, size: 22),
+                            const SizedBox(width: 8),
+                          ],
+                          Text(
+                            label,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
           if (badgeLabel != null && onPressed == null)
-            Transform.rotate(
-              angle: -0.08,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xffd6512a).withValues(alpha: 0.82),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.amberAccent, width: 1),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black87,
-                      blurRadius: 6,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  badgeLabel!.toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.amberAccent,
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black,
-                        blurRadius: 3,
-                        offset: Offset(1, 1),
+            Positioned(
+              left: -18,
+              top: 10,
+              child: Transform.rotate(
+                angle: -0.55,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff7a33cc).withValues(alpha: 0.92),
+                    border: Border.all(color: const Color(0xffd0a5ff), width: 1),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black87,
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
                       ),
                     ],
+                  ),
+                  child: Text(
+                    badgeLabel!.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
               ),
@@ -925,6 +1016,558 @@ class ImageActionButton extends StatelessWidget {
       ),
     );
   }
+}
+
+class BossBattleActionButton extends StatelessWidget {
+  const BossBattleActionButton({
+    required this.onPressed,
+    this.bossName = 'KAELEN VOSS',
+    this.bossImage = 'assets/enemy_previews/kaelen-voss.webp',
+    this.bossImageAlignment = const Alignment(0.0, -0.85),
+    this.bossImageOffset = const Offset(35.0, 0.0),
+    this.badgeLabel = 'BOSS OF THE MONTH',
+    super.key,
+  });
+
+  final VoidCallback? onPressed;
+  final String bossName;
+  final String bossImage;
+  final Alignment bossImageAlignment;
+  final Offset bossImageOffset;
+  final String badgeLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onPressed,
+              borderRadius: BorderRadius.circular(8),
+              child: Ink(
+                height: 76,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white24, width: 1.5),
+                ),
+                child: Stack(
+                  children: [
+                    // Right-side boss wedge artwork
+                    Positioned.fill(
+                      child: ClipPath(
+                        clipper: const _BossWedgeClipper(),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Transform.translate(
+                              offset: bossImageOffset,
+                              child: Image.asset(
+                                bossImage,
+                                fit: BoxFit.cover,
+                                alignment: bossImageAlignment,
+                              ),
+                            ),
+                            // Dark gradient overlay for text readability
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.black.withValues(alpha: 0.15),
+                                    Colors.black.withValues(alpha: 0.8),
+                                  ],
+                                  stops: const [0.45, 1.0],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Gold diagonal divider line
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: const _BossWedgeBorderPainter(),
+                      ),
+                    ),
+                    // Left-side "BOSS BATTLE" text
+                    Positioned(
+                      left: 12,
+                      top: 0,
+                      bottom: 0,
+                      right: 76,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'BOSS',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1.05,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              Text(
+                                'BATTLE',
+                                style: TextStyle(
+                                  color: Color(0xffffe22d),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1.05,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Bottom-right boss name
+                    Positioned(
+                      right: 6,
+                      bottom: 4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 1.5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: const Color(0xffffb300).withValues(alpha: 0.4),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Text(
+                          bossName,
+                          style: const TextStyle(
+                            color: Color(0xffffe22d),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Top-right compact patch / tag
+        Positioned(
+          top: -8,
+          right: 8,
+          child: IgnorePointer(
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 2,
+              ),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xff4a1942),
+                    Color(0xff231032),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: const Color(0xffffb300),
+                  width: 1.2,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black87,
+                    blurRadius: 4,
+                    offset: Offset(0, 1.5),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.stars_rounded,
+                    size: 10,
+                    color: Color(0xffffe22d),
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    badgeLabel,
+                    style: const TextStyle(
+                      color: Color(0xffffe22d),
+                      fontSize: 8,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BossWedgeClipper extends CustomClipper<Path> {
+  const _BossWedgeClipper();
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(size.width * 0.48, 0);
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width * 0.32, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _BossWedgeBorderPainter extends CustomPainter {
+  const _BossWedgeBorderPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xffffb300).withValues(alpha: 0.9)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..moveTo(size.width * 0.48, 0)
+      ..lineTo(size.width * 0.32, size.height);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldPainter) => false;
+}
+
+class WedgeActionButton extends StatelessWidget {
+  const WedgeActionButton({
+    required this.title,
+    required this.imageAsset,
+    required this.onPressed,
+    this.titleColor = Colors.white,
+    this.titleAccent,
+    this.titleAccentColor,
+    this.subtitle,
+    this.subtitleColor = const Color(0xffffe22d),
+    this.imageAlignment = Alignment.center,
+    this.borderColor = const Color(0xffffb300),
+    this.badgeLabel,
+    this.topRatio = 0.58,
+    this.bottomRatio = 0.44,
+    this.imageOffsetLeft = 45.0,
+    this.imageScale = 1.0,
+    super.key,
+  });
+
+  final String title;
+  final String? titleAccent;
+  final Color titleColor;
+  final Color? titleAccentColor;
+  final String? subtitle;
+  final Color subtitleColor;
+  final String imageAsset;
+  final Alignment imageAlignment;
+  final Color borderColor;
+  final VoidCallback? onPressed;
+  final String? badgeLabel;
+  final double topRatio;
+  final double bottomRatio;
+  final double imageOffsetLeft;
+  final double imageScale;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onPressed,
+              borderRadius: BorderRadius.circular(8),
+              child: Ink(
+                height: 76,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white24, width: 1.5),
+                ),
+                child: Opacity(
+                  opacity: onPressed == null ? 0.45 : 1.0,
+                  child: Stack(
+                    children: [
+                      // Wedge artwork on right
+                      Positioned.fill(
+                        child: ClipPath(
+                          clipper: _WedgeClipper(
+                            topRatio: topRatio,
+                            bottomRatio: bottomRatio,
+                          ),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final effectiveLeft = max(
+                                imageOffsetLeft,
+                                constraints.maxWidth * bottomRatio - 20,
+                              );
+                              return Stack(
+                                children: [
+                                  Positioned(
+                                    left: effectiveLeft,
+                                    top: 0,
+                                    bottom: 0,
+                                    right: -15,
+                                    child: ClipRect(
+                                      child: Transform.scale(
+                                        scale: imageScale,
+                                        alignment: imageAlignment,
+                                        child: Image.asset(
+                                          imageAsset,
+                                          fit: BoxFit.cover,
+                                          alignment: imageAlignment,
+                                          errorBuilder: (_, __, ___) => ColoredBox(
+                                            color: Colors.black45,
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.image_not_supported_outlined,
+                                                color: Colors.white24,
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Cinematic dark gradient overlay
+                                  Positioned.fill(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.black.withValues(alpha: 0.05),
+                                            Colors.black.withValues(alpha: 0.65),
+                                          ],
+                                          stops: const [0.55, 1.0],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      // Diagonal divider line
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _WedgeBorderPainter(
+                            color: borderColor,
+                            topRatio: topRatio,
+                            bottomRatio: bottomRatio,
+                          ),
+                        ),
+                      ),
+                      // Left text column
+                      Positioned.fill(
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final effectiveRight = constraints.maxWidth > 250
+                                ? constraints.maxWidth * (1.0 - topRatio) + 12.0
+                                : 56.0;
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                left: 14,
+                                right: effectiveRight,
+                              ),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (titleAccent != null) ...[
+                                      Text(
+                                        title,
+                                        style: TextStyle(
+                                          color: titleColor,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w900,
+                                          height: 1.05,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      Text(
+                                        titleAccent!,
+                                        style: TextStyle(
+                                          color: titleAccentColor ?? const Color(0xffffe22d),
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w900,
+                                          height: 1.05,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ] else ...[
+                                      Text(
+                                        title,
+                                        style: TextStyle(
+                                          color: titleColor,
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w900,
+                                          height: 1.05,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ],
+                                    if (subtitle != null) ...[
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        subtitle!,
+                                        style: TextStyle(
+                                          color: subtitleColor,
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (badgeLabel != null && onPressed == null)
+          Positioned(
+            left: -18,
+            top: 10,
+            child: Transform.rotate(
+              angle: -0.55,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xff7a33cc).withValues(alpha: 0.92),
+                  border: Border.all(color: const Color(0xffd0a5ff), width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black87,
+                      blurRadius: 4,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  badgeLabel!.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _WedgeClipper extends CustomClipper<Path> {
+  const _WedgeClipper({this.topRatio = 0.58, this.bottomRatio = 0.44});
+
+  final double topRatio;
+  final double bottomRatio;
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(size.width * topRatio, 0);
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width * bottomRatio, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant _WedgeClipper oldClipper) =>
+      oldClipper.topRatio != topRatio || oldClipper.bottomRatio != bottomRatio;
+}
+
+class _WedgeBorderPainter extends CustomPainter {
+  const _WedgeBorderPainter({
+    required this.color,
+    this.topRatio = 0.58,
+    this.bottomRatio = 0.44,
+  });
+
+  final Color color;
+  final double topRatio;
+  final double bottomRatio;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.9)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..moveTo(size.width * topRatio, 0)
+      ..lineTo(size.width * bottomRatio, size.height);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _WedgeBorderPainter oldPainter) =>
+      oldPainter.color != color ||
+      oldPainter.topRatio != topRatio ||
+      oldPainter.bottomRatio != bottomRatio;
 }
 
 /// Chip de compte : connecté (email + déconnexion) ou invité

@@ -789,6 +789,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
   SurvivalMode _mode = SurvivalMode.mediumFixed;
   bool _randomRoute = false;
   bool _expertFreeMode = false;
+  bool _expansionsExpanded = false;
   final Map<EnemyRank, int> _freeCounts = {
     EnemyRank.green: 1,
     EnemyRank.blue: 0,
@@ -850,24 +851,6 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 92),
           children: [
-            InfoCard(
-              child: Row(
-                children: [
-                  HeroAvatar(hero: widget.hero, size: 56),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      widget.hero.label,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
             SegmentedButton<SurvivalMode>(
               segments: const [
                 ButtonSegment(value: SurvivalMode.free, label: Text('Free')),
@@ -951,14 +934,223 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+            _buildMinionPacksCard(),
             const SizedBox(height: 16),
-            ImageActionButton(
-              label: 'Start run',
-              icon: Icons.play_arrow,
+            WedgeActionButton(
+              title: 'START',
+              titleAccent: 'RUN',
+              titleAccentColor: const Color(0xff54e98a),
+              subtitle: widget.hero.label.toUpperCase(),
+              subtitleColor: const Color(0xffffe22d),
+              imageAsset: widget.hero.asset,
+              imageAlignment: widget.hero.headAlignment,
+              imageScale: 1.0,
+              borderColor: const Color(0xff54e98a),
+              topRatio: 0.60,
+              bottomRatio: 0.46,
               onPressed: canStart ? () => widget.onStart(config) : null,
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMinionPacksCard() {
+    final activePacks = AppSettings.instance.activeMinionPacks;
+    return InfoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => setState(() => _expansionsExpanded = !_expansionsExpanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  const Icon(Icons.style_rounded, size: 18, color: Color(0xffffe22d)),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'CARD EXPANSIONS',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xffffe22d).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: const Color(0xffffe22d).withValues(alpha: 0.5),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      '${activePacks.length} / 4 active',
+                      style: const TextStyle(
+                        color: Color(0xffffe22d),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  AnimatedRotation(
+                    turns: _expansionsExpanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white70,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Column(
+                children: [
+                  _buildPackTile(
+                    packKey: 'dta',
+                    title: 'DTA Minions',
+                    subtitle: 'Core campaign deck (Required)',
+                    imageAsset: 'assets/packs/pack_dta.webp',
+                    locked: true,
+                  ),
+                  _buildPackTile(
+                    packKey: 'promo',
+                    title: 'Promo pack DTA',
+                    subtitle: 'Loot Goblin & promo minions',
+                    imageAsset: 'assets/packs/pack_promo.webp',
+                  ),
+                  _buildPackTile(
+                    packKey: 'santa',
+                    title: "Santa's workshop Promo pack DTA",
+                    subtitle: 'Winter Soldiers & holiday minions',
+                    imageAsset: 'assets/packs/pack_santa.webp',
+                  ),
+                  _buildPackTile(
+                    packKey: 'community',
+                    title: 'Community minions',
+                    subtitle: 'Custom community created minions',
+                    imageAsset: 'assets/packs/pack_community.webp',
+                  ),
+                ],
+              ),
+            ),
+            crossFadeState: _expansionsExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 250),
+            sizeCurve: Curves.easeInOutCubic,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPackTile({
+    required String packKey,
+    required String title,
+    required String subtitle,
+    required String imageAsset,
+    bool locked = false,
+  }) {
+    final isActive = locked || AppSettings.instance.isMinionPackActive(packKey);
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: isActive ? 0.45 : 0.2),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isActive
+              ? (locked
+                  ? Colors.amber.withValues(alpha: 0.6)
+                  : const Color(0xff7a33cc).withValues(alpha: 0.75))
+              : Colors.white12,
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              width: 44,
+              height: 44,
+              color: Colors.black,
+              child: Image.asset(
+                imageAsset,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey.shade900,
+                  child: const Icon(Icons.style, color: Colors.white38),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          color: isActive ? Colors.white : Colors.white60,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (locked) ...[
+                      const SizedBox(width: 6),
+                      const Icon(Icons.lock_rounded, size: 13, color: Colors.amber),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: isActive ? Colors.white70 : Colors.white38,
+                    fontSize: 11,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: isActive,
+            activeColor: locked ? Colors.amber : const Color(0xff9b58ff),
+            onChanged: locked
+                ? null
+                : (val) async {
+                    await AppSettings.instance.setMinionPackActive(packKey, val);
+                    if (mounted) setState(() {});
+                  },
+          ),
+        ],
       ),
     );
   }

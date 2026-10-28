@@ -53,6 +53,8 @@ class _FightStepSnapshot {
     required this.enemyHeal,
     this.secondaryEnemyHeal = 0,
     required this.cpSteal,
+    this.battleDiscardCards = 0,
+    this.battleDiscardPositiveToken = false,
     required this.heroAttackCount,
     required this.heroAttackTotal,
     required this.lastHeroAttack,
@@ -94,6 +96,8 @@ class _FightStepSnapshot {
   final int enemyHeal;
   final int secondaryEnemyHeal;
   final int cpSteal;
+  final int battleDiscardCards;
+  final bool battleDiscardPositiveToken;
   final int heroAttackCount;
   final int heroAttackTotal;
   final int lastHeroAttack;
@@ -263,6 +267,8 @@ class _FightPageState extends State<FightPage> {
   int _battleEnemyHeal = 0;
   int _battleSecondaryEnemyHeal = 0;
   int _battleCpSteal = 0;
+  int _battleDiscardCards = 0;
+  bool _battleDiscardPositiveToken = false;
   bool _battleAttackFailedCompletely = false;
   bool _battleEnemyFled = false;
   bool _discipleSummonLevel3 = false;
@@ -271,8 +277,40 @@ class _FightPageState extends State<FightPage> {
   int _lastHeroAttack = 0;
   String _lastBattleOutcomeMessage = '';
   String _extraDiceOutcomeMessage = '';
+  List<GameDie>? _lastExtraDice;
   final List<String> _battleHeroTokens = [];
   final List<String> _battleMinionTokens = [];
+  List<String> get _currentDisplayHeroTokens {
+    final list = List<String>.from(widget.adventure.alterations);
+    if (_phase == CombatPhase.hero || _phase == CombatPhase.minionAttack) {
+      for (final t in _battleHeroTokens) {
+        final rule = TokenCatalogRepository.byLabel(t);
+        final max = rule?.maxStack ?? 99;
+        final k = _normalizeTokenKey(t);
+        final count = list.where((x) => _normalizeTokenKey(x) == k).length;
+        if (count < max) {
+          list.add(t);
+        }
+      }
+    }
+    return list;
+  }
+
+  List<String> get _currentDisplayEnemyTokens {
+    final list = List<String>.from(enemy.alterations);
+    if (_phase == CombatPhase.hero || _phase == CombatPhase.minionAttack) {
+      for (final t in _battleMinionTokens) {
+        final rule = TokenCatalogRepository.byLabel(t);
+        final max = rule?.maxStack ?? 99;
+        final k = _normalizeTokenKey(t);
+        final count = list.where((x) => _normalizeTokenKey(x) == k).length;
+        if (count < max) {
+          list.add(t);
+        }
+      }
+    }
+    return list;
+  }
   final List<String> _battleNotes = [];
   final List<String> _naraxusRollHistory = [];
   bool _diceAnimationPending = false;
@@ -344,19 +382,27 @@ class _FightPageState extends State<FightPage> {
   bool get _isResolutionMode =>
       _battleEnemyFled ||
       widget.adventure.health <= 0 ||
-      (_isNaraxus && enemy.health <= 0) ||
+      ((_isNaraxus || enemy.rank == EnemyRank.naraxus) && enemy.health <= 0) ||
       _allFightEnemiesDefeated;
 
-  bool get _isNaraxus => enemy.profileKey == 'naraxus';
+  bool get _isNaraxus =>
+      enemy.profileKey == 'naraxus' ||
+      (enemy.profileKey == 'kaelen-voss' &&
+          enemy.attackPlan.style == MinionAttackStyle.none &&
+          enemy.attackPlan.displayRows.isEmpty);
 
   bool _isViseerNode(EnemyNode node) => node.profileKey == 'viseer';
 
   bool _enemyHasInfiniteCp(EnemyNode node) =>
-      node.profileKey == 'naraxus' || _isViseerNode(node);
+      node.rank == EnemyRank.naraxus ||
+      node.profileKey == 'naraxus' ||
+      _isViseerNode(node);
 
   @override
   void initState() {
     super.initState();
+    enforceTokenStackLimits(widget.adventure.alterations);
+    enforceTokenStackLimits(enemy.alterations);
     AppSettings.instance.addListener(_handleAppSettingsChanged);
     for (var i = 0; i < 6; i++) {
       _dice.add(GameDie(id: i));
@@ -456,12 +502,11 @@ class _FightPageState extends State<FightPage> {
                       adventure: widget.adventure,
                       enemy: enemy,
                       phase: _phase,
+                      heroTokens: _currentDisplayHeroTokens,
+                      enemyTokens: _currentDisplayEnemyTokens,
                       naraxusRollHistory: _naraxusRollHistory,
                       onFinish: null,
-                      onChanged: () {
-                        widget.onChanged();
-                        setState(() {});
-                      },
+                      onChanged: _syncAfterTokensChanged,
                       onEditHeroTokens: _editHeroTokens,
                       onEditEnemyTokens: _editEnemyTokens,
                       onHeroTokenRemoved: (token) {
@@ -533,12 +578,11 @@ class _FightPageState extends State<FightPage> {
                           adventure: widget.adventure,
                           enemy: enemy,
                           phase: _phase,
+                          heroTokens: _currentDisplayHeroTokens,
+                          enemyTokens: _currentDisplayEnemyTokens,
                           naraxusRollHistory: _naraxusRollHistory,
                           onFinish: null,
-                          onChanged: () {
-                            widget.onChanged();
-                            setState(() {});
-                          },
+                          onChanged: _syncAfterTokensChanged,
                           onEditHeroTokens: _editHeroTokens,
                           onEditEnemyTokens: _editEnemyTokens,
                           onHeroTokenRemoved: (token) {
@@ -609,7 +653,7 @@ class _FightPageState extends State<FightPage> {
                             widget.onGameOverHistory?.call();
                           },
                           onHomepage: () {
-                            if (_isNaraxus) {
+                            if (_isNaraxus || enemy.rank == EnemyRank.naraxus) {
                               widget.onFinished?.call();
                             } else {
                               widget.onGameOverHome?.call();
@@ -946,10 +990,7 @@ class _FightPageState extends State<FightPage> {
                             ) &&
                             !_heroConstrictUsed),
                     onFinish: null,
-                    onChanged: () {
-                      widget.onChanged();
-                      setState(() {});
-                    },
+                    onChanged: _syncAfterTokensChanged,
                     onEditHeroTokens: _editHeroTokens,
                     onEditEnemyTokens: _editEnemyTokens,
                     onHeroTokenRemoved: (token) {
@@ -1405,6 +1446,7 @@ class _FightPageState extends State<FightPage> {
       await _handlePowderKegStacking(values, true);
       await _handleNanitesStacking(values, true);
       await _handleWebbedInfection(oldTokens, values, true);
+      enforceTokenStackLimits(values);
       widget.adventure.setAlterations(values);
       final defensiveTokens = [
         'Agility',
@@ -1462,6 +1504,7 @@ class _FightPageState extends State<FightPage> {
       await _handlePowderKegStacking(values, false);
       await _handleNanitesStacking(values, false);
       await _handleWebbedInfection(oldTokens, values, false);
+      enforceTokenStackLimits(values);
       enemy.alterations
         ..clear()
         ..addAll(values);
@@ -1508,9 +1551,18 @@ class _FightPageState extends State<FightPage> {
       }
       final currentKeys = values.map(_normalizeTokenKey).toSet();
       enemy.maskedPopinTokens.removeWhere((key) => !currentKeys.contains(key));
-      widget.onChanged();
-      setState(() {});
+      _syncAfterTokensChanged();
     }
+  }
+
+  void _syncAfterTokensChanged() {
+    if (_phase == CombatPhase.minionAttack &&
+        _lastExtraDice != null &&
+        _showAiExtraDicePhase) {
+      _resolveExtraDicePhase(_lastExtraDice!);
+    }
+    widget.onChanged();
+    setState(() {});
   }
 
   void _rollDice() {
@@ -2563,6 +2615,8 @@ class _FightPageState extends State<FightPage> {
       enemyHeal: _battleEnemyHeal,
       secondaryEnemyHeal: _battleSecondaryEnemyHeal,
       cpSteal: _battleCpSteal,
+      battleDiscardCards: _battleDiscardCards,
+      battleDiscardPositiveToken: _battleDiscardPositiveToken,
       heroAttackCount: _heroAttackCount,
       heroAttackTotal: _heroAttackTotal,
       lastHeroAttack: _lastHeroAttack,
@@ -2627,6 +2681,8 @@ class _FightPageState extends State<FightPage> {
       _battleEnemyHeal = snapshot.enemyHeal;
       _battleSecondaryEnemyHeal = snapshot.secondaryEnemyHeal;
       _battleCpSteal = snapshot.cpSteal;
+      _battleDiscardCards = snapshot.battleDiscardCards;
+      _battleDiscardPositiveToken = snapshot.battleDiscardPositiveToken;
       _heroAttackCount = snapshot.heroAttackCount;
       _heroAttackTotal = snapshot.heroAttackTotal;
       _lastHeroAttack = snapshot.lastHeroAttack;
@@ -2740,14 +2796,7 @@ class _FightPageState extends State<FightPage> {
     _rerollOneMode = false;
     _specialAttackReady = false;
     _specialAttackMode = false;
-    if (_defenseGainedChaos > 0) {
-      for (int i = 0; i < _defenseGainedChaos; i++) {
-        final idx =
-            enemy.alterations.indexWhere((t) => t.toLowerCase() == 'chaos');
-        if (idx != -1) enemy.alterations.removeAt(idx);
-      }
-      _defenseGainedChaos = 0;
-    }
+    _defenseGainedChaos = 0;
     for (final die in _dice) {
       die
         ..value = null
@@ -2846,12 +2895,14 @@ class _FightPageState extends State<FightPage> {
 
   bool get _hasActiveBlindOnAttacker {
     if (_blindRollResolved) return false;
+    if (_phase != CombatPhase.hero && _phase != CombatPhase.minionAttack) return false;
+    if (_battleAttackValue <= 0) return false;
     final isMinionAttacker = _phase == CombatPhase.minionAttack;
     final targetList = isMinionAttacker
         ? enemy.alterations
         : widget.adventure.alterations;
     return targetList.any(
-      (t) => t.toLowerCase() == 'blind' || t.toLowerCase() == 'Ã©blouissement',
+      (t) => t.toLowerCase() == 'blind' || t.toLowerCase() == 'éblouissement' || t.toLowerCase() == 'eblouissement',
     );
   }
 
@@ -2869,12 +2920,14 @@ class _FightPageState extends State<FightPage> {
 
   Future<void> _checkAndTriggerBlindPopin() async {
     if (_blindPopinTriggered || !mounted) return;
+    if (_phase != CombatPhase.hero && _phase != CombatPhase.minionAttack) return;
+    if (_battleAttackValue <= 0) return;
 
     final isMinion = _phase == CombatPhase.minionAttack;
     final tokens = isMinion ? enemy.alterations : widget.adventure.alterations;
 
     final hasBlind = tokens.any(
-      (t) => t.toLowerCase() == 'blind' || t.toLowerCase() == 'Ã©blouissement',
+      (t) => t.toLowerCase() == 'blind' || t.toLowerCase() == 'éblouissement' || t.toLowerCase() == 'eblouissement',
     );
 
     if (!hasBlind) return;
@@ -3281,6 +3334,16 @@ class _FightPageState extends State<FightPage> {
         ),
       );
     }
+  }
+
+  String _formatTokensWithCounts(List<String> tokens) {
+    final counts = <String, int>{};
+    for (final t in tokens) {
+      counts[t] = (counts[t] ?? 0) + 1;
+    }
+    return counts.entries
+        .map((e) => e.value > 1 ? '${e.value}x ${e.key}' : e.key)
+        .join(', ');
   }
 
   bool _isBleedToken(String t) {
@@ -5193,6 +5256,7 @@ class _FightPageState extends State<FightPage> {
     _battleLoseHp = 0;
     _battleEnemyHeal = 0;
     _battleCpSteal = 0;
+    _battleDiscardCards = 0;
     _battleAttackFailedCompletely = false;
     _battleEnemyFled = false;
     _discipleSummonLevel3 = false;
@@ -5200,6 +5264,9 @@ class _FightPageState extends State<FightPage> {
     _battleMinionTokens.clear();
     _battleNotes.clear();
     _extraDiceOutcomeMessage = '';
+    _lastExtraDice = null;
+    _blindPopinTriggered = false;
+    _blindRollResolved = false;
     _viseerDefensePassivePending = false;
     _heroEvasiveAvoided = false;
     _minionEvasiveAvoided = false;
@@ -5595,10 +5662,20 @@ class _FightPageState extends State<FightPage> {
               notes.add('Defense: steals ${eff.stealCp * count} CP.');
             }
             for (final t in eff.tokens) {
+              final isMinion = t.toLowerCase() == 'chaos' ||
+                  TokenCatalogRepository.byLabel(t)?.kind == StatusTokenKind.positive;
               for (var i = 0; i < count; i++) {
-                heroTokens.add(t);
+                if (isMinion) {
+                  minionTokens.add(t);
+                } else {
+                  heroTokens.add(t);
+                }
               }
-              notes.add('Defense: gives $t to the hero.');
+              if (isMinion) {
+                notes.add('Defense: ${enemy.label} gains $t${count > 1 ? ' ($count)' : ''}.');
+              } else {
+                notes.add('Defense: gives $t to the hero.');
+              }
             }
             if (eff.heal > 0) {
               enemyHeal += eff.heal * count;
@@ -5612,6 +5689,7 @@ class _FightPageState extends State<FightPage> {
                 firstDieValue: rolled.isNotEmpty ? (rolled.first.value ?? 0) : 0,
                 hasDualEnemies: _hasDualEnemies,
                 heroTokens: widget.adventure.alterations,
+                enemyTokens: [...enemy.alterations, ...minionTokens],
                 rollD6: () => _random.nextInt(6) + 1,
               );
               if (formRes.matched) {
@@ -5813,6 +5891,88 @@ class _FightPageState extends State<FightPage> {
       case 'viseer':
         return allSymbols(DieSymbol.red);
       default:
+        if (enemy.defenseEffects.isNotEmpty) {
+          final matchedEffects = <MatchedDefenseEffect>[];
+          final counts = _symbolCounts();
+          final white = counts[DieSymbol.white] ?? 0;
+          final yellow = counts[DieSymbol.yellow] ?? 0;
+          final red = counts[DieSymbol.red] ?? 0;
+          for (final eff in enemy.defenseEffects) {
+            bool matches = false;
+            int count = 1;
+            if (eff.white > 0 || eff.orange > 0 || eff.red > 0) {
+              if (eff.orWhiteOrange && (eff.white > 0 || eff.orange > 0)) {
+                final matchW = eff.white > 0 && white >= eff.white;
+                final matchO = eff.orange > 0 && yellow >= eff.orange;
+                final matchR = eff.red == 0 || red >= eff.red;
+                if ((matchW || matchO) && matchR) {
+                  matches = true;
+                  if (eff.repeat) {
+                    final wCount = eff.white > 0 ? white ~/ eff.white : 0;
+                    final oCount = eff.orange > 0 ? yellow ~/ eff.orange : 0;
+                    count = (wCount + oCount).clamp(1, 99);
+                  }
+                }
+              } else if (eff.orOrangeRed && (eff.orange > 0 || eff.red > 0)) {
+                final matchO = eff.orange > 0 && yellow >= eff.orange;
+                final matchR = eff.red > 0 && red >= eff.red;
+                final matchW = eff.white == 0 || white >= eff.white;
+                if ((matchO || matchR) && matchW) {
+                  matches = true;
+                  if (eff.repeat) {
+                    final oCount = eff.orange > 0 ? yellow ~/ eff.orange : 0;
+                    final rCount = eff.red > 0 ? red ~/ eff.red : 0;
+                    count = (oCount + rCount).clamp(1, 99);
+                  }
+                }
+              } else if (white >= eff.white && yellow >= eff.orange && red >= eff.red) {
+                matches = true;
+                if (eff.repeat) {
+                  final factors = <int>[];
+                  if (eff.orange > 0) factors.add(yellow ~/ eff.orange);
+                  if (eff.red > 0) factors.add(red ~/ eff.red);
+                  if (eff.white > 0) factors.add(white ~/ eff.white);
+                  count = factors.isEmpty ? 1 : factors.reduce(min);
+                }
+              }
+            } else if (eff.prevent > 0 ||
+                eff.returnDamage > 0 ||
+                eff.stealHp > 0 ||
+                eff.loseHp > 0 ||
+                eff.stealCp > 0 ||
+                eff.heal > 0 ||
+                eff.tokens.isNotEmpty ||
+                eff.formulas.isNotEmpty) {
+              matches = true;
+            }
+
+            if (matches && count > 0) {
+              matchedEffects.add(MatchedDefenseEffect(effect: eff, count: count));
+            }
+          }
+
+          final activeEffects = filterActiveDefenseEffects(matchedEffects);
+          final selected = <int>{};
+          for (final matched in activeEffects) {
+            final eff = matched.effect;
+            final count = matched.count;
+            if (eff.white > 0) {
+              final needed = eff.white * (eff.repeat ? count : 1);
+              selected.addAll(firstSymbols(DieSymbol.white, needed));
+            }
+            if (eff.orange > 0) {
+              final needed = eff.orange * (eff.repeat ? count : 1);
+              selected.addAll(firstSymbols(DieSymbol.yellow, needed));
+            }
+            if (eff.red > 0) {
+              final needed = eff.red * (eff.repeat ? count : 1);
+              selected.addAll(firstSymbols(DieSymbol.red, needed));
+            }
+          }
+          if (selected.isNotEmpty) {
+            return selected;
+          }
+        }
         return rolled.map((die) => die.id);
     }
   }
@@ -5831,6 +5991,7 @@ class _FightPageState extends State<FightPage> {
     var lifeSteal = 0;
     var loseHp = 0;
     var cpSteal = 0;
+    var discardCards = 0;
 
     if (enemy.attackPlan.style == MinionAttackStyle.symbols) {
       final goal = _currentMinionSymbolGoal();
@@ -5839,8 +6000,15 @@ class _FightPageState extends State<FightPage> {
         lifeSteal += eff.stealHp;
         loseHp += eff.loseHp;
         cpSteal += eff.stealCp;
+        discardCards += eff.discardCards;
         heroTokens.addAll(eff.heroTokens);
         minionTokens.addAll(eff.minionTokens);
+        final hasDiscardPosToken = eff.formulas.any((f) => f.toLowerCase().contains('discardpositivetoken')) ||
+            eff.notes.any((n) => n.toLowerCase().contains('discard a random positive status token')) ||
+            enemy.profileKey == 'bleu-bleu-015';
+        if (hasDiscardPosToken) {
+          notes.add('Attack: hero must discard a random positive status token.');
+        }
         if (eff.stealHp > 0) {
           notes.add('Attack: steals ${eff.stealHp} HP.');
         }
@@ -5868,6 +6036,7 @@ class _FightPageState extends State<FightPage> {
         lifeSteal += eff.stealHp;
         loseHp += eff.loseHp;
         cpSteal += eff.stealCp;
+        discardCards += eff.discardCards;
         heroTokens.addAll(eff.heroTokens);
         minionTokens.addAll(eff.minionTokens);
         if (eff.stealHp > 0) {
@@ -5879,11 +6048,42 @@ class _FightPageState extends State<FightPage> {
         if (eff.stealCp > 0) {
           notes.add('Attack: steals ${eff.stealCp} CP.');
         }
+        final heroTokenCounts = <String, int>{};
         for (final t in eff.heroTokens) {
-          notes.add('Attack: gives $t to the hero.');
+          heroTokenCounts[t] = (heroTokenCounts[t] ?? 0) + 1;
+        }
+        for (final entry in heroTokenCounts.entries) {
+          if (entry.value > 1) {
+            notes.add('Attack: gives ${entry.value}x ${entry.key} to the hero.');
+          } else {
+            notes.add('Attack: gives ${entry.key} to the hero.');
+          }
         }
         for (final t in eff.minionTokens) {
           notes.add('Attack: gives $t to minion.');
+        }
+        final bleedFormula = eff.formulas.firstWhere(
+          (f) => f.toLowerCase().contains('bleed on hero'),
+          orElse: () => '',
+        );
+        final hasBleedBonus = rawLen >= 4 &&
+            (bleedFormula.isNotEmpty ||
+                enemy.profileKey == 'orange-orange-009' ||
+                eff.notes.any((n) => n.toLowerCase().contains('bleed')));
+        if (hasBleedBonus) {
+          final existingBleeds = widget.adventure.alterations.where(_isBleedToken).length;
+          final newBleeds = heroTokens.where(_isBleedToken).length;
+          final totalBleeds = existingBleeds + newBleeds;
+          final multiplier = bleedFormula.contains('+2') ||
+                  rawLen >= 5 ||
+                  eff.notes.any((n) => n.contains('{damage:2}') || n.contains('+2'))
+              ? 2
+              : 1;
+          final bonus = totalBleeds * multiplier;
+          attack = eff.damage + bonus;
+          if (bonus > 0) {
+            notes.add('Leeching Strike: +$bonus damage from $totalBleeds Bleed on hero board.');
+          }
         }
       }
     }
@@ -5974,6 +6174,7 @@ class _FightPageState extends State<FightPage> {
       lifeSteal: lifeSteal,
       loseHp: loseHp,
       cpSteal: cpSteal,
+      discardCards: discardCards,
       heroTokens: heroTokens,
       minionTokens: minionTokens,
       notes: notes,
@@ -6002,6 +6203,11 @@ class _FightPageState extends State<FightPage> {
     _battleLoseHp = acc.loseHp.clamp(0, 99);
     _battleEnemyHeal = 0;
     _battleCpSteal = acc.cpSteal.clamp(0, 99);
+    _battleDiscardCards = acc.discardCards.clamp(0, 99);
+    final hasValidAttack = (acc.result != null && acc.result!.value > 0) || acc.attack > 0;
+    final hasDiscardPosToken = enemy.profileKey == 'bleu-bleu-015' ||
+        (_currentMinionSymbolGoal()?.effect?.formulas.any((f) => f.toLowerCase().contains('discardpositivetoken')) ?? false);
+    _battleDiscardPositiveToken = hasValidAttack && hasDiscardPosToken;
     _battleHeroTokens
       ..clear()
       ..addAll(acc.heroTokens);
@@ -6054,6 +6260,7 @@ class _FightPageState extends State<FightPage> {
       case 'enchanteur-gobelin':
         if (_symbolGoalMet(const SymbolGoal(white: 1, yellow: 2, red: 1))) {
           acc.notes.add('Validated attack: hero discards 1 random card.');
+          acc.discardCards = 1;
         }
       case 'oni-delirant':
         if (_symbolGoalMet(const SymbolGoal(yellow: 4))) {
@@ -6091,6 +6298,7 @@ class _FightPageState extends State<FightPage> {
       case 'vert-vert-019':
         if (_symbolGoalMet(const SymbolGoal(red: 2))) {
           acc.notes.add('Validated attack: hero discards 1 random card.');
+          acc.discardCards = 1;
         }
       case 'vert-vert-020':
         if (_bestSuiteLength(values) >= 5) {
@@ -6350,6 +6558,7 @@ class _FightPageState extends State<FightPage> {
     _battleLifeSteal = 0;
     _battleEnemyHeal = enemyHeal.clamp(0, 99);
     _battleCpSteal = 0;
+    _battleDiscardCards = (first == 5 ? 1 : 0);
     _battleHeroTokens
       ..clear()
       ..addAll(heroTokens);
@@ -6393,6 +6602,130 @@ class _FightPageState extends State<FightPage> {
     if (_phase != CombatPhase.minionAttack) {
       return;
     }
+    // Generic resolver for attacks with extraRoll in attackPlan.actions
+    const customExtraRollProfiles = {
+      'vert-vert-012',
+      'vert-vert-015',
+      'vert-vert-017',
+      'vert-vert-021',
+      'bleu-bleu-003',
+      'oni-delirant',
+    };
+    final currentGoal = _currentMinionSymbolGoal();
+    final extraRoll = currentGoal?.effect?.extraRoll;
+    if (extraRoll != null &&
+        extraRoll.outcomes.isNotEmpty &&
+        !customExtraRollProfiles.contains(enemy.profileKey) &&
+        !_isNaraxus) {
+      final rolled = extraDice.where((die) => die.value != null).toList();
+      if (rolled.isEmpty) return;
+      _lastExtraDice = extraDice;
+      _markExtraDiceSelection(extraDice, rolled.map((d) => d.id).toList());
+
+      var extraDamage = 0;
+      var isUndef = currentGoal?.effect?.undefendable ?? false;
+      var extraLifeSteal = currentGoal?.effect?.stealHp ?? 0;
+      var extraLoseHp = currentGoal?.effect?.loseHp ?? 0;
+      var extraCpSteal = currentGoal?.effect?.stealCp ?? 0;
+      var extraDiscard = currentGoal?.effect?.discardCards ?? 0;
+      final addedHeroTokens = <String>[...(currentGoal?.effect?.heroTokens ?? const [])];
+      final addedMinionTokens = <String>[...(currentGoal?.effect?.minionTokens ?? const [])];
+      final outcomeLines = <String>[];
+
+      for (final die in rolled) {
+        final roll = die.value!;
+        final symbol = _symbolForFace(roll);
+        final outcomeFace = switch (symbol) {
+          DieSymbol.white => ExtraRollFace.white,
+          DieSymbol.yellow => ExtraRollFace.yellow,
+          DieSymbol.red => ExtraRollFace.red,
+        };
+
+        ExtraRollOutcome? matchedOutcome;
+        for (final out in extraRoll.outcomes) {
+          if (out.face == outcomeFace || out.face == ExtraRollFace.any) {
+            matchedOutcome = out;
+            break;
+          }
+        }
+
+        if (matchedOutcome != null) {
+          extraDamage += matchedOutcome.damage ?? 0;
+          if (matchedOutcome.undefendable) isUndef = true;
+          extraLifeSteal += matchedOutcome.stealHp ?? 0;
+          extraLoseHp += matchedOutcome.loseHp ?? 0;
+          extraCpSteal += matchedOutcome.stealCp ?? 0;
+          if ((matchedOutcome.discardCards ?? 0) > 0) {
+            extraDiscard += matchedOutcome.discardCards!;
+          } else if (matchedOutcome.label?.toLowerCase().contains('discard') ?? false) {
+            extraDiscard += 1;
+          }
+          for (final t in matchedOutcome.tokens) {
+            final isMinion = t.toLowerCase() == 'chaos' ||
+                TokenCatalogRepository.byLabel(t)?.kind == StatusTokenKind.positive;
+            final rule = TokenCatalogRepository.byLabel(t);
+            final maxStack = rule?.maxStack ?? 99;
+            final key = _normalizeTokenKey(t);
+
+            if (isMinion) {
+              final currentTotal = enemy.alterations.where((x) => _normalizeTokenKey(x) == key).length +
+                  addedMinionTokens.where((x) => _normalizeTokenKey(x) == key).length;
+              if (currentTotal < maxStack) {
+                addedMinionTokens.add(t);
+              }
+            } else {
+              final currentTotal = widget.adventure.alterations.where((x) => _normalizeTokenKey(x) == key).length +
+                  addedHeroTokens.where((x) => _normalizeTokenKey(x) == key).length;
+              if (currentTotal < maxStack) {
+                addedHeroTokens.add(t);
+              }
+            }
+          }
+          final desc = matchedOutcome.label?.isNotEmpty == true
+              ? matchedOutcome.label!
+              : '${symbol.name} face';
+          outcomeLines.add('Die $roll (${symbol.name}): $desc');
+        }
+      }
+
+      // Bonus de degats par Chaos (Devin de Mort / formulas / finalText)
+      if (enemy.profileKey == 'violet-violet-008' ||
+          (currentGoal?.effect?.formulas.any((f) => f.contains('Chaos')) ?? false) ||
+          (extraRoll.finalText?.toLowerCase().contains('chaos') ?? false)) {
+        final currentChaos = enemy.alterations.where((t) => t.toLowerCase() == 'chaos').length +
+            addedMinionTokens.where((t) => t.toLowerCase() == 'chaos').length;
+        extraDamage += currentChaos;
+        if (currentChaos > 0) {
+          outcomeLines.add('+$currentChaos damage from Chaos');
+        }
+      }
+
+      setState(() {
+        final baseDamage = currentGoal?.effect?.damage ?? 0;
+        _battleAttackValue = (baseDamage + extraDamage).clamp(0, 99);
+        _battleAttackUndefendable = isUndef;
+        _battleLifeSteal = extraLifeSteal;
+        _battleLoseHp = extraLoseHp;
+        _battleEnemyHeal = currentGoal?.effect?.heal ?? 0;
+        _battleCpSteal = extraCpSteal;
+        _battleDiscardCards = extraDiscard;
+        _battleHeroTokens.clear();
+        _battleHeroTokens.addAll(addedHeroTokens);
+        _battleMinionTokens.clear();
+        _battleMinionTokens.addAll(addedMinionTokens);
+
+        _battleNotes.clear();
+        final actionLabel = currentGoal?.effect?.label ?? enemy.label;
+        for (final line in outcomeLines) {
+          _battleNotes.add('$actionLabel: $line');
+        }
+        _extraDiceOutcomeMessage =
+            '$actionLabel extra roll:\n${outcomeLines.join('\n')}\n'
+            '${enemy.label} inflicts $_battleAttackValue damage.';
+      });
+      return;
+    }
+
     if (enemy.profileKey == 'vert-vert-012') {
       final values = extraDice
           .where((die) => die.value != null)
@@ -6727,10 +7060,13 @@ class _FightPageState extends State<FightPage> {
     enemy.alterations.removeAt(_random.nextInt(enemy.alterations.length));
   }
 
-  SymbolGoal? _currentMinionSymbolGoal() {
+  SymbolGoal? _currentMinionSymbolGoal({bool includeFallbackZero = false}) {
     if (enemy.attackPlan.style != MinionAttackStyle.symbols) return null;
     SymbolGoal? bestGoal;
     for (final goal in enemy.attackPlan.goals) {
+      if (!includeFallbackZero && (goal.white + goal.yellow + goal.red == 0)) {
+        continue;
+      }
       if (_symbolGoalMet(goal)) {
         if (bestGoal == null) {
           bestGoal = goal;
@@ -6749,13 +7085,22 @@ class _FightPageState extends State<FightPage> {
         }
       }
     }
+    if (bestGoal == null && includeFallbackZero) {
+      for (final goal in enemy.attackPlan.goals) {
+        if (goal.white + goal.yellow + goal.red == 0 && _symbolGoalMet(goal)) {
+          return goal;
+        }
+      }
+    }
     return bestGoal;
   }
 
   _AttackDamage? _currentMinionAttackResult() {
     switch (enemy.attackPlan.style) {
       case MinionAttackStyle.symbols:
-        final goal = _currentMinionSymbolGoal();
+        final goal = _currentMinionSymbolGoal(
+          includeFallbackZero: _rollCount >= _maxRolls,
+        );
         return goal != null ? _damageForSymbolGoal(enemy, goal) : null;
       case MinionAttackStyle.suite:
         final values = _activeDice
@@ -6776,7 +7121,9 @@ class _FightPageState extends State<FightPage> {
   bool _currentAttackGoalMet() {
     switch (enemy.attackPlan.style) {
       case MinionAttackStyle.symbols:
-        return enemy.attackPlan.goals.any(_symbolGoalMet);
+        return enemy.attackPlan.goals.any(
+          (g) => (g.white + g.yellow + g.red > 0) && _symbolGoalMet(g),
+        );
       case MinionAttackStyle.suite:
         final values = _activeDice
             .map((die) => die.effectiveValue)
@@ -7140,8 +7487,8 @@ class _FightPageState extends State<FightPage> {
           );
         }
 
-        enemy.alterations.addAll(_battleMinionTokens);
-        widget.adventure.alterations.addAll(_battleHeroTokens);
+        addTokensWithStackLimit(enemy.alterations, _battleMinionTokens);
+        addTokensWithStackLimit(widget.adventure.alterations, _battleHeroTokens);
 
         for (final token in _battleMinionTokens) {
           buffer.writeln('[TOKEN:$token] applied to enemy');
@@ -7177,8 +7524,8 @@ class _FightPageState extends State<FightPage> {
               '${_battleReturnDamage > 0 ? ' Return damage: $_battleReturnDamage.' : ''}'
               '${_battleLifeSteal > 0 ? ' Steals $_battleLifeSteal health.' : ''}'
               '${_battleLoseHp > 0 ? ' Hero loses $_battleLoseHp health.' : ''}'
-              '${_battleHeroTokens.isNotEmpty ? ' Hero receives ${_battleHeroTokens.join(', ')}.' : ''}'
-              '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_battleMinionTokens.join(', ')}.' : ''}'
+              '${_battleHeroTokens.isNotEmpty ? ' Hero receives ${_formatTokensWithCounts(_battleHeroTokens)}.' : ''}'
+              '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_formatTokensWithCounts(_battleMinionTokens)}.' : ''}'
               '${_battleCpSteal > 0 ? ' ${enemy.label} steals $_battleCpSteal CP.' : ''}'
               '\n❤️ ${enemy.label} HP: $oldEnemyHealthBeforeBattle ➔ ${enemy.health}';
         }
@@ -7439,8 +7786,8 @@ class _FightPageState extends State<FightPage> {
             '[CP] Enemy CP: $oldEnemyCp âž” ${enemy.combatPoints} (CP Steal)',
           );
         }
-        widget.adventure.alterations.addAll(_battleHeroTokens);
-        enemy.alterations.addAll(_battleMinionTokens);
+        addTokensWithStackLimit(widget.adventure.alterations, _battleHeroTokens);
+        addTokensWithStackLimit(enemy.alterations, _battleMinionTokens);
 
         for (final token in _battleMinionTokens) {
           buffer.writeln('[TOKEN:$token] applied to enemy');
@@ -7526,8 +7873,8 @@ class _FightPageState extends State<FightPage> {
             '${enemy.label} dealt $effectiveAttack damage. '
             '${_battleAttackUndefendable ? 'This attack is undefendable. ' : ''}${wasDefenderStunned ? '${widget.adventure.hero.label} was stunned and could not defend.\n' : '${widget.adventure.hero.label} prevented $effectiveDefense damage.\n'}'
             '${shadowsWasActive ? 'Net damage: 0 damage (Absorbed by Shadows).' : 'Net damage: deals $netDamage damage.'}'
-            '${_battleHeroTokens.isNotEmpty ? ' ${widget.adventure.hero.label} receives ${_battleHeroTokens.join(', ')}.' : ''}'
-            '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_battleMinionTokens.join(', ')}.' : ''}'
+            '${_battleHeroTokens.isNotEmpty ? ' ${widget.adventure.hero.label} receives ${_formatTokensWithCounts(_battleHeroTokens)}.' : ''}'
+            '${_battleMinionTokens.isNotEmpty ? ' ${enemy.label} receives ${_formatTokensWithCounts(_battleMinionTokens)}.' : ''}'
             '${_battleEnemyHeal > 0 ? ' ${enemy.label} heals $_battleEnemyHeal HP.' : ''}'
             '${_battleLifeSteal > 0 ? ' ${enemy.label} steals $_battleLifeSteal health.' : ''}'
             '${_battleLoseHp > 0 ? ' ${widget.adventure.hero.label} loses $_battleLoseHp health.' : ''}'
@@ -7660,11 +8007,66 @@ class _FightPageState extends State<FightPage> {
       if (!_isResolutionMode && isHydraEnemy(enemy) && enemy.health > 0) {
         await _triggerHydraRegrowthPopin(enemy);
       }
+      if (!_isResolutionMode && _battleDiscardCards > 0 && widget.adventure.health > 0) {
+        final toDiscard = _battleDiscardCards;
+        _battleDiscardCards = 0;
+        await _triggerDiscardCardPopin(
+          count: toDiscard,
+          enemyName: enemy.label,
+        );
+      }
+      if (!_isResolutionMode && _battleDiscardPositiveToken && widget.adventure.health > 0) {
+        _battleDiscardPositiveToken = false;
+        await _triggerDiscardPositiveTokenPopin(enemy.label);
+      }
     }
     if (_isResolutionMode) {
       return;
     }
     _setPhase(nextPhase);
+  }
+
+  Future<void> _triggerDiscardCardPopin({
+    required int count,
+    String? enemyName,
+  }) async {
+    if (!mounted) return;
+    await DiscardCardDialog.show(
+      context,
+      count: count,
+      enemyName: enemyName,
+    );
+    widget.adventure.log(
+      '🃏 [DISCARD] ${widget.adventure.hero.label} discarded $count card(s) ($enemyName).',
+    );
+  }
+
+  Future<void> _triggerDiscardPositiveTokenPopin(String enemyName) async {
+    if (!mounted) return;
+    final positiveTokens = widget.adventure.alterations.where((t) {
+      final r = TokenCatalogRepository.byLabel(t);
+      return r != null && r.kind == StatusTokenKind.positive;
+    }).toList();
+
+    String? tokenToDiscard;
+    if (positiveTokens.isNotEmpty) {
+      tokenToDiscard = positiveTokens[Random().nextInt(positiveTokens.length)];
+      widget.adventure.alterations.remove(tokenToDiscard);
+      widget.adventure.log(
+        '✨ [DISCARD TOKEN] ${widget.adventure.hero.label} discarded positive token: $tokenToDiscard ($enemyName).',
+      );
+    } else {
+      widget.adventure.log(
+        '✨ [DISCARD TOKEN] ${widget.adventure.hero.label} has no positive token to discard ($enemyName).',
+      );
+    }
+
+    await DiscardPositiveTokenDialog.show(
+      context,
+      enemyName: enemyName,
+      discardedToken: tokenToDiscard,
+    );
+    if (mounted) setState(() {});
   }
 
   Future<void> _triggerHydraRegrowthPopin(EnemyNode hydra) async {
@@ -8027,6 +8429,18 @@ class _FightPageState extends State<FightPage> {
           l.contains('lumiere aveuglante')) {
         continue;
       }
+      final isBlindToken = l == 'blind' ||
+          l == 'éblouissement' ||
+          l == 'eblouissement' ||
+          (l.contains('blind') && !l.contains('blinding light')) ||
+          l.contains('éblouissement') ||
+          l.contains('eblouissement');
+      if (isBlindToken) {
+        continue;
+      }
+      if (l == 'parlay' || l == 'pourparlers') {
+        continue;
+      }
       if (l == 'wellspring' || l == 'source') {
         continue;
       }
@@ -8106,6 +8520,11 @@ class _FightPageState extends State<FightPage> {
           isAccuracy ||
           isSilence ||
           isWither;
+
+      // Bleed (Hémorragie) must strictly ONLY trigger in upkeep phase, never in roll phase
+      if (isRollPhase && (_isBleedToken(rule.label) || _isBleedToken(tokenLabel))) {
+        continue;
+      }
 
       if (!isRollPhase) {
         if (isDefenderRollToken || isAttackerRollToken) {
@@ -9063,11 +9482,14 @@ class _FightPageState extends State<FightPage> {
       _heroUpkeepApplied = true;
       final skip = <String>{};
       if (resolvedInPopin.contains('bleed')) {
-        skip.addAll({'Bleed', 'HÃ©morragie', 'Hemorragie', 'Saignement'});
+        skip.addAll({'Bleed', 'bleed', 'Hémorragie', 'hémorragie', 'HÃ©morragie', 'Hemorragie', 'hemorragie', 'Saignement', 'saignement'});
       }
       if (resolvedInPopin.contains('timebomb1')) {
         skip.addAll({
           'Time bomb 1',
+          'time bomb 1',
+          'Bombe à retardement 1',
+          'bombe à retardement 1',
           'Bombe Ã  retardement 1',
           'bombe a retardement 1',
         });
@@ -9075,8 +9497,15 @@ class _FightPageState extends State<FightPage> {
       if (resolvedInPopin.contains('timebomb2')) {
         skip.addAll({
           'Time bomb 2',
+          'time bomb 2',
+          'Time bomb',
+          'time bomb',
+          'Bombe à retardement 2',
+          'bombe à retardement 2',
           'Bombe Ã  retardement 2',
           'bombe a retardement 2',
+          'Bombe à retardement',
+          'bombe à retardement',
         });
       }
       if (resolvedInPopin.contains('coal') || _heroCoalTriggered) {
@@ -9095,14 +9524,17 @@ class _FightPageState extends State<FightPage> {
         skip.addAll({
           'Phoenix Burn',
           'Phoenix burn',
-          'BrÃ»lure du phÃ©nix',
+          'Brûlure du phénix',
+          'brûlure du phénix',
           'Brulure du phenix',
+          'brulure du phenix',
+          'BrÃ»lure du phÃ©nix',
         });
       }
       if (resolvedInPopin.contains('powderkeg')) {
         skip.addAll({'Powder Keg', 'Baril de poudre'});
       }
-      skip.addAll({'Knockdown', 'A terre', 'Ã€ terre', 'aterre', 'Ã terre'});
+      skip.addAll({'Knockdown', 'A terre', 'À terre', 'à terre', 'Ã€ terre', 'aterre', 'Ã terre'});
       heroOutcome = GameEngine.heroUpkeep(
         tokens: widget.adventure.alterations,
         rollD6: () => _random.nextInt(6) + 1,
@@ -9193,11 +9625,14 @@ class _FightPageState extends State<FightPage> {
       }
       final skip = <String>{};
       if (resolvedInPopin.contains('bleed')) {
-        skip.addAll({'Bleed', 'HÃ©morragie', 'Hemorragie', 'Saignement'});
+        skip.addAll({'Bleed', 'bleed', 'Hémorragie', 'hémorragie', 'HÃ©morragie', 'Hemorragie', 'hemorragie', 'Saignement', 'saignement'});
       }
       if (resolvedInPopin.contains('timebomb1')) {
         skip.addAll({
           'Time bomb 1',
+          'time bomb 1',
+          'Bombe à retardement 1',
+          'bombe à retardement 1',
           'Bombe Ã  retardement 1',
           'bombe a retardement 1',
         });
@@ -9205,8 +9640,15 @@ class _FightPageState extends State<FightPage> {
       if (resolvedInPopin.contains('timebomb2')) {
         skip.addAll({
           'Time bomb 2',
+          'time bomb 2',
+          'Time bomb',
+          'time bomb',
+          'Bombe à retardement 2',
+          'bombe à retardement 2',
           'Bombe Ã  retardement 2',
           'bombe a retardement 2',
+          'Bombe à retardement',
+          'bombe à retardement',
         });
       }
       if (resolvedInPopin.contains('coal') || _minionCoalTriggered) {
@@ -9225,14 +9667,17 @@ class _FightPageState extends State<FightPage> {
         skip.addAll({
           'Phoenix Burn',
           'Phoenix burn',
-          'BrÃ»lure du phÃ©nix',
+          'Brûlure du phénix',
+          'brûlure du phénix',
           'Brulure du phenix',
+          'brulure du phenix',
+          'BrÃ»lure du phÃ©nix',
         });
       }
       if (resolvedInPopin.contains('powderkeg')) {
         skip.addAll({'Powder Keg', 'Baril de poudre'});
       }
-      skip.addAll({'Knockdown', 'A terre', 'Ã€ terre', 'aterre', 'Ã terre'});
+      skip.addAll({'Knockdown', 'A terre', 'À terre', 'à terre', 'Ã€ terre', 'aterre', 'Ã terre'});
       final outcome = GameEngine.minionUpkeep(
         tokens: enemy.alterations,
         rollD6: () => _random.nextInt(6) + 1,
@@ -9402,40 +9847,18 @@ class _FightPageState extends State<FightPage> {
   }
 
   void _reserveSymbolGoal() {
-    final goals = enemy.attackPlan.goals;
-    if (goals.isEmpty) {
-      return;
-    }
-    var goal = goals.first;
-    for (final candidate in goals) {
-      if (!_symbolGoalMet(candidate)) {
-        goal = candidate;
-        break;
-      }
-      goal = candidate;
-    }
-    var white = goal.white;
-    var yellow = goal.yellow;
-    var red = goal.red;
     final active = _activeDice;
+    final decision = MinionDiceEngineSymbols.chooseSymbolHold(
+      dice: active,
+      goals: enemy.attackPlan.goals,
+      enemy: enemy,
+    );
     for (final die in _dice) {
       if (!active.contains(die)) {
         die.reserved = false;
         continue;
       }
-      final symbol = die.symbol;
-      if (symbol == DieSymbol.white && white > 0) {
-        die.reserved = true;
-        white--;
-      } else if (symbol == DieSymbol.yellow && yellow > 0) {
-        die.reserved = true;
-        yellow--;
-      } else if (symbol == DieSymbol.red && red > 0) {
-        die.reserved = true;
-        red--;
-      } else {
-        die.reserved = false;
-      }
+      die.reserved = decision.reservedDieIds.contains(die.id);
     }
   }
 
@@ -10532,8 +10955,25 @@ class MinionAiPanel extends StatelessWidget {
                         height: 6,
                         margin: EdgeInsets.only(bottom: i == maxRolls - 1 ? 0 : 4),
                         decoration: BoxDecoration(
-                          color: isAvailable ? Colors.greenAccent : Colors.white.withValues(alpha: 0.2),
+                          color: isAvailable
+                              ? enemy.rank.color
+                              : Colors.white.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(3),
+                          border: isAvailable
+                              ? null
+                              : Border.all(
+                                  color: Colors.white.withValues(alpha: 0.08),
+                                  width: 0.5,
+                                ),
+                          boxShadow: isAvailable
+                              ? [
+                                  BoxShadow(
+                                    color: enemy.rank.color.withValues(alpha: 0.45),
+                                    blurRadius: 4,
+                                    spreadRadius: 0.5,
+                                  ),
+                                ]
+                              : null,
                         ),
                       );
                     }),
@@ -11034,7 +11474,7 @@ String _minionAttackAiMessage(
 
     if (isSilenced) {
       if (best >= 3) {
-        final damage = adjustDamage(_suiteDamage(enemy, 3));
+        final damage = adjustDamage(_suiteDamage(enemy, 3, adventure: adventure));
         final suiteBlockedNote = best >= 4
             ? 'Silence is active: Small/Large suite blocked, micro suite validated with ${_bestSuiteValues(values, 3).join('/')}.'
             : 'Silence is active: micro suite validated with ${_bestSuiteValues(values, 3).join('/')}.';
@@ -11057,7 +11497,7 @@ String _minionAttackAiMessage(
     }
 
     if (best >= 5) {
-      final damage = adjustDamage(_suiteDamage(enemy, 5));
+      final damage = adjustDamage(_suiteDamage(enemy, 5, adventure: adventure));
       if (hasBarbedVine && rollCount < 3) {
         return 'On my $rollLabel roll, large suite validated with ${_bestSuiteValues(values, 5).join('/')}.\n'
             'Afflicted by Barbed Vine, I stop my attack rolls here to avoid taking counter damage.$blLine\n'
@@ -11070,7 +11510,7 @@ String _minionAttackAiMessage(
                 'The resolution line is ready; I can still try to improve if one roll remains.';
     }
     if (best == 4) {
-      final damage = adjustDamage(_suiteDamage(enemy, 4));
+      final damage = adjustDamage(_suiteDamage(enemy, 4, adventure: adventure));
       if (hasBarbedVine && rollCount < 3) {
         return 'On my $rollLabel roll, small suite validated with ${_bestSuiteValues(values, 4).join('/')}.\n'
             'Afflicted by Barbed Vine, I stop my attack rolls here to avoid taking counter damage.$blLine\n'
@@ -11083,7 +11523,7 @@ String _minionAttackAiMessage(
                 'I can hit, then try to improve if one roll remains.';
     }
     if (best == 3) {
-      final damage = adjustDamage(_suiteDamage(enemy, 3));
+      final damage = adjustDamage(_suiteDamage(enemy, 3, adventure: adventure));
       if (hasBarbedVine && rollCount < 3) {
         return 'On my $rollLabel roll, micro suite validated with ${_bestSuiteValues(values, 3).join('/')}.\n'
             'Afflicted by Barbed Vine, I stop my attack rolls here to avoid taking counter damage.$blLine\n'
@@ -11101,7 +11541,11 @@ String _minionAttackAiMessage(
         'Kept dice: ${kept.isEmpty ? 'nothing' : kept.join('/')}.';
   }
 
-  final rawSymbolDamage = _bestSymbolAttackDamage(enemy, dice);
+  final rawSymbolDamage = _bestSymbolAttackDamage(
+    enemy,
+    dice,
+    includeFallbackZero: rollCount >= 3,
+  );
   final symbolDamage = rawSymbolDamage != null
       ? adjustDamage(rawSymbolDamage)
       : null;
@@ -11122,9 +11566,14 @@ String _minionAttackAiMessage(
         'I can hit, or try to improve if a roll remains.\n'
         '${_defenseInstruction(adventure, symbolDamage)}';
   }
+  final symbolDecision = MinionDiceEngineSymbols.chooseSymbolHold(
+    dice: dice,
+    goals: enemy.attackPlan.goals,
+    enemy: enemy,
+  );
   return kept.isEmpty
-      ? 'On my $rollLabel roll, I deal no damage yet.${hasBarbedVine ? '\nAfflicted by Barbed Vine: rerolling will inflict 1 counter damage on me.' : ''}$blLine\nI reroll toward the first attack.'
-      : 'On my $rollLabel roll, I keep ${kept.join('/')}.${hasBarbedVine ? '\nAfflicted by Barbed Vine: rerolling will inflict 1 counter damage on me.' : ''}$blLine\nI try to improve the attack.';
+      ? 'On my $rollLabel roll, I deal no damage yet.${hasBarbedVine ? '\nAfflicted by Barbed Vine: rerolling will inflict 1 counter damage on me.' : ''}$blLine\n${symbolDecision.reason.isNotEmpty ? symbolDecision.reason : 'I reroll toward the first attack.'}'
+      : 'On my $rollLabel roll, I keep ${kept.join('/')}.${hasBarbedVine ? '\nAfflicted by Barbed Vine: rerolling will inflict 1 counter damage on me.' : ''}$blLine\n${symbolDecision.reason}';
 }
 
 String minionAttackAiMessage(
@@ -11255,12 +11704,19 @@ String _naraxusAiMessage(
   return '**Battle phase.**\n$result';
 }
 
-_AttackDamage? _bestSymbolAttackDamage(EnemyNode enemy, List<GameDie> dice) {
+_AttackDamage? _bestSymbolAttackDamage(
+  EnemyNode enemy,
+  List<GameDie> dice, {
+  bool includeFallbackZero = false,
+}) {
   if (enemy.attackPlan.style != MinionAttackStyle.symbols) {
     return null;
   }
   _AttackDamage? result;
   for (final goal in enemy.attackPlan.goals) {
+    if (!includeFallbackZero && (goal.white + goal.yellow + goal.red == 0)) {
+      continue;
+    }
     if (_symbolGoalMetDice(dice, goal)) {
       result = _damageForSymbolGoal(enemy, goal);
     }
@@ -11695,16 +12151,26 @@ class _ExtraRollAttackSummary extends StatelessWidget {
         children.add(_buildOutcomeLine(outcome));
       }
 
-      // L6: final effect note.
+      // L6: final effect note (attack continuation, not a passive).
       final finalText = extraRoll.finalText;
       if (finalText != null && finalText.isNotEmpty) {
         children.add(const SizedBox(height: 6));
         children.add(
-          _PassiveNote(
-            child: InlineTokenText(
-              finalText,
-              color: color,
-              style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Align(
+              alignment: extraRoll.align == 'center'
+                  ? Alignment.center
+                  : Alignment.centerLeft,
+              child: InlineTokenText(
+                finalText,
+                color: color,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xffcbd8cc),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ),
         );
@@ -11751,8 +12217,12 @@ class _ExtraRollAttackSummary extends StatelessWidget {
     if (outcome.stealCp > 0) {
       badges.add(CpStealBadge(value: outcome.stealCp, color: color));
     }
+    final tokenCounts = <String, int>{};
     for (final token in outcome.tokens) {
-      badges.add(TokenBadge(label: token, color: color));
+      tokenCounts[token] = (tokenCounts[token] ?? 0) + 1;
+    }
+    for (final entry in tokenCounts.entries) {
+      badges.add(TokenBadge(label: entry.key, color: color, count: entry.value));
     }
 
     final align = outcome.align ?? extraRoll.align;
@@ -12565,7 +13035,7 @@ class _PassiveLine extends StatelessWidget {
         style: const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
       ),
     ];
-    if (effect != null) {
+    if (effect != null && !passive.text.contains('{')) {
       final badges = <Widget>[];
       if (effect.damage > 0) {
         badges.add(
@@ -12587,8 +13057,18 @@ class _PassiveLine extends StatelessWidget {
           TokenBadge(label: '+$effect.heal PV', color: Colors.greenAccent),
         );
       }
+      final tokenCounts = <String, int>{};
       for (final token in effect.heroTokens) {
-        badges.add(TokenBadge(label: token, color: Colors.deepOrangeAccent));
+        tokenCounts[token] = (tokenCounts[token] ?? 0) + 1;
+      }
+      for (final entry in tokenCounts.entries) {
+        badges.add(
+          TokenBadge(
+            label: entry.key,
+            color: Colors.deepOrangeAccent,
+            count: entry.value,
+          ),
+        );
       }
       if (badges.isNotEmpty) {
         children
@@ -13050,7 +13530,7 @@ class TokenBadge extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              '$count x ',
+              '${count}x ',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -13345,12 +13825,18 @@ class _EmptyDieBadge extends StatelessWidget {
   }
 }
 
-class _AttackDamage {
-  const _AttackDamage(this.value, {this.imparable = false});
+class AttackDamage {
+  const AttackDamage(this.value, {this.imparable = false});
 
   final int value;
   final bool imparable;
 }
+
+typedef _AttackDamage = AttackDamage;
+
+/// Public helper to inspect suite damage resolution (used in tests and analytics).
+AttackDamage? minionSuiteDamage(EnemyNode enemy, int length, {AdventureState? adventure}) =>
+    _suiteDamage(enemy, length, adventure: adventure);
 
 /// Mutable accumulators passed through [ConditionalRule] application so the
 /// generic runtime can mutate attack resolution the same way the legacy
@@ -13366,6 +13852,7 @@ class _ConditionalAccumulators {
     required this.lifeSteal,
     required this.loseHp,
     required this.cpSteal,
+    this.discardCards = 0,
     required this.heroTokens,
     required this.minionTokens,
     required this.notes,
@@ -13379,6 +13866,7 @@ class _ConditionalAccumulators {
   int lifeSteal;
   int loseHp;
   int cpSteal;
+  int discardCards;
   final List<String> heroTokens;
   final List<String> minionTokens;
   final List<String> notes;
@@ -13391,6 +13879,9 @@ SymbolGoal? _extraRollGoalFor(EnemyNode enemy) {
   final goals = enemy.attackPlan.goals;
   if (goals.isEmpty) {
     return null;
+  }
+  for (final g in goals) {
+    if (g.effect?.extraRoll != null) return g;
   }
   return goals.first;
 }
@@ -13510,13 +14001,20 @@ _AttackDamage? _damageForSymbolGoal(EnemyNode enemy, SymbolGoal goal) {
   return _damageFromAttackText(enemy, goalIndex);
 }
 
-_AttackDamage? _suiteDamage(EnemyNode enemy, int length) {
+_AttackDamage? _suiteDamage(EnemyNode enemy, int length, {AdventureState? adventure}) {
   final key = enemy.profileKey;
   // Prefer the structured effect parsed from the JSON `attackPlan.actions`
   // entry for this suite length. Same rationale as `_damageForSymbolGoal`:
   // the JSON is the source of truth and avoids fragile text parsing.
   final effect = enemy.attackPlan.suiteEffects[length];
   if (effect != null) {
+    if (adventure != null && ((key == 'orange-orange-009' && length >= 4) || effect.formulas.any((f) => f.contains('Bleed')))) {
+      final existingBleeds = adventure.alterations.where(_isBleedToken).length;
+      final newBleeds = effect.heroTokens.where(_isBleedToken).length;
+      final totalBleeds = existingBleeds + newBleeds;
+      final multiplier = length >= 5 ? 2 : 1;
+      return _AttackDamage(effect.damage + totalBleeds * multiplier, imparable: effect.undefendable);
+    }
     return _AttackDamage(effect.damage, imparable: effect.undefendable);
   }
   if (key == 'fee') {
@@ -13736,6 +14234,8 @@ class FightStatusPanel extends StatefulWidget {
     required this.onEditEnemyTokens,
     this.onHeroTokenRemoved,
     this.onEnemyTokenRemoved,
+    this.heroTokens,
+    this.enemyTokens,
     super.key,
   });
 
@@ -13749,6 +14249,8 @@ class FightStatusPanel extends StatefulWidget {
   final VoidCallback onEditEnemyTokens;
   final ValueChanged<String>? onHeroTokenRemoved;
   final ValueChanged<String>? onEnemyTokenRemoved;
+  final List<String>? heroTokens;
+  final List<String>? enemyTokens;
 
   @override
   State<FightStatusPanel> createState() => _FightStatusPanelState();
@@ -13772,6 +14274,8 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
           CombatVersusStatusPanel(
             adventure: widget.adventure,
             enemy: widget.enemy,
+            heroTokens: widget.heroTokens,
+            enemyTokens: widget.enemyTokens,
             isRollPhase:
                 widget.phase == CombatPhase.hero ||
                 widget.phase == CombatPhase.minionAttack,
@@ -14024,6 +14528,8 @@ class CombatVersusStatusPanel extends StatelessWidget {
     required this.onTokensChanged,
     this.onHeroTokenRemoved,
     this.onEnemyTokenRemoved,
+    this.heroTokens,
+    this.enemyTokens,
     super.key,
   });
 
@@ -14039,9 +14545,13 @@ class CombatVersusStatusPanel extends StatelessWidget {
   final ValueChanged<String>? onHeroTokenRemoved;
   final ValueChanged<String>? onEnemyTokenRemoved;
   final bool isRollPhase;
+  final List<String>? heroTokens;
+  final List<String>? enemyTokens;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveHeroTokens = heroTokens ?? adventure.alterations;
+    final effectiveEnemyTokens = enemyTokens ?? enemy.alterations;
     if (isRollPhase) {
       return Container(
         decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.26)),
@@ -14130,7 +14640,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
                       child: CompactItemStrip(
                         label: 'Tokens',
                         emptyText: 'Tokens',
-                        items: adventure.alterations,
+                        items: effectiveHeroTokens,
                         accent: heroAccent,
                         background: Colors.black.withValues(alpha: 0.22),
                         border: panelBorderGrey,
@@ -14159,7 +14669,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
                       child: CompactItemStrip(
                         label: 'Tokens',
                         emptyText: 'Tokens',
-                        items: enemy.alterations,
+                        items: effectiveEnemyTokens,
                         accent: enemy.rank.color,
                         background: Colors.black.withValues(alpha: 0.22),
                         border: panelBorderGrey,
@@ -14196,7 +14706,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
                   title: adventure.hero.label,
                   hp: adventure.health,
                   cp: adventure.combatPoints,
-                  tokens: adventure.alterations,
+                  tokens: effectiveHeroTokens,
                   accent: heroAccent,
                   portraitAsset: adventure.hero.asset,
                   portraitAlignment: adventure.hero.imageAlignment,
@@ -14219,7 +14729,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
                   title: enemy.label,
                   hp: enemy.health,
                   cp: enemy.combatPoints,
-                  tokens: enemy.alterations,
+                  tokens: effectiveEnemyTokens,
                   accent: enemy.rank.color,
                   portraitAsset: enemy.previewAsset,
                   portraitAlignment: enemy.profileKey == 'naraxus'
@@ -14450,6 +14960,7 @@ Alignment _heroEyeAlignment(HeroType hero) {
     HeroType.pyromancer => const Alignment(0, -0.76),
     HeroType.shadowThief => const Alignment(0, -0.72),
     HeroType.spiderman => const Alignment(0, -0.58),
+    HeroType.benjamin => const Alignment(0, -0.20),
     _ => const Alignment(0, -0.66),
   };
 }

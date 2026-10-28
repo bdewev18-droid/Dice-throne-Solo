@@ -19,7 +19,27 @@ const EnemyProfile naraxusProfile = EnemyProfile(
   rank: EnemyRank.naraxus,
   maxHealth: 65,
   cp: 0,
-  cardAsset: 'assets/enemy_previews/naraxus_card.webp',
+  cardAsset: 'assets/enemy_previews/naraxus.webp',
+  attacks: [
+    'Swoop: 1 = remove 1 random Naxarus token, heal 4 HP, deal 3 undefendable damage.',
+    'Ember Spark: 2 = hero moves top 3 deck cards to discard, then takes 8 damage.',
+    'Gashing Bite: 3 = roll 4 dice, deal damage equal to the 2 highest dice.',
+    'Hoarding: 4 = hero loses 1 die next battle phase, then takes 9 damage.',
+    'Thundering Roar: 5 = hero discards 1 card and takes 8 undefendable damage.',
+    "Dragon's Might: 6 = deal 10 damage and roll 1 extra die; on 5-6 also Swoop.",
+  ],
+  defense: 'Defense roll 1 die: 1 prevents 1, 2-5 prevents 3, 6 prevents 5.',
+  defenseDice: 1,
+  attackPlan: MinionAttackPlan.none(),
+);
+
+const EnemyProfile kaelenVossProfile = EnemyProfile(
+  key: 'kaelen-voss',
+  name: 'Kaelen Voss',
+  rank: EnemyRank.naraxus,
+  maxHealth: 50,
+  cp: 0,
+  cardAsset: 'assets/enemy_previews/kaelen-voss.webp',
   attacks: [
     'Swoop: 1 = remove 1 random Naxarus token, heal 4 HP, deal 3 undefendable damage.',
     'Ember Spark: 2 = hero moves top 3 deck cards to discard, then takes 8 damage.',

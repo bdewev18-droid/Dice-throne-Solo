@@ -11,9 +11,18 @@ class EnemyProfileRepository {
   static List<EnemyProfile> _profiles = const [];
   static String _jsonVersion = '';
 
-  static Future<void> load() async {
+  static Future<void> load([String? jsonSource]) async {
     try {
-      final source = await rootBundle.loadString('docs/enemy_profiles.json');
+      final source = jsonSource ?? await rootBundle.loadString('docs/enemy_profiles.json');
+      loadFromJsonString(source);
+    } catch (error) {
+      debugPrint('Enemy profile JSON load failed: $error');
+      _profiles = const [];
+    }
+  }
+
+  static void loadFromJsonString(String source) {
+    try {
       final json = jsonDecode(source) as Map<String, dynamic>;
       _jsonVersion = json['version']?.toString() ?? '';
       final rawProfiles = (json['profiles'] as List<dynamic>? ?? const []);
@@ -29,12 +38,18 @@ class EnemyProfileRepository {
 
   static String get jsonVersion => _jsonVersion;
   static bool get isLoaded => _profiles.isNotEmpty;
+  static List<EnemyProfile> get all => _profiles;
 
-  static List<EnemyProfile> byRank(EnemyRank rank, {bool validatedOnly = false}) {
+  static List<EnemyProfile> byRank(
+    EnemyRank rank, {
+    bool validatedOnly = false,
+    Set<String>? allowedPacks,
+  }) {
     return _profiles
         .where((profile) =>
             profile.rank == rank &&
-            (!validatedOnly || profile.isFullyValidated))
+            (!validatedOnly || profile.isFullyValidated) &&
+            (allowedPacks == null || allowedPacks.contains(profile.sourcePack)))
         .toList();
   }
 
@@ -45,6 +60,22 @@ class EnemyProfileRepository {
       }
     }
     return null;
+  }
+
+  static int get validatedCatalogCount {
+    final byKey = <String, EnemyProfile>{};
+    for (final profile in _profiles) {
+      if (profile.key == 'green-fallback' ||
+          profile.key == 'blue-generic' ||
+          profile.key == 'violet-generic' ||
+          profile.key == 'orange-generic') {
+        continue;
+      }
+      if (profile.isFullyValidated) {
+        byKey[profile.key] = profile;
+      }
+    }
+    return byKey.length;
   }
 }
 
@@ -88,6 +119,9 @@ class EnemyProfileJson {
       validated: json['validated'] as bool? ?? false,
       validatedAtk: json['validatedAtk'] as bool? ?? false,
       validatedDef: json['validatedDef'] as bool? ?? false,
+      sourcePack: (json['sourcePack'] as String?)?.trim().isNotEmpty == true
+          ? (json['sourcePack'] as String).trim()
+          : 'dta',
     );
   }
 
@@ -200,6 +234,7 @@ class EnemyProfileJson {
           loseHp: _intValue(action['loseHp'] ?? action['loseHealth'], fallback: 0),
           stealCp: _intValue(action['stealCp'], fallback: 0),
           heal: _intValue(action['heal'], fallback: 0),
+          discardCards: _intValue(action['discardCards'], fallback: ((action['label'] as String?)?.toLowerCase().contains('discard') ?? false) ? 1 : 0),
           heroTokens: _stringList(action['tokens']),
           minionTokens: const [],
           label: (action['label'] as String?)?.trim(),
@@ -370,6 +405,7 @@ class EnemyProfileJson {
       stealHp: _intValue(raw['stealHp'], fallback: 0),
       loseHp: _intValue(raw['loseHp'] ?? raw['loseHealth'], fallback: 0),
       stealCp: _intValue(raw['stealCp'], fallback: 0),
+      discardCards: _intValue(raw['discardCards'], fallback: (label?.toLowerCase().contains('discard') ?? false) ? 1 : 0),
       tokens: _stringList(raw['tokens']),
       align: raw['align'] as String?,
     );
@@ -406,12 +442,16 @@ class EnemyProfileJson {
           loseHp: _intValue(action['loseHp'] ?? action['loseHealth'], fallback: 0),
           stealCp: _intValue(action['stealCp'], fallback: 0),
           heal: _intValue(action['heal'], fallback: 0),
+          discardCards: _intValue(action['discardCards'], fallback: ((action['label'] as String?)?.toLowerCase().contains('discard') ?? false) ? 1 : 0),
           heroTokens: _stringList(action['tokens']),
           minionTokens: const [],
           label: (action['label'] as String?)?.trim(),
           label2: (action['label2'] as String?)?.trim(),
           label3: (action['label3'] as String?)?.trim(),
-          formulas: _stringList(action['formulas']),
+          formulas: _stringList(action['formulas'] ?? action['formula']),
+          notes: _stringList(action['notes'] ?? action['note']),
+          extraRoll: _extraRollFromJson(action['extraRoll']),
+          align: action['align'] as String? ?? 'left',
         );
       }
       return MinionAttackPlan.suite(

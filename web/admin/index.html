@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>D.T Solo Quest - Enemy Back Office</title>
-  <link rel="stylesheet" href="./admin.css?v=1.7.27" />
+  <link rel="stylesheet" href="./admin.css?v=1.7.44" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -22,7 +22,7 @@
       <div class="brand-block">
         <div class="brand-title">Enemy Admin <button id="toggleSidebarBtn" class="collapse-btn toggle-sidebar" title="Collapse">◀</button></div>
         <div class="brand-subtitle">docs/enemy_profiles.json</div>
-        <div id="adminVersion" class="admin-version">Admin version 1.7.27</div>
+        <div id="adminVersion" class="admin-version">Admin version 1.7.44</div>
         <div id="jsonVersionBox" class="json-version">JSON v<input id="jsonVersionInput" class="json-version-input" type="text" value="1.0.0" title="Version du fichier JSON ennemies (incrémentée automatiquement lors de l'export)" /></div>
       </div>
       <div class="side-actions">
@@ -74,7 +74,7 @@
             <div class="identity-grid">
               <label>Name<input id="nameInput" /></label>
               <label>Key<input id="keyInput" /></label>
-              <label>Rank<select id="rankInput"><option>green</option><option>blue</option><option>violet</option><option>orange</option><option>viseer</option><option>naraxus</option></select></label>
+              <label>Rank<select id="rankInput"><option>green</option><option>blue</option><option>violet</option><option>orange</option><option>viseer</option><option value="naraxus">boss</option></select></label>
               <label>HP<input id="hpInput" type="number" min="0" /></label>
               <label>CP<input id="cpInput" type="number" min="0" /></label>
               <label>Defense dice<input id="defenseDiceInput" type="number" min="0" max="5" /></label>
@@ -82,7 +82,18 @@
               <label>Reward rank<input id="rewardRankInput" placeholder="green/blue/violet/orange" /></label>
             </div>
             <label class="wide-label">Card asset<input id="cardAssetInput" /></label>
-            <label class="wide-label">Initial tokens<input id="initialTokensInput" placeholder="Poison, Blind" /></label>
+            <div class="tokens-count-row" style="display: grid; grid-template-columns: 80px 1fr; gap: 8px; margin-top: 9px; align-items: end;">
+              <label>Nb<input id="initialTokensNbInput" type="number" min="1" max="10" placeholder="1" /></label>
+              <label>Initial tokens<input id="initialTokensInput" placeholder="Poison, Blind" /></label>
+            </div>
+            <label class="wide-label">Minion pack / Origin
+              <select id="sourcePackInput">
+                <option value="dta">DTA minions</option>
+                <option value="promo">Promo pack DTA</option>
+                <option value="santa">Santa's workshop Promo pack DTA</option>
+                <option value="community">Community minions</option>
+              </select>
+            </label>
             <img id="previewImage" alt="Minion preview" style="width: 100%; height: auto; margin-top: 10px; display: none;" />
           </div>
         </section>
@@ -163,9 +174,52 @@
           </div>
 
           <div id="tab-passive" class="tab-panel">
-            <h2>Passive rules</h2>
-            <div id="passiveRules" class="stack"></div>
-            <button id="addPassiveRuleBtn" class="ghost-btn full">Add passive rule</button>
+            <div class="section-head">
+              <h2>Passive rules</h2>
+              <span class="hint">Passives are structured into 3 distinct zones: Offensive roll failure, Start of turn, and Custom / specific formulas.</span>
+            </div>
+
+            <!-- Zone 1 : Offensive roll failure -->
+            <div class="passive-zone-card passive-zone-failure">
+              <div class="passive-zone-head">
+                <div class="passive-zone-title">
+                  <span class="passive-type-badge badge-failure">Offensive roll failure</span>
+                  <strong>If the offensive roll fails</strong>
+                </div>
+                <button id="addPassiveFailureBtn" class="ghost-btn small" type="button">+ Add failure passive</button>
+              </div>
+              <p class="hint">Applies consequence if the minion fails its offensive roll phase. English sentence is auto-generated.</p>
+              <div id="passiveFailureRules" class="stack"></div>
+            </div>
+
+            <!-- Zone 2 : Start of minion turn -->
+            <div class="passive-zone-card passive-zone-start">
+              <div class="passive-zone-head">
+                <div class="passive-zone-title">
+                  <span class="passive-type-badge badge-start">Start of turn</span>
+                  <strong>At the start of minion's turn (upkeep)</strong>
+                </div>
+                <button id="addPassiveStartBtn" class="ghost-btn small" type="button">+ Add start-of-turn passive</button>
+              </div>
+              <p class="hint">Applies consequence at the beginning of the minion's turn. English sentence is auto-generated.</p>
+              <div id="passiveStartOfTurnRules" class="stack"></div>
+            </div>
+
+            <!-- Zone 3 : Custom & specific formulas -->
+            <div class="passive-zone-card passive-zone-custom">
+              <div class="passive-zone-head">
+                <div class="passive-zone-title">
+                  <span class="passive-type-badge badge-custom">Custom & Formulas</span>
+                  <strong>Specific formula / complex mechanic</strong>
+                </div>
+                <button id="addPassiveCustomBtn" class="ghost-btn small" type="button">+ Add custom passive</button>
+              </div>
+              <p class="hint">Unique conditions, dice tables, or rules requiring runtime formulas. Authored freely with tags.</p>
+              <div id="passiveCustomRules" class="stack"></div>
+            </div>
+
+            <div id="passiveRules" style="display:none;"></div>
+            <button id="addPassiveRuleBtn" style="display:none;" type="button"></button>
           </div>
 
           <div id="tab-text" class="tab-panel">
@@ -284,7 +338,7 @@
     </article>
   </template>
 
-  <script src="admin.js?v=1.7.27"></script>
+  <script src="admin.js?v=1.7.44"></script>
 
   <div id="imageModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:2000; place-items:center; cursor:zoom-out;">
     <img id="imageModalImg" src="" style="max-width:95vw; max-height:95vh; object-fit:contain;">

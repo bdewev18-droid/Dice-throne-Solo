@@ -27,7 +27,10 @@ class _CombatResolutionPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final heroDead = adventure.health <= 0;
     final enemyDead = enemy.health <= 0;
-    final isNaraxus = enemy.profileKey == 'naraxus';
+    final isNaraxus =
+        enemy.rank == EnemyRank.naraxus ||
+        enemy.profileKey == 'naraxus' ||
+        enemy.profileKey == 'kaelen-voss';
 
     final String title;
     final Color titleColor;
