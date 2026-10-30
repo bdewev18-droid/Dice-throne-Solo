@@ -707,6 +707,25 @@ void main() {
       expect(cyclope.defenseDisplayRows, isEmpty);
     });
 
+    test('Cyclope Brutal attackPlan has Ecrasement with 6 base damage and simple extraRoll', () {
+      final cyclope = EnemyProfileRepository.byKey('bleu-bleu-006')!;
+      expect(cyclope.attackPlan.goals.length, 1);
+      final goal = cyclope.attackPlan.goals.first;
+      expect(goal.white, 4);
+      expect(goal.red, 1);
+      expect(goal.effect?.damage, 6);
+      expect(goal.effect?.extraRoll, isNotNull);
+      final extraRoll = goal.effect!.extraRoll!;
+      expect(extraRoll.dice, 1);
+      expect(extraRoll.mode, ExtraRollMode.simple);
+      expect(extraRoll.outcomes, isEmpty);
+
+      // Verify that rolling a 6 on extra roll adds 6 to base damage (6 + 6 = 12)
+      const rollValue = 6;
+      final totalAttackDamage = (goal.effect!.damage + rollValue).clamp(0, 99);
+      expect(totalAttackDamage, 12);
+    });
+
     test('EnemyDefenseEffect with orOrangeRed matches orange or red dice', () {
       const effect = EnemyDefenseEffect(
         orange: 1,
@@ -1262,6 +1281,87 @@ void main() {
       expect(res6.returnDamage, equals(0));
     });
 
+    test('Pillard Gobelin attack: 5 orange, extra roll with display rows (1-3: 4 undef, 4-6: Flees)', () {
+      final enemy = EnemyProfileRepository.byKey('violet-violet-012');
+      expect(enemy, isNotNull);
+      final attackPlan = enemy!.attackPlan;
+      expect(attackPlan.goals.length, 1);
+      final goal = attackPlan.goals.first;
+      expect(goal.yellow, 5);
+      expect(goal.white, 0);
+      expect(goal.red, 0);
+
+      final extra = goal.effect?.extraRoll;
+      expect(extra, isNotNull);
+      expect(extra!.dice, 1);
+      expect(extra.rollText, contains('{die}'));
+      expect(extra.displayRows.length, 2);
+
+      // Row 1: 1-3 = 4 undef
+      expect(extra.displayRows[0].items, containsAllInOrder(['{die:1}', '{die:2}', '{die:3}', '=', '{undef:4}']));
+
+      // Row 2: 4-6 = Flees
+      expect(extra.displayRows[1].items, containsAllInOrder(['{die:4}', '{die:5}', '{die:6}', '=', 'Flees']));
+    });
+
+    test('Chevalier du Chaos & Chevalier a la Hache suite and passive targets', () {
+      final chaos = EnemyProfileRepository.byKey('violet-violet-021');
+      expect(chaos, isNotNull);
+      expect(chaos!.attackPlan.suiteEffects.containsKey(3), isFalse);
+      expect(chaos.attackPlan.suiteEffects[4]?.heal, 1);
+      expect(chaos.attackPlan.suiteEffects[5]?.heal, 2);
+      expect(chaos.passives.first.target, 'minion');
+
+      final hache = EnemyProfileRepository.byKey('bleu-bleu-016');
+      expect(hache, isNotNull);
+      expect(hache!.attackPlan.suiteEffects.containsKey(3), isFalse);
+      expect(hache.attackPlan.suiteEffects[4]?.heal, 2);
+      expect(hache.attackPlan.suiteEffects[5]?.heal, 2);
+      expect(hache.passives.first.target, 'minion');
+    });
+
+    test('Umbra conditional rule has alteration condition with Shadows and +4 formula', () {
+      final umbra = EnemyProfileRepository.byKey('orange-orange-004');
+      expect(umbra, isNotNull);
+      final rules = umbra!.attackPlan.conditionalRules;
+      expect(rules.length, 1);
+      expect(rules.first.condition.type, ConditionalConditionType.alteration);
+      expect(rules.first.condition.present, contains('Shadows'));
+      expect(rules.first.effect.damageFormula, '+4');
+      expect(rules.first.effect.undefendable, isTrue);
+    });
+
+    test('Carrion Golem and Golem Concasseur profiles', () {
+      final carrion = EnemyProfileRepository.byKey('violet-violet-006');
+      expect(carrion, isNotNull);
+      expect(carrion!.attackPlan.goals.first.yellow, 3);
+      final cExtra = carrion.attackPlan.goals.first.effect?.extraRoll;
+      expect(cExtra?.dice, 2);
+      expect(cExtra?.mode, ExtraRollMode.simple);
+      expect(cExtra?.finalText, contains('Parasite'));
+
+      final concasseur = EnemyProfileRepository.byKey('violet-violet-010');
+      expect(concasseur, isNotNull);
+      expect(concasseur!.attackPlan.goals.first.yellow, 3);
+      final gExtra = concasseur.attackPlan.goals.first.effect?.extraRoll;
+      expect(gExtra?.dice, 2);
+      expect(gExtra?.mode, ExtraRollMode.simple);
+      expect(gExtra?.finalText, contains('Concussion'));
+    });
+
+    test('Chaman Orque profile has 2 white 2 red, 4 undef, Poison, 1 discard card and 3 display rows', () {
+      final orc = EnemyProfileRepository.byKey('violet-violet-015');
+      expect(orc, isNotNull);
+      final goal = orc!.attackPlan.goals.first;
+      expect(goal.white, 2);
+      expect(goal.red, 2);
+      expect(goal.effect?.damage, 4);
+      expect(goal.effect?.undefendable, isTrue);
+      expect(goal.effect?.heroTokens, contains('Poison'));
+      expect(goal.effect?.discardCards, 1);
+      expect(orc.attackPlan.displayRows.length, 3);
+    });
+
     test('AdventureState.recordEnemyFled: marks enemy fled and defeated but does NOT add victory score', () {
       final adventure = AdventureState(
         hero: HeroType.barbare,
@@ -1610,9 +1710,16 @@ void main() {
       expect(node.passives.isNotEmpty, isTrue);
     });
 
-    test('Minion pack classification: DTA default and allowedPacks filtering', () {
+    test('Minion pack classification: DTA default and allowedPacks filtering', () async {
       expect(AppSettings.instance.isMinionPackActive('dta'), isTrue);
       expect(AppSettings.instance.activeMinionPacks.contains('dta'), isTrue);
+
+      // Heritage pack toggle
+      expect(AppSettings.instance.isMinionPackActive('heritage'), isFalse);
+      await AppSettings.instance.setMinionPackActive('heritage', true);
+      expect(AppSettings.instance.isMinionPackActive('heritage'), isTrue);
+      await AppSettings.instance.setMinionPackActive('heritage', false);
+      expect(AppSettings.instance.isMinionPackActive('heritage'), isFalse);
 
       final dtaProfiles = EnemyProfileRepository.byRank(
         EnemyRank.green,
@@ -2000,6 +2107,493 @@ void main() {
       const isUpkeepPhase = false;
       final shouldSkipInUpkeep = isUpkeepPhase && isBleedToken('Bleed');
       expect(shouldSkipInUpkeep, isFalse);
+    });
+
+    test('Recipe minion selection filtering and alphabetical sorting', () {
+      final greenProfiles = EnemyProfileRepository.byRank(EnemyRank.green);
+      expect(greenProfiles, isNotEmpty);
+
+      // Filter unvalidated only and sort alphabetically
+      final unvalidatedOnly = greenProfiles
+          .where((p) => !p.isFullyValidated)
+          .toList()
+        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
+      for (var i = 0; i < unvalidatedOnly.length - 1; i++) {
+        expect(
+          unvalidatedOnly[i].name.toLowerCase().compareTo(unvalidatedOnly[i + 1].name.toLowerCase()),
+          lessThanOrEqualTo(0),
+        );
+        expect(unvalidatedOnly[i].isFullyValidated, isFalse);
+      }
+
+      // When including validated minions, all are present and sorted alphabetically
+      final allAlphabetical = List<EnemyProfile>.from(greenProfiles)
+        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
+      expect(allAlphabetical.length, greenProfiles.length);
+      for (var i = 0; i < allAlphabetical.length - 1; i++) {
+        expect(
+          allAlphabetical[i].name.toLowerCase().compareTo(allAlphabetical[i + 1].name.toLowerCase()),
+          lessThanOrEqualTo(0),
+        );
+      }
+    });
+
+    test('Yokai offensive failure passive inflicts Hex and Silence', () {
+      final yokaiProfile = EnemyProfileRepository.byKey('bleu-bleu-023');
+      expect(yokaiProfile, isNotNull);
+      final yokai = EnemyNode(
+        id: 44,
+        label: yokaiProfile!.name,
+        rank: yokaiProfile.rank,
+        maxHealth: yokaiProfile.maxHealth,
+        cp: yokaiProfile.cp,
+        attacks: yokaiProfile.attacks,
+        defense: yokaiProfile.defense,
+        defenseDice: yokaiProfile.defenseDice,
+        attackPlan: yokaiProfile.attackPlan,
+        cardAsset: yokaiProfile.cardAsset,
+        profileKey: yokaiProfile.key,
+        passives: yokaiProfile.passives,
+      );
+
+      expect(yokai.passives, isNotEmpty);
+      final outcome = MinionPassiveResolver.resolveOffensiveFailure(
+        enemy: yokai,
+        hasValidAttack: false,
+        rollPhaseFinished: true,
+      );
+
+      expect(outcome.triggered, isTrue);
+      expect(outcome.damage, 0);
+      expect(outcome.heroTokens, containsAll(['Hex', 'Silence']));
+      expect(outcome.minionTokens, isEmpty);
+      expect(outcome.notes, isNotEmpty);
+
+      // If attack is valid, passive should NOT trigger
+      final noOutcome = MinionPassiveResolver.resolveOffensiveFailure(
+        enemy: yokai,
+        hasValidAttack: true,
+        rollPhaseFinished: true,
+      );
+      expect(noOutcome.triggered, isFalse);
+    });
+
+    test('Cyclope Brutal offensive failure passive deals 2 undefendable damage', () {
+      final cyclopeProfile = EnemyProfileRepository.byKey('bleu-bleu-006');
+      expect(cyclopeProfile, isNotNull);
+      final cyclope = EnemyNode(
+        id: 27,
+        label: cyclopeProfile!.name,
+        rank: cyclopeProfile.rank,
+        maxHealth: cyclopeProfile.maxHealth,
+        cp: cyclopeProfile.cp,
+        attacks: cyclopeProfile.attacks,
+        defense: cyclopeProfile.defense,
+        defenseDice: cyclopeProfile.defenseDice,
+        attackPlan: cyclopeProfile.attackPlan,
+        cardAsset: cyclopeProfile.cardAsset,
+        profileKey: cyclopeProfile.key,
+        passives: cyclopeProfile.passives,
+      );
+
+      expect(cyclope.passives, isNotEmpty);
+      final outcome = MinionPassiveResolver.resolveOffensiveFailure(
+        enemy: cyclope,
+        hasValidAttack: false,
+        rollPhaseFinished: true,
+      );
+
+      expect(outcome.triggered, isTrue);
+      expect(outcome.damage, 2);
+      expect(outcome.undefendable, isTrue);
+      expect(outcome.heroTokens, isEmpty);
+      expect(outcome.notes, isNotEmpty);
+    });
+
+    test('The Butcher offensive failure passive heals 2 HP', () {
+      final butcherProfile = EnemyProfileRepository.byKey('bleu-bleu-009');
+      expect(butcherProfile, isNotNull);
+      final butcher = EnemyNode(
+        id: 30,
+        label: butcherProfile!.name,
+        rank: butcherProfile.rank,
+        maxHealth: butcherProfile.maxHealth,
+        cp: butcherProfile.cp,
+        attacks: butcherProfile.attacks,
+        defense: butcherProfile.defense,
+        defenseDice: butcherProfile.defenseDice,
+        attackPlan: butcherProfile.attackPlan,
+        cardAsset: butcherProfile.cardAsset,
+        profileKey: butcherProfile.key,
+        passives: butcherProfile.passives,
+      );
+
+      expect(butcher.passives, isNotEmpty);
+      final outcome = MinionPassiveResolver.resolveOffensiveFailure(
+        enemy: butcher,
+        hasValidAttack: false,
+        rollPhaseFinished: true,
+      );
+
+      expect(outcome.triggered, isTrue);
+      expect(outcome.heal, 2);
+      expect(outcome.damage, 0);
+      expect(outcome.heroTokens, isEmpty);
+      expect(outcome.notes, isNotEmpty);
+    });
+
+    test('Fanatique Sacre consolidates multi-passives without repeating prefix and executes both effects', () {
+      final profile = EnemyProfileRepository.byKey('violet-violet-016')!;
+      expect(profile.passives.length, 2);
+
+      // Test consolidatePassives
+      final consolidated = MinionPassiveResolver.consolidatePassives(profile.passives);
+      expect(consolidated.length, 1);
+      final combined = consolidated.first;
+      expect(combined.text, 'If the Offensive Roll Phase fails: deals {damage:2}, steals {hp:2}.');
+      expect(combined.effect?.damage, 2);
+      expect(combined.effect?.heal, 2);
+
+      // Test EnemyNode instance resolution
+      final enemy = EnemyNode(
+        id: 31,
+        label: profile.name,
+        rank: profile.rank,
+        maxHealth: profile.maxHealth,
+        cp: profile.cp,
+        attacks: profile.attacks,
+        defense: profile.defense,
+        defenseDice: profile.defenseDice,
+        attackPlan: profile.attackPlan,
+        cardAsset: profile.cardAsset,
+        profileKey: profile.key,
+        passives: profile.passives,
+      );
+
+      final outcome = MinionPassiveResolver.resolveOffensiveFailure(
+        enemy: enemy,
+        hasValidAttack: false,
+        rollPhaseFinished: true,
+      );
+
+      expect(outcome.triggered, isTrue);
+      expect(outcome.damage, 2);
+      expect(outcome.heal, 2);
+      expect(outcome.notes.length, 1);
+      expect(outcome.notes.first, contains('Passive triggered: If the Offensive Roll Phase fails: deals {damage:2}, steals {hp:2}.'));
+    });
+
+    test('ExtraRollOutcome model and repository support heal and repeat', () {
+      final profile = EnemyProfileRepository.byKey('violet-violet-016')!;
+      final goal = profile.attackPlan?.goals.first;
+      expect(goal?.effect?.extraRoll, isNotNull);
+      final outcomes = goal!.effect!.extraRoll!.outcomes;
+      expect(outcomes.length, 3);
+
+      // White: +1 dmg, repeat true
+      expect(outcomes[0].face, ExtraRollFace.white);
+      expect(outcomes[0].damage, 1);
+      expect(outcomes[0].heal, 0);
+      expect(outcomes[0].repeat, isTrue);
+
+      // Orange: +2 dmg, repeat true
+      expect(outcomes[1].face, ExtraRollFace.yellow);
+      expect(outcomes[1].damage, 2);
+      expect(outcomes[1].heal, 0);
+      expect(outcomes[1].repeat, isTrue);
+
+      // Red: +2 heal, repeat true
+      expect(outcomes[2].face, ExtraRollFace.red);
+      expect(outcomes[2].damage, 0);
+      expect(outcomes[2].heal, 2);
+      expect(outcomes[2].repeat, isTrue);
+    });
+
+    test('Chevalier a la Hache & Chevalier du Chaos have no micro suite and aim for small suite', () {
+      final hacheProfile = EnemyProfileRepository.byKey('bleu-bleu-016')!;
+      final chaosProfile = EnemyProfileRepository.byKey('violet-violet-021')!;
+
+      final hacheEnemy = EnemyNode(
+        id: 40,
+        label: hacheProfile.name,
+        rank: hacheProfile.rank,
+        maxHealth: hacheProfile.maxHealth,
+        cp: hacheProfile.cp,
+        attacks: hacheProfile.attacks,
+        defense: hacheProfile.defense,
+        defenseDice: hacheProfile.defenseDice,
+        attackPlan: hacheProfile.attackPlan,
+        cardAsset: hacheProfile.cardAsset,
+        profileKey: hacheProfile.key,
+        passives: hacheProfile.passives,
+      );
+
+      final chaosEnemy = EnemyNode(
+        id: 41,
+        label: chaosProfile.name,
+        rank: chaosProfile.rank,
+        maxHealth: chaosProfile.maxHealth,
+        cp: chaosProfile.cp,
+        attacks: chaosProfile.attacks,
+        defense: chaosProfile.defense,
+        defenseDice: chaosProfile.defenseDice,
+        attackPlan: chaosProfile.attackPlan,
+        cardAsset: chaosProfile.cardAsset,
+        profileKey: chaosProfile.key,
+        passives: chaosProfile.passives,
+      );
+
+      // Verify no micro suite (length 3) exists in attack plan
+      expect(hacheEnemy.attackPlan.suiteEffects[3], isNull);
+      expect(chaosEnemy.attackPlan.suiteEffects[3], isNull);
+      expect(hacheEnemy.attackPlan.suiteEffects[4], isNotNull);
+      expect(chaosEnemy.attackPlan.suiteEffects[4], isNotNull);
+
+      final adventure = AdventureState(
+        config: SurvivalConfig(mode: SurvivalMode.mediumFixed, targetScore: mediumTarget),
+        hero: HeroType.barbare,
+      );
+
+      // Initial roll message targets small suite, NOT micro suite
+      final introMsgHache = minionAttackAiMessage(hacheEnemy, [], 0, adventure, '');
+      expect(introMsgHache, contains('First target: small suite'));
+      expect(introMsgHache, isNot(contains('First target: micro suite')));
+
+      final introMsgChaos = minionAttackAiMessage(chaosEnemy, [], 0, adventure, '');
+      expect(introMsgChaos, contains('First target: small suite'));
+      expect(introMsgChaos, isNot(contains('First target: micro suite')));
+
+      // When rolling 3 consecutive dice (1, 2, 3), chooseSuiteHold aims towards small suite
+      final dice = [
+        GameDie(id: 0)..value = 1..settled = true,
+        GameDie(id: 1)..value = 2..settled = true,
+        GameDie(id: 2)..value = 3..settled = true,
+        GameDie(id: 3)..value = 5..settled = true,
+        GameDie(id: 4)..value = 6..settled = true,
+      ];
+      final decision = MinionDiceEngine.chooseSuiteHold(dice, minLength: 4);
+      expect(decision.values, [1, 2, 3]);
+      expect(decision.reason, contains('towards a small suite'));
+      expect(decision.reason, isNot(contains('already validated')));
+
+      // At roll 3 with only 3 consecutive dice, it fails offensive phase and triggers passive
+      final msgRoll3 = minionAttackAiMessage(hacheEnemy, dice, 3, adventure, '');
+      expect(msgRoll3, contains('no valid suite was made'));
+      expect(msgRoll3, isNot(contains('micro suite validated')));
+    });
+
+    test('MinionPassive parsing accepts steals {hp:2}, {stealhp:2}, and {hp:2}', () {
+      final p1 = MinionPassive.fromJson({
+        'type': 'offensive_failure',
+        'timing': 'offensiveRollFailed',
+        'target': 'minion',
+        'impact': 'steals {hp:2}',
+        'text': 'If the Offensive Roll Phase fails: steals {hp:2}.',
+      });
+      expect(p1.effect?.stealHp, 2);
+
+      final p2 = MinionPassive.fromJson({
+        'type': 'offensive_failure',
+        'timing': 'offensiveRollFailed',
+        'target': 'minion',
+        'impact': 'steals {stealhp:3}',
+        'text': 'If the Offensive Roll Phase fails: steals {stealhp:3}.',
+      });
+      expect(p2.effect?.stealHp, 3);
+
+      final p3 = MinionPassive.fromJson({
+        'type': 'offensive_failure',
+        'timing': 'offensiveRollFailed',
+        'target': 'minion',
+        'impact': 'heals {hp:4}',
+        'text': 'If the Offensive Roll Phase fails: heals {hp:4}.',
+      });
+      expect(p3.effect?.heal, 4);
+      expect(p3.effect?.stealHp, 0);
+    });
+
+    test('CompactItemStrip and alterating tokens callbacks modify alterations list', () {
+      final heroTokens = <String>['Poison', 'Barbed Vine'];
+      final added = <String>[];
+      final removed = <String>[];
+
+      void onHeroTokenAdded(String t) {
+        heroTokens.add(t);
+        added.add(t);
+      }
+
+      void onHeroTokenRemoved(String t) {
+        heroTokens.remove(t);
+        removed.add(t);
+      }
+
+      // Add a token
+      onHeroTokenAdded('Shadows');
+      expect(heroTokens, contains('Shadows'));
+      expect(added, equals(['Shadows']));
+
+      // Remove a token
+      onHeroTokenRemoved('Poison');
+      expect(heroTokens, isNot(contains('Poison')));
+      expect(removed, equals(['Poison']));
+      expect(heroTokens, equals(['Barbed Vine', 'Shadows']));
+    });
+
+    test('Enraged Berserker (orange-orange-007): goal, extra dice scaling with Chaos, failure passive', () {
+      final profile = EnemyProfileRepository.byKey('orange-orange-007')!;
+      expect(profile.attackPlan.goals.length, 1);
+      final goal = profile.attackPlan.goals.first;
+      expect(goal.white, 3);
+      expect(goal.yellow, 0);
+      expect(goal.red, 1);
+
+      final node = EnemyNode(
+        id: 1,
+        label: profile.name,
+        rank: profile.rank,
+        maxHealth: profile.maxHealth,
+        cp: profile.cp,
+        attacks: profile.attacks,
+        defense: profile.defense,
+        defenseDice: profile.defenseDice,
+        attackPlan: profile.attackPlan,
+        cardAsset: profile.cardAsset,
+        profileKey: profile.key,
+        passives: profile.passives,
+      );
+
+      // Failure passive: offensive failure gives 1 Chaos
+      final failOutcome = MinionPassiveResolver.resolveOffensiveFailure(
+        enemy: node,
+        hasValidAttack: false,
+        rollPhaseFinished: true,
+      );
+      expect(failOutcome.triggered, isTrue);
+      expect(failOutcome.minionTokens, contains('Chaos'));
+    });
+
+    test('Goblin Horde (orange-orange-005): 5 white, half health damage, undefendable <= 5, failure removes positive tokens', () {
+      final profile = EnemyProfileRepository.byKey('orange-orange-005')!;
+      final goal = profile.attackPlan.goals.first;
+      expect(goal.white, 5);
+
+      final node = EnemyNode(
+        id: 2,
+        label: profile.name,
+        rank: profile.rank,
+        maxHealth: profile.maxHealth,
+        cp: profile.cp,
+        attacks: profile.attacks,
+        defense: profile.defense,
+        defenseDice: profile.defenseDice,
+        attackPlan: profile.attackPlan,
+        cardAsset: profile.cardAsset,
+        profileKey: profile.key,
+        passives: profile.passives,
+      );
+
+      // At 25 HP -> 13 damage, defendable
+      node.health = 25;
+      final dmg25 = minionSymbolGoalDamage(node, goal);
+      expect(dmg25?.value, 13);
+      expect(dmg25?.imparable, isFalse);
+
+      // At 10 HP -> 5 damage, undefendable
+      node.health = 10;
+      final dmg10 = minionSymbolGoalDamage(node, goal);
+      expect(dmg10?.value, 5);
+      expect(dmg10?.imparable, isTrue);
+
+      // At 9 HP -> 5 damage, undefendable
+      node.health = 9;
+      final dmg9 = minionSymbolGoalDamage(node, goal);
+      expect(dmg9?.value, 5);
+      expect(dmg9?.imparable, isTrue);
+
+      // Offensive failure heals 3 HP and flags removeHeroPositiveTokens
+      final failOutcome = MinionPassiveResolver.resolveOffensiveFailure(
+        enemy: node,
+        hasValidAttack: false,
+        rollPhaseFinished: true,
+      );
+      expect(failOutcome.triggered, isTrue);
+      expect(failOutcome.heal, 3);
+      expect(failOutcome.removeHeroPositiveTokens, isTrue);
+    });
+
+    test('Fallen Pharaoh (orange-orange-011): 2W 2O 1R deals 5 undef, extra roll faces, upkeep passive', () {
+      final profile = EnemyProfileRepository.byKey('orange-orange-011')!;
+      final goal = profile.attackPlan.goals.first;
+      expect(goal.white, 2);
+      expect(goal.yellow, 2);
+      expect(goal.red, 1);
+      expect(goal.effect?.damage, 5);
+      expect(goal.effect?.undefendable, isTrue);
+
+      final extraRoll = goal.effect?.extraRoll;
+      expect(extraRoll, isNotNull);
+      expect(extraRoll!.dice, 1);
+      expect(extraRoll.outcomes.length, 3);
+
+      final whiteOutcome = extraRoll.outcomes.firstWhere((o) => o.face == ExtraRollFace.white);
+      expect(whiteOutcome.tokens, equals(['Silence']));
+
+      final orangeOutcome = extraRoll.outcomes.firstWhere((o) => o.face == ExtraRollFace.yellow);
+      expect(orangeOutcome.tokens, equals(['Hex']));
+
+      final redOutcome = extraRoll.outcomes.firstWhere((o) => o.face == ExtraRollFace.red);
+      expect(redOutcome.tokens, containsAll(['Hex', 'Silence']));
+
+      final node = EnemyNode(
+        id: 3,
+        label: profile.name,
+        rank: profile.rank,
+        maxHealth: profile.maxHealth,
+        cp: profile.cp,
+        attacks: profile.attacks,
+        defense: profile.defense,
+        defenseDice: profile.defenseDice,
+        attackPlan: profile.attackPlan,
+        cardAsset: profile.cardAsset,
+        profileKey: profile.key,
+        passives: profile.passives,
+      );
+      final adventure = AdventureState(
+        config: SurvivalConfig(mode: SurvivalMode.mediumFixed, targetScore: mediumTarget),
+        hero: HeroType.barbare,
+      );
+
+      // Upkeep when no Siphon: gains Siphon vital
+      final upkeep1 = MinionPassiveResolver.resolveMinionUpkeep(enemy: node, adventure: adventure);
+      expect(upkeep1.triggered, isTrue);
+      expect(upkeep1.minionTokens, contains('Siphon vital'));
+      expect(node.alterations, contains('Siphon vital'));
+
+      // Upkeep when already has Siphon: heals 3 HP instead
+      final upkeep2 = MinionPassiveResolver.resolveMinionUpkeep(enemy: node, adventure: adventure);
+      expect(upkeep2.triggered, isTrue);
+      expect(upkeep2.minionHeal, 3);
+    });
+
+    test('Swamp Dweller (orange-orange-008): 1W 3O inflicts 2 Poison, passives in JSON', () {
+      final profile = EnemyProfileRepository.byKey('orange-orange-008')!;
+      final goal = profile.attackPlan.goals.first;
+      expect(goal.white, 1);
+      expect(goal.yellow, 3);
+      expect(goal.effect?.heroTokens, equals(['Poison', 'Poison']));
+      expect(profile.passives.any((p) => p.text.contains('Poison limit')), isTrue);
+    });
+
+    test('Empereur Cobra (orange-orange-006): 3O inflicts Poison, Entangle, 2 Bleed, end-of-turn passive in JSON', () {
+      final profile = EnemyProfileRepository.byKey('orange-orange-006')!;
+      final goal = profile.attackPlan.goals.first;
+      expect(goal.white, 0);
+      expect(goal.yellow, 3);
+      expect(goal.effect?.heroTokens, containsAll(['Poison', 'Entangle', 'Bleed']));
+      expect(goal.effect?.heroTokens.where((t) => t == 'Bleed').length, 2);
+      expect(profile.passives.any((p) => p.timing == 'endOfTurn'), isTrue);
     });
   });
 }

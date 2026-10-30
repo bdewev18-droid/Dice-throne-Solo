@@ -39,7 +39,9 @@ class CombatAiChatDock extends StatefulWidget {
     this.onEditHeroTokens,
     this.onEditEnemyTokens,
     this.onHeroTokenRemoved,
+    this.onHeroTokenAdded,
     this.onEnemyTokenRemoved,
+    this.onEnemyTokenAdded,
     this.showBlindButton = false,
     this.onBlindPressed,
     this.showEvasiveAttackCover = false,
@@ -273,7 +275,9 @@ class CombatAiChatDock extends StatefulWidget {
   final VoidCallback? onEditHeroTokens;
   final VoidCallback? onEditEnemyTokens;
   final ValueChanged<String>? onHeroTokenRemoved;
+  final ValueChanged<String>? onHeroTokenAdded;
   final ValueChanged<String>? onEnemyTokenRemoved;
+  final ValueChanged<String>? onEnemyTokenAdded;
   final bool showBlindButton;
   final VoidCallback? onBlindPressed;
   final bool showEvasiveAttackCover;
@@ -365,7 +369,9 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
     final onEditHeroTokens = widget.onEditHeroTokens;
     final onEditEnemyTokens = widget.onEditEnemyTokens;
     final onHeroTokenRemoved = widget.onHeroTokenRemoved;
+    final onHeroTokenAdded = widget.onHeroTokenAdded;
     final onEnemyTokenRemoved = widget.onEnemyTokenRemoved;
+    final onEnemyTokenAdded = widget.onEnemyTokenAdded;
     final showBlindButton = widget.showBlindButton;
     final onBlindPressed = widget.onBlindPressed;
     final showEvasiveAttackCover = widget.showEvasiveAttackCover;
@@ -2704,7 +2710,9 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
                             onEditEnemyTokens: onEditEnemyTokens,
                             onTokensChanged: onChanged,
                             onHeroTokenRemoved: onHeroTokenRemoved,
+                            onHeroTokenAdded: onHeroTokenAdded,
                             onEnemyTokenRemoved: onEnemyTokenRemoved,
+                            onEnemyTokenAdded: onEnemyTokenAdded,
                             portraitAsset:
                                 phase == CombatPhase.hero ||
                                     phase == CombatPhase.heroUpkeep

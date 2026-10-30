@@ -81,7 +81,9 @@ class _AiChatWithHealth extends StatefulWidget {
     this.onEditEnemyTokens,
     this.onTokensChanged,
     this.onHeroTokenRemoved,
+    this.onHeroTokenAdded,
     this.onEnemyTokenRemoved,
+    this.onEnemyTokenAdded,
     required this.onHeroHpSaved,
     required this.onHeroCpSaved,
     required this.onEnemyHpSaved,
@@ -111,7 +113,9 @@ class _AiChatWithHealth extends StatefulWidget {
   final VoidCallback? onEditEnemyTokens;
   final VoidCallback? onTokensChanged;
   final ValueChanged<String>? onHeroTokenRemoved;
+  final ValueChanged<String>? onHeroTokenAdded;
   final ValueChanged<String>? onEnemyTokenRemoved;
+  final ValueChanged<String>? onEnemyTokenAdded;
   final ValueChanged<int> onHeroHpSaved;
   final ValueChanged<int> onHeroCpSaved;
   final ValueChanged<int> onEnemyHpSaved;
@@ -245,6 +249,9 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
           onTokenRemoved: portraitIsHero
               ? widget.onHeroTokenRemoved
               : widget.onEnemyTokenRemoved,
+          onTokenAdded: portraitIsHero
+              ? widget.onHeroTokenAdded
+              : widget.onEnemyTokenAdded,
           onHpTap: () => _openEditor(
             portraitIsHero
                 ? _QuickVitalTarget.heroHp
@@ -416,6 +423,7 @@ class _AiChatPortraitVitals extends StatelessWidget {
     this.onEditTokens,
     this.onTokensChanged,
     this.onTokenRemoved,
+    this.onTokenAdded,
   }) : imageOnRight = false;
 
   final String asset;
@@ -437,6 +445,7 @@ class _AiChatPortraitVitals extends StatelessWidget {
   final VoidCallback? onEditTokens;
   final VoidCallback? onTokensChanged;
   final ValueChanged<String>? onTokenRemoved;
+  final ValueChanged<String>? onTokenAdded;
 
   @override
   Widget build(BuildContext context) {
@@ -557,7 +566,12 @@ class _AiChatPortraitVitals extends StatelessWidget {
                                                         rule.label,
                                                   );
                                                   if (idx != -1) {
+                                                    final removed =
+                                                        tokens[idx];
                                                     tokens.removeAt(idx);
+                                                    onTokenRemoved?.call(
+                                                      removed,
+                                                    );
                                                     onTokensChanged!();
                                                   }
                                                 }
@@ -565,6 +579,9 @@ class _AiChatPortraitVitals extends StatelessWidget {
                                           onPlus: onTokensChanged != null
                                               ? () {
                                                   tokens.add(rule.label);
+                                                  onTokenAdded?.call(
+                                                    rule.label,
+                                                  );
                                                   onTokensChanged!();
                                                 }
                                               : null,
@@ -845,6 +862,7 @@ class _CompactRoundIconButton extends StatelessWidget {
     final isEnabled = onPressed != null;
     return Tooltip(
       message: tooltip,
+      triggerMode: TooltipTriggerMode.longPress,
       child: Material(
         color: Colors.transparent,
         shape: const CircleBorder(),

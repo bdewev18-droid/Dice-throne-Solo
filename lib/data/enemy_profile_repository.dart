@@ -402,11 +402,13 @@ class EnemyProfileJson {
       label: label,
       damage: _intValue(raw['damage'], fallback: 0),
       undefendable: raw['undefendable'] as bool? ?? false,
+      heal: _intValue(raw['heal'], fallback: 0),
       stealHp: _intValue(raw['stealHp'], fallback: 0),
       loseHp: _intValue(raw['loseHp'] ?? raw['loseHealth'], fallback: 0),
       stealCp: _intValue(raw['stealCp'], fallback: 0),
       discardCards: _intValue(raw['discardCards'], fallback: (label?.toLowerCase().contains('discard') ?? false) ? 1 : 0),
       tokens: _stringList(raw['tokens']),
+      repeat: raw['repeat'] as bool? ?? false,
       align: raw['align'] as String?,
     );
   }

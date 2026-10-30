@@ -1208,12 +1208,15 @@ function outcomeRow(outcome) {
   row.innerHTML = `
     <div class="outcome-row-grid">
       ${select('Align', 'out-align', outcome.align || '', ['', 'left', 'center', 'right'])}
-      ${select('Face', 'out-face', outcome.face || 'white', ['white', 'orange', 'red', 'any'])}
+      ${select('Face', 'out-face', outcome.face || 'white', ['white', 'orange', 'red', 'any', '1-3', '4-6', '1', '2', '3', '4', '5', '6'])}
+      ${check('Repeat', 'out-repeat', !!outcome.repeat)}
       ${input('Dmg', 'out-damage', outcome.damage ?? 0, 'number')}
+      ${input('Heal', 'out-heal', outcome.heal ?? 0, 'number')}
       ${input('Steal HP', 'out-stealhp', outcome.stealHp ?? 0, 'number')}
       ${input('Lose HP', 'out-losehp', outcome.loseHp ?? 0, 'number')}
       ${input('Steal CP', 'out-stealcp', outcome.stealCp ?? 0, 'number')}
       ${check('Undef', 'out-undef', !!outcome.undefendable)}
+      ${check('Flee', 'out-flee', !!outcome.flee)}
       ${input('Nb', 'out-nb', resolveTokenCountDisplay(outcome), 'number')}
       ${input('Tokens', 'out-tokens', [...new Set(outcome.tokens || [])].join(', '))}
       <button type="button" class="danger small">X</button>
@@ -1341,9 +1344,12 @@ function readExtra(card) {
       return {
         align: row.querySelector('.out-align').value || undefined,
         face: row.querySelector('.out-face').value,
+        repeat: row.querySelector('.out-repeat')?.checked || undefined,
         label: row.querySelector('.out-label').value.trim(),
         damage: intVal(row.querySelector('.out-damage').value),
+        heal: intVal(row.querySelector('.out-heal').value),
         undefendable: row.querySelector('.out-undef').checked,
+        flee: row.querySelector('.out-flee')?.checked || false,
         stealHp: intVal(row.querySelector('.out-stealhp').value),
         loseHp: intVal(row.querySelector('.out-losehp').value),
         stealCp: intVal(row.querySelector('.out-stealcp').value),
@@ -1416,9 +1422,24 @@ function actionToDisplayRows(action = {}) {
     rows.push({ align: 'center', items: ['Extra roll:', `${action.extraRoll.dice}x`, '{die:white}'] });
     const outcomes = action.extraRoll.outcomes || [];
     for (const outcome of outcomes) {
-      const outcomeItems = [`{die:${outcome.face || 'white'}}`, '=', ...effectDisplayItems(outcome)];
-      if (outcome.label) outcomeItems.splice(2, 0, outcome.label);
-      if (outcomeItems.length > 2) rows.push({ align: 'left', items: outcomeItems });
+      let prefix;
+      if (outcome.face === '1-3') {
+        prefix = ['{die:1}', '{die:2}', '{die:3}'];
+      } else if (outcome.face === '4-6') {
+        prefix = ['{die:4}', '{die:5}', '{die:6}'];
+      } else if (['1', '2', '3', '4', '5', '6'].includes(String(outcome.face))) {
+        prefix = [`{die:${outcome.face}}`];
+      } else {
+        const dieFace = `{die:${outcome.face || 'white'}}`;
+        prefix = outcome.repeat ? ['x', dieFace] : [dieFace];
+      }
+      const effects = effectDisplayItems(outcome);
+      if (outcome.flee) {
+        effects.push('Flees');
+      }
+      const outcomeItems = [...prefix, '=', ...effects];
+      if (outcome.label) outcomeItems.splice(prefix.length + 1, 0, outcome.label);
+      if (outcomeItems.length > prefix.length + 1) rows.push({ align: 'left', items: outcomeItems });
     }
     if (action.extraRoll.finalText) rows.push({ align: 'left', items: [action.extraRoll.finalText] });
   }
@@ -1514,7 +1535,8 @@ function generateDefenseRows() {
 function generatePassiveRows() {
   collectCurrent();
   const passives = (selectedProfile?.attackPlan?.passives?.length ? selectedProfile.attackPlan.passives : selectedProfile?.passives) || [];
-  const rows = passives.flatMap(passiveToDisplayRows);
+  const consolidated = combinePassivesForDisplay(passives);
+  const rows = consolidated.flatMap(passiveToDisplayRows);
   writeGeneratedRows('passivesDisplayRowsInput', rows, 'Passive');
 }
 function parseDisplayRowsText(raw) {
@@ -1590,6 +1612,9 @@ function tokenImageHtml(name) {
 }
 function displayItemHtml(item) {
   const text = String(item || '');
+  if (text === 'x') {
+    return '<span style="font-weight:900; font-size:16px; margin-right:4px;">x</span>';
+  }
   const match = text.match(/^\{([^:}]+)(?::([^}]+))?\}$/);
   if (!match) return '<span>' + escapeText(text) + '</span>';
   const kind = match[1].toLowerCase();
@@ -1597,6 +1622,9 @@ function displayItemHtml(item) {
   if (kind === 'die') {
     if (['white', 'orange', 'red', 'yellow'].includes(value.toLowerCase())) {
       return dice(value.toLowerCase() === 'yellow' ? 'orange' : value.toLowerCase(), 1);
+    }
+    if (['1', '2', '3', '4', '5', '6'].includes(value)) {
+      return `<span class="die white">${value}</span>`;
     }
     return dice('white', 1) || '<span class="die white">D</span>';
   }
@@ -1609,6 +1637,8 @@ function displayItemHtml(item) {
   if (kind === 'half_prevent' || kind === 'half_shield' || kind === 'half_block') {
     return '<span class="badge prevent" style="font-size:10px;">½</span>';
   }
+  if (kind === 'hp' || kind === 'pv') return '<span class="badge heal" title="HP">' + escapeText(value) + '</span>';
+  if (kind === 'stealhp' || kind === 'steal_hp') return '<span style="font-weight:900; color:#5fe38b; margin-right:3px;">steal</span><span class="badge heal" title="Steal HP">' + escapeText(value) + '</span>';
   if (kind === 'heal' || kind === 'life' || kind === 'vie' || kind === 'soin') return '<span class="badge heal">+' + escapeText(value) + '</span>';
   if (kind === 'losehp' || kind === 'lose_hp' || kind === 'losehealth' || kind === 'loselife' || kind === 'pertevie') return '<span class="badge losehp">-' + escapeText(value) + '</span>';
   if (kind === 'cp') return '<span class="token-chip">Steal ' + escapeText(value) + ' CP</span>';
@@ -1625,7 +1655,16 @@ function renderFormattedInlineBadge(text = '') {
 }
 function displayRowsHtml(rows = []) {
   if (!rows.length) return '<em>No display rows.</em>';
-  return rows.map((row) => '<div class="display-row ' + (row.align || 'left') + '">' + (row.items || []).map(displayItemHtml).join('') + '</div>').join('');
+  return rows.map((row) => {
+    const items = row.items || [];
+    const eqIdx = items.indexOf('=');
+    if (eqIdx !== -1) {
+      const left = items.slice(0, eqIdx).map(displayItemHtml).join('');
+      const right = items.slice(eqIdx + 1).map(displayItemHtml).join('');
+      return '<div class="display-row" style="display:flex; justify-content:space-between; align-items:center; width:100%;"><div style="display:flex; gap:6px; align-items:center;">' + left + '</div><div style="display:flex; gap:6px; align-items:center;">' + right + '</div></div>';
+    }
+    return '<div class="display-row ' + (row.align || 'left') + '">' + items.map(displayItemHtml).join('') + '</div>';
+  }).join('');
 }
 function renderDisplayRowsPreviews() {
   if(window.bindHighlights) window.bindHighlights();
@@ -1797,11 +1836,144 @@ function extractPassiveImpact(text = '', type = 'custom') {
   return str.replace(/\.$/, '').trim();
 }
 
+function convertPassiveTextToTags(rawText) {
+  let text = String(rawText || '').trim();
+  if (!text) return '';
+
+  // 1. Remove duplicate numbers before {undef:N} or {damage:N}
+  // e.g. "deals 1 {undef:1} damage" -> "deals {undef:1} damage"
+  // e.g. "deals an additional 2 {undef:2} damage" -> "deals an additional {undef:2} damage"
+  text = text.replace(/\bdeals\s+(?:an\s+additional\s+)?(\d+)\s*\{(undef|imparable):(\d+)\}\s*damage/gi, (m, n1, tag, n2) => {
+    const isAdditional = /additional/i.test(m);
+    return `deals ${isAdditional ? 'an additional ' : ''}{undef:${n2}} damage`;
+  });
+  text = text.replace(/\bdeals\s+(?:an\s+additional\s+)?(\d+)\s*\{(damage|dmg):(\d+)\}\s*damage/gi, (m, n1, tag, n2) => {
+    const isAdditional = /additional/i.test(m);
+    return `deals ${isAdditional ? 'an additional ' : ''}{damage:${n2}} damage`;
+  });
+  text = text.replace(/\b(\d+)\s*\{(undef|imparable):(\d+)\}/gi, '{undef:$3}');
+  text = text.replace(/\b(\d+)\s*\{(damage|dmg):(\d+)\}/gi, '{damage:$3}');
+
+  // 2. Convert plain text undefendable damage
+  // e.g. "deals 2 undefendable damage" -> "deals {undef:2} damage"
+  // e.g. "deals 1 undef damage" -> "deals {undef:1} damage"
+  // e.g. "inflige 2 dégâts imparables" -> "deals {undef:2} damage"
+  text = text.replace(/\bdeals\s+(?:an\s+additional\s+)?(\d+)\s+(?:undefendable|imparable|undef)\s+damage/gi, (m, n) => {
+    const isAdditional = /additional/i.test(m);
+    return `deals ${isAdditional ? 'an additional ' : ''}{undef:${n}} damage`;
+  });
+  text = text.replace(/\binflige\s+(?:un\s+supplément\s+de\s+)?(\d+)\s+(?:dégâts?|degats?)\s+imparables?/gi, 'deals {undef:$1} damage');
+
+  // 3. Convert plain text normal damage (not already tagged)
+  text = text.replace(/\btakes\s+(\d+)\s*\{damage:\1\}\s*damage/gi, 'takes {damage:$1} damage');
+  text = text.replace(/\btakes\s+(\d+)\s*\{damage:\1\}/gi, 'takes {damage:$1}');
+  text = text.replace(/\bdeals\s+(?:an\s+additional\s+)?(\d+)\s+damage(?!\s*\})/gi, (m, n) => {
+    const isAdditional = /additional/i.test(m);
+    return `deals ${isAdditional ? 'an additional ' : ''}{damage:${n}} damage`;
+  });
+
+  // 4. Heals
+  // e.g. "heals 2 {heal:2}" -> "heals {heal:2}"
+  text = text.replace(/\bheals?\s+(\d+)\s*\{(heal|life|vie|soin):(\d+)\}/gi, 'heals {heal:$3}');
+  text = text.replace(/\bheals?\s+(\d+)\s*(?:hp|pv|health)?(?!\s*\})/gi, 'heals {heal:$1}');
+
+  // 5. Steal HP
+  // Support "steals {hp:2}", "steals {stealhp:2}", "steals 2 HP", "steals 2"
+  text = text.replace(/\bsteals?\s+(\d+)\s*\{(?:stealhp|steal_hp|hp|pv):(\d+)\}/gi, 'steals {hp:$2}');
+  text = text.replace(/\bsteals?\s*\{(?:stealhp|steal_hp):(\d+)\}/gi, 'steals {hp:$1}');
+  text = text.replace(/\bsteals?\s+(\d+)\s*(?:hp|pv|health|life)?(?!\s*\})/gi, 'steals {hp:$1}');
+
+  // 6. Tokens: detect known token names from tokenCatalog and wrap with {token:...}
+  if (Array.isArray(tokenCatalog) && tokenCatalog.length > 0) {
+    const labels = tokenCatalog
+      .map(t => t.label)
+      .filter(l => l && l.length > 1)
+      .sort((a, b) => b.length - a.length);
+
+    for (const label of labels) {
+      const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const reg = new RegExp(`(?<!\\{token:)\\b${escaped}\\b(?!\\})`, 'gi');
+      text = text.replace(reg, `{token:${label}}`);
+    }
+  }
+
+  // 7. Dice shortcodes
+  text = text.replace(/\broll\s+1\s+white\s+die\b/gi, 'roll 1 {die:white}');
+  text = text.replace(/\broll\s+1\s+orange\s+die\b/gi, 'roll 1 {die:orange}');
+  text = text.replace(/\broll\s+1\s+red\s+die\b/gi, 'roll 1 {die:red}');
+  text = text.replace(/\bwhite\s+die\b/gi, '{die:white}');
+  text = text.replace(/\borange\s+die\b/gi, '{die:orange}');
+  text = text.replace(/\bred\s+die\b/gi, '{die:red}');
+
+  return text;
+}
+
+function combinePassivesForDisplay(passives = []) {
+  if (!passives || passives.length <= 1) return passives;
+  const grouped = {};
+  const orderedKeys = [];
+  passives.forEach((p, idx) => {
+    const timingKey = p.timing?.trim() || p.type?.trim() || `custom_${idx}`;
+    if (!grouped[timingKey]) {
+      grouped[timingKey] = [];
+      orderedKeys.push(timingKey);
+    }
+    grouped[timingKey].push(p);
+  });
+
+  const consolidated = [];
+  for (const key of orderedKeys) {
+    const list = grouped[key];
+    if (list.length === 1) {
+      consolidated.push(list[0]);
+    } else {
+      const isFailure = list[0].type === 'offensive_failure' || list[0].timing === 'offensiveRollFailed';
+      const isStart = list[0].type === 'start_of_turn' || list[0].timing === 'minionUpkeep';
+      const prefix = isFailure
+        ? 'If the Offensive Roll Phase fails: '
+        : (isStart ? 'At the start of its turn: ' : '');
+
+      const impacts = list.map((item) => {
+        let text = item.customText?.trim() || item.text?.trim() || item.impact?.trim() || '';
+        if (prefix && text.startsWith(prefix)) {
+          text = text.substring(prefix.length).trim();
+        } else if (text.startsWith('If the Offensive Roll Phase fails: ')) {
+          text = text.substring('If the Offensive Roll Phase fails: '.length).trim();
+        } else if (text.startsWith('At the start of its turn: ')) {
+          text = text.substring('At the start of its turn: '.length).trim();
+        }
+        if (text.endsWith('.')) text = text.slice(0, -1).trim();
+        return text;
+      }).filter(Boolean);
+
+      const combinedText = prefix + impacts.join(', ') + '.';
+      consolidated.push({
+        ...list[0],
+        customText: combinedText,
+        text: combinedText,
+      });
+    }
+  }
+  return consolidated;
+}
+
 function buildPassiveSentence(passive) {
   if (passive.customText && passive.customText.trim()) {
     return passive.customText.trim();
   }
-  const impact = (passive.impact || '').trim();
+  let impact = (passive.impact || '').trim();
+  // Auto-clean redundant digits before tags if present
+  impact = impact.replace(/\bdeals\s+(?:an\s+additional\s+)?(\d+)\s*\{(undef|imparable):(\d+)\}\s*damage/gi, (m, n1, tag, n2) => {
+    const isAdd = /additional/i.test(m);
+    return `deals ${isAdd ? 'an additional ' : ''}{undef:${n2}} damage`;
+  });
+  impact = impact.replace(/\bdeals\s+(?:an\s+additional\s+)?(\d+)\s*\{(damage|dmg):(\d+)\}\s*damage/gi, (m, n1, tag, n2) => {
+    const isAdd = /additional/i.test(m);
+    return `deals ${isAdd ? 'an additional ' : ''}{damage:${n2}} damage`;
+  });
+  impact = impact.replace(/\b(\d+)\s*\{(undef|imparable):(\d+)\}/gi, '{undef:$3}');
+  impact = impact.replace(/\b(\d+)\s*\{(damage|dmg):(\d+)\}/gi, '{damage:$3}');
+
   if (passive.type === 'offensive_failure') {
     if (!impact) return 'If the Offensive Roll Phase fails: no effect.';
     return `If the Offensive Roll Phase fails: ${impact}${impact.endsWith('.') ? '' : '.'}`;
@@ -1843,15 +2015,24 @@ function syncPassiveEffects(passive) {
     passive.effects.damage = parseInt(dmgMatch[2], 10) || 0;
     passive.effects.undefendable = ['undef', 'imparable'].includes(dmgMatch[1].toLowerCase());
   }
+  // Extract stealHp
+  const stealHpMatch = textToScan.match(/\{(stealhp|steal_hp):(\d+)\}/i);
+  const contextStealHp = textToScan.match(/\bsteals?\s*\{hp:(\d+)\}/i);
+  if (stealHpMatch) {
+    passive.effects.stealHp = parseInt(stealHpMatch[2], 10) || 0;
+  } else if (contextStealHp) {
+    passive.effects.stealHp = parseInt(contextStealHp[1], 10) || 0;
+  }
+
   // Extract heal
   const healMatch = textToScan.match(/\{(heal|life|vie|soin):(\d+)\}/i);
   if (healMatch) {
     passive.effects.heal = parseInt(healMatch[2], 10) || 0;
-  }
-  // Extract stealHp
-  const stealHpMatch = textToScan.match(/\{(stealhp|steal_hp):(\d+)\}/i);
-  if (stealHpMatch) {
-    passive.effects.stealHp = parseInt(stealHpMatch[2], 10) || 0;
+  } else {
+    const hpMatch = textToScan.match(/\{hp:(\d+)\}/i);
+    if (hpMatch && !contextStealHp) {
+      passive.effects.heal = parseInt(hpMatch[1], 10) || 0;
+    }
   }
   passive.effects.tokens = passive.tokens;
 }
@@ -1860,6 +2041,9 @@ function createPassiveQuickChipsRow(input, onUpdate) {
   const row = document.createElement('div');
   row.className = 'passive-quick-chips';
   const chips = [
+    { label: '+ steals {hp:2}', code: 'steals {hp:2}' },
+    { label: '+ {hp:2}', code: '{hp:2}' },
+    { label: '+ {stealhp:2}', code: '{stealhp:2}' },
     { label: '+ {undef:1}', code: '{undef:1}' },
     { label: '+ {undef:2}', code: '{undef:2}' },
     { label: '+ {damage:2}', code: '{damage:2}' },
@@ -1967,8 +2151,18 @@ function renderPassiveItemCard(item, origIndex, zoneType) {
     textarea.oninput = updatePreview;
     tokenBtn.onclick = () => openTokenPickerForPassive(textarea, updatePreview);
 
+    const convertBtn = document.createElement('button');
+    convertBtn.type = 'button';
+    convertBtn.className = 'ghost-btn small';
+    convertBtn.textContent = '⚡ Convert';
+    convertBtn.title = 'Convert plain text to shortcode tags ({undef:...}, {token:...})';
+    convertBtn.onclick = () => {
+      textarea.value = convertPassiveTextToTags(textarea.value);
+      updatePreview();
+    };
+
     const chipsRow = createPassiveQuickChipsRow(textarea, updatePreview);
-    chipsRow.prepend(tokenBtn);
+    chipsRow.prepend(convertBtn, tokenBtn);
 
     textGroup.append(lbl, textarea, chipsRow, previewBox);
     card.appendChild(textGroup);
@@ -2015,7 +2209,7 @@ function renderPassiveItemCard(item, origIndex, zoneType) {
   impactInput.className = 'passive-impact-input';
   impactInput.value = item.impact || '';
   impactInput.placeholder = zoneType === 'offensive_failure'
-    ? 'e.g. deals 2 {undef:2} damage or gains {token:Shadows}'
+    ? 'e.g. deals {undef:2} damage or gains {token:Shadows}'
     : 'e.g. gains 1 {token:Chaos} or heals 3 {heal:3}';
 
   const tokenBtn = document.createElement('button');
@@ -2034,13 +2228,52 @@ function renderPassiveItemCard(item, origIndex, zoneType) {
   const overrideDetails = document.createElement('details');
   overrideDetails.className = 'passive-override-details';
   if (item.customText) overrideDetails.open = true;
+
   const summary = document.createElement('summary');
-  summary.textContent = 'Render override (custom English text)';
+  const summaryTitle = document.createElement('span');
+  summaryTitle.textContent = 'Render override (custom English text)';
+
+  const summaryConvertBtn = document.createElement('button');
+  summaryConvertBtn.type = 'button';
+  summaryConvertBtn.className = 'passive-convert-btn';
+  summaryConvertBtn.textContent = '⚡ Convert';
+  summaryConvertBtn.title = 'Convert preview sentence with tags into override';
+
+  summary.append(summaryTitle, summaryConvertBtn);
+
+  const overrideRow = document.createElement('div');
+  overrideRow.className = 'passive-override-row';
+
   const overrideInput = document.createElement('input');
   overrideInput.type = 'text';
   overrideInput.value = item.customText || '';
   overrideInput.placeholder = 'Optional: Override the generated English phrase';
-  overrideDetails.append(summary, overrideInput);
+
+  const inlineConvertBtn = document.createElement('button');
+  inlineConvertBtn.type = 'button';
+  inlineConvertBtn.className = 'passive-convert-btn';
+  inlineConvertBtn.textContent = '⚡ Convert';
+  inlineConvertBtn.title = 'Convert sentence with tags into override';
+
+  overrideRow.append(overrideInput, inlineConvertBtn);
+  overrideDetails.append(summary, overrideRow);
+
+  const doConvert = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    overrideDetails.open = true;
+    const basePhrase = (overrideInput.value && overrideInput.value.trim())
+      ? overrideInput.value.trim()
+      : buildPassiveSentence({ ...item, customText: '' });
+    overrideInput.value = convertPassiveTextToTags(basePhrase);
+    overrideInput.focus();
+    updateAll();
+  };
+
+  summaryConvertBtn.onclick = doConvert;
+  inlineConvertBtn.onclick = doConvert;
 
   const updateAll = () => {
     item.target = targetSelect.value;
@@ -2102,9 +2335,27 @@ function renderPassiveRules() {
 
   if (failureCount === 0) {
     failureRoot.innerHTML = '<div class="passive-empty-hint">No offensive roll failure passive. Click "+ Add failure passive" to create one.</div>';
+  } else if (failureCount > 1) {
+    const failurePassives = passivesList.filter((p) => (p.type || 'custom') === 'offensive_failure');
+    const consolidated = combinePassivesForDisplay(failurePassives);
+    if (consolidated.length > 0 && consolidated[0].text) {
+      const summaryBox = document.createElement('div');
+      summaryBox.className = 'passive-consolidated-preview';
+      summaryBox.innerHTML = `<span class="passive-preview-label">Combined In-Game Passive (${failureCount} passives)</span> <div>${formatInlineHtml(consolidated[0].text)}</div>`;
+      failureRoot.appendChild(summaryBox);
+    }
   }
   if (startCount === 0) {
     startRoot.innerHTML = '<div class="passive-empty-hint">No start-of-turn passive. Click "+ Add start-of-turn passive" to create one.</div>';
+  } else if (startCount > 1) {
+    const startPassives = passivesList.filter((p) => (p.type || 'custom') === 'start_of_turn');
+    const consolidated = combinePassivesForDisplay(startPassives);
+    if (consolidated.length > 0 && consolidated[0].text) {
+      const summaryBox = document.createElement('div');
+      summaryBox.className = 'passive-consolidated-preview';
+      summaryBox.innerHTML = `<span class="passive-preview-label">Combined In-Game Passive (${startCount} passives)</span> <div>${formatInlineHtml(consolidated[0].text)}</div>`;
+      startRoot.appendChild(summaryBox);
+    }
   }
   if (customCount === 0) {
     customRoot.innerHTML = '<div class="passive-empty-hint">No custom passive. Click "+ Add custom passive" to create one.</div>';

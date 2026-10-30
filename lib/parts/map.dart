@@ -1326,103 +1326,236 @@ class RecipeEnemySelectionPage extends StatefulWidget {
 class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
   static final Map<EnemyRank, int> _lastSelectedIndices = {};
 
-  late final List<EnemyProfile> _profiles = _recipeProfilesFor(
-    widget.rank ?? widget.enemy.rank,
-  );
-  late EnemyProfile _selected = _computeInitialSelection();
+  late EnemyRank _currentRank = widget.rank ?? widget.enemy.rank;
+  bool _showValidated = false;
+  late EnemyProfile _selected;
 
-  EnemyProfile _computeInitialSelection() {
-    final rank = widget.rank ?? widget.enemy.rank;
-    final lastIndex = _lastSelectedIndices[rank];
-    if (lastIndex == null) {
-      if (rank == EnemyRank.green) {
-        return _profiles.firstWhere(
-          (p) =>
-              p.name.toLowerCase().contains('fée') ||
-              p.name.toLowerCase().contains('fee'),
-          orElse: () => _profiles.first,
-        );
-      }
-      return _profiles.first;
-    } else {
-      return _profiles[(lastIndex + 1) % _profiles.length];
+  @override
+  void initState() {
+    super.initState();
+    _selected = _computeInitialSelectionForRank(_currentRank);
+  }
+
+  List<EnemyProfile> _allProfilesForRank(EnemyRank rank) {
+    return _recipeProfilesFor(rank);
+  }
+
+  List<EnemyProfile> _filteredProfilesForRank(
+    EnemyRank rank, {
+    required bool showValidated,
+  }) {
+    final list = _allProfilesForRank(rank).where((p) {
+      if (!showValidated && p.isFullyValidated) return false;
+      return true;
+    }).toList();
+    list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return list;
+  }
+
+  EnemyProfile _computeInitialSelectionForRank(EnemyRank rank) {
+    final candidates = _filteredProfilesForRank(
+      rank,
+      showValidated: _showValidated,
+    );
+    final fallbackList = _allProfilesForRank(rank);
+
+    if (candidates.isEmpty) {
+      return fallbackList.isNotEmpty ? fallbackList.first : _selected;
     }
+
+    final lastIndex = _lastSelectedIndices[rank];
+    if (lastIndex != null && lastIndex < candidates.length) {
+      return candidates[(lastIndex + 1) % candidates.length];
+    }
+
+    if (rank == EnemyRank.green) {
+      return candidates.firstWhere(
+        (p) =>
+            p.name.toLowerCase().contains('fée') ||
+            p.name.toLowerCase().contains('fee'),
+        orElse: () => candidates.first,
+      );
+    }
+    return candidates.first;
   }
 
   Future<void> _pickProfile() async {
     final selected = await showModalBottomSheet<EnemyProfile>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: const Color(0xff111111),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
       ),
-      builder: (context) => SafeArea(
-        child: ListView.separated(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
-          itemCount: _profiles.length,
-          separatorBuilder: (_, _) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final profile = _profiles[index];
-            final selected = profile.key == _selected.key;
-            return ListTile(
-              selected: selected,
-              leading: Text(
-                _recipeProfileCode(profile),
-                style: TextStyle(
-                  color: profile.rank.color,
-                  fontWeight: FontWeight.w900,
-                ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final allForRank = _allProfilesForRank(_currentRank);
+          final validatedCount =
+              allForRank.where((p) => p.isFullyValidated).length;
+          final displayed = _filteredProfilesForRank(
+            _currentRank,
+            showValidated: _showValidated,
+          );
+
+          return SafeArea(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.75,
               ),
-              title: Text(
-                profile.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w900),
-              ),
-              trailing: Row(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: profile.isFullyValidated
-                          ? const Color(0xff1b4332)
-                          : const Color(0xff4a3000),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: profile.isFullyValidated
-                            ? const Color(0xff2d6a4f)
-                            : const Color(0xffd48b00),
-                      ),
-                    ),
-                    child: Text(
-                      profile.isFullyValidated ? '✓ Valid' : 'WIP',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        color: profile.isFullyValidated
-                            ? const Color(0xff74c69d)
-                            : const Color(0xffffba08),
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${_currentRank.name.toUpperCase()} (${displayed.length})',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                            color: _currentRank.color,
+                          ),
+                        ),
+                        const Spacer(),
+                        FilterChip(
+                          selected: _showValidated,
+                          avatar: Icon(
+                            _showValidated
+                                ? Icons.verified
+                                : Icons.visibility_off_outlined,
+                            size: 16,
+                            color: _showValidated
+                                ? const Color(0xff74c69d)
+                                : Colors.white70,
+                          ),
+                          label: Text(
+                            _showValidated
+                                ? 'Validated ($validatedCount)'
+                                : 'Show validated ($validatedCount)',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onSelected: (val) {
+                            setModalState(() => _showValidated = val);
+                            setState(() => _showValidated = val);
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                  if (selected) ...[
-                    const SizedBox(width: 8),
-                    const Icon(Icons.check, size: 18),
-                  ],
+                  const Divider(height: 1),
+                  if (displayed.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.check_circle_outline,
+                            size: 40,
+                            color: Color(0xff74c69d),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'All ${_currentRank.name} minions are validated!',
+                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.visibility),
+                            label: const Text('Show validated minions'),
+                            onPressed: () {
+                              setModalState(() => _showValidated = true);
+                              setState(() => _showValidated = true);
+                            },
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Flexible(
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 18),
+                        itemCount: displayed.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final profile = displayed[index];
+                          final isSelected = profile.key == _selected.key;
+                          return ListTile(
+                            selected: isSelected,
+                            leading: Text(
+                              _recipeProfileCode(profile),
+                              style: TextStyle(
+                                color: profile.rank.color,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            title: Text(
+                              profile.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w900),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: profile.isFullyValidated
+                                        ? const Color(0xff1b4332)
+                                        : const Color(0xff4a3000),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: profile.isFullyValidated
+                                          ? const Color(0xff2d6a4f)
+                                          : const Color(0xffd48b00),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    profile.isFullyValidated
+                                        ? '✓ Valid'
+                                        : 'WIP',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      color: profile.isFullyValidated
+                                          ? const Color(0xff74c69d)
+                                          : const Color(0xffffba08),
+                                    ),
+                                  ),
+                                ),
+                                if (isSelected) ...[
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.check, size: 18),
+                                ],
+                              ],
+                            ),
+                            onTap: () => Navigator.of(context).pop(profile),
+                          );
+                        },
+                      ),
+                    ),
                 ],
               ),
-              onTap: () => Navigator.of(context).pop(profile),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
     if (selected != null) {
-      setState(() => _selected = selected);
+      setState(() {
+        _selected = selected;
+        _currentRank = selected.rank;
+      });
     }
   }
 
@@ -1443,25 +1576,71 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 12),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 14,
+              RecipeRankPicker(
+                selected: _currentRank,
+                onChanged: (newRank) {
+                  setState(() {
+                    _currentRank = newRank;
+                    _selected = _computeInitialSelectionForRank(newRank);
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
+                        side:
+                            BorderSide(color: _selected.rank.color, width: 1.6),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: _pickProfile,
+                      icon: const Icon(Icons.expand_more),
+                      label: Text(
+                        _recipeProfileLabel(_selected),
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    ),
                   ),
-                  side: BorderSide(color: _selected.rank.color, width: 1.6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    selected: _showValidated,
+                    avatar: Icon(
+                      _showValidated
+                          ? Icons.verified
+                          : Icons.visibility_off_outlined,
+                      size: 16,
+                      color: _showValidated
+                          ? const Color(0xff74c69d)
+                          : Colors.white70,
+                    ),
+                    label: Text(
+                      _showValidated ? 'Validated' : 'WIP only',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onSelected: (val) {
+                      setState(() {
+                        _showValidated = val;
+                        if (!_showValidated && _selected.isFullyValidated) {
+                          _selected =
+                              _computeInitialSelectionForRank(_currentRank);
+                        }
+                      });
+                    },
                   ),
-                ),
-                onPressed: _pickProfile,
-                icon: const Icon(Icons.expand_more),
-                label: Text(
-                  _recipeProfileLabel(_selected),
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
-                ),
+                ],
               ),
               const SizedBox(height: 16),
               Expanded(
@@ -1480,8 +1659,9 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
                 icon: Icons.arrow_forward,
                 color: const Color(0xff8f43ff),
                 onPressed: () {
-                  final rank = widget.rank ?? widget.enemy.rank;
-                  final index = _profiles.indexWhere(
+                  final rank = _currentRank;
+                  final allForRank = _allProfilesForRank(rank);
+                  final index = allForRank.indexWhere(
                     (p) => p.key == _selected.key,
                   );
                   if (index >= 0) {

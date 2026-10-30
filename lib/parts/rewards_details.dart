@@ -835,12 +835,35 @@ Future<List<String>?> showAlterationDialog(
                         return TokenPickerCard(
                           rule: rule,
                           count: count,
-                          onImageTap: () => showTokenDetails(context, rule),
+                          onImageTap: () => showTokenDetails(
+                            context,
+                            rule,
+                            getCount: () => counts[rule.label] ?? 0,
+                            onMinus: () => setDialogState(() {
+                              final cur = counts[rule.label] ?? 0;
+                              if (cur > 0) {
+                                counts[rule.label] = cur - 1;
+                              }
+                            }),
+                            onPlus: () => setDialogState(() {
+                              final cur = counts[rule.label] ?? 0;
+                              if (cur < rule.maxStack) {
+                                if (rule.label.toLowerCase().startsWith('damage bonus')) {
+                                  final totalDb = counts.entries
+                                      .where((e) => e.key.toLowerCase().startsWith('damage bonus'))
+                                      .fold(0, (sum, e) => sum + e.value);
+                                  if (totalDb >= 2) return;
+                                }
+                                counts[rule.label] = cur + 1;
+                              }
+                            }),
+                          ),
                           onMinus: count <= 0
                               ? null
-                              : () => setDialogState(
-                                  () => counts[rule.label] = count - 1,
-                                ),
+                              : () => setDialogState(() {
+                                  final cur = counts[rule.label] ?? 0;
+                                  if (cur > 0) counts[rule.label] = cur - 1;
+                                }),
                           onPlus: () {
                             if (count >= rule.maxStack) return null;
                             if (rule.label.toLowerCase().startsWith(
@@ -855,9 +878,10 @@ Future<List<String>?> showAlterationDialog(
                                   .fold(0, (sum, e) => sum + e.value);
                               if (totalDb >= 2) return null;
                             }
-                            return () => setDialogState(
-                              () => counts[rule.label] = count + 1,
-                            );
+                            return () => setDialogState(() {
+                              final cur = counts[rule.label] ?? 0;
+                              if (cur < rule.maxStack) counts[rule.label] = cur + 1;
+                            });
                           }(),
                         );
                       },
@@ -927,13 +951,68 @@ void showTokenDetails(
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        Text(
-                          'Stack limit: ${rule.maxStack}',
-                          style: const TextStyle(
-                            color: Colors.white54,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        const SizedBox(height: 2),
+                        Wrap(
+                          spacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              'Stack limit: ${rule.maxStack}',
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (rule.appSupported
+                                        ? const Color(0xff41dd74)
+                                        : const Color(0xffff9f1c))
+                                    .withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: (rule.appSupported
+                                          ? const Color(0xff41dd74)
+                                          : const Color(0xffff9f1c))
+                                      .withValues(alpha: 0.5),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: rule.appSupported
+                                          ? const Color(0xff41dd74)
+                                          : const Color(0xffff9f1c),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    rule.appSupported
+                                        ? 'Handled by app'
+                                        : 'Manual resolution',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: rule.appSupported
+                                          ? const Color(0xff41dd74)
+                                          : const Color(0xffff9f1c),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -1118,6 +1197,7 @@ class _TokenCardRoundButton extends StatelessWidget {
     const color = Color(0xff54e98a);
     return Tooltip(
       message: tooltip,
+      triggerMode: TooltipTriggerMode.longPress,
       child: Material(
         color: Colors.transparent,
         shape: const CircleBorder(),
@@ -1127,8 +1207,12 @@ class _TokenCardRoundButton extends StatelessWidget {
           child: Container(
             width: 28,
             height: 28,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
+              color: onPressed != null
+                  ? color.withValues(alpha: 0.16)
+                  : Colors.transparent,
               border: Border.all(
                 color: onPressed != null ? color : Colors.white24,
                 width: 1.5,

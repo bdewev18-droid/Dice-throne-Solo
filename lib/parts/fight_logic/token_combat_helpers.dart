@@ -164,6 +164,11 @@ bool _isStunToken(String label) {
   return k == 'stun' || k == 'etourdissement';
 }
 
+bool _isPoisonToken(String label) {
+  final k = _normalizeTokenKey(label);
+  return k == 'poison';
+}
+
 bool _isDelayedPoisonToken(String label) {
   final k = _normalizeTokenKey(label);
   return k == 'delayedpoison' ||

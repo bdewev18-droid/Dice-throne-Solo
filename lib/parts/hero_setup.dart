@@ -994,7 +994,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                       ),
                     ),
                     child: Text(
-                      '${activePacks.length} / 4 active',
+                      '${activePacks.length} / 5 active',
                       style: const TextStyle(
                         color: Color(0xffffe22d),
                         fontSize: 11,
@@ -1029,6 +1029,12 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                     subtitle: 'Core campaign deck (Required)',
                     imageAsset: 'assets/packs/pack_dta.webp',
                     locked: true,
+                  ),
+                  _buildPackTile(
+                    packKey: 'heritage',
+                    title: 'Heritage DTA minions',
+                    subtitle: 'Heritage campaign deck (Optional)',
+                    imageAsset: 'assets/packs/pack_dta.webp',
                   ),
                   _buildPackTile(
                     packKey: 'promo',
@@ -1239,6 +1245,7 @@ class RoundIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
+      triggerMode: TooltipTriggerMode.longPress,
       child: Material(
         color: Colors.transparent,
         shape: const CircleBorder(),
@@ -1250,6 +1257,7 @@ class RoundIconButton extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
+              color: onPressed != null ? color.withValues(alpha: 0.16) : Colors.transparent,
               border: Border.all(color: onPressed == null ? Colors.white12 : color, width: 1.5),
             ),
             alignment: Alignment.center,

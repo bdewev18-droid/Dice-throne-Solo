@@ -73,7 +73,7 @@ class EnemyProfile {
   final bool validatedAtk;
   final bool validatedDef;
 
-  /// Minion origin expansion pack ('dta', 'promo', 'santa', 'community').
+  /// Minion origin expansion pack ('dta', 'heritage', 'promo', 'santa', 'community').
   final String sourcePack;
 
   /// Whether the minion is 100% validated (both attack and defense approved).
@@ -293,11 +293,13 @@ class ExtraRollOutcome {
     this.label,
     this.damage = 0,
     this.undefendable = false,
+    this.heal = 0,
     this.stealHp = 0,
     this.loseHp = 0,
     this.stealCp = 0,
     this.discardCards = 0,
     this.tokens = const [],
+    this.repeat = false,
     this.align,
   });
 
@@ -305,11 +307,13 @@ class ExtraRollOutcome {
   final String? label;
   final int damage;
   final bool undefendable;
+  final int heal;
   final int stealHp;
   final int loseHp;
   final int stealCp;
   final int discardCards;
   final List<String> tokens;
+  final bool repeat;
   final String? align;
 }
 
@@ -574,6 +578,7 @@ class MinionPassive {
     this.target,
     this.impact,
     this.customText,
+    this.tokens = const [],
     this.effect,
   });
 
@@ -585,18 +590,75 @@ class MinionPassive {
     final impact = (json['impact'] as String?)?.trim();
     final customText = (json['customText'] as String?)?.trim();
     final effectsJson = json['effects'];
-    MinionPassiveEffect? effect;
+    final rawTokens = _asStringList(json['tokens']);
+    final effectTokens = _asStringList(
+      effectsJson is Map<String, dynamic> ? effectsJson['tokens'] : null,
+    );
+    final allTokens = List<String>.unmodifiable(
+      <String>{...rawTokens, ...effectTokens},
+    );
+
+    int parsedDamage = 0;
+    bool parsedUndef = false;
+    int parsedStealHp = 0;
+    int parsedLoseHp = 0;
+    int parsedStealCp = 0;
+    int parsedHeal = 0;
+
     if (effectsJson is Map<String, dynamic>) {
-      effect = MinionPassiveEffect(
-        damage: _asInt(effectsJson['damage']),
-        undefendable: effectsJson['undefendable'] as bool? ?? false,
-        stealHp: _asInt(effectsJson['stealHp']),
-        loseHp: _asInt(effectsJson['loseHp'] ?? effectsJson['loseHealth']),
-        stealCp: _asInt(effectsJson['stealCp']),
-        heal: _asInt(effectsJson['heal']),
-        heroTokens: _asStringList(effectsJson['tokens']),
-      );
+      parsedDamage = _asInt(effectsJson['damage']);
+      parsedUndef = effectsJson['undefendable'] as bool? ?? false;
+      parsedStealHp = _asInt(effectsJson['stealHp']);
+      parsedLoseHp = _asInt(effectsJson['loseHp'] ?? effectsJson['loseHealth']);
+      parsedStealCp = _asInt(effectsJson['stealCp']);
+      parsedHeal = _asInt(effectsJson['heal']);
     }
+
+    final textToScan = '$text $impact $customText';
+    if (parsedStealHp == 0) {
+      final stealHpMatch = RegExp(r'\{(?:stealhp|steal_hp):(\d+)\}', caseSensitive: false).firstMatch(textToScan);
+      if (stealHpMatch != null) {
+        parsedStealHp = int.tryParse(stealHpMatch.group(1) ?? '') ?? 0;
+      } else {
+        final contextMatch = RegExp(r'\bsteals?\s*\{hp:(\d+)\}', caseSensitive: false).firstMatch(textToScan);
+        if (contextMatch != null) {
+          parsedStealHp = int.tryParse(contextMatch.group(1) ?? '') ?? 0;
+        }
+      }
+    }
+    if (parsedHeal == 0) {
+      final healMatch = RegExp(r'\{(?:heal|life|vie|soin):(\d+)\}', caseSensitive: false).firstMatch(textToScan);
+      if (healMatch != null) {
+        parsedHeal = int.tryParse(healMatch.group(1) ?? '') ?? 0;
+      } else if (parsedStealHp == 0) {
+        final hpMatch = RegExp(r'\{hp:(\d+)\}', caseSensitive: false).firstMatch(textToScan);
+        if (hpMatch != null) {
+          parsedHeal = int.tryParse(hpMatch.group(1) ?? '') ?? 0;
+        }
+      }
+    }
+    if (parsedDamage == 0) {
+      final dmgMatch = RegExp(r'\{(?:damage|dmg|undef|imparable):(\d+)\}', caseSensitive: false).firstMatch(textToScan);
+      if (dmgMatch != null) {
+        parsedDamage = int.tryParse(dmgMatch.group(1) ?? '') ?? 0;
+        if (textToScan.toLowerCase().contains('{undef:') || textToScan.toLowerCase().contains('{imparable:')) {
+          parsedUndef = true;
+        }
+      }
+    }
+
+    final isMinionTarget = (target?.toLowerCase().trim()) == 'minion';
+    final isBothTarget = (target?.toLowerCase().trim()) == 'both';
+    final effect = MinionPassiveEffect(
+      damage: parsedDamage,
+      undefendable: parsedUndef,
+      stealHp: parsedStealHp,
+      loseHp: parsedLoseHp,
+      stealCp: parsedStealCp,
+      heal: parsedHeal,
+      heroTokens: (isMinionTarget) ? const [] : allTokens,
+      minionTokens: (isMinionTarget || isBothTarget) ? allTokens : const [],
+    );
     return MinionPassive(
       text: text,
       timing: timing,
@@ -604,6 +666,7 @@ class MinionPassive {
       target: target,
       impact: impact,
       customText: customText,
+      tokens: allTokens,
       effect: effect,
     );
   }
@@ -614,6 +677,7 @@ class MinionPassive {
   final String? target;
   final String? impact;
   final String? customText;
+  final List<String> tokens;
   final MinionPassiveEffect? effect;
 
   @override
@@ -645,6 +709,7 @@ class MinionPassiveEffect {
     this.heal = 0,
     this.discardCards = 0,
     this.heroTokens = const [],
+    this.minionTokens = const [],
   });
 
   final int damage;
@@ -655,4 +720,5 @@ class MinionPassiveEffect {
   final int heal;
   final int discardCards;
   final List<String> heroTokens;
+  final List<String> minionTokens;
 }

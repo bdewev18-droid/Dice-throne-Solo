@@ -219,7 +219,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                       ),
                     )
                   else
-                    for (final passive in _displayedPassives)
+                    for (final passive in MinionPassiveResolver.consolidatePassives(_displayedPassives))
                       Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: _PassiveNote(
@@ -485,8 +485,10 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
   }
 }
 
-class _RecipeRankPicker extends StatelessWidget {
-  const _RecipeRankPicker({required this.selected, required this.onChanged});
+typedef _RecipeRankPicker = RecipeRankPicker;
+
+class RecipeRankPicker extends StatelessWidget {
+  const RecipeRankPicker({required this.selected, required this.onChanged, super.key});
 
   final EnemyRank selected;
   final ValueChanged<EnemyRank> onChanged;
@@ -1471,14 +1473,16 @@ class MinionAttackSummary extends StatelessWidget {
               ],
             );
           case MinionAttackStyle.suite:
+            final hasMicro = enemy.attackPlan.suiteEffects.containsKey(3);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SuiteLine(
-                  label: 'Micro',
-                  length: 3,
-                  result: _buildSuiteResult(3, enemy),
-                ),
+                if (hasMicro)
+                  _SuiteLine(
+                    label: 'Micro',
+                    length: 3,
+                    result: _buildSuiteResult(3, enemy),
+                  ),
                 _SuiteLine(
                   label: 'Small',
                   length: 4,

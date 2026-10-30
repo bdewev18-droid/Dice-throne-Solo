@@ -41,10 +41,11 @@ part 'parts/fight_logic/token_combat_helpers.dart';
 part 'parts/fight_logic/defense_formula_evaluator.dart';
 part 'parts/fight_logic/hydra_logic.dart';
 part 'parts/fight_logic/minion_dice_strategy.dart';
+part 'parts/fight_logic/minion_passive_resolver.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.4.118';
+const String appVersionLabel = 'Version 1.4.134';
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -570,13 +571,14 @@ class MinionDiceEngine {
   static MinionDiceDecision chooseSuiteHold(
     List<GameDie> dice, {
     bool limitTo3 = false,
+    int minLength = 3,
   }) {
     final values =
         dice.where((die) => die.value != null).map((die) => die.value!).toList()
           ..sort();
     final unique = values.toSet();
 
-    var complete = _bestCompleteSuite(unique);
+    var complete = _bestCompleteSuite(unique, minLength: minLength);
     if (complete.isNotEmpty) {
       if (limitTo3 && complete.length > 3) {
         complete = complete.sublist(0, 3);
@@ -587,12 +589,23 @@ class MinionDiceEngine {
       );
     }
 
+    if (minLength >= 4) {
+      final triple = _bestAdjacentTriple(unique);
+      if (triple.isNotEmpty) {
+        return MinionDiceDecision(
+          values: triple,
+          reason: 'Keeping ${triple.join('/')} towards a small suite.',
+        );
+      }
+    }
+
     final pair = _bestAdjacentPair(unique);
     if (pair.isNotEmpty) {
       return MinionDiceDecision(
         values: pair,
-        reason:
-            'Keeping ${pair.join('/')} because it is the best micro-suite start.',
+        reason: minLength >= 4
+            ? 'Keeping ${pair.join('/')} towards a small suite.'
+            : 'Keeping ${pair.join('/')} because it is the best micro-suite start.',
       );
     }
 
@@ -615,7 +628,7 @@ class MinionDiceEngine {
     );
   }
 
-  static List<int> _bestCompleteSuite(Set<int> values) {
+  static List<int> _bestCompleteSuite(Set<int> values, {int minLength = 3}) {
     for (final suite in const [
       [1, 2, 3, 4, 5],
       [2, 3, 4, 5, 6],
@@ -627,8 +640,24 @@ class MinionDiceEngine {
       [3, 4, 5],
       [4, 5, 6],
     ]) {
+      if (suite.length < minLength) continue;
       if (suite.every(values.contains)) {
         return suite;
+      }
+    }
+    return const [];
+  }
+
+  static List<int> _bestAdjacentTriple(Set<int> values) {
+    const triples = [
+      [2, 3, 4],
+      [3, 4, 5],
+      [1, 2, 3],
+      [4, 5, 6],
+    ];
+    for (final triple in triples) {
+      if (triple.every(values.contains)) {
+        return triple;
       }
     }
     return const [];

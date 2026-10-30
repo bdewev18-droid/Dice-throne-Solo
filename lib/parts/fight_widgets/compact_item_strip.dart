@@ -1,4 +1,4 @@
-﻿part of '../../main.dart';
+part of '../../main.dart';
 
 class CompactItemStrip extends StatefulWidget {
   const CompactItemStrip({
@@ -13,6 +13,7 @@ class CompactItemStrip extends StatefulWidget {
     this.trailing,
     this.onTokensChanged,
     this.onTokenRemoved,
+    this.onTokenAdded,
     super.key,
   });
 
@@ -27,6 +28,7 @@ class CompactItemStrip extends StatefulWidget {
   final Widget? trailing;
   final VoidCallback? onTokensChanged;
   final ValueChanged<String>? onTokenRemoved;
+  final ValueChanged<String>? onTokenAdded;
 
   @override
   State<CompactItemStrip> createState() => _CompactItemStripState();
@@ -58,6 +60,105 @@ class _CompactItemStripState extends State<CompactItemStrip> {
               )
               .toList();
     final displayLabel = visibleItems.isEmpty ? widget.emptyText : '';
+
+    bool isAppSupported(CompactItemModel item) {
+      final rule = TokenCatalogRepository.byLabel(
+            _compactTokenBaseLabel(item.tooltip),
+          ) ??
+          TokenCatalogRepository.byLabel(
+            _compactTokenBaseLabel(item.label),
+          );
+      return rule?.appSupported ?? false;
+    }
+
+    final automatedItems = <CompactItemModel>[];
+    final manualItems = <CompactItemModel>[];
+    for (final item in displayItems) {
+      if (isAppSupported(item)) {
+        automatedItems.add(item);
+      } else {
+        manualItems.add(item);
+      }
+    }
+
+    Widget buildItemWidget(CompactItemModel item) {
+      return Padding(
+        padding: const EdgeInsets.only(right: 4),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: () {
+            final rule = TokenCatalogRepository.byLabel(
+              _compactTokenBaseLabel(item.tooltip),
+            );
+            if (rule != null) {
+              showTokenDetails(
+                context,
+                rule,
+                getCount: widget.onTokensChanged != null
+                    ? () => widget.items
+                          .where(
+                            (t) => rule.matches(
+                              _compactTokenBaseLabel(t),
+                            ),
+                          )
+                          .length
+                    : null,
+                onMinus: widget.onTokensChanged != null
+                    ? () {
+                        final idx = widget.items.indexWhere(
+                          (t) => rule.matches(
+                            _compactTokenBaseLabel(t),
+                          ),
+                        );
+                        if (idx != -1) {
+                          final removedItem = widget.items[idx];
+                          if (widget.onTokenRemoved != null) {
+                            widget.onTokenRemoved!(removedItem);
+                          } else {
+                            widget.items.removeAt(idx);
+                          }
+                          widget.onTokensChanged!();
+                        }
+                      }
+                    : null,
+                onPlus: widget.onTokensChanged != null
+                    ? () {
+                        if (widget.onTokenAdded != null) {
+                          widget.onTokenAdded!(rule.label);
+                        } else {
+                          widget.items.add(rule.label);
+                        }
+                        widget.onTokensChanged!();
+                      }
+                    : null,
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    item.tooltip.replaceAll(
+                      RegExp(r'_active', caseSensitive: false),
+                      '',
+                    ),
+                  ),
+                ),
+              );
+            }
+          },
+          child: Tooltip(
+            message: item.tooltip.replaceAll(
+              RegExp(r'_active', caseSensitive: false),
+              '',
+            ),
+            child: _CompactItemVisual(
+              item: item,
+              color: widget.accent,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -102,100 +203,18 @@ class _CompactItemStripState extends State<CompactItemStrip> {
                           ),
                           child: Row(
                             children: [
-                              ...displayItems.map(
-                                (item) => Padding(
-                                  padding: const EdgeInsets.only(right: 4),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(6),
-                                    onTap: () {
-                                      final rule =
-                                          TokenCatalogRepository.byLabel(
-                                            _compactTokenBaseLabel(
-                                              item.tooltip,
-                                            ),
-                                          );
-                                      if (rule != null) {
-                                        showTokenDetails(
-                                          context,
-                                          rule,
-                                          getCount:
-                                              widget.onTokensChanged != null
-                                              ? () => widget.items
-                                                    .where(
-                                                      (t) =>
-                                                          _compactTokenBaseLabel(
-                                                            t,
-                                                          ) ==
-                                                          rule.label,
-                                                    )
-                                                    .length
-                                              : null,
-                                          onMinus:
-                                              widget.onTokensChanged != null
-                                              ? () {
-                                                  final idx = widget.items
-                                                      .indexWhere(
-                                                        (t) =>
-                                                            _compactTokenBaseLabel(
-                                                              t,
-                                                            ) ==
-                                                            rule.label,
-                                                      );
-                                                  if (idx != -1) {
-                                                    final removedItem =
-                                                        widget.items[idx];
-                                                    widget.items.removeAt(idx);
-                                                    if (widget.onTokenRemoved !=
-                                                        null) {
-                                                      widget.onTokenRemoved!(
-                                                        removedItem,
-                                                      );
-                                                    }
-                                                    widget.onTokensChanged!();
-                                                  }
-                                                }
-                                              : null,
-                                          onPlus: widget.onTokensChanged != null
-                                              ? () {
-                                                  widget.items.add(rule.label);
-                                                  widget.onTokensChanged!();
-                                                }
-                                              : null,
-                                        );
-                                      } else {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              item.tooltip.replaceAll(
-                                                RegExp(
-                                                  r'_active',
-                                                  caseSensitive: false,
-                                                ),
-                                                '',
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    child: Tooltip(
-                                      message: item.tooltip.replaceAll(
-                                        RegExp(
-                                          r'_active',
-                                          caseSensitive: false,
-                                        ),
-                                        '',
-                                      ),
-                                      child: _CompactItemVisual(
-                                        item: item,
-                                        color: widget.accent,
-                                      ),
-                                    ),
+                              ...automatedItems.map(buildItemWidget),
+                              if (automatedItems.isNotEmpty && manualItems.isNotEmpty)
+                                Container(
+                                  margin: const EdgeInsets.only(left: 2, right: 6),
+                                  width: 1.5,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white24,
+                                    borderRadius: BorderRadius.circular(1),
                                   ),
                                 ),
-                              ),
+                              ...manualItems.map(buildItemWidget),
                             ],
                           ),
                         ),
@@ -417,6 +436,35 @@ class CompactItemBadge extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           image,
+          Positioned(
+            left: -2,
+            top: -2,
+            child: Tooltip(
+              message:
+                  rule.appSupported ? 'Handled by app' : 'Manual resolution',
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: rule.appSupported
+                      ? const Color(0xff41dd74)
+                      : const Color(0xffff9f1c),
+                  border: Border.all(color: Colors.black, width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (rule.appSupported
+                              ? const Color(0xff41dd74)
+                              : const Color(0xffff9f1c))
+                          .withValues(alpha: 0.5),
+                      blurRadius: 2,
+                      spreadRadius: 0.5,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           if (count != null)
             Positioned(
               right: -2,

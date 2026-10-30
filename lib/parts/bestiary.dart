@@ -30,6 +30,7 @@ enum _BestiaryRankFilter {
 enum _BestiaryPackFilter {
   all('All packs', null, 'assets/packs/pack_dta.webp'),
   dta('DTA Minions', 'dta', 'assets/packs/pack_dta.webp'),
+  heritage('Heritage DTA minions', 'heritage', 'assets/packs/pack_dta.webp'),
   promo('Promo Pack', 'promo', 'assets/packs/pack_promo.webp'),
   santa("Santa's Pack", 'santa', 'assets/packs/pack_santa.webp'),
   community("Community's Cards", 'community', 'assets/packs/pack_community.webp');
@@ -1927,6 +1928,7 @@ class _BestiaryEnemyDetailPageState extends State<BestiaryEnemyDetailPage> {
                     const SizedBox(width: 8),
                     Text(
                       switch (profile.sourcePack) {
+                        'heritage' => 'Heritage DTA minions (Official)',
                         'promo' => 'Promo pack DTA (Official)',
                         'santa' => "Santa's workshop Promo pack DTA (Official)",
                         _ => 'DTA Minions (Core Game)',
