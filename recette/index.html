@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galerie de Composants UI - Dice Throne Solo</title>
+  <link rel="stylesheet" href="recette.css">
+</head>
+<body>
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <span class="brand-logo">🛡️</span>
+      <div>
+        <h1 class="brand-title">Galerie de Composants UI</h1>
+        <p class="brand-subtitle">Dice Throne Solo • Design System & Showcase des Popins & Widgets</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="../admin/index.html" class="btn btn-primary" style="text-decoration:none;">
+        ⚙️ Back Office Admin
+      </a>
+      <a href="../" class="btn" style="text-decoration:none;">
+        🎮 Retour au Jeu
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Body -->
+  <main class="main-content">
+    <div class="search-bar-container">
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" class="search-input" placeholder="Rechercher un composant UI, un token, une popin...">
+      </div>
+    </div>
+
+    <!-- UI Component Library -->
+    <section class="tab-pane active" id="tab-components">
+      <div style="margin-bottom:1.5rem; background:var(--bg-card); padding:1rem 1.5rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+        <h2 style="font-size:1.1rem; color:var(--accent-gold); margin-bottom:0.25rem;">🧩 Bibliothèque & Showcase UI</h2>
+        <p style="font-size:0.85rem; color:var(--text-secondary);">Prévisualisation et test des modules, barres d'effets et popins de jeu autonomes.</p>
+      </div>
+      <div class="components-grid" id="components-grid">
+        <!-- Components rendered dynamically -->
+      </div>
+    </section>
+  </main>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    Dice Throne Solo • Design System & Galerie UI • Serveur Preview Local
+  </footer>
+
+  <script src="recette.js"></script>
+</body>
+</html>

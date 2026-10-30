@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dice Throne - Simulateur de Combat & Profils</title>
+  <link rel="stylesheet" href="./simulation.css" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="app-logo">⚔️</div>
+      <div>
+        <div class="app-title">Dice Throne Simulator</div>
+        <div class="app-subtitle">Simulateur 1v1, Profils & Statistiques</div>
+      </div>
+    </div>
+
+    <!-- Tab Switcher -->
+    <nav class="tab-navigation">
+      <button class="tab-btn active" data-tab="tabSimulator">
+        <span>⚔️</span> Simulateur de Combat
+      </button>
+      <button class="tab-btn" data-tab="tabProfiles">
+        <span>📊</span> Profils & Données Héros
+      </button>
+      <button class="tab-btn" data-tab="tabStats">
+        <span>📈</span> Statistiques & Courbes
+      </button>
+      <button class="tab-btn" data-tab="tabBoards">
+        <span>📋</span> Plateaux & Force
+      </button>
+    </nav>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+    <!-- ====================================================================
+         TAB 1 : SIMULATEUR DE COMBAT
+         ==================================================================== -->
+    <div id="tabSimulator" class="tab-view active">
+      <!-- Top Hero Selection Section -->
+      <section class="hero-selection-panel">
+        <div class="panel-heading">
+          <span class="panel-title">👥 Sélection des Héros (Face à Face)</span>
+          <span style="font-size: 12px; color: var(--text-muted);" id="activeHeroesCountHint">Seuls les héros configurés dans l'onglet Profils sont disponibles</span>
+        </div>
+
+        <div class="versus-wrapper">
+          <!-- Player 1 -->
+          <div class="combatant-block player1 active-turn" id="p1Block">
+            <div class="hero-card" id="heroCard1">
+              <!-- Rendered by JS -->
+            </div>
+            <div class="combatant-vitals">
+              <div class="vitals-header">
+                <span class="combatant-role-title" id="p1Role">Joueur 1 (Attaquant)</span>
+                <button id="changeH1Btn" class="btn-change-hero">Changer</button>
+              </div>
+              
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px 0;">
+                <div style="font-size: 17px; font-weight: 900;" id="p1Name">Black Widow</div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <label for="p1VariantSelect" style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Style :</label>
+                  <select id="p1VariantSelect" class="sim-style-select" title="Choisir le style du héros"></select>
+                </div>
+              </div>
+
+              <!-- HP & CP -->
+              <div class="vital-row">
+                <div class="counter-box">
+                  <span class="counter-label hp">Points de Vie</span>
+                  <div class="counter-controls">
+                    <button class="btn-counter" data-action="dec" data-target="p1Hp">−</button>
+                    <span class="counter-value" id="p1Hp">50</span>
+                    <button class="btn-counter" data-action="inc" data-target="p1Hp">+</button>
+                  </div>
+                  <div class="hp-bar-container">
+                    <div class="hp-bar-fill" id="p1HpBar" style="width: 100%;"></div>
+                  </div>
+                </div>
+
+                <div class="counter-box">
+                  <span class="counter-label cp">Points de Combat</span>
+                  <div class="counter-controls">
+                    <button class="btn-counter" data-action="dec" data-target="p1Cp">−</button>
+                    <span class="counter-value" id="p1Cp">2</span>
+                    <button class="btn-counter" data-action="inc" data-target="p1Cp">+</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Averages pill -->
+              <div class="hero-averages-pill" id="p1StatsPill">
+                <!-- Injected by JS -->
+              </div>
+
+              <!-- Tokens with Quick Defensive Buttons -->
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Tokens actifs :</span>
+                  <div class="quick-token-buttons" id="p1QuickTokens"></div>
+                </div>
+                <div class="token-strip" id="p1Tokens"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VS Center -->
+          <div class="versus-center">
+            <div class="vs-circle">VS</div>
+            <button id="swapHeroesBtn" class="btn-swap" title="Inverser les deux héros">
+              <span>⇄</span> Inverser
+            </button>
+          </div>
+
+          <!-- Player 2 -->
+          <div class="combatant-block player2" id="p2Block">
+            <div class="hero-card" id="heroCard2">
+              <!-- Rendered by JS -->
+            </div>
+            <div class="combatant-vitals">
+              <div class="vitals-header">
+                <span class="combatant-role-title" id="p2Role">Joueur 2 (Défenseur)</span>
+                <button id="changeH2Btn" class="btn-change-hero">Changer</button>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px 0;">
+                <div style="font-size: 17px; font-weight: 900;" id="p2Name">Loki</div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <label for="p2VariantSelect" style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Style :</label>
+                  <select id="p2VariantSelect" class="sim-style-select" title="Choisir le style du héros"></select>
+                </div>
+              </div>
+
+              <!-- HP & CP -->
+              <div class="vital-row">
+                <div class="counter-box">
+                  <span class="counter-label hp">Points de Vie</span>
+                  <div class="counter-controls">
+                    <button class="btn-counter" data-action="dec" data-target="p2Hp">−</button>
+                    <span class="counter-value" id="p2Hp">50</span>
+                    <button class="btn-counter" data-action="inc" data-target="p2Hp">+</button>
+                  </div>
+                  <div class="hp-bar-container">
+                    <div class="hp-bar-fill" id="p2HpBar" style="width: 100%;"></div>
+                  </div>
+                </div>
+
+                <div class="counter-box">
+                  <span class="counter-label cp">Points de Combat</span>
+                  <div class="counter-controls">
+                    <button class="btn-counter" data-action="dec" data-target="p2Cp">−</button>
+                    <span class="counter-value" id="p2Cp">2</span>
+                    <button class="btn-counter" data-action="inc" data-target="p2Cp">+</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Averages pill -->
+              <div class="hero-averages-pill" id="p2StatsPill">
+                <!-- Injected by JS -->
+              </div>
+
+              <!-- Tokens with Quick Defensive Buttons -->
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Tokens actifs :</span>
+                  <div class="quick-token-buttons" id="p2QuickTokens"></div>
+                </div>
+                <div class="token-strip" id="p2Tokens"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Phase & Turn Banner with First Player Selection -->
+      <section class="phase-banner">
+        <div class="phase-top-controls">
+          <div class="phase-turn-title">
+            <span class="turn-badge" id="currentTurnBadge">Tour 1</span>
+            <span>Attaquant : <strong id="activeAttackerLabel" style="color: var(--accent-gold);">Joueur 1</strong></span>
+          </div>
+
+          <!-- Who starts selector -->
+          <div class="starter-selection-box">
+            <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Qui commence :</span>
+            <div class="starter-btn-group">
+              <button id="btnStartP1" class="btn-starter active" title="Joueur 1 commence l'offensive">🟢 J1</button>
+              <button id="btnStartP2" class="btn-starter" title="Joueur 2 commence l'offensive">🔵 J2</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase-steps-row">
+          <div class="phase-step active" data-phase="0">1. Entretien (Upkeep)</div>
+          <div class="phase-step" data-phase="1">2. Principale 1</div>
+          <div class="phase-step" data-phase="2">3. Lancer Offensif</div>
+          <div class="phase-step" data-phase="3">4. Défense & Riposte</div>
+          <div class="phase-step" data-phase="4">5. Résolution PV</div>
+        </div>
+
+        <div class="sim-controls-bar">
+          <button id="btnNextPhase" class="btn-sim-accent">▶️ Phase Suivante</button>
+          <button id="btnNextTurn" class="btn-sim-primary">⏭️ Tour Suivant</button>
+          <button id="btnAutoFight" class="btn-ghost">⚡ Combat Auto</button>
+          <button id="btnMonteCarlo" class="btn-ghost" title="Lancer 100 simulations statistiques">📊 100 Combats</button>
+          <button id="resetCombatBtn" class="btn-ghost">🔄 Reset</button>
+        </div>
+      </section>
+
+      <!-- Simulation Workbench -->
+      <section class="simulation-workbench">
+        <!-- Left: Phase Details & Actions -->
+        <div class="workbench-card">
+          <div class="card-title">
+            <span>🎯 Résolution de la Phase Active</span>
+            <span id="phaseStateBadge" style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Phase 1 / 5</span>
+          </div>
+
+          <div class="phase-details-box" id="phaseDetailsBox">
+            <!-- Dynamically populated based on phase -->
+          </div>
+
+          <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-top: auto;">
+            💡 <em>Les tokens spéciaux (Parlay, Agilité, Illusion, Ombre) réduisent ou annulent les dégâts lors des phases 3 et 4.</em>
+          </div>
+        </div>
+
+        <!-- Right: Combat Log -->
+        <div class="workbench-card">
+          <div class="card-title">
+            <span>📜 Journal du Combat</span>
+            <button id="btnClearLog" class="btn-ghost" style="padding: 4px 8px; font-size: 11px;">Effacer</button>
+          </div>
+          <div class="combat-log-container">
+            <div class="log-scroll-area" id="combatLog"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HP History Chart Section -->
+      <section class="hp-graph-section">
+        <div class="workbench-card" style="width: 100%;">
+          <div class="card-title">
+            <span>📉 Évolution des PV au fil des Tours (Courbes de Combat)</span>
+            <span id="graphRoundHint" style="font-size: 11px; color: var(--text-muted);">Mise à jour dynamique en temps réel</span>
+          </div>
+          <div class="chart-canvas-container" style="position: relative; height: 230px; width: 100%;">
+            <svg id="hpCombatSvg" style="width: 100%; height: 100%; overflow: visible;"></svg>
+          </div>
+          <div class="graph-legend-row" id="hpGraphLegend">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ====================================================================
+         TAB 2 : GESTION DES PROFILS & MOYENNES DES HÉROS
+         ==================================================================== -->
+    <div id="tabProfiles" class="tab-view">
+      <div class="editor-layout">
+        <!-- Sidebar: Hero List with Filter -->
+        <aside class="editor-sidebar">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="font-size: 14px;">Héros Dice Throne</strong>
+            <span id="activeCountBadge" class="active-tag">8 actifs</span>
+          </div>
+
+          <!-- Active Filter Pill Buttons -->
+          <div class="editor-filter-tabs">
+            <button class="filter-tab-pill" data-filter="all">Tous (46)</button>
+            <button class="filter-tab-pill active" data-filter="active">⭐ Actifs</button>
+            <button class="filter-tab-pill" data-filter="inactive">Inactifs</button>
+          </div>
+
+          <input type="search" id="editorSearch" class="editor-search-input" placeholder="Filtrer les héros..." />
+          <div class="editor-heroes-list" id="editorHeroesList">
+            <!-- Injected by JS -->
+          </div>
+        </aside>
+
+        <!-- Main Editor View -->
+        <section class="editor-workspace">
+          <div class="editor-header-bar">
+            <div class="editor-hero-title">
+              <img id="edHeroImg" class="editor-hero-avatar" src="assets/heroes.jpg" alt="" style="width: 44px; height: 44px; border-radius: 8px;" />
+              <div>
+                <h2 id="edHeroName" style="font-size: 18px; font-weight: 900;">Black Widow</h2>
+                <div style="font-size: 11px; color: var(--text-muted);" id="edHeroMeta">Complexité 4 • Marvel Avengers</div>
+              </div>
+            </div>
+
+            <!-- Active Switch -->
+            <div class="editor-toggle-row">
+              <span>Actif dans le simulateur :</span>
+              <label class="switch">
+                <input type="checkbox" id="edActiveToggle" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Styles / Multi-Versions Tab Strip -->
+          <div class="styles-manager-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span class="form-label" style="margin: 0; font-size: 12px;">Styles de jeu / Variantes du Héros :</span>
+              <div style="display: flex; gap: 8px;">
+                <button id="btnCombinedAverageBtn" class="btn-ghost" style="font-size: 11px; padding: 4px 8px;" title="Calculer automatiquement la moyenne de tous les styles">🔀 Moyenne Combinée</button>
+                <button id="btnAddVariantBtn" class="btn-ghost" style="font-size: 11px; padding: 4px 8px;">+ Nouveau Style</button>
+              </div>
+            </div>
+
+            <!-- Interactive Style Tabs -->
+            <div class="style-tabs-row" id="styleTabsRow">
+              <!-- Injected by JS (e.g. Agro, Équilibré, Survie...) -->
+            </div>
+          </div>
+
+          <!-- Turn by Turn Cards with Detailed Runs -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div>
+                <span class="form-label" style="font-size: 13px; color: #fff;">📈 Profil Tour par Tour & Détail des Runs :</span>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                  Chaque tour affiche la moyenne calculée à partir des runs enregistrés. Vous pouvez ajouter/modifier des runs dans chaque tour pour recalculer sa moyenne.
+                </div>
+              </div>
+              <button id="btnAddTurnRowBtn" class="btn-ghost" style="font-size: 11px; padding: 6px 12px;">+ Ajouter un Tour</button>
+            </div>
+
+            <div id="edTurnsContainer">
+              <!-- Dynamically populated Turn Cards with Nested Runs -->
+            </div>
+          </div>
+
+          <!-- Save Actions -->
+          <div class="save-actions-bar">
+            <div>
+              <span id="saveStatusIndicator" style="font-size: 12px; color: var(--text-muted);">Prêt pour enregistrement</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button id="btnReloadFileBtn" class="btn-ghost">📥 Recharger JSON</button>
+              <button id="btnSaveStatsBtn" class="btn-save-all">💾 Sauvegarder les Profils (JSON)</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         TAB 3 : STATISTIQUES & PLUS-VALUE
+         ==================================================================== -->
+    <div id="tabStats" class="tab-view">
+      <section class="stats-dashboard">
+        <!-- Top Mode Switch & Hero Cards Versus Section -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div class="stats-mode-buttons">
+            <button class="stats-mode-btn active" data-mode="single">👤 Analyse 1 Héros</button>
+            <button class="stats-mode-btn" data-mode="compare">👥 Comparatif 2 Héros</button>
+          </div>
+          <span style="font-size: 12px; color: var(--text-muted);">Sélectionnez les héros et leurs styles de jeu respectifs</span>
+        </div>
+
+        <!-- Visual Hero Cards with Dual Style Selectors -->
+        <div class="stats-versus-cards-row" id="statsVersusCardsRow">
+          <!-- Hero A -->
+          <div class="stats-hero-col" id="statsColA">
+            <div class="hero-card" id="statsCardA" style="width: 170px; height: 240px;"></div>
+            <div class="stats-hero-picker-controls">
+              <label>Héros A :</label>
+              <select id="statsHero1Select" class="form-input" style="padding: 6px 10px; font-size: 13px;"></select>
+              <label style="margin-top: 6px;">Style de jeu A :</label>
+              <select id="statsVariantSelectA" class="form-input" style="padding: 6px 10px; font-size: 13px;"></select>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="stats-vs-divider" id="statsVsDivider" style="display: none;">
+            <div class="vs-circle" style="width: 44px; height: 44px; font-size: 14px;">VS</div>
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: bold;">Face à Face</span>
+          </div>
+
+          <!-- Hero B (visible in compare mode) -->
+          <div class="stats-hero-col" id="statsColB" style="display: none;">
+            <div class="hero-card" id="statsCardB" style="width: 170px; height: 240px;"></div>
+            <div class="stats-hero-picker-controls">
+              <label>Héros B :</label>
+              <select id="statsHero2Select" class="form-input" style="padding: 6px 10px; font-size: 13px;"></select>
+              <label style="margin-top: 6px;">Style de jeu B :</label>
+              <select id="statsVariantSelectB" class="form-input" style="padding: 6px 10px; font-size: 13px;"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="stats-kpis-grid" id="statsKpisGrid">
+          <!-- Injected by JS -->
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="stats-charts-grid">
+          <!-- Chart 1: Components by turn -->
+          <div class="workbench-card" id="chart1Card">
+            <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <span id="chart1Title">📊 Courbes des Composantes par Tour</span>
+              <span id="chart1Sublabel" style="font-size: 11px; color: var(--text-muted);"></span>
+            </div>
+
+            <!-- Component Filter buttons positioned directly at chart level -->
+            <div class="stats-components-filter-row" id="statsComponentsFilterRow" style="margin: 4px 0 12px 0;">
+              <span id="filterRowLabel" style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Composante :</span>
+              <button class="comp-filter-btn active" data-comp="avgAtk" style="--c-color: #ff9944;">⚔️ Atk Parable</button>
+              <button class="comp-filter-btn" data-comp="avgUndef" style="--c-color: #ff4757;">💥 Imparable</button>
+              <button class="comp-filter-btn" data-comp="avgToken" style="--c-color: #f59e0b;">💣 Tokens</button>
+              <button class="comp-filter-btn" data-comp="avgDef" style="--c-color: #38bdf8;">🛡️ Défense</button>
+              <button class="comp-filter-btn" data-comp="avgHeal" style="--c-color: #2ed573;">💚 Soin</button>
+              <button class="comp-filter-btn" data-comp="totalDmg" style="--c-color: #eab308;">💥 Dégâts Totaux</button>
+              <button class="comp-filter-btn" data-comp="plusValue" style="--c-color: #c084fc;">⚖️ Plus-Value</button>
+            </div>
+
+            <div class="chart-canvas-container" style="height: 270px;">
+              <svg id="statsComponentsSvg" style="width: 100%; height: 100%; overflow: visible;"></svg>
+            </div>
+            <div class="graph-legend-row" id="statsComponentsLegend"></div>
+          </div>
+
+          <!-- Chart 2: Benchmark Comparison with Roster Average (1 Hero Mode only) -->
+          <div class="workbench-card" id="chartBenchmarkCard">
+            <div class="card-title">
+              <span id="chart2Title">📈 Comparatif par rapport à la Moyenne du Roster Actif</span>
+            </div>
+            <div class="chart-canvas-container" style="height: 270px;">
+              <svg id="statsBenchmarkSvg" style="width: 100%; height: 100%; overflow: visible;"></svg>
+            </div>
+            <div class="graph-legend-row" id="statsBenchmarkLegend"></div>
+          </div>
+
+          <!-- Chart 3: Plus-Value Curve & Delta Curve -->
+          <div class="workbench-card" id="chartPlusValueCard" style="grid-column: 1 / -1;">
+            <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <span id="chart3Title">⚖️ Courbe de Plus-Value & Courbe du Delta</span>
+              <span style="font-size: 11px; color: var(--text-muted);">Dégâts Totaux (avec contres) - (Défense + Soin)</span>
+            </div>
+            <div class="chart-canvas-container" style="height: 280px;">
+              <svg id="statsPlusValueSvg" style="width: 100%; height: 100%; overflow: visible;"></svg>
+            </div>
+            <div class="graph-legend-row" id="statsPlusValueLegend"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ====================================================================
+         TAB 4 : PLATEAUX & FORCE DES HÉROS
+         ==================================================================== -->
+    <div id="tabBoards" class="tab-view">
+      <section class="boards-main-layout">
+        <!-- Sub Mode Bar -->
+        <div class="boards-top-bar">
+          <div class="boards-mode-toggle">
+            <button class="mode-btn active" id="btnModeBoardView">🖼️ Fiche & Plateau</button>
+            <button class="mode-btn" id="btnModeCompare">⚖️ Comparateur de Plateaux</button>
+            <button class="mode-btn" id="btnModeDiceSim">🎲 Simulateur par les Dés</button>
+          </div>
+          <div class="boards-hero-selector-row" id="boardHeroSelectorRow">
+            <!-- Hero pill buttons generated by JS -->
+          </div>
+        </div>
+
+        <!-- MODE 1: FICHE & PLATEAU -->
+        <div id="boardViewContainer" class="board-mode-content">
+          <!-- Hero Identity Banner & Metrics -->
+          <div class="board-header-card workbench-card">
+            <div class="hero-board-intro">
+              <img id="boardHeroPortrait" class="board-hero-avatar" src="" alt="Portrait" />
+              <div class="board-hero-info">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <h2 id="boardHeroName" style="margin: 0;">Barbare</h2>
+                  <span id="boardHeroDiffBadge" class="badge-pill">Difficulté 1 / 5</span>
+                </div>
+                <div id="boardHeroSubtitle" class="hero-quote" style="margin-top: 4px;">La Force Brute et l'Étourdissement</div>
+              </div>
+            </div>
+
+            <!-- Radar / Characteristics Pills -->
+            <div class="board-ratings-row" id="boardRatingsRow">
+              <!-- Ratings pills injected by JS -->
+            </div>
+          </div>
+
+          <!-- Board Visual & Level Toggle -->
+          <div class="board-display-grid">
+            <div class="workbench-card board-image-card">
+              <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <span>Plateau de Jeu Officiel</span>
+                <div class="board-level-switch">
+                  <button id="btnBoardLevelBase" class="btn-toggle active">🖼️ Plateau de Départ</button>
+                  <button id="btnBoardLevelUpgraded" class="btn-toggle">✨ Plateau Optimisé</button>
+                </div>
+              </div>
+
+              <!-- Large Interactive Board Image Container -->
+              <div class="board-img-wrapper" id="boardImgWrapper">
+                <img id="boardImageEl" class="board-interactive-img" src="" alt="Plateau de jeu" />
+              </div>
+
+              <!-- Dice Faces Bar -->
+              <div class="board-dice-bar">
+                <div class="dice-bar-title">🎲 Composition des Dés (6 Faces) :</div>
+                <div class="dice-faces-list" id="boardDiceFacesList"></div>
+              </div>
+            </div>
+
+            <!-- Force & Expected Value Dashboard -->
+            <div class="workbench-card board-metrics-card">
+              <div class="card-title">
+                <span>⚡ Analyse de la Force du Plateau</span>
+              </div>
+
+              <div class="board-kpi-grid">
+                <div class="kpi-pill">
+                  <span class="kpi-label">Dégâts Max Cumulés</span>
+                  <div class="kpi-val" id="kpiDmgTotal">0 PV</div>
+                  <span class="kpi-sub" id="kpiDmgSub">Base vs Optimisé</span>
+                </div>
+                <div class="kpi-pill">
+                  <span class="kpi-label">Espérance Moyenne / Tour (EV)</span>
+                  <div class="kpi-val" id="kpiEvTotal" style="color: #38bdf8;">0.0 PV</div>
+                  <span class="kpi-sub" id="kpiEvSub">Moyenne par jet</span>
+                </div>
+                <div class="kpi-pill">
+                  <span class="kpi-label">Gain de Puissance Global</span>
+                  <div class="kpi-val" id="kpiPowerGain" style="color: #2ed573;">+0%</div>
+                  <span class="kpi-sub" id="kpiPowerSub">Après Évolutions</span>
+                </div>
+                <div class="kpi-pill">
+                  <span class="kpi-label">Part Imparable</span>
+                  <div class="kpi-val" id="kpiUndefShare" style="color: #ff4757;">0%</div>
+                  <span class="kpi-sub" id="kpiUndefSub">Traverse la défense</span>
+                </div>
+              </div>
+
+              <!-- Abilities Comparison Table -->
+              <div class="board-abilities-table-container">
+                <table class="abilities-comp-table">
+                  <thead>
+                    <tr>
+                      <th>Capacité</th>
+                      <th>Dés Requis</th>
+                      <th>Niveau 1 (Départ)</th>
+                      <th>Évolution (II / III)</th>
+                      <th>Gain</th>
+                    </tr>
+                  </thead>
+                  <tbody id="boardAbilitiesTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODE 2: COMPARATEUR DE PLATEAUX -->
+        <div id="boardCompareContainer" class="board-mode-content" style="display: none;">
+          <div class="workbench-card">
+            <div class="compare-selectors-bar">
+              <div class="compare-hero-picker">
+                <label>Héros A :</label>
+                <select id="compareHeroSelectA" class="sim-style-select"></select>
+              </div>
+              <div class="compare-vs-badge">VS</div>
+              <div class="compare-hero-picker">
+                <label>Héros B :</label>
+                <select id="compareHeroSelectB" class="sim-style-select"></select>
+              </div>
+            </div>
+
+            <div class="compare-results-grid" id="compareResultsGrid">
+              <!-- Side by side comparison generated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- MODE 3: SIMULATEUR AVANCÉ PAR LES DÉS -->
+        <div id="boardDiceSimContainer" class="board-mode-content" style="display: none;">
+          <div class="workbench-card">
+            <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <span>🎲 Combat Simulé par Jets de Dés Virtuels & Achat d'Améliorations en CP</span>
+              <div style="display: flex; gap: 8px;">
+                <button id="btnRunDiceCombat1" class="btn-accent">⚡ Simuler 1 Combat Détaillé</button>
+                <button id="btnRunDiceCombat100" class="btn-action">🎲 100 Combats par Dés</button>
+              </div>
+            </div>
+            <div class="dice-sim-settings-bar">
+              <div><strong>Joueur 1 :</strong> <span id="diceSimP1Name">Barbare</span> (Plateau Réel)</div>
+              <div class="badge-pill" style="background: rgba(255,255,255,0.1);">VS</div>
+              <div><strong>Joueur 2 :</strong> <span id="diceSimP2Name">Voleur de l'Ombre</span> (Plateau Réel)</div>
+            </div>
+            <div id="diceSimLog" class="dice-sim-log-box">
+              <div class="empty-state">Cliquez sur « Simuler 1 Combat Détaillé » ou « 100 Combats par Dés » pour lancer la simulation complète basée sur les jets de dés et l'achat de cartes d'évolution en CP.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Modal Hero Picker (Simulator) -->
+  <div class="modal-backdrop" id="heroPickerModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Choisir un héros actif</h3>
+        <button id="closeModalBtn" class="btn-close-modal">&times;</button>
+      </div>
+
+      <div class="modal-filter-bar">
+        <div class="filter-search-row">
+          <input type="search" id="heroSearchInput" class="search-input" placeholder="Rechercher un héros..." />
+          <button id="randomPickBtn" class="btn-random-pick">🎲 Aléatoire</button>
+        </div>
+      </div>
+
+      <div class="modal-grid-body" id="modalHeroGrid">
+        <!-- Hero Cards injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="./heroes.js"></script>
+  <script src="./simulation.js"></script>
+</body>
+</html>
