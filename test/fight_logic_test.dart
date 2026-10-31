@@ -4,6 +4,7 @@ import 'package:dice_throne_survie/data/enemy_profile_repository.dart';
 import 'package:dice_throne_survie/game_engine.dart';
 import 'package:dice_throne_survie/main.dart';
 import 'package:dice_throne_survie/models/enemy_profile.dart';
+import 'package:dice_throne_survie/services/app_update_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -2965,6 +2966,21 @@ void main() {
       expect(stealMatch, isNotNull);
       expect(stealMatch!.group(1)!.toLowerCase(), 'steals-cp');
       expect(stealMatch.group(2), '1');
+    });
+
+    test('RemoteAppVersion parsing and update detection', () {
+      final json = {
+        'version': '1.4.150',
+        'buildNumber': 999,
+        'apkUrl': 'https://github.com/bdewev18-droid/Dice-throne-Solo/releases/latest/download/app-release.apk',
+        'releaseNotes': 'Test notes',
+      };
+      final parsed = RemoteAppVersion.fromJson(json);
+      expect(parsed.version, '1.4.150');
+      expect(parsed.buildNumber, 999);
+      expect(parsed.apkUrl, contains('app-release.apk'));
+      expect(parsed.releaseNotes, 'Test notes');
+      expect(parsed.buildNumber > appBuildNumber, isTrue);
     });
   });
 }

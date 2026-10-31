@@ -9,6 +9,9 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: write
+
 concurrency:
   group: dt-solo-apk
   cancel-in-progress: true
@@ -52,3 +55,24 @@ jobs:
           name: dt-solo-quest-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+
+      - name: Extract version from pubspec.yaml
+        id: get_version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "DTS Solo Quest v${{ steps.get_version.outputs.version }}"
+          body: |
+            Release automatique pour Dice Throne Solo Quest.
+            Version : **v${{ steps.get_version.outputs.version }}**
+            
+            Téléchargement direct de l'APK : [app-release.apk](https://github.com/bdewev18-droid/Dice-throne-Solo/releases/latest/download/app-release.apk)
+          files: build/app/outputs/flutter-apk/app-release.apk
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

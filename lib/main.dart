@@ -14,6 +14,7 @@ import 'data/fallback_enemy_profiles.dart';
 import 'game_engine.dart';
 import 'history_repository.dart';
 import 'models/enemy_profile.dart';
+import 'services/app_update_service.dart';
 import 'supabase_service.dart';
 
 part 'parts/app_shell.dart';
@@ -49,6 +50,7 @@ part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
 const String appVersionLabel = 'Version 1.4.143';
+const int appBuildNumber = 455;
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);

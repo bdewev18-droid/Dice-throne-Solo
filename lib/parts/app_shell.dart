@@ -556,6 +556,7 @@ class _HomePageState extends State<HomePage> {
     Future<void>.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         setState(() => _showActions = true);
+        AppUpdateService.checkAndPrompt(context);
       }
     });
   }
