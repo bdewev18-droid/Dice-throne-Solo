@@ -2,6 +2,14 @@ part of '../../main.dart';
 
 // --- Token helper predicates and alteration checkers ---
 
+bool isGuivreNoireEnemy(EnemyNode e) =>
+    e.profileKey == 'violet-violet-001' ||
+    e.label.toLowerCase().contains('guivre');
+
+bool _isGuivreNoire(EnemyNode e) => isGuivreNoireEnemy(e);
+
+bool isDruidBearForm(EnemyNode enemy) => _isDruidBearForm(enemy);
+
 String _tokenClean(String t) =>
     t.replaceAll(RegExp(r'_active', caseSensitive: false), '');
 
@@ -197,6 +205,7 @@ String _tokenUpkeepSummary({
   required List<String> tokens,
   required bool isHero,
   int currentCp = 0,
+  String? enemyProfileKey,
 }) {
   if (tokens.isEmpty) {
     return '';
@@ -226,13 +235,29 @@ String _tokenUpkeepSummary({
       );
     } else if (lower.contains('brûlure') || lower.contains('brulure')) {
       lines.add('$count Burn token${count > 1 ? 's' : ''} found on $owner.');
-      lines.add('Resolve Burn damage before moving to battle.');
+      lines.add('Resolve Burn damage before moving to battle (inflicts 2 damage).');
     } else if (lower.contains('coal') || lower.contains('charbon')) {
       if (count < 4) {
         lines.add(
           '$count Coal token${count > 1 ? 's' : ''} found on $owner (accumulates up to 4 to reduce next CP gain).',
         );
       }
+    } else if (lower.contains('chaos')) {
+      if (enemyProfileKey == 'bleu-bleu-004') {
+        lines.add(
+          '$count Chaos token${count > 1 ? 's' : ''} on Blood Mage. Gains 1 Chaos at upkeep. When reaching 3, spends 3 Chaos to steal 3 HP.',
+        );
+      } else if (enemyProfileKey == 'bleu-bleu-022') {
+        lines.add(
+          '$count Chaos token${count > 1 ? 's' : ''} on Vibra. Gains 1 Chaos at upkeep. With 3 Chaos, spends them on an attack dealing ≥ 1 damage to heal HP equal to damage dealt.',
+        );
+      } else if (enemyProfileKey == 'violet-violet-018') {
+        lines.add(
+          '$count Chaos token${count > 1 ? 's' : ''} on Succubus. Gains 1 Chaos at upkeep. With 2 Chaos, spends them on an attack dealing ≥ 1 damage to heal HP equal to damage dealt.',
+        );
+      }
+    } else if (lower.contains('siphon')) {
+      lines.add('Siphon vital on $owner. If already active, upkeep heals 3 HP.');
     }
   }
   if (lines.isEmpty) {

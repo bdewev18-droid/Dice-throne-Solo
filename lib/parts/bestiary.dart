@@ -2239,7 +2239,7 @@ class BossBattleSelectionPage extends StatelessWidget {
               isUnofficial: true,
               isBossOfTheMonth: true,
               accentColor: const Color(0xff9b58ff),
-              imageAlignment: const Alignment(0, -0.48),
+              imageAlignment: const Alignment(0, -0.75),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(

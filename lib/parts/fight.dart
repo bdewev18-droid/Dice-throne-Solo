@@ -271,6 +271,8 @@ class _FightPageState extends State<FightPage> {
   bool _battleDiscardPositiveToken = false;
   bool _battleAttackFailedCompletely = false;
   bool _battleEnemyFled = false;
+  bool _isApplyingUpkeep = false;
+  bool _isApplyingHeroUpkeep = false;
   bool _discipleSummonLevel3 = false;
   int _heroAttackCount = 0;
   int _heroAttackTotal = 0;
@@ -6751,10 +6753,18 @@ class _FightPageState extends State<FightPage> {
         };
 
         ExtraRollOutcome? matchedOutcome;
-        for (final out in extraRoll.outcomes) {
-          if (out.face == outcomeFace || out.face == ExtraRollFace.any) {
-            matchedOutcome = out;
-            break;
+        if (enemy.profileKey == 'violet-violet-014' ||
+            enemy.label.toLowerCase().contains('chim')) {
+          final outcomeIndex = roll <= 2 ? 0 : (roll <= 4 ? 1 : 2);
+          if (outcomeIndex < extraRoll.outcomes.length) {
+            matchedOutcome = extraRoll.outcomes[outcomeIndex];
+          }
+        } else {
+          for (final out in extraRoll.outcomes) {
+            if (out.face == outcomeFace || out.face == ExtraRollFace.any) {
+              matchedOutcome = out;
+              break;
+            }
           }
         }
 
@@ -7367,6 +7377,29 @@ class _FightPageState extends State<FightPage> {
         '[TOKEN] Hero Shadows active: negating incoming attack damage.',
       );
     }
+    if (_phase == CombatPhase.minionAttack && !_hasValidMinionAttack) {
+      if (enemy.profileKey == 'violet-violet-014' ||
+          enemy.label.toLowerCase().contains('chim')) {
+        final restart = await ChimeraFailureRollDialog.show(context, enemy);
+        if (restart && mounted) {
+          setState(() {
+            _rollCount = 0;
+            for (final die in _dice) {
+              die.reserved = false;
+              die.isLocked = false;
+              die.value = null;
+              die.settled = true;
+            }
+            _resetBattleResolution();
+            _configureDiceForPhase(autoRollAttack: _aiMode);
+          });
+          widget.adventure.log(
+            '[PASSIVE] ${enemy.label}: Offensive Roll Phase failed. Rolled extra die (White face 1-3). Restarting Offensive Roll Phase!',
+          );
+          return;
+        }
+      }
+    }
     _captureStepUndo();
     final currentBattlePhase = _phase;
     final wasDefenderStunned = _isDefenderStunned;
@@ -7698,12 +7731,17 @@ class _FightPageState extends State<FightPage> {
           buffer.writeln('[TOKEN:Stun] Enemy Stun removed after attack.');
         }
 
+        if (_isGuivreNoire(enemy) && enemy.health > 0 && enemy.health < 5) {
+          _battleEnemyFled = true;
+          buffer.writeln('[FLEE] ${enemy.label} has less than 5 HP (${enemy.health} HP) and flees the battle!');
+        }
+
         widget.adventure.log(buffer.toString().trim());
 
         if (_battleEnemyFled) {
-          _lastBattleOutcomeMessage =
-              '${enemy.label} fled the battle!\n'
-              '❤️ ${enemy.label} HP: $oldEnemyHealthBeforeBattle (no damage taken)';
+          _lastBattleOutcomeMessage = _isGuivreNoire(enemy)
+              ? '${enemy.label} has less than 5 HP and fled the battle!\n❤️ ${enemy.label} HP: ${enemy.health} (Combat ended without loot or victory)'
+              : '${enemy.label} fled the battle!\n❤️ ${enemy.label} HP: $oldEnemyHealthBeforeBattle (no damage taken)';
         } else if (_battleAttackFailedCompletely) {
           _lastBattleOutcomeMessage =
               '${widget.adventure.hero.label} attack failed completely (dodged by ${enemy.label}).\n'
@@ -9640,9 +9678,11 @@ class _FightPageState extends State<FightPage> {
   }
 
   Future<void> _applyHeroUpkeep({bool captureUndo = true}) async {
-    if (!mounted || _heroUpkeepApplied || _phase != CombatPhase.heroUpkeep) {
+    if (!mounted || _heroUpkeepApplied || _isApplyingHeroUpkeep || _phase != CombatPhase.heroUpkeep) {
       return;
     }
+    _isApplyingHeroUpkeep = true;
+    try {
 
     final enemyNanitesCount = enemy.alterations
         .where(
@@ -9790,13 +9830,40 @@ class _FightPageState extends State<FightPage> {
         );
       }
     }
+    _heroUpkeepApplied = true;
+    } finally {
+      _isApplyingHeroUpkeep = false;
+    }
   }
 
   Future<void> _applyUpkeep({bool captureUndo = true}) async {
-    if (_upkeepApplied) {
+    if (!mounted || _upkeepApplied || _isApplyingUpkeep || _phase != CombatPhase.minionUpkeep) {
       return;
     }
-    final resolvedInPopin = await _triggerTokenAnimationDialogs(
+    _isApplyingUpkeep = true;
+    try {
+      if (_isGuivreNoire(enemy) && enemy.health > 0 && enemy.health < 5) {
+        setState(() {
+          _battleEnemyFled = true;
+          _lastBattleOutcomeMessage = '${enemy.label} has less than 5 HP and flees the battle!\nCombat ends without victory or loot.';
+        });
+        widget.adventure.log('[FLEE] ${enemy.label} has less than 5 HP and flees the battle.');
+        return;
+      }
+      if (enemy.profileKey == 'vert-vert-014' && !_druidFormRolledThisUpkeep) {
+        final chosenForm = await DruidFormRollDialog.show(context, enemy);
+        if (!mounted) return;
+        if (chosenForm != null) {
+          enemy.alterations.removeWhere(
+            (token) => token == 'Forme Ours' || token == 'Forme Elan',
+          );
+          enemy.alterations.add(chosenForm);
+          _druidFormRolledThisUpkeep = true;
+          widget.adventure.log('Druid shapeshifted into $chosenForm.');
+          setState(() {});
+        }
+      }
+      final resolvedInPopin = await _triggerTokenAnimationDialogs(
       enemy.alterations,
       targetName: enemy.label,
       currentHp: enemy.health,
@@ -9949,6 +10016,10 @@ class _FightPageState extends State<FightPage> {
         enemy.health > 0 &&
         mounted) {
       await _triggerMinionWellspringAttempt();
+    }
+    _upkeepApplied = true;
+    } finally {
+      _isApplyingUpkeep = false;
     }
   }
 
@@ -13001,7 +13072,7 @@ class InlineTokenText extends StatelessWidget {
 
 /// Regex for visual effect shortcodes inside authored text.
 final RegExp _visualShortcodeRegex = RegExp(
-  r'\{(hp|pv|damage|dmg|undef|imparable|prevent|block|shield|bouclier|half_prevent|half_shield|half_block|heal|life|vie|soin|losehp|lose_hp|losehealth|loselife|pertevie|cp|die|dice)(?::([^}]+))?\}',
+  r'\{(hp|pv|damage|dmg|undef|imparable|prevent|block|shield|bouclier|half_prevent|half_shield|half_block|heal|life|vie|soin|losehp|lose_hp|losehealth|loselife|pertevie|steals-cp|steal-cp|steals_cp|steal_cp|stealcp|gains-cp|gain-cp|gains_cp|gain_cp|gaincp|gainscp|cp|die|dice)(?::([^}]+))?\}',
   caseSensitive: false,
 );
 
@@ -13096,7 +13167,11 @@ List<InlineSpan> _buildSpans(
         );
         continue;
       }
-      if (tag == 'cp') {
+      if (tag == 'steals-cp' ||
+          tag == 'steal-cp' ||
+          tag == 'steals_cp' ||
+          tag == 'steal_cp' ||
+          tag == 'stealcp') {
         final amount = int.tryParse(rawValue) ?? 1;
         matches.add(
           _TokenMatch(
@@ -13107,6 +13182,43 @@ List<InlineSpan> _buildSpans(
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2),
               child: CpStealBadge(value: amount, color: color),
+            ),
+          ),
+        );
+        continue;
+      }
+      if (tag == 'gains-cp' ||
+          tag == 'gain-cp' ||
+          tag == 'gains_cp' ||
+          tag == 'gain_cp' ||
+          tag == 'gaincp' ||
+          tag == 'gainscp') {
+        final amount = int.tryParse(rawValue) ?? 1;
+        matches.add(
+          _TokenMatch(
+            match.start,
+            match.end,
+            null,
+            null,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: CpGainBadge(value: amount, color: color),
+            ),
+          ),
+        );
+        continue;
+      }
+      if (tag == 'cp') {
+        final amount = int.tryParse(rawValue) ?? 1;
+        matches.add(
+          _TokenMatch(
+            match.start,
+            match.end,
+            null,
+            null,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: CpBadge(value: amount),
             ),
           ),
         );
@@ -14318,6 +14430,17 @@ _AttackDamage? _damageForSymbolGoal(EnemyNode enemy, SymbolGoal goal) {
   // missed attacks for profiles like Roi Vautour / vert-vert-011).
   final effect = goal.effect;
   if (effect != null) {
+    if (effect.formulas.any((f) => f.contains('minionCp'))) {
+      int dmg = effect.damage;
+      for (final formula in effect.formulas) {
+        if (formula.contains('minionCp / 2') || formula.contains('minionCp/2')) {
+          dmg += (enemy.combatPoints / 2.0).ceil();
+        } else if (formula.contains('minionCp')) {
+          dmg += enemy.combatPoints;
+        }
+      }
+      return _AttackDamage(dmg, imparable: effect.undefendable);
+    }
     return _AttackDamage(effect.damage, imparable: effect.undefendable);
   }
   return _damageFromAttackText(enemy, goalIndex);
@@ -14336,6 +14459,17 @@ _AttackDamage? _suiteDamage(EnemyNode enemy, int length, {AdventureState? advent
       final totalBleeds = existingBleeds + newBleeds;
       final multiplier = length >= 5 ? 2 : 1;
       return _AttackDamage(effect.damage + totalBleeds * multiplier, imparable: effect.undefendable);
+    }
+    if (effect.formulas.any((f) => f.contains('minionCp'))) {
+      int dmg = effect.damage;
+      for (final formula in effect.formulas) {
+        if (formula.contains('minionCp / 2') || formula.contains('minionCp/2')) {
+          dmg += (enemy.combatPoints / 2.0).ceil();
+        } else if (formula.contains('minionCp')) {
+          dmg += enemy.combatPoints;
+        }
+      }
+      return _AttackDamage(dmg, imparable: effect.undefendable);
     }
     return _AttackDamage(effect.damage, imparable: effect.undefendable);
   }

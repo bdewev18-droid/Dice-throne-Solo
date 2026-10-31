@@ -1,5 +1,5 @@
 {
-  "version": "1.1.121",
+  "version": "1.1.140",
   "schemaVersion": 2,
   "note": "Enemy profiles source of truth. Defense display and automation should use defensePlan, not duplicated defense text.",
   "diceSymbols": {
@@ -19,7 +19,7 @@
       "rewardChests": 1,
       "rewardRank": "green",
       "attacks": [],
-      "defense": "Defense roll 4 dice: sur 2 orange symbols, steals 1 CP; sur 2 red symbols, ignores all damage.",
+      "defense": "Defense roll 4 dice: sur 2 orange symbols, steal 1 CP; sur 2 red symbols, ignores all damage.",
       "defenseDice": 4,
       "defensePlan": {
         "dice": 4,
@@ -183,7 +183,7 @@
               "lifeSteal": 0,
               "loseHp": 0,
               "cpSteal": 2,
-              "note": "Large suite: Rat steals 2 CP, then deals damage equal to its CP."
+              "note": "Large suite: Rat steals 2 CP, then deal damage equal to its CP."
             },
             "displayRows": [],
             "exclusive": true,
@@ -206,7 +206,7 @@
               "lifeSteal": 0,
               "loseHp": 0,
               "cpSteal": 1,
-              "note": "Small suite: Rat steals 1 CP, then deals damage equal to its CP."
+              "note": "Small suite: Rat steals 1 CP, then deal damage equal to its CP."
             },
             "displayRows": [],
             "exclusive": true,
@@ -2000,7 +2000,7 @@
             "timing": "offensiveRollFailed",
             "target": "opponent",
             "impact": "deals {undef:1} damage",
-            "text": "If the Offensive Roll Phase fails: deals {undef:1} damage.",
+            "text": "If the Offensive Roll Phase fails: deal {undef:1} damage.",
             "customText": "",
             "tokens": [],
             "effects": {
@@ -2026,7 +2026,7 @@
           "timing": "offensiveRollFailed",
           "target": "opponent",
           "impact": "deals 1 {undef:1} damage",
-          "text": "If the Offensive Roll Phase fails: deals 1 {undef:1} damage.",
+          "text": "If the Offensive Roll Phase fails: deal 1 {undef:1} damage.",
           "customText": "",
           "tokens": [],
           "effects": {
@@ -2231,46 +2231,7 @@
       "defenseDice": 4,
       "defensePlan": {
         "dice": 4,
-        "effects": [
-          {
-            "align": "left",
-            "condition": {
-              "type": "text"
-            },
-            "label": "",
-            "undefendable": true,
-            "prevent": 0,
-            "returnDamage": 1,
-            "stealHp": 0,
-            "loseHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": []
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "text"
-            },
-            "label": "",
-            "undefendable": false,
-            "prevent": 1,
-            "returnDamage": 0,
-            "stealHp": 0,
-            "loseHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": []
-          }
-        ],
+        "effects": [],
         "notes": [],
         "displayRows": []
       },
@@ -2295,7 +2256,7 @@
                 "red": 0
               }
             },
-            "label": "Frappe Spirituelle",
+            "label": "",
             "damage": 0,
             "undefendable": false,
             "prevent": 0,
@@ -2436,8 +2397,8 @@
             "type": "custom",
             "timing": "minionUpkeep",
             "target": "minion",
-            "impact": "roll 1 {die:white}: on 1-3: Bear Form, on 4-6: Elk Form",
-            "text": "At each Druid upkeep, roll 1 {die:white}: on 1-3: Bear Form, on 4-6: Elk Form. The form stays active until the next Druid upkeep roll.",
+            "impact": "At each Druid upkeep, roll 1 {die}: \non {die:1} - {die:3} : Druid turns into a Bear Form,\non {die:4} - {die:6} : Druid turns into an Elk Form. \nThe form stays active until the next Druid upkeep roll.",
+            "text": "At each Druid upkeep, roll 1 {die}: \non {die:1} - {die:3} : Druid turns into a Bear Form,\non {die:4} - {die:6} : Druid turns into an Elk Form. \nThe form stays active until the next Druid upkeep roll.",
             "customText": "",
             "tokens": [],
             "effects": {
@@ -2462,8 +2423,7 @@
           "type": "custom",
           "timing": "minionUpkeep",
           "target": "minion",
-          "impact": "roll 1 {die:white}: on 1-3: Bear Form, on 4-6: Elk Form",
-          "text": "At each Druid upkeep, roll 1 {die:white}: on 1-3: Bear Form, on 4-6: Elk Form. The form stays active until the next Druid upkeep roll.",
+          "impact": "roll 1 {die}: on 1-3: Bear Form, on 4-6: Elk Form",
           "customText": "",
           "tokens": [],
           "effects": {
@@ -2482,9 +2442,11 @@
       ],
       "defense": "",
       "passiveDisplayRows": [],
-      "validated": false,
+      "validated": true,
       "validatedAtk": true,
-      "validatedDef": false
+      "validatedDef": true,
+      "initialTokenCount": 1,
+      "sourcePack": "heritage"
     },
     {
       "key": "vert-vert-015",
@@ -2805,7 +2767,7 @@
                 {
                   "align": "center",
                   "face": "any",
-                  "label": "And deals",
+                  "label": "And deal",
                   "damage": 0,
                   "undefendable": false,
                   "stealHp": 0,
@@ -3456,7 +3418,7 @@
                 {
                   "align": "center",
                   "face": "any",
-                  "label": "Then deals {damage:6} + {damage:1} for each Chaos",
+                  "label": "Then deal {damage:6} + {damage:1} for each Chaos",
                   "damage": 0,
                   "undefendable": false,
                   "stealHp": 0,
@@ -3780,7 +3742,7 @@
               "lifeSteal": 2,
               "loseHp": 0,
               "cpSteal": 0,
-              "note": "Validated attack: steals 2 HP."
+              "note": "Validated attack: steal 2 HP."
             },
             "displayRows": [],
             "exclusive": true,
@@ -4246,7 +4208,7 @@
                 {
                   "align": "center",
                   "face": "any",
-                  "label": "Then deals {damage:7} + {damage:1} for each Chaos",
+                  "label": "Then deal {damage:7} + {damage:1} for each Chaos",
                   "damage": 0,
                   "undefendable": false,
                   "stealHp": 0,
@@ -4489,7 +4451,7 @@
           "timing": "minionUpkeep",
           "target": "minion",
           "impact": "gains 1 {token:Chaos}. At 3 {token:Chaos}, spends them to steal 3 {stealHp:3}.",
-          "text": "At the start of its turn: gains 1 {token:Chaos}. At 3 {token:Chaos}, spends them to steal 3 {stealHp:3}.",
+          "text": "At the start of its turn: gain 1 {token:Chaos}. At 3 {token:Chaos}, spends them to steal 3 {stealHp:3}.",
           "customText": "",
           "tokens": [
             "Chaos"
@@ -4512,9 +4474,10 @@
       ],
       "defense": "",
       "passiveDisplayRows": [],
-      "validated": false,
-      "validatedAtk": false,
-      "validatedDef": true
+      "validated": true,
+      "validatedAtk": true,
+      "validatedDef": true,
+      "sourcePack": "dta"
     },
     {
       "key": "bleu-bleu-005",
@@ -4642,7 +4605,7 @@
             "timing": "minionUpkeep",
             "target": "minion",
             "impact": "gains 1 {token:Siphon vital}",
-            "text": "At the start of its turn: gains 1 {token:Siphon vital}.",
+            "text": "At the start of its turn: gain 1 {token:Siphon vital}.",
             "customText": "",
             "tokens": [
               "Siphon vital"
@@ -4673,7 +4636,7 @@
           "timing": "minionUpkeep",
           "target": "minion",
           "impact": "gains 1 {token:Siphon vital}",
-          "text": "At the start of its turn: gains 1 {token:Siphon vital}.",
+          "text": "At the start of its turn: gain 1 {token:Siphon vital}.",
           "customText": "",
           "tokens": [
             "Siphon vital"
@@ -4823,7 +4786,7 @@
             "timing": "offensiveRollFailed",
             "target": "opponent",
             "impact": "deals {undef:2}",
-            "text": "If the Offensive Roll Phase fails: deals {undef:2}.",
+            "text": "If the Offensive Roll Phase fails: deal {undef:2}.",
             "customText": "",
             "tokens": [],
             "effects": {
@@ -5130,9 +5093,9 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false,
+      "validated": true,
       "sourcePack": "dta"
     },
     {
@@ -5554,9 +5517,9 @@
             "type": "start_of_turn",
             "timing": "minionUpkeep",
             "target": "minion",
-            "impact": "{cp:2}",
+            "impact": "{gain-cp:2}",
             "customText": "",
-            "text": "At the start of its turn: {cp:2}.",
+            "text": "At the start of its turn: {gain-cp:2}.",
             "tokens": [],
             "effects": {
               "damage": 0,
@@ -5575,15 +5538,15 @@
             "type": "offensive_failure",
             "timing": "offensiveRollFailed",
             "target": "minion",
-            "impact": "steals {cp:1}",
+            "impact": "{steals-cp:1}",
             "customText": "",
-            "text": "If the Offensive Roll Phase fails: steals {cp:1}.",
+            "text": "If the Offensive Roll Phase fails: {steals-cp:1}.",
             "tokens": [],
             "effects": {
               "damage": 0,
               "undefendable": false,
-              "stealHp": 2,
-              "stealCp": 0,
+              "stealHp": 0,
+              "stealCp": 1,
               "heal": 0,
               "drawCards": 0,
               "discardCards": 0,
@@ -5599,9 +5562,9 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false,
+      "validated": true,
       "initialTokenCount": 1,
       "sourcePack": "dta"
     },
@@ -5770,7 +5733,7 @@
               "lifeSteal": 0,
               "loseHp": 0,
               "cpSteal": 0,
-              "note": "If 3 identical value, deals {token:Parasite}"
+              "note": "If 3 identical value, deal {token:Parasite}"
             },
             "displayRows": [
               {
@@ -6510,7 +6473,7 @@
             "target": "minion",
             "impact": "gains {token:Damage bonus 3}",
             "customText": "",
-            "text": "If the Offensive Roll Phase fails: gains {token:Damage bonus 3}.",
+            "text": "If the Offensive Roll Phase fails: gain {token:Damage bonus 3}.",
             "tokens": [
               "Damage bonus 3"
             ],
@@ -7111,9 +7074,9 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false,
+      "validated": true,
       "sourcePack": "dta"
     },
     {
@@ -7212,7 +7175,9 @@
                   "face": "white",
                   "label": "",
                   "damage": 0,
+                  "heal": 0,
                   "undefendable": false,
+                  "flee": false,
                   "stealHp": 0,
                   "loseHp": 0,
                   "stealCp": 2,
@@ -7223,7 +7188,9 @@
                   "face": "orange",
                   "label": "hero discards 1 card",
                   "damage": 0,
+                  "heal": 0,
                   "undefendable": false,
+                  "flee": false,
                   "stealHp": 0,
                   "loseHp": 0,
                   "stealCp": 0,
@@ -7234,7 +7201,9 @@
                   "face": "red",
                   "label": "hero discards 1 card and",
                   "damage": 0,
+                  "heal": 0,
                   "undefendable": false,
+                  "flee": false,
                   "stealHp": 0,
                   "loseHp": 0,
                   "stealCp": 2,
@@ -7252,9 +7221,9 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false,
+      "validated": true,
       "initialTokenCount": 1,
       "sourcePack": "dta"
     },
@@ -7556,6 +7525,60 @@
               "type": "symbols",
               "symbols": {
                 "white": 2,
+                "orange": 1,
+                "red": 0
+              }
+            },
+            "label": "",
+            "damage": 4,
+            "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
+            "stealHp": 0,
+            "loseHp": 0,
+            "stealCp": 0,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "tokens": [],
+            "formulas": [],
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
+          },
+          {
+            "align": "left",
+            "condition": {
+              "type": "symbols",
+              "symbols": {
+                "white": 2,
+                "orange": 2,
+                "red": 0
+              }
+            },
+            "label": "",
+            "damage": 5,
+            "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
+            "stealHp": 0,
+            "loseHp": 0,
+            "stealCp": 0,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "tokens": [],
+            "formulas": [],
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
+          },
+          {
+            "align": "left",
+            "condition": {
+              "type": "symbols",
+              "symbols": {
+                "white": 2,
                 "orange": 3,
                 "red": 0
               }
@@ -7576,31 +7599,43 @@
             "notes": [],
             "topDeckToDiscard": 0,
             "extraRoll": null
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "text"
-            },
-            "label": "",
-            "damage": 0,
-            "undefendable": false,
-            "prevent": 0,
-            "returnDamage": 0,
-            "stealHp": 0,
-            "loseHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "topDeckToDiscard": 0,
-            "extraRoll": null
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "alteration",
+              "negate": false,
+              "and": [],
+              "present": [
+                "Chaos"
+              ],
+              "absent": [],
+              "inner": null
+            },
+            "effect": {
+              "heroTokens": [],
+              "minionTokens": [],
+              "damage": null,
+              "damageFormula": null,
+              "undefendable": false,
+              "lifeSteal": 0,
+              "loseHp": 0,
+              "cpSteal": 0,
+              "note": "Spends 3 Chaos to heal HP equal to damage dealt."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If the minion has 3 {token:Chaos}, when an attack deals ≥ 1 damage, spends 3 {token:Chaos} to heal HP equal to damage dealt."
+                ]
+              }
+            ],
+            "exclusive": false,
+            "minRollCount": 0
+          }
+        ],
         "passives": [
           {
             "type": "start_of_turn",
@@ -7634,9 +7669,9 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false,
+      "validated": true,
       "sourcePack": "dta",
       "initialTokenCount": 1
     },
@@ -7926,7 +7961,7 @@
                 "red": 2
               }
             },
-            "label": "Souffle Acide",
+            "label": "",
             "damage": 3,
             "undefendable": true,
             "prevent": 0,
@@ -7951,10 +7986,10 @@
         "passives": [
           {
             "type": "custom",
-            "timing": "startOfTurn",
+            "timing": "custom",
             "target": "minion",
-            "impact": "flees if below 5 {hp}",
-            "text": "If this minion has less than 5 {hp} at the start of its turn, it flees the battle.",
+            "impact": "If this minion has less than {hp:5}: it flees the battle.",
+            "text": "If this minion has less than {hp:5}: it flees the battle.",
             "customText": "",
             "tokens": [],
             "effects": {
@@ -7962,7 +7997,7 @@
               "undefendable": false,
               "stealHp": 0,
               "stealCp": 0,
-              "heal": 0,
+              "heal": 5,
               "drawCards": 0,
               "discardCards": 0,
               "topDeckToDiscard": 0,
@@ -7975,33 +8010,11 @@
         "displayRows": []
       },
       "defense": "",
-      "passives": [
-        {
-          "type": "custom",
-          "timing": "startOfTurn",
-          "target": "minion",
-          "impact": "flees if below 5 {hp}",
-          "text": "If this minion has less than 5 {hp} at the start of its turn, it flees the battle.",
-          "customText": "",
-          "tokens": [],
-          "effects": {
-            "damage": 0,
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "topDeckToDiscard": 0,
-            "tokens": [],
-            "formulas": []
-          }
-        }
-      ],
+      "passives": [],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false,
+      "validated": true,
       "sourcePack": "dta"
     },
     {
@@ -8700,8 +8713,8 @@
       "rewardChests": 2,
       "rewardRank": "blue/violet",
       "attacks": [
-        "Ritual: 1/2/3 blancs + 2 jaunes = 3/4/5 undefendable damage et gains Chaos.",
-        "Avec 3 Chaos fin de tour: se removes et engage un niveau 3 avec Premiere Frappe."
+        "Ritual: 1/2/3 white + 2 orange = 3/4/5 undefendable damage and gains {token:Chaos}.",
+        "At the end of any turn: if Fell Summoner has 3 {token:Chaos}, this combat ends and a random level 3 minion engages with {token:First Strike}."
       ],
       "defenseDice": 2,
       "defensePlan": {
@@ -8722,6 +8735,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -8762,22 +8776,25 @@
             "condition": {
               "type": "symbols",
               "symbols": {
-                "white": 3,
+                "white": 1,
                 "orange": 2,
                 "red": 0
               }
             },
-            "label": "Ritual",
-            "damage": 5,
+            "label": "",
+            "damage": 3,
             "undefendable": true,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "tokens": [],
+            "tokens": [
+              "Chaos"
+            ],
             "formulas": [],
             "notes": [],
             "topDeckToDiscard": 0,
@@ -8786,20 +8803,55 @@
           {
             "align": "left",
             "condition": {
-              "type": "text"
+              "type": "symbols",
+              "symbols": {
+                "white": 2,
+                "orange": 2,
+                "red": 0
+              }
             },
-            "label": "Avec 3 Chaos fin de tour",
-            "damage": 0,
-            "undefendable": false,
+            "label": "",
+            "damage": 4,
+            "undefendable": true,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [
-              "Première Frappe"
+              "Chaos"
+            ],
+            "formulas": [],
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
+          },
+          {
+            "align": "left",
+            "condition": {
+              "type": "symbols",
+              "symbols": {
+                "white": 3,
+                "orange": 2,
+                "red": 0
+              }
+            },
+            "label": "",
+            "damage": 5,
+            "undefendable": true,
+            "prevent": 0,
+            "returnDamage": 0,
+            "stealHp": 0,
+            "loseHp": 0,
+            "stealCp": 0,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "tokens": [
+              "Chaos"
             ],
             "formulas": [],
             "notes": [],
@@ -8808,16 +8860,45 @@
           }
         ],
         "conditionalRules": [],
-        "passives": [],
+        "passives": [
+          {
+            "type": "end_of_turn",
+            "timing": "endOfTurn",
+            "target": "minion",
+            "impact": "At the end of any turn: if {token:Chaos} ≥ 3, this combat ends and a random level 3 minion engages with {token:First Strike}.",
+            "customText": "",
+            "text": "At the end of any turn: if {token:Chaos} ≥ 3, this combat ends and a random level 3 minion engages with {token:First Strike}.",
+            "tokens": [
+              "Chaos",
+              "First Strike"
+            ],
+            "effects": {
+              "damage": 0,
+              "undefendable": false,
+              "stealHp": 0,
+              "stealCp": 0,
+              "heal": 0,
+              "drawCards": 0,
+              "discardCards": 0,
+              "topDeckToDiscard": 0,
+              "tokens": [
+                "Chaos",
+                "First Strike"
+              ],
+              "formulas": []
+            }
+          }
+        ],
         "notes": [],
         "displayRows": []
       },
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false
+      "validated": true,
+      "sourcePack": "dta"
     },
     {
       "key": "violet-violet-008",
@@ -9783,9 +9864,9 @@
             "type": "offensive_failure",
             "timing": "offensiveRollFailed",
             "target": "opponent",
-            "impact": "deals {token:Hex} and steals {hp:2}",
+            "impact": "deals {token:Hex} and steal {hp:2}",
             "customText": "",
-            "text": "If the Offensive Roll Phase fails: deals {token:Hex} and steals {hp:2}.",
+            "text": "If the Offensive Roll Phase fails: deal {token:Hex} and steal {hp:2}.",
             "tokens": [
               "Hex"
             ],
@@ -9953,7 +10034,35 @@
               "mode": "perFace",
               "align": "left",
               "rollText": "Roll 1 {die}.",
-              "displayRows": [],
+              "displayRows": [
+                {
+                  "align": "left",
+                  "items": [
+                    "{die:1}",
+                    "{die:2}",
+                    "=",
+                    "{token:Burn}"
+                  ]
+                },
+                {
+                  "align": "left",
+                  "items": [
+                    "{die:3}",
+                    "{die:4}",
+                    "=",
+                    "{token:Knockdown}"
+                  ]
+                },
+                {
+                  "align": "left",
+                  "items": [
+                    "{die:5}",
+                    "{die:6}",
+                    "=",
+                    "2x {token:Bleed}"
+                  ]
+                }
+              ],
               "outcomes": [
                 {
                   "align": "left",
@@ -9962,6 +10071,7 @@
                   "damage": 0,
                   "heal": 0,
                   "undefendable": false,
+                  "flee": false,
                   "stealHp": 0,
                   "loseHp": 0,
                   "stealCp": 0,
@@ -9971,11 +10081,12 @@
                 },
                 {
                   "align": "left",
-                  "face": "orange",
+                  "face": "white",
                   "label": "",
                   "damage": 0,
                   "heal": 0,
                   "undefendable": false,
+                  "flee": false,
                   "stealHp": 0,
                   "loseHp": 0,
                   "stealCp": 0,
@@ -9985,11 +10096,12 @@
                 },
                 {
                   "align": "left",
-                  "face": "red",
-                  "label": "deals 2 Bleed (5-6)",
+                  "face": "white",
+                  "label": "",
                   "damage": 0,
                   "heal": 0,
                   "undefendable": false,
+                  "flee": false,
                   "stealHp": 0,
                   "loseHp": 0,
                   "stealCp": 0,
@@ -10004,7 +10116,29 @@
           }
         ],
         "conditionalRules": [],
-        "passives": [],
+        "passives": [
+          {
+            "type": "offensive_failure",
+            "timing": "offensiveRollFailed",
+            "target": "minion",
+            "impact": "roll 1 {die}. On {die:white} (1-3): restart the Offensive Roll Phase",
+            "customText": "",
+            "text": "If the Offensive Roll Phase fails: roll 1 {die}. On {die:white} (1-3): restart the Offensive Roll Phase.",
+            "tokens": [],
+            "effects": {
+              "damage": 0,
+              "undefendable": false,
+              "stealHp": 0,
+              "stealCp": 0,
+              "heal": 0,
+              "drawCards": 0,
+              "discardCards": 0,
+              "topDeckToDiscard": 0,
+              "tokens": [],
+              "formulas": []
+            }
+          }
+        ],
         "notes": [],
         "displayRows": []
       },
@@ -10167,23 +10301,13 @@
               "{die:red}",
               "{die:red}",
               "=",
-              "{undef:4}"
+              "{token:Poison} + {undef:4}"
             ]
           },
           {
-            "align": "left",
+            "align": "center",
             "items": [
-              "Hero receives",
-              "=",
-              "{token:Poison}"
-            ]
-          },
-          {
-            "align": "left",
-            "items": [
-              "Hero discards 1 card",
-              "=",
-              "Random"
+              "Then hero discards 1 card"
             ]
           }
         ]
@@ -10191,9 +10315,9 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false,
+      "validated": true,
       "sourcePack": "dta"
     },
     {
@@ -10363,7 +10487,7 @@
             "target": "opponent",
             "impact": "deals {damage:2}",
             "customText": "",
-            "text": "If the Offensive Roll Phase fails: deals {damage:2}.",
+            "text": "If the Offensive Roll Phase fails: deal {damage:2}.",
             "tokens": [],
             "effects": {
               "damage": 2,
@@ -10384,7 +10508,7 @@
             "target": "minion",
             "impact": "steals {hp:2}",
             "customText": "",
-            "text": "If the Offensive Roll Phase fails: steals {hp:2}.",
+            "text": "If the Offensive Roll Phase fails: steal {hp:2}.",
             "tokens": [],
             "effects": {
               "damage": 0,
@@ -10581,7 +10705,7 @@
               "lifeSteal": 0,
               "loseHp": 0,
               "cpSteal": 0,
-              "note": "Si 3 chiffres identiques, gains Back Strike."
+              "note": "Si 3 chiffres identiques, gain Back Strike."
             },
             "displayRows": [
               {
@@ -10621,8 +10745,8 @@
       "rewardChests": 1,
       "rewardRank": "violet",
       "attacks": [
-        "Seduction: 2 blancs + 1/2/3 jaunes = 4/5/6 damage.",
-        "Avec 2 Chaos, spends them pour se healsr du montant dice damage. Debut de tour gains Chaos."
+        "Seduction: 2 white + 1/2/3 orange = 4/5/6 damage.",
+        "With 2 {token:Chaos}, spends them to heal HP equal to damage dealt. At the start of its turn: gains {token:Chaos}."
       ],
       "defenseDice": 4,
       "defensePlan": {
@@ -10699,11 +10823,6 @@
           {
             "white": 2,
             "orange": 3,
-            "red": 0
-          },
-          {
-            "white": 2,
-            "orange": 0,
             "red": 0
           }
         ],
@@ -10791,7 +10910,41 @@
             "extraRoll": null
           }
         ],
-        "conditionalRules": [],
+        "conditionalRules": [
+          {
+            "condition": {
+              "type": "alteration",
+              "negate": false,
+              "and": [],
+              "present": [
+                "Chaos"
+              ],
+              "absent": [],
+              "inner": null
+            },
+            "effect": {
+              "heroTokens": [],
+              "minionTokens": [],
+              "damage": null,
+              "damageFormula": null,
+              "undefendable": false,
+              "lifeSteal": 0,
+              "loseHp": 0,
+              "cpSteal": 0,
+              "note": "Spends 2 Chaos to heal HP equal to damage dealt."
+            },
+            "displayRows": [
+              {
+                "align": "left",
+                "items": [
+                  "If the minion has 2 {token:Chaos}, when an attack deals ≥ 1 damage, spends 2 {token:Chaos} to heal HP equal to damage dealt."
+                ]
+              }
+            ],
+            "exclusive": false,
+            "minRollCount": 0
+          }
+        ],
         "passives": [
           {
             "type": "start_of_turn",
@@ -10825,9 +10978,9 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false,
+      "validated": true,
       "initialTokenCount": 1,
       "sourcePack": "dta"
     },
@@ -11058,7 +11211,7 @@
               "lifeSteal": 0,
               "loseHp": 0,
               "cpSteal": 0,
-              "note": "Si 3 chiffres identiques, deals Barbed Vine to heros"
+              "note": "Si 3 chiffres identiques, deal Barbed Vine to heros"
             },
             "displayRows": [
               {
@@ -11287,13 +11440,13 @@
               "lifeSteal": 0,
               "loseHp": 0,
               "cpSteal": 0,
-              "note": "Si 3 chiffres identiques, deals Bleed + Silence."
+              "note": "Si 3 chiffres identiques, deal Bleed + Silence."
             },
             "displayRows": [
               {
                 "align": "left",
                 "items": [
-                  "If you roll 3 matching values, deals  {token:Bleed} + {token:Silence}.."
+                  "If you roll 3 matching values, deals  {token:Bleed} +{token:Silence}."
                 ]
               }
             ],
@@ -11308,10 +11461,11 @@
       "defense": "",
       "passives": [],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false,
-      "sourcePack": "dta"
+      "validated": true,
+      "sourcePack": "dta",
+      "initialTokenCount": 1
     },
     {
       "key": "violet-violet-021",
@@ -11471,7 +11625,7 @@
             "target": "minion",
             "impact": "gains {token:Damage bonus 3}",
             "customText": "",
-            "text": "If the Offensive Roll Phase fails: gains {token:Damage bonus 3}.",
+            "text": "If the Offensive Roll Phase fails: gain {token:Damage bonus 3}.",
             "tokens": [
               "Damage bonus 3"
             ],
@@ -11648,8 +11802,8 @@
             "type": "start_of_turn",
             "timing": "minionUpkeep",
             "target": "minion",
-            "impact": "gains  {cp:2}",
-            "text": "At the start of its turn: gains  {cp:2}.",
+            "impact": "{gain-cp:2}",
+            "text": "At the start of its turn: {gain-cp:2}.",
             "customText": "",
             "tokens": [],
             "effects": {
@@ -11669,11 +11823,11 @@
             "type": "offensive_failure",
             "timing": "offensiveRollFailed",
             "target": "minion",
-            "impact": "gains 3 {token:Dégâts Bonus} and {token:Shadows}",
-            "text": "If the Offensive Roll Phase fails: gains 3 {token:Dégâts Bonus} and {token:Shadows}.",
+            "impact": "gain {token:Damage bonus 3} and {token:Shadows}",
+            "text": "If the Offensive Roll Phase fails: gain {token:Damage bonus 3} and {token:Shadows}.",
             "customText": "",
             "tokens": [
-              "Dégâts Bonus",
+              "Damage bonus 3",
               "Shadows"
             ],
             "effects": {
@@ -11686,7 +11840,7 @@
               "discardCards": 0,
               "topDeckToDiscard": 0,
               "tokens": [
-                "Dégâts Bonus",
+                "Damage bonus 3",
                 "Shadows"
               ],
               "formulas": []
@@ -11697,56 +11851,7 @@
         "displayRows": []
       },
       "defense": "",
-      "passives": [
-        {
-          "type": "start_of_turn",
-          "timing": "minionUpkeep",
-          "target": "minion",
-          "impact": "gains 2 CP",
-          "text": "At the start of its turn: gains 2 CP.",
-          "customText": "",
-          "tokens": [],
-          "effects": {
-            "damage": 0,
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "topDeckToDiscard": 0,
-            "tokens": [],
-            "formulas": []
-          }
-        },
-        {
-          "type": "offensive_failure",
-          "timing": "offensiveRollFailed",
-          "target": "minion",
-          "impact": "gains 3 {token:Dégâts Bonus} and {token:Shadows}",
-          "text": "If the Offensive Roll Phase fails: gains 3 {token:Dégâts Bonus} and {token:Shadows}.",
-          "customText": "",
-          "tokens": [
-            "Shadows",
-            "Dégâts Bonus"
-          ],
-          "effects": {
-            "damage": 0,
-            "undefendable": false,
-            "stealHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "topDeckToDiscard": 0,
-            "tokens": [
-              "Shadows",
-              "Dégâts Bonus"
-            ],
-            "formulas": []
-          }
-        }
-      ],
+      "passives": [],
       "passiveDisplayRows": [],
       "validatedAtk": false,
       "validatedDef": true,
@@ -12278,7 +12383,7 @@
             "timing": "offensiveRollFailed",
             "target": "minion",
             "impact": "gains {token:Shadows}",
-            "text": "If the Offensive Roll Phase fails: gains {token:Shadows}.",
+            "text": "If the Offensive Roll Phase fails: gain {token:Shadows}.",
             "customText": "",
             "tokens": [
               "Shadows"
@@ -12309,7 +12414,7 @@
           "timing": "offensiveRollFailed",
           "target": "minion",
           "impact": "gains {token:Shadows}",
-          "text": "If the Offensive Roll Phase fails: gains {token:Shadows}.",
+          "text": "If the Offensive Roll Phase fails: gain {token:Shadows}.",
           "customText": "",
           "tokens": [
             "Shadows"
@@ -12417,7 +12522,7 @@
                 "red": 0
               }
             },
-            "label": "Swarm",
+            "label": "",
             "damage": 0,
             "undefendable": false,
             "prevent": 0,
@@ -12441,44 +12546,14 @@
             "extraRoll": null
           }
         ],
-        "conditionalRules": [
-          {
-            "condition": {
-              "type": "text",
-              "negate": false,
-              "and": [],
-              "inner": null
-            },
-            "effect": {
-              "heroTokens": [],
-              "minionTokens": [],
-              "damage": null,
-              "damageFormula": "+0",
-              "undefendable": true,
-              "lifeSteal": 0,
-              "loseHp": 0,
-              "cpSteal": 0,
-              "note": "If damage is 5 or less, this attack becomes undefendable."
-            },
-            "displayRows": [
-              {
-                "align": "left",
-                "items": [
-                  "If damage is 5 or less, this attack becomes undefendable."
-                ]
-              }
-            ],
-            "exclusive": true,
-            "minRollCount": 0
-          }
-        ],
+        "conditionalRules": [],
         "passives": [
           {
             "type": "offensive_failure",
             "timing": "offensiveRollFailed",
             "target": "both",
-            "impact": "heals 3 {heal:3} and removes all positive status effects from the opponent",
-            "text": "If the Offensive Roll Phase fails: heals 3 {heal:3} and removes all positive status effects from the opponent.",
+            "impact": "{heal:3} and removes all positive status effects from the opponent",
+            "text": "If the Offensive Roll Phase fails: {heal:3} and removes all positive status effects from the opponent.",
             "customText": "",
             "tokens": [],
             "effects": {
@@ -12504,8 +12579,8 @@
           "type": "offensive_failure",
           "timing": "offensiveRollFailed",
           "target": "both",
-          "impact": "heals 3 {heal:3} and removes all positive status effects from the opponent",
-          "text": "If the Offensive Roll Phase fails: heals 3 {heal:3} and removes all positive status effects from the opponent.",
+          "impact": "{heal:3} and removes all positive status effects from the opponent",
+          "text": "If the Offensive Roll Phase fails:  {heal:3} and removes all positive status effects from the opponent.",
           "customText": "",
           "tokens": [],
           "effects": {
@@ -12523,9 +12598,11 @@
         }
       ],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false
+      "validated": true,
+      "initialTokenCount": 1,
+      "sourcePack": "dta"
     },
     {
       "key": "orange-orange-006",
@@ -12562,6 +12639,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12597,12 +12675,13 @@
                 "red": 0
               }
             },
-            "label": "Venomous Strike",
+            "label": "",
             "damage": 0,
             "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12615,7 +12694,7 @@
             ],
             "formulas": [],
             "notes": [
-              "Inflicts Poison, Entangle, and 2 Bleed tokens."
+              "Deals Poison, Entangle, 2x Bleed."
             ],
             "topDeckToDiscard": 0,
             "extraRoll": null
@@ -12627,13 +12706,13 @@
             "type": "custom",
             "timing": "endOfTurn",
             "target": "opponent",
-            "impact": "deals 1 {undef:1} damage per negative status effect on the active player",
-            "text": "At the end of its turn: deals 1 {undef:1} damage per negative status effect on the active player.",
+            "impact": "At the end of its turn: deal {undef:1} damage per negative status effect on the active player.",
+            "text": "At the end of its turn: deal {undef:1} damage per negative status effect on the active player.",
             "customText": "",
             "tokens": [],
             "effects": {
-              "damage": 0,
-              "undefendable": false,
+              "damage": 1,
+              "undefendable": true,
               "stealHp": 0,
               "stealCp": 0,
               "heal": 0,
@@ -12655,7 +12734,7 @@
           "timing": "endOfTurn",
           "target": "opponent",
           "impact": "deals 1 {undef:1} damage per negative status effect on the active player",
-          "text": "At the end of its turn: deals 1 {undef:1} damage per negative status effect on the active player.",
+          "text": "At the end of its turn: deal {undef:1} damage per negative status effect on the active player.",
           "customText": "",
           "tokens": [],
           "effects": {
@@ -12673,9 +12752,11 @@
         }
       ],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false
+      "validated": true,
+      "initialTokenCount": 1,
+      "sourcePack": "dta"
     },
     {
       "key": "orange-orange-007",
@@ -12685,7 +12766,7 @@
       "cp": 4,
       "cardAsset": "assets/orange/orange-007.png",
       "initialTokens": [
-        "Première Frappe",
+        "First Strike",
         "Main du roi"
       ],
       "rewardChests": 1,
@@ -12740,7 +12821,7 @@
         "name": "Berserker Enrage",
         "actions": [
           {
-            "align": "left",
+            "align": "center",
             "condition": {
               "type": "symbols",
               "symbols": {
@@ -12749,7 +12830,7 @@
                 "red": 1
               }
             },
-            "label": "Unbridled Wrath",
+            "label": "",
             "damage": 0,
             "undefendable": false,
             "prevent": 0,
@@ -12771,8 +12852,7 @@
               "dice": 2,
               "mode": "simple",
               "align": "left",
-              "rollText": "Roll 2 {die} + 1 per {token:Chaos} (max 5 {die}).",
-              "finalText": "Deals damage equal to the total roll value.",
+              "rollText": "Roll 2x {die} + 1 per Chaos (max 5 {die}).\nDeals damage equal to the total roll value.",
               "displayRows": [],
               "outcomes": []
             }
@@ -12784,8 +12864,8 @@
             "type": "offensive_failure",
             "timing": "offensiveRollFailed",
             "target": "minion",
-            "impact": "gains 1 {token:Chaos}",
-            "text": "If the Offensive Roll Phase fails: gains 1 {token:Chaos}.",
+            "impact": "gains {token:Chaos}",
+            "text": "If the Offensive Roll Phase fails: gain {token:Chaos}.",
             "customText": "",
             "tokens": [
               "Chaos"
@@ -12816,7 +12896,7 @@
           "timing": "offensiveRollFailed",
           "target": "minion",
           "impact": "gains 1 {token:Chaos}",
-          "text": "If the Offensive Roll Phase fails: gains 1 {token:Chaos}.",
+          "text": "If the Offensive Roll Phase fails: gain {token:Chaos}.",
           "customText": "",
           "tokens": [
             "Chaos"
@@ -12838,9 +12918,11 @@
         }
       ],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false
+      "validated": true,
+      "initialTokenCount": 1,
+      "sourcePack": "dta"
     },
     {
       "key": "orange-orange-008",
@@ -12877,6 +12959,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -12912,23 +12995,25 @@
                 "red": 0
               }
             },
-            "label": "Toxic Touch",
+            "label": "",
             "damage": 0,
             "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
+            "tokenCount": 2,
             "tokens": [
               "Poison",
               "Poison"
             ],
             "formulas": [],
             "notes": [
-              "Inflicts 2 Poison tokens."
+              "deals 2x Poison."
             ],
             "topDeckToDiscard": 0,
             "extraRoll": null
@@ -12940,8 +13025,8 @@
             "type": "custom",
             "timing": "onPoisonOverflow",
             "target": "opponent",
-            "impact": "deals 2 {undef:2} damage per excess {token:Poison} that cannot be inflicted",
-            "text": "If the Poison limit is reached: deals 2 {undef:2} damage for each {token:Poison} that cannot be inflicted (including from defense).",
+            "impact": "If the Poison limit is reached: deal {undef:2} damage for each {token:Poison} that cannot be inflicted (including from defense).",
+            "text": "If the Poison limit is reached: deal {undef:2} damage for each {token:Poison} that cannot be inflicted (including from defense).",
             "customText": "",
             "tokens": [
               "Poison"
@@ -12972,7 +13057,7 @@
           "timing": "onPoisonOverflow",
           "target": "opponent",
           "impact": "deals 2 {undef:2} damage per excess {token:Poison} that cannot be inflicted",
-          "text": "If the Poison limit is reached: deals 2 {undef:2} damage for each {token:Poison} that cannot be inflicted (including from defense).",
+          "text": "If the Poison limit is reached: deal {undef:2} damage for each {token:Poison} that cannot be inflicted (including from defense).",
           "customText": "",
           "tokens": [
             "Poison"
@@ -12994,9 +13079,11 @@
         }
       ],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false
+      "validated": true,
+      "initialTokenCount": 1,
+      "sourcePack": "dta"
     },
     {
       "key": "orange-orange-009",
@@ -13354,6 +13441,7 @@
       "cp": 5,
       "cardAsset": "assets/orange/orange-011.png",
       "initialTokens": [
+        "Main du roi",
         "Main du roi"
       ],
       "rewardChests": 1,
@@ -13382,6 +13470,7 @@
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 2,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -13415,12 +13504,13 @@
                 "red": 1
               }
             },
-            "label": "Ancient Curse",
+            "label": "",
             "damage": 5,
             "undefendable": true,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
+            "loseHp": 0,
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
@@ -13432,33 +13522,51 @@
             "extraRoll": {
               "dice": 1,
               "mode": "perFace",
-              "align": "left",
+              "align": "center",
               "rollText": "Roll 1 {die}.",
               "displayRows": [],
               "outcomes": [
                 {
+                  "align": "left",
                   "face": "white",
-                  "label": "inflicts Silence",
+                  "label": "",
                   "damage": 0,
+                  "heal": 0,
                   "undefendable": false,
+                  "flee": false,
+                  "stealHp": 0,
+                  "loseHp": 0,
+                  "stealCp": 0,
                   "tokens": [
                     "Silence"
                   ]
                 },
                 {
+                  "align": "left",
                   "face": "orange",
-                  "label": "inflicts Hex",
+                  "label": "",
                   "damage": 0,
+                  "heal": 0,
                   "undefendable": false,
+                  "flee": false,
+                  "stealHp": 0,
+                  "loseHp": 0,
+                  "stealCp": 0,
                   "tokens": [
                     "Hex"
                   ]
                 },
                 {
+                  "align": "left",
                   "face": "red",
-                  "label": "inflicts Hex and Silence",
+                  "label": "",
                   "damage": 0,
+                  "heal": 0,
                   "undefendable": false,
+                  "flee": false,
+                  "stealHp": 0,
+                  "loseHp": 0,
+                  "stealCp": 0,
                   "tokens": [
                     "Hex",
                     "Silence"
@@ -13474,8 +13582,8 @@
             "type": "start_of_turn",
             "timing": "minionUpkeep",
             "target": "minion",
-            "impact": "gains 1 {token:Siphon vital}. If already possessed, heals 3 {heal:3} instead",
-            "text": "At the start of its turn: gains 1 {token:Siphon vital}. If already possessed, heals 3 {heal:3} instead.",
+            "impact": "gains 1 {token:Siphon vital}. If already possessed, {heal:3} instead",
+            "text": "At the start of its turn: gain 1 {token:Siphon vital}. If already possessed, {heal:3} instead.",
             "customText": "",
             "tokens": [
               "Siphon vital"
@@ -13506,7 +13614,7 @@
           "timing": "minionUpkeep",
           "target": "minion",
           "impact": "gains 1 {token:Siphon vital}. If already possessed, heals 3 {heal:3} instead",
-          "text": "At the start of its turn: gains 1 {token:Siphon vital}. If already possessed, heals 3 {heal:3} instead.",
+          "text": "At the start of its turn: gain 1 {token:Siphon vital}. If already possessed, {heal:3} instead.",
           "customText": "",
           "tokens": [
             "Siphon vital"
@@ -13528,9 +13636,11 @@
         }
       ],
       "passiveDisplayRows": [],
-      "validatedAtk": false,
+      "validatedAtk": true,
       "validatedDef": true,
-      "validated": false
+      "validated": true,
+      "initialTokenCount": 2,
+      "sourcePack": "dta"
     },
     {
       "key": "naraxus",

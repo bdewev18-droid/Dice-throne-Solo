@@ -73,29 +73,53 @@ extension MinionDiceEngineSymbols on MinionDiceEngine {
       final bestMet = metGoals.first;
       final targetGoal = bestMet.goal;
 
-      // If the minion can improve towards a higher tier of the same primary symbol
-      // (e.g. Banshee: 2 red validated, but 3, 4, 5 red exist), hold all dice matching that symbol!
-      final higherGoalExists = realGoals.any((g) {
+      // If the minion can improve towards a higher tier of the attack
+      // (e.g. Succubus: 2 white + 1 yellow met, but 2W+2Y or 2W+3Y exist;
+      //  or Banshee: 2 red met, but 3, 4, 5 red exist),
+      // keep only the required dice for the met goal PLUS any extra dice that match
+      // the higher goal requirements, without holding useless extra dice!
+      final higherGoals = realGoals.where((g) {
         final totalG = g.white + g.yellow + g.red;
         final totalTarget = targetGoal.white + targetGoal.yellow + targetGoal.red;
         if (totalG <= totalTarget) return false;
-        if (targetGoal.red > 0 && g.red > targetGoal.red) return true;
-        if (targetGoal.yellow > 0 && g.yellow > targetGoal.yellow) return true;
-        if (targetGoal.white > 0 && g.white > targetGoal.white) return true;
-        return false;
-      });
+        return g.white >= targetGoal.white &&
+            g.yellow >= targetGoal.yellow &&
+            g.red >= targetGoal.red;
+      }).toList();
 
-      List<GameDie> keptDice;
-      if (higherGoalExists) {
-        // Keep all active dice that match any of the symbols in targetGoal
-        keptDice = active.where((d) {
-          if (targetGoal.red > 0 && d.symbol == DieSymbol.red) return true;
-          if (targetGoal.yellow > 0 && d.symbol == DieSymbol.yellow) return true;
-          if (targetGoal.white > 0 && d.symbol == DieSymbol.white) return true;
-          return false;
-        }).toList();
-      } else {
-        keptDice = bestMet.matched;
+      // Base: the dice that satisfy the currently best met goal MUST ALWAYS BE KEPT
+      // so the minion can NEVER lose its validated attack on a subsequent reroll!
+      final keptDice = <GameDie>[...bestMet.matched];
+
+      if (higherGoals.isNotEmpty) {
+        int maxNeededWhite = targetGoal.white;
+        int maxNeededYellow = targetGoal.yellow;
+        int maxNeededRed = targetGoal.red;
+        for (final g in higherGoals) {
+          if (g.white > maxNeededWhite) maxNeededWhite = g.white;
+          if (g.yellow > maxNeededYellow) maxNeededYellow = g.yellow;
+          if (g.red > maxNeededRed) maxNeededRed = g.red;
+        }
+
+        int wKept = keptDice.where((d) => d.symbol == DieSymbol.white).length;
+        int yKept = keptDice.where((d) => d.symbol == DieSymbol.yellow).length;
+        int rKept = keptDice.where((d) => d.symbol == DieSymbol.red).length;
+
+        // Reserve extra matching dice only if needed for higher goals,
+        // leaving any useless dice free to reroll.
+        for (final d in active) {
+          if (keptDice.contains(d)) continue;
+          if (d.symbol == DieSymbol.white && wKept < maxNeededWhite) {
+            keptDice.add(d);
+            wKept++;
+          } else if (d.symbol == DieSymbol.yellow && yKept < maxNeededYellow) {
+            keptDice.add(d);
+            yKept++;
+          } else if (d.symbol == DieSymbol.red && rKept < maxNeededRed) {
+            keptDice.add(d);
+            rKept++;
+          }
+        }
       }
 
       final keptValues = keptDice.map((d) => d.effectiveValue ?? d.value!).toList()..sort();

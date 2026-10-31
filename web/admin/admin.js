@@ -606,6 +606,7 @@ function renderLists() {
   const root = $('enemyLists');
   root.innerHTML = '';
   const query = $('enemySearch').value.trim().toLowerCase();
+  const hideValidated = $('hideValidatedCheck')?.checked || false;
   const allProfiles = sourceData?.profiles || [];
   
   let globalValidPoints = 0;
@@ -627,8 +628,14 @@ function renderLists() {
       .filter(
         ({ profile }) =>
           !query || `${profile.name} ${profile.key}`.toLowerCase().includes(query),
-      );
-    if (!profiles.length) continue;
+      )
+      .filter(({ profile }) => {
+        if (hideValidated && isAtkValid(profile) && isDefValid(profile)) {
+          return false;
+        }
+        return true;
+      });
+    if (!profiles.length && hideValidated) continue;
     
     let groupValidPoints = 0;
     for (const { profile } of profiles) {
@@ -668,9 +675,65 @@ function renderLists() {
       button.onclick = () => selectProfile(index);
       items.appendChild(button);
     }
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-enemy-btn ghost-btn';
+    addBtn.style.cssText = 'width: 100%; margin-top: 6px; padding: 6px 10px; font-size: 11px; text-align: center; border: 1px dashed rgba(255,255,255,0.25); border-radius: 4px; color: #bbb; cursor: pointer; background: rgba(255,255,255,0.03);';
+    addBtn.textContent = `+ Ajouter un ennemi (${rankLabels[rank] || rank})`;
+    addBtn.onclick = () => createNewEnemy(rank);
+    items.appendChild(addBtn);
     group.append(head, items);
     root.appendChild(group);
   }
+}
+
+function createNewEnemy(rank) {
+  collectCurrent();
+  const rankCount = (sourceData?.profiles || []).filter(p => p.rank === rank).length + 1;
+  const key = `${rank}-${rank}-${String(rankCount).padStart(3, '0')}`;
+  const newEnemy = {
+    key: key,
+    name: `New ${rankLabels[rank] || rank} ${rankCount}`,
+    rank: rank,
+    maxHealth: 15,
+    cp: 3,
+    cardAsset: 'assets/illustration/soin.webp',
+    initialTokens: [],
+    rewardChests: 1,
+    rewardRank: rank,
+    attacks: [],
+    defenseDice: 4,
+    defensePlan: {
+      dice: 4,
+      effects: [],
+      notes: [],
+      displayRows: []
+    },
+    attackPlan: {
+      style: 'symbols',
+      goals: [],
+      name: `New ${rankLabels[rank] || rank} ${rankCount}`,
+      actions: [],
+      conditionalRules: [],
+      passives: [],
+      notes: [],
+      displayRows: []
+    },
+    defense: '',
+    passives: [],
+    passiveDisplayRows: [],
+    validatedAtk: false,
+    validatedDef: false,
+    validated: false,
+    sourcePack: 'dta'
+  };
+  sourceData.profiles.push(newEnemy);
+  selectedIndex = sourceData.profiles.length - 1;
+  selectedProfile = clone(newEnemy);
+  originalSelectedProfile = clone(newEnemy);
+  setDirty('enemy');
+  renderLists();
+  renderEditor();
+  flash(`Ennemi ${newEnemy.name} créé.`);
 }
 
 function selectFirst() {
@@ -1641,7 +1704,9 @@ function displayItemHtml(item) {
   if (kind === 'stealhp' || kind === 'steal_hp') return '<span style="font-weight:900; color:#5fe38b; margin-right:3px;">steal</span><span class="badge heal" title="Steal HP">' + escapeText(value) + '</span>';
   if (kind === 'heal' || kind === 'life' || kind === 'vie' || kind === 'soin') return '<span class="badge heal">+' + escapeText(value) + '</span>';
   if (kind === 'losehp' || kind === 'lose_hp' || kind === 'losehealth' || kind === 'loselife' || kind === 'pertevie') return '<span class="badge losehp">-' + escapeText(value) + '</span>';
-  if (kind === 'cp') return '<span class="token-chip">Steal ' + escapeText(value) + ' CP</span>';
+  if (kind === 'stealcp' || kind === 'steal_cp' || kind === 'steals-cp' || kind === 'steal-cp') return '<span class="token-chip">Steal ' + escapeText(value) + ' CP</span>';
+  if (kind === 'gaincp' || kind === 'gain_cp' || kind === 'gains-cp' || kind === 'gain-cp') return '<span class="token-chip">Gain ' + escapeText(value) + ' CP</span>';
+  if (kind === 'cp') return '<span class="token-chip">' + escapeText(value) + ' CP</span>';
   if (kind === 'token') return '<span class="token-chip">' + tokenImageHtml(value) + escapeText(value) + '</span>';
   return '<span>' + escapeText(text) + '</span>';
 }
@@ -1704,6 +1769,14 @@ function effectHtml(effect = {}) {
   if (effect.topDeckToDiscard) bits.push(`<span class="token-chip">Top ${effect.topDeckToDiscard} discard</span>`);
   if (effect.notes && effect.notes.length) {
     bits.push(...effect.notes.map((note) => renderFormattedInlineBadge(note)));
+  }
+  if (!effect.damage && effect.formulas && effect.formulas.length) {
+    for (const f of effect.formulas) {
+      if (/minioncp/i.test(f)) {
+        const prefix = /minioncp\s*\/\s*2/i.test(f) ? '1/2CP=' : 'CP=';
+        bits.push(`<span style="font-size:11px;font-weight:bold;margin-right:2px;color:#cbd8cc;">${prefix}</span><span class="badge ${effect.undefendable ? 'undef' : 'damage'}">${prefix === 'CP=' ? 'CP' : '½CP'}</span>`);
+      }
+    }
   }
   if (effect.extraRoll?.dice) {
     bits.push(`<span class="token-chip">Roll ${effect.extraRoll.dice} die</span>`);
@@ -2024,6 +2097,15 @@ function syncPassiveEffects(passive) {
     passive.effects.stealHp = parseInt(contextStealHp[1], 10) || 0;
   }
 
+  // Extract stealCp
+  const stealCpMatch = textToScan.match(/\{(stealcp|steal_cp|steals-cp|steal-cp):(\d+)\}/i);
+  const contextStealCp = textToScan.match(/\bsteals?\s*\{cp:(\d+)\}/i);
+  if (stealCpMatch) {
+    passive.effects.stealCp = parseInt(stealCpMatch[2], 10) || 0;
+  } else if (contextStealCp) {
+    passive.effects.stealCp = parseInt(contextStealCp[1], 10) || 0;
+  }
+
   // Extract heal
   const healMatch = textToScan.match(/\{(heal|life|vie|soin):(\d+)\}/i);
   if (healMatch) {
@@ -2050,6 +2132,8 @@ function createPassiveQuickChipsRow(input, onUpdate) {
     { label: '+ {heal:2}', code: '{heal:2}' },
     { label: '+ {heal:3}', code: '{heal:3}' },
     { label: '+ {cp:1}', code: '{cp:1}' },
+    { label: '+ {gains-cp:2}', code: '{gains-cp:2}' },
+    { label: '+ {steals-cp:1}', code: '{steals-cp:1}' },
     { label: '+ {die:white}', code: '{die:white}' },
     { label: '+ {die:orange}', code: '{die:orange}' },
     { label: '+ {die:red}', code: '{die:red}' },
@@ -2982,6 +3066,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   $('enemySearch').oninput = renderLists;
+  if ($('hideValidatedCheck')) $('hideValidatedCheck').onchange = renderLists;
   $('tokenSearch').oninput = renderTokenAdmin;
   $('addAttackActionBtn').onclick = addAction;
   $('addConditionalRuleBtn').onclick = addConditionalRule;

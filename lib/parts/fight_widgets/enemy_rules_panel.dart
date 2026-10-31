@@ -889,6 +889,42 @@ class MinionAttackSummary extends StatelessWidget {
         badges.add(
           DamageBadge(value: effect.damage, imparable: effect.undefendable),
         );
+      } else if (enemy.profileKey == 'bleu-bleu-011' ||
+          enemy.profileKey == 'orange-orange-001' ||
+          effect.formulas.any((f) => f.toLowerCase().contains('minioncp'))) {
+        final calculatedDmg = length >= 5
+            ? enemy.combatPoints
+            : (enemy.combatPoints / 2).ceil();
+        if (badges.isNotEmpty) {
+          badges.add(const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              '+',
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ));
+        }
+        final formulaPrefix = length >= 5 ? 'CP=' : '1/2CP=';
+        badges.add(
+          Padding(
+            padding: const EdgeInsets.only(right: 2),
+            child: Text(
+              formulaPrefix,
+              style: const TextStyle(
+                color: Color(0xffcbd8cc),
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        );
+        badges.add(
+          DamageBadge(value: calculatedDmg, imparable: effect.undefendable),
+        );
       }
       if (effect.notes.isNotEmpty) {
         for (final note in effect.notes) {

@@ -626,6 +626,17 @@ class MinionPassive {
         }
       }
     }
+    if (parsedStealCp == 0) {
+      final stealCpMatch = RegExp(r'\{(?:steals-cp|steal-cp|steals_cp|steal_cp|stealcp):(\d+)\}', caseSensitive: false).firstMatch(textToScan);
+      if (stealCpMatch != null) {
+        parsedStealCp = int.tryParse(stealCpMatch.group(1) ?? '') ?? 0;
+      } else {
+        final contextMatch = RegExp(r'\bsteals?\s*\{cp:(\d+)\}', caseSensitive: false).firstMatch(textToScan);
+        if (contextMatch != null) {
+          parsedStealCp = int.tryParse(contextMatch.group(1) ?? '') ?? 0;
+        }
+      }
+    }
     if (parsedHeal == 0) {
       final healMatch = RegExp(r'\{(?:heal|life|vie|soin):(\d+)\}', caseSensitive: false).firstMatch(textToScan);
       if (healMatch != null) {

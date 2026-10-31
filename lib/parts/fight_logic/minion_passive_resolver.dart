@@ -15,6 +15,7 @@ class MinionOffensiveFailureOutcome {
     this.notes = const [],
     this.triggered = false,
     this.removeHeroPositiveTokens = false,
+    this.restartRollPhase = false,
   });
 
   final int damage;
@@ -28,6 +29,7 @@ class MinionOffensiveFailureOutcome {
   final List<String> notes;
   final bool triggered;
   final bool removeHeroPositiveTokens;
+  final bool restartRollPhase;
 
   static const empty = MinionOffensiveFailureOutcome();
 }
@@ -38,6 +40,7 @@ class MinionUpkeepPassiveOutcome {
     this.log = '',
     this.heroDamage = 0,
     this.minionHeal = 0,
+    this.minionCpGain = 0,
     this.heroTokens = const [],
     this.minionTokens = const [],
     this.triggered = false,
@@ -46,6 +49,7 @@ class MinionUpkeepPassiveOutcome {
   final String log;
   final int heroDamage;
   final int minionHeal;
+  final int minionCpGain;
   final List<String> heroTokens;
   final List<String> minionTokens;
   final bool triggered;
@@ -87,6 +91,7 @@ class MinionPassiveResolver {
     var loseHp = 0;
     var cpSteal = 0;
     var removeHeroPositiveTokens = false;
+    var restartRollPhase = false;
     final heroTokens = <String>[];
     final minionTokens = <String>[];
     final notes = <String>[];
@@ -103,6 +108,12 @@ class MinionPassiveResolver {
       if (p.impact?.toLowerCase().contains('positive status') == true ||
           p.text.toLowerCase().contains('positive status')) {
         removeHeroPositiveTokens = true;
+      }
+      if (p.impact?.toLowerCase().contains('restart') == true ||
+          p.text.toLowerCase().contains('restart') ||
+          p.impact?.toLowerCase().contains('recommence') == true ||
+          p.text.toLowerCase().contains('recommence')) {
+        restartRollPhase = true;
       }
 
       final eff = p.effect;
@@ -128,11 +139,10 @@ class MinionPassiveResolver {
       }
 
       final target = (p.target ?? '').toLowerCase().trim();
-      final tokensToAdd = <String>[
-        ...p.tokens,
-        if (eff != null) ...eff.heroTokens,
-        if (eff != null) ...eff.minionTokens,
-      ];
+      final effTokens = eff != null
+          ? (target == 'minion' ? eff.minionTokens : eff.heroTokens)
+          : const <String>[];
+      final tokensToAdd = effTokens.isNotEmpty ? effTokens : p.tokens;
       // Deduplicate token strings if repeated
       final uniqueTokens = <String>{...tokensToAdd}.toList();
 
@@ -195,6 +205,7 @@ class MinionPassiveResolver {
       notes: List<String>.unmodifiable(consolidatedNotes),
       triggered: true,
       removeHeroPositiveTokens: removeHeroPositiveTokens,
+      restartRollPhase: restartRollPhase,
     );
   }
 
@@ -226,6 +237,38 @@ class MinionPassiveResolver {
         minionHeal: heal,
         triggered: true,
       );
+    }
+
+    // Vaurien (bleu-bleu-011) & Renégate Véreuse (orange-orange-001): gains 2 CP at start of turn
+    if (enemy.profileKey == 'bleu-bleu-011' || enemy.profileKey == 'orange-orange-001') {
+      enemy.combatPoints = (enemy.combatPoints + 2).clamp(0, 99);
+      final enemyName = enemy.profileKey == 'orange-orange-001' ? 'Renégate Véreuse' : 'Vaurien';
+      return MinionUpkeepPassiveOutcome(
+        log: '$enemyName gains 2 CP (now at ${enemy.combatPoints} CP)',
+        minionCpGain: 2,
+        triggered: true,
+      );
+    }
+
+    // Agile Elf (bleu-bleu-019): removes all positive status effects from active player
+    if (enemy.profileKey == 'bleu-bleu-019') {
+      final positiveTokens = adventure.alterations
+          .where((t) => TokenCatalogRepository.byLabel(t)?.kind == StatusTokenKind.positive)
+          .toList();
+      if (positiveTokens.isNotEmpty) {
+        adventure.alterations.removeWhere(
+          (t) => TokenCatalogRepository.byLabel(t)?.kind == StatusTokenKind.positive,
+        );
+        return MinionUpkeepPassiveOutcome(
+          log: 'Agile Elf removes all positive status effects from ${adventure.hero.label} (${positiveTokens.join(', ')})',
+          triggered: true,
+        );
+      } else {
+        return const MinionUpkeepPassiveOutcome(
+          log: 'Agile Elf passive: no positive status effects on hero to remove',
+          triggered: true,
+        );
+      }
     }
 
     if (enemy.profileKey == 'bleu-bleu-005') {
@@ -287,11 +330,10 @@ class MinionPassiveResolver {
     for (final p in upkeepPassives) {
       final eff = p.effect;
       final target = (p.target ?? '').toLowerCase().trim();
-      final tokensToAdd = <String>[
-        ...p.tokens,
-        if (eff != null) ...eff.heroTokens,
-        if (eff != null) ...eff.minionTokens,
-      ];
+      final effTokens = eff != null
+          ? (target == 'minion' ? eff.minionTokens : eff.heroTokens)
+          : const <String>[];
+      final tokensToAdd = effTokens.isNotEmpty ? effTokens : p.tokens;
 
       for (final tok in tokensToAdd) {
         if (target == 'minion') {
@@ -305,6 +347,22 @@ class MinionPassiveResolver {
 
       if (eff != null && eff.heal > 0) {
         totalHeal += eff.heal;
+      }
+
+      if (p.text.toLowerCase().contains('positive status') ||
+          (p.impact?.toLowerCase().contains('positive status') ?? false)) {
+        final positiveTokens = adventure.alterations
+            .where((t) =>
+                TokenCatalogRepository.byLabel(t)?.kind ==
+                StatusTokenKind.positive)
+            .toList();
+        if (positiveTokens.isNotEmpty) {
+          adventure.alterations.removeWhere((t) =>
+              TokenCatalogRepository.byLabel(t)?.kind ==
+              StatusTokenKind.positive);
+          logs.add(
+              '${enemy.label} removes all positive status effects from ${adventure.hero.label} (${positiveTokens.join(', ')})');
+        }
       }
 
       logs.add('Passive triggered (${enemy.label}): ${p.text}');
@@ -411,5 +469,18 @@ class MinionPassiveResolver {
       }
     }
     return consolidated;
+  }
+
+  /// Evaluates whether Fell Summoner's ritual completes (3+ Chaos tokens present at end of turn).
+  static bool shouldTriggerFellSummon(EnemyNode enemy) {
+    if (enemy.profileKey != 'violet-violet-007' &&
+        !enemy.label.toLowerCase().contains('fell summoner')) {
+      return false;
+    }
+    if (enemy.health <= 0) return false;
+    final chaosCount = enemy.alterations
+        .where((t) => _normalizeTokenKey(t) == 'chaos')
+        .length;
+    return chaosCount >= 3;
   }
 }
