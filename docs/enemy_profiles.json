@@ -1,5 +1,5 @@
 {
-  "version": "1.1.141",
+  "version": "1.1.142",
   "schemaVersion": 2,
   "note": "Enemy profiles source of truth. Defense display and automation should use defensePlan, not duplicated defense text.",
   "diceSymbols": {
@@ -2544,7 +2544,9 @@
                   "face": "orange",
                   "label": "",
                   "damage": 0,
+                  "heal": 0,
                   "undefendable": false,
+                  "flee": false,
                   "stealHp": 0,
                   "loseHp": 0,
                   "stealCp": 1,
@@ -2555,7 +2557,9 @@
                   "face": "red",
                   "label": "End this fight and engage a random violet minion",
                   "damage": 0,
+                  "heal": 0,
                   "undefendable": false,
+                  "flee": false,
                   "stealHp": 0,
                   "loseHp": 0,
                   "stealCp": 0,
@@ -2576,7 +2580,7 @@
       "validated": true,
       "validatedAtk": true,
       "validatedDef": true,
-      "sourcePack": "dta"
+      "sourcePack": "heritage"
     },
     {
       "key": "vert-vert-016",
@@ -3107,7 +3111,8 @@
       "passiveDisplayRows": [],
       "validated": true,
       "validatedAtk": true,
-      "validatedDef": true
+      "validatedDef": true,
+      "sourcePack": "promo"
     },
     {
       "key": "vert-vert-020",
@@ -4477,7 +4482,7 @@
       "validated": true,
       "validatedAtk": true,
       "validatedDef": true,
-      "sourcePack": "dta"
+      "sourcePack": "heritage"
     },
     {
       "key": "bleu-bleu-005",
@@ -4605,7 +4610,7 @@
             "timing": "minionUpkeep",
             "target": "minion",
             "impact": "gains 1 {token:Siphon vital}",
-            "text": "At the start of its turn: gain 1 {token:Siphon vital}.",
+            "text": "At the start of its turn: gains 1 {token:Siphon vital}.",
             "customText": "",
             "tokens": [
               "Siphon vital"
@@ -4661,7 +4666,7 @@
       "validatedAtk": true,
       "validatedDef": true,
       "validated": true,
-      "sourcePack": "dta"
+      "sourcePack": "heritage"
     },
     {
       "key": "bleu-bleu-006",
@@ -7077,7 +7082,7 @@
       "validatedAtk": true,
       "validatedDef": true,
       "validated": true,
-      "sourcePack": "dta"
+      "sourcePack": "promo"
     },
     {
       "key": "bleu-bleu-020",
@@ -8015,7 +8020,7 @@
       "validatedAtk": true,
       "validatedDef": true,
       "validated": true,
-      "sourcePack": "dta"
+      "sourcePack": "heritage"
     },
     {
       "key": "violet-violet-002",
@@ -8126,7 +8131,7 @@
       "validatedAtk": true,
       "validatedDef": true,
       "validated": true,
-      "sourcePack": "dta"
+      "sourcePack": "heritage"
     },
     {
       "key": "violet-violet-003",
@@ -9513,7 +9518,7 @@
             "type": "custom",
             "timing": "endOfOffensiveRoll",
             "target": "minion",
-            "impact": "roll 1 {die:white}: on 6 ({die:red}), gains 1 new Head ({token:Chaos})",
+            "impact": "At the end of the Offensive Roll Phase, roll 1 {die:white}: on 6 ({die:red}), gains 1 new Head ({token:Chaos}).",
             "text": "At the end of the Offensive Roll Phase, roll 1 {die:white}: on 6 ({die:red}), gains 1 new Head ({token:Chaos}).",
             "customText": "",
             "tokens": [
@@ -9573,7 +9578,7 @@
       "validatedDef": true,
       "validated": true,
       "initialTokenCount": 3,
-      "sourcePack": "dta"
+      "sourcePack": "heritage"
     },
     {
       "key": "violet-violet-012",
@@ -12217,7 +12222,7 @@
       "validatedDef": true,
       "validated": true,
       "initialTokenCount": 1,
-      "sourcePack": "dta"
+      "sourcePack": "heritage"
     },
     {
       "key": "orange-orange-004",
@@ -12358,7 +12363,7 @@
               "heroTokens": [],
               "minionTokens": [],
               "damage": null,
-              "damageFormula": "+4",
+              "damageFormula": null,
               "undefendable": true,
               "lifeSteal": 0,
               "loseHp": 0,
@@ -12383,7 +12388,7 @@
             "timing": "offensiveRollFailed",
             "target": "minion",
             "impact": "gains {token:Shadows}",
-            "text": "If the Offensive Roll Phase fails: gain {token:Shadows}.",
+            "text": "If the Offensive Roll Phase fails: gains {token:Shadows}.",
             "customText": "",
             "tokens": [
               "Shadows"
@@ -12440,7 +12445,7 @@
       "validatedDef": true,
       "validated": true,
       "initialTokenCount": 1,
-      "sourcePack": "dta"
+      "sourcePack": "promo"
     },
     {
       "key": "orange-orange-005",

@@ -1320,14 +1320,13 @@ void main() {
       expect(hache.passives.first.target, 'minion');
     });
 
-    test('Umbra conditional rule has alteration condition with Shadows and +4 formula', () {
+    test('Umbra conditional rule has alteration condition with Shadows', () {
       final umbra = EnemyProfileRepository.byKey('orange-orange-004');
       expect(umbra, isNotNull);
       final rules = umbra!.attackPlan.conditionalRules;
       expect(rules.length, 1);
       expect(rules.first.condition.type, ConditionalConditionType.alteration);
       expect(rules.first.condition.present, contains('Shadows'));
-      expect(rules.first.effect.damageFormula, '+4');
       expect(rules.first.effect.undefendable, isTrue);
     });
 
