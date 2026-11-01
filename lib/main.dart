@@ -51,7 +51,7 @@ part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
 const String appVersionLabel = 'Version 1.5.0';
-const int appBuildNumber = 464;
+const int appBuildNumber = 465;
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);

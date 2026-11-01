@@ -1140,9 +1140,9 @@ Widget _buildRequirementCard({
             height: 1.35,
           ),
         ),
-        if (actionLink != null) ...[const SizedBox(height: 8), actionLink],
         const SizedBox(height: 12),
         imageWidget,
+        if (actionLink != null) ...[const SizedBox(height: 10), actionLink],
       ],
     ),
   );
