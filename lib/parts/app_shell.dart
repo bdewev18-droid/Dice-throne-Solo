@@ -362,9 +362,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   void _openBestiary(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => BestiaryPage(
-          historyRecords: _history,
-        ),
+        builder: (_) => BestiaryPage(historyRecords: _history),
       ),
     );
   }
@@ -547,7 +545,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _showActions = false;
-  static const String _minionRushImage = 'assets/enemy_previews/violet-002.webp';
+  static const String _minionRushImage =
+      'assets/enemy_previews/violet-002.webp';
   static const Alignment _minionRushAlignment = Alignment(0.0, -0.75);
 
   @override
@@ -676,8 +675,7 @@ class _HomePageState extends State<HomePage> {
                                     subtitleColor: const Color(0xffffe22d),
                                     imageAsset:
                                         'assets/enemy_previews/naxarus_head.png',
-                                    imageAlignment:
-                                        const Alignment(0.4, 0.0),
+                                    imageAlignment: const Alignment(0.4, 0.0),
                                     borderColor: const Color(0xffd51f2a),
                                     onPressed: widget.onBestiary,
                                   ),
@@ -689,16 +687,26 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  VersionPill(
-                    label:
-                        '$appVersionLabel${AppSettings.instance.developerMode ? ' - Dev mode' : ''}',
-                    isDev: AppSettings.instance.developerMode,
-                    onTap: () async {
-                      await AppSettings.instance.setDeveloperMode(
-                        !AppSettings.instance.developerMode,
-                      );
-                    },
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: VersionPill(
+                            label:
+                                '$appVersionLabel${AppSettings.instance.developerMode ? ' - Dev mode' : ''}',
+                            isDev: AppSettings.instance.developerMode,
+                          ),
+                        ),
+                        _PhysicalGameRequirementFooter(
+                          onTap: () => _showPhysicalRequirementsDialog(context),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -708,6 +716,436 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+}
+
+class _PhysicalGameRequirementFooter extends StatelessWidget {
+  const _PhysicalGameRequirementFooter({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: const Color(0xffffd700).withValues(alpha: 0.7),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.7),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text(
+              'Physical game required',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            Text(
+              'More information ↗',
+              style: TextStyle(
+                color: Color(0xffffe22d),
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Widget _buildOfficialLink({required String label, required String url}) {
+  return InkWell(
+    onTap: () async {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    },
+    borderRadius: BorderRadius.circular(6),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.open_in_new_rounded,
+            size: 14,
+            color: Color(0xff1d4ed8),
+          ),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xff1d4ed8),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                decoration: TextDecoration.underline,
+                decorationColor: Color(0xff1d4ed8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+void _showPhysicalRequirementsDialog(BuildContext context) {
+  const dialogBgColor = Color(0xffe2e7e5);
+  showDialog<void>(
+    context: context,
+    builder: (ctx) {
+      return Dialog(
+        backgroundColor: dialogBgColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 580, maxHeight: 680),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: const Color(0xff2a2e39),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.inventory_2_rounded,
+                              color: Color(0xffffe22d),
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Text(
+                              'Physical Games Required',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xff1e232a),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'DTA Solo Quest is an unofficial companion application. To play, you must physically own Dice Throne board game products.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xff4b5563),
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Section 1: Boss Battles
+                      _buildRequirementCard(
+                        badge: _buildHpButtonBadge(type: 'boss'),
+                        title: '1. Dice Throne 2-Hero Battle Box',
+                        description:
+                            'To play Boss Battles, you must own at least one official physical Dice Throne 2-Hero Box of your choice (e.g. Barbarian v. Moon Elf, Gunslinger v. Samurai, Treant v. Ninja). You will need your physical hero board, hero combat dice, and hero deck to fight.',
+                        actionLink: _buildOfficialLink(
+                          label:
+                              'More info on official website: dicethrone.com/heroes',
+                          url: 'https://dicethrone.com/heroes/',
+                        ),
+                        imageWidget: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            color: dialogBgColor,
+                            height: 130,
+                            width: double.infinity,
+                            child: Image.asset(
+                              'assets/requirement/popin4.webp',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      // Section 2: Minion Rush Mode
+                      _buildRequirementCard(
+                        badge: _buildHpButtonBadge(type: 'minion'),
+                        title: '2. Dice Throne Adventures (DTA) Core Box',
+                        description:
+                            'To play Minion Rush, in addition to a 2-Hero Battle Box, you must own the physical Dice Throne Adventures (DTA) box. It contains all physical minion card decks, level brackets, and adventure components.',
+                        actionLink: _buildOfficialLink(
+                          label:
+                              'More info on official expansions: shop.dicethrone.com',
+                          url:
+                              'https://shop.dicethrone.com/collections/expansions',
+                        ),
+                        imageWidget: Row(
+                          children: [
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  color: dialogBgColor,
+                                  height: 120,
+                                  child: Image.asset(
+                                    'assets/packs/pack_dta.webp',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  color: dialogBgColor,
+                                  height: 120,
+                                  child: Image.asset(
+                                    'assets/requirement/popin3.webp',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      // Section 3: Loot & Tokens
+                      _buildRequirementCard(
+                        badge: _buildHpButtonBadge(type: 'loot'),
+                        title: '3. Loot Cards & Status Effect Tokens',
+                        description:
+                            'During a run, you must physically add loot cards into your hero deck upon winning rewards (Common, Rare, Epic, Legendary). You also physically track or place status tokens using the DTA token tray.',
+                        imageWidget: Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                color: dialogBgColor,
+                                height: 90,
+                                width: double.infinity,
+                                child: Image.asset(
+                                  'assets/requirement/popin.webp',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                color: dialogBgColor,
+                                height: 120,
+                                width: double.infinity,
+                                child: Image.asset(
+                                  'assets/requirement/popin2.webp',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  tooltip: 'Close',
+                  icon: const Icon(Icons.close, color: Color(0xff2a2e39)),
+                  onPressed: () => Navigator.of(ctx).pop(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+Widget _buildHpButtonBadge({required String type}) {
+  if (type == 'boss') {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xff181920),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xffd51f2a), width: 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xffd51f2a).withValues(alpha: 0.25),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Text(
+            'BOSS ',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.6,
+            ),
+          ),
+          Text(
+            'BATTLE',
+            style: TextStyle(
+              color: Color(0xffffe22d),
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  } else if (type == 'minion') {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xff181920),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xff9b58ff), width: 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xff9b58ff).withValues(alpha: 0.25),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Text(
+            'MINION ',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.6,
+            ),
+          ),
+          Text(
+            'RUSH',
+            style: TextStyle(
+              color: Color(0xffc084fc),
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  } else {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xff181920),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xff2d6a4f), width: 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xff2d6a4f).withValues(alpha: 0.25),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: const Text(
+        'LOOT & TOKENS',
+        style: TextStyle(
+          color: Color(0xff52b788),
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+}
+
+Widget _buildRequirementCard({
+  required Widget badge,
+  required String title,
+  required String description,
+  required Widget imageWidget,
+  Widget? actionLink,
+}) {
+  return Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.78),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: const Color(0xffcbd5d1), width: 1.2),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        badge,
+        const SizedBox(height: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w900,
+            color: Color(0xff1e232a),
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          description,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Color(0xff4b5563),
+            height: 1.35,
+          ),
+        ),
+        if (actionLink != null) ...[const SizedBox(height: 8), actionLink],
+        const SizedBox(height: 12),
+        imageWidget,
+      ],
+    ),
+  );
 }
 
 class ActiveCampaignHomeCard extends StatelessWidget {
@@ -875,36 +1313,94 @@ class ActiveCampaignHomeCard extends StatelessWidget {
   }
 }
 
-class VersionPill extends StatelessWidget {
+class VersionPill extends StatefulWidget {
   const VersionPill({
     required this.label,
     this.isDev = false,
+    this.requiredTaps = 11,
     this.onTap,
     super.key,
   });
 
   final String label;
   final bool isDev;
+  final int requiredTaps;
   final VoidCallback? onTap;
+
+  @override
+  State<VersionPill> createState() => _VersionPillState();
+}
+
+class _VersionPillState extends State<VersionPill> {
+  int _tapCount = 0;
+  DateTime? _lastTapTime;
+
+  void _handleTap() async {
+    if (widget.onTap != null && widget.requiredTaps <= 1) {
+      widget.onTap!();
+      return;
+    }
+    final now = DateTime.now();
+    if (_lastTapTime == null ||
+        now.difference(_lastTapTime!).inMilliseconds > 1500) {
+      _tapCount = 1;
+    } else {
+      _tapCount++;
+    }
+    _lastTapTime = now;
+
+    final target = widget.requiredTaps;
+    if (_tapCount >= target) {
+      _tapCount = 0;
+      final newMode = !AppSettings.instance.developerMode;
+      await AppSettings.instance.setDeveloperMode(newMode);
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newMode
+                  ? 'Developer mode activated!'
+                  : 'Developer mode deactivated.',
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: newMode ? Colors.orange : Colors.grey[800],
+          ),
+        );
+      }
+    } else if (_tapCount >= target - 3 && mounted) {
+      final remaining = target - _tapCount;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '$remaining tap${remaining > 1 ? 's' : ''} left for developer mode',
+          ),
+          duration: const Duration(milliseconds: 700),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: _handleTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.58),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isDev ? Colors.orangeAccent : Colors.white24,
-            width: isDev ? 1.5 : 1,
+            color: widget.isDev ? Colors.orangeAccent : Colors.white24,
+            width: widget.isDev ? 1.5 : 1,
           ),
         ),
         child: Text(
-          label,
+          widget.label,
           style: TextStyle(
-            color: isDev ? Colors.orangeAccent : Colors.white,
+            color: widget.isDev ? Colors.orangeAccent : Colors.white,
             fontWeight: FontWeight.w900,
             letterSpacing: 0,
           ),
@@ -992,7 +1488,10 @@ class ImageActionButton extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xff7a33cc).withValues(alpha: 0.92),
-                    border: Border.all(color: const Color(0xffd0a5ff), width: 1),
+                    border: Border.all(
+                      color: const Color(0xffd0a5ff),
+                      width: 1,
+                    ),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black87,
@@ -1150,7 +1649,9 @@ class BossBattleActionButton extends StatelessWidget {
                           color: Colors.black.withValues(alpha: 0.65),
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
-                            color: const Color(0xffffb300).withValues(alpha: 0.4),
+                            color: const Color(
+                              0xffffb300,
+                            ).withValues(alpha: 0.4),
                             width: 0.8,
                           ),
                         ),
@@ -1177,22 +1678,13 @@ class BossBattleActionButton extends StatelessWidget {
           right: 8,
           child: IgnorePointer(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 6,
-                vertical: 2,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [
-                    Color(0xff4a1942),
-                    Color(0xff231032),
-                  ],
+                  colors: [Color(0xff4a1942), Color(0xff231032)],
                 ),
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: const Color(0xffffb300),
-                  width: 1.2,
-                ),
+                border: Border.all(color: const Color(0xffffb300), width: 1.2),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black87,
@@ -1359,7 +1851,8 @@ class WedgeActionButton extends StatelessWidget {
                                             color: Colors.black45,
                                             child: const Center(
                                               child: Icon(
-                                                Icons.image_not_supported_outlined,
+                                                Icons
+                                                    .image_not_supported_outlined,
                                                 color: Colors.white24,
                                                 size: 20,
                                               ),
@@ -1377,8 +1870,12 @@ class WedgeActionButton extends StatelessWidget {
                                           begin: Alignment.topCenter,
                                           end: Alignment.bottomCenter,
                                           colors: [
-                                            Colors.black.withValues(alpha: 0.05),
-                                            Colors.black.withValues(alpha: 0.65),
+                                            Colors.black.withValues(
+                                              alpha: 0.05,
+                                            ),
+                                            Colors.black.withValues(
+                                              alpha: 0.65,
+                                            ),
                                           ],
                                           stops: const [0.55, 1.0],
                                         ),
@@ -1433,7 +1930,9 @@ class WedgeActionButton extends StatelessWidget {
                                       Text(
                                         titleAccent!,
                                         style: TextStyle(
-                                          color: titleAccentColor ?? const Color(0xffffe22d),
+                                          color:
+                                              titleAccentColor ??
+                                              const Color(0xffffe22d),
                                           fontSize: 16,
                                           fontWeight: FontWeight.w900,
                                           height: 1.05,

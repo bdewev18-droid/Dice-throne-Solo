@@ -98,23 +98,23 @@ Map<EnemyRank, int> _rankCountsForMode(SurvivalMode mode) {
   };
 }
 
-List<EnemyRank> _mediumRanks() {
-  return const [
-    EnemyRank.green,
-    EnemyRank.blue,
-    EnemyRank.green,
-    EnemyRank.violet,
-    EnemyRank.green,
-    EnemyRank.violet,
-    EnemyRank.orange,
-    EnemyRank.violet,
-    EnemyRank.blue,
-    EnemyRank.green,
-    EnemyRank.green,
-    EnemyRank.violet,
-    EnemyRank.orange,
-  ];
-}
+List<EnemyRank> _mediumRanks() => const [
+  EnemyRank.green,
+  // Left branch (slot 1 is violet, slot 2 is blue, etc.)
+  EnemyRank.violet,
+  EnemyRank.blue,
+  EnemyRank.green,
+  EnemyRank.green,
+  EnemyRank.violet,
+  EnemyRank.orange,
+  // Right branch (slot 1 is blue, slot 2 is green, etc.)
+  EnemyRank.blue,
+  EnemyRank.green,
+  EnemyRank.violet,
+  EnemyRank.green,
+  EnemyRank.violet,
+  EnemyRank.orange,
+];
 
 List<EnemyRank> _hardRanks() {
   return const [
@@ -262,7 +262,7 @@ EnemyNode _enemy(
   final selectedProfile = profile ?? defaultProfileFor(rank);
   return EnemyNode(
     id: id,
-    label: rank == EnemyRank.green ? selectedProfile.name : label,
+    label: selectedProfile.name.isNotEmpty ? selectedProfile.name : label,
     rank: rank,
     branch: branch,
     step: step,
@@ -281,6 +281,7 @@ EnemyNode _enemy(
     passives: selectedProfile.passives,
     defenseDisplayRows: selectedProfile.defenseDisplayRows,
     passiveDisplayRows: selectedProfile.passiveDisplayRows,
+    defenseEffects: selectedProfile.defenseEffects,
   );
 }
 

@@ -419,6 +419,22 @@ class SupabaseService {
     await _client.auth.updateUser(UserAttributes(data: existing));
   }
 
+  Future<void> updateDefeatedEnemies(Set<String> enemyKeys) async {
+    if (!_initialized || _client.auth.currentUser == null) {
+      return;
+    }
+    final existing = Map<String, dynamic>.from(
+      _client.auth.currentUser?.userMetadata ?? const {},
+    );
+    existing['defeated_enemies'] = enemyKeys.toList()..sort();
+    await _client.auth.updateUser(UserAttributes(data: existing));
+  }
+
+  Map<String, dynamic>? get currentUserMetadata {
+    if (!_initialized) return null;
+    return _client.auth.currentUser?.userMetadata;
+  }
+
   String? _currentUserId() {
     if (!_initialized) {
       return null;

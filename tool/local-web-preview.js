@@ -12,6 +12,7 @@ const types = {
   '.jpg': 'image/jpeg',
   '.js': 'text/javascript',
   '.json': 'application/json',
+  '.pdf': 'application/pdf',
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
   '.wasm': 'application/wasm',

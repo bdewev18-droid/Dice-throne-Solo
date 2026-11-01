@@ -146,6 +146,7 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
           enemiesDefeated: success ? 1 : 0,
           duration: _adventure.elapsed,
           isVictory: success,
+          bossKey: widget.bossKey ?? 'naraxus',
         ),
       );
       _recorded = true;
@@ -173,6 +174,7 @@ class _MapPageState extends State<MapPage> {
   int? _selectedEnemyId;
   Size? _latestMapSize;
   Size? _latestMapViewportSize;
+  bool _endGameDialogShown = false;
 
   @override
   void initState() {
@@ -201,6 +203,10 @@ class _MapPageState extends State<MapPage> {
     if (adventure.finished) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         widget.onRecordScore(adventure);
+        if (!_endGameDialogShown && mounted) {
+          _endGameDialogShown = true;
+          _showEndGameDialog(adventure);
+        }
       });
     }
 
@@ -255,14 +261,10 @@ class _MapPageState extends State<MapPage> {
                     Positioned(
                       left: 16,
                       right: 16,
-                      top: 12,
-                      child: EndAdventureBanner(
+                      bottom: currentTarget != null ? 140 : 20,
+                      child: _EndGameBanner(
                         adventure: adventure,
-                        onReplay: widget.onReplay,
-                        onChangeHero: widget.onChangeHero,
-                        onDetails: () => Navigator.of(
-                          context,
-                        ).popUntil((route) => route.isFirst),
+                        onOpenDialog: () => _showEndGameDialog(adventure),
                       ),
                     ),
                   if (adventure.defeatedEnemies.isEmpty)
@@ -294,10 +296,19 @@ class _MapPageState extends State<MapPage> {
                       showRewards: false,
                       onDetails: () => _openDetails(context),
                       onChanged: () {
+                        if (widget.adventure.health > 0 &&
+                            widget.adventure.finished &&
+                            !widget.adventure.victory) {
+                          widget.adventure.finished = false;
+                          widget.adventure.recorded = false;
+                          _endGameDialogShown = false;
+                        }
                         widget.onChanged();
                         setState(() {});
                       },
                       onPause: _openPauseDialog,
+                      onRules: () => _openRules(context),
+                      onSettings: () => _openMapSettings(context),
                     ),
                   ),
                 ],
@@ -549,12 +560,15 @@ class _MapPageState extends State<MapPage> {
                     ),
                   ),
                 );
-                if (mounted) {
+                if (mounted && rewardDue != null) {
                   navigator.pop();
                 }
                 if (rewardDue == true && mounted) {
                   widget.onChanged();
                   setState(() {});
+                  if (widget.adventure.finished) {
+                    _showEndGameDialog(widget.adventure);
+                  }
                 }
               },
             ),
@@ -686,6 +700,367 @@ class _MapPageState extends State<MapPage> {
       widget.onAbandon();
     }
   }
+
+  void _showEndGameDialog([AdventureState? adv]) {
+    final adventure = adv ?? widget.adventure;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => _EndGameDialog(
+        adventure: adventure,
+        historyRecords: widget.historyRecords,
+        onReplay: () {
+          Navigator.of(dialogContext).pop();
+          widget.onReplay();
+        },
+        onOpenHistory: () {
+          Navigator.of(dialogContext).pop();
+          widget.onOpenHistory();
+        },
+        onHomepage: () {
+          Navigator.of(dialogContext).pop();
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        },
+        onClose: () => Navigator.of(dialogContext).pop(),
+      ),
+    );
+  }
+
+  void _openRules(BuildContext context) {
+    showRulebooksDialog(context, isNaraxus: widget.adventure.config.isNaraxusMode);
+  }
+
+  void _openMapSettings(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xff111111),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Settings',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Close',
+                    onPressed: () => Navigator.of(sheetContext).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.menu_book, color: Color(0xff8ab4f8)),
+                title: const Text('Game Rulebooks', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('Download official DT, DTA and Minion Rush rulebooks', style: TextStyle(fontSize: 11, color: Colors.white60)),
+                tileColor: Colors.white.withValues(alpha: 0.05),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _openRules(context);
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.receipt_long, color: heroAccent),
+                title: const Text('Run log', style: TextStyle(fontWeight: FontWeight.w700)),
+                tileColor: Colors.white.withValues(alpha: 0.05),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _openDetails(context);
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.ios_share, color: Colors.white),
+                title: const Text('Export log', style: TextStyle(fontWeight: FontWeight.w700)),
+                tileColor: Colors.white.withValues(alpha: 0.05),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _exportAdventureLogs(context);
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.power_settings_new, color: Colors.redAccent),
+                title: const Text('Pause / Quit adventure', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.redAccent)),
+                tileColor: Colors.red.withValues(alpha: 0.08),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _openPauseDialog();
+                },
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: VersionPill(
+                  label: '$appVersionLabel${AppSettings.instance.developerMode ? ' - Dev mode' : ''}',
+                  isDev: AppSettings.instance.developerMode,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _exportAdventureLogs(BuildContext context) {
+    final jsonText = const JsonEncoder.withIndent('  ').convert({
+      'exportVersion': 2,
+      'createdAt': DateTime.now().toIso8601String(),
+      'run': {
+        'hero': widget.adventure.hero.label,
+        'mode': widget.adventure.config.mode.label,
+        'score': widget.adventure.score,
+        'targetScore': widget.adventure.targetScore,
+        'elapsed': widget.adventure.elapsed.inSeconds,
+        'rewards': widget.adventure.bonuses,
+        'logs': widget.adventure.logs,
+      },
+      'heroState': {
+        'hp': widget.adventure.health,
+        'cp': widget.adventure.combatPoints,
+        'tokens': widget.adventure.alterations,
+      },
+    });
+    Clipboard.setData(ClipboardData(text: jsonText));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Adventure log copied to clipboard!'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+}
+
+class _RulebookItem {
+  const _RulebookItem({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.imageAsset,
+    required this.pdfFileName,
+    required this.fileSizeLabel,
+  });
+
+  final String id;
+  final String title;
+  final String subtitle;
+  final String imageAsset;
+  final String pdfFileName;
+  final String fileSizeLabel;
+}
+
+void showRulebooksDialog(BuildContext context, {bool isNaraxus = false}) {
+  final items = [
+    const _RulebookItem(
+      id: 'dt',
+      title: 'Dice Throne (Classic Rules & Errata)',
+      subtitle: 'Official core rules errata v2.2, attack modifiers, damage types table & hero clarifications.',
+      imageAsset: 'assets/rules/rule_dt.webp',
+      pdfFileName: 'dice_throne_rules.pdf',
+      fileSizeLabel: '1.5 MB',
+    ),
+    const _RulebookItem(
+      id: 'dta',
+      title: 'Dice Throne Adventures',
+      subtitle: 'Complete DTA rulebook: Portal crawl, minion turn flow, loot table, shop & boss battle rules.',
+      imageAsset: 'assets/rules/rule_dta.webp',
+      pdfFileName: 'dice_throne_adventures_rules.pdf',
+      fileSizeLabel: '20.8 MB',
+    ),
+    if (!isNaraxus)
+      const _RulebookItem(
+        id: 'unchained',
+        title: 'Minion Rush (DTA Unchained)',
+        subtitle: 'Official Minion Rush rules: solo & co-op mode, One-Shot Loot Table, card tree setup & scoring.',
+        imageAsset: 'assets/rules/rule_unchained.webp',
+        pdfFileName: 'dice_throne_unchained_rules.pdf',
+        fileSizeLabel: '8.5 MB',
+      ),
+  ];
+
+  showDialog<void>(
+    context: context,
+    builder: (dialogCtx) => Dialog(
+      backgroundColor: const Color(0xff0d1527),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xff8f43ff), width: 1.5),
+      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 580),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.menu_book_rounded, color: Color(0xff8f43ff), size: 24),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Official Rulebooks',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        Text(
+                          'Download PDF rulebooks & references',
+                          style: TextStyle(fontSize: 12, color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                    tooltip: 'Close',
+                    onPressed: () => Navigator.of(dialogCtx).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: items.map((item) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xff141e33),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                width: 68,
+                                height: 96,
+                                color: Colors.black,
+                                child: Image.asset(
+                                  item.imageAsset,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    color: Colors.grey.shade900,
+                                    child: const Icon(Icons.menu_book, color: Colors.white38),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.title,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    item.subtitle,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                      height: 1.25,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xff7a33cc),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                    icon: const Icon(Icons.download_rounded, size: 15),
+                                    label: Text(
+                                      'Download PDF (${item.fileSizeLabel})',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    onPressed: () async {
+                                      try {
+                                        final uri = Uri.base.resolve('rules/${item.pdfFileName}');
+                                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Downloading ${item.title}...'),
+                                              backgroundColor: const Color(0xff182b49),
+                                              duration: const Duration(seconds: 2),
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Could not open PDF: $e'),
+                                              backgroundColor: Colors.red.shade900,
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class MapHeader extends StatefulWidget {
@@ -694,6 +1069,8 @@ class MapHeader extends StatefulWidget {
     required this.onDetails,
     required this.onChanged,
     required this.onPause,
+    this.onRules,
+    this.onSettings,
     this.showRewards = true,
     this.showVitals = true,
     super.key,
@@ -703,6 +1080,8 @@ class MapHeader extends StatefulWidget {
   final VoidCallback onDetails;
   final VoidCallback onChanged;
   final VoidCallback onPause;
+  final VoidCallback? onRules;
+  final VoidCallback? onSettings;
   final bool showRewards;
   final bool showVitals;
 
@@ -770,15 +1149,15 @@ class _MapHeaderState extends State<MapHeader> {
                     const SizedBox(width: 6),
                   ],
                   IconButton(
-                    tooltip: 'Pause',
-                    onPressed: widget.onPause,
-                    icon: const Icon(Icons.pause_circle, color: heroAccent),
+                    tooltip: 'Rules',
+                    onPressed: widget.onRules,
+                    icon: const Icon(Icons.menu_book, color: heroAccent),
                     visualDensity: VisualDensity.compact,
                   ),
                   IconButton(
-                    tooltip: 'Run log',
-                    onPressed: widget.onDetails,
-                    icon: const Icon(Icons.receipt_long, color: heroAccent),
+                    tooltip: 'Settings',
+                    onPressed: widget.onSettings,
+                    icon: const Icon(Icons.settings, color: heroAccent),
                     visualDensity: VisualDensity.compact,
                   ),
                 ],
@@ -1259,55 +1638,334 @@ class MapObjectiveCard extends StatelessWidget {
   }
 }
 
-class EndAdventureBanner extends StatelessWidget {
-  const EndAdventureBanner({
+class _EndGameBanner extends StatelessWidget {
+  const _EndGameBanner({
     required this.adventure,
-    required this.onReplay,
-    required this.onChangeHero,
-    required this.onDetails,
-    super.key,
+    required this.onOpenDialog,
   });
 
   final AdventureState adventure;
-  final VoidCallback onReplay;
-  final VoidCallback onChangeHero;
-  final VoidCallback onDetails;
+  final VoidCallback onOpenDialog;
 
   @override
   Widget build(BuildContext context) {
+    final isVictory = adventure.victory;
+    final color = isVictory ? const Color(0xff54e98a) : Colors.orangeAccent;
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      color: adventure.victory
-          ? Colors.green.withValues(alpha: 0.28)
-          : Colors.orange.withValues(alpha: 0.28),
-      child: Column(
-        children: [
-          Text(
-            adventure.victory ? 'Victory: run complete' : 'Survival ended',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-          ),
-          Text(
-            '${adventure.score} points - ${adventure.defeatedEnemies.length} enemies defeated',
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              FilledButton(onPressed: onReplay, child: const Text('Replay')),
-              OutlinedButton(
-                onPressed: onChangeHero,
-                child: const Text('Change hero'),
-              ),
-              OutlinedButton(
-                onPressed: onDetails,
-                child: const Text('Homepage'),
-              ),
-            ],
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.90),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
+      child: Row(
+        children: [
+          Icon(isVictory ? Icons.emoji_events : Icons.shield, color: color, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isVictory ? 'VICTORY !' : 'ADVENTURE OVER',
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                  ),
+                ),
+                Text(
+                  '${adventure.score} pts • ${_formatDuration(adventure.elapsed)}',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: color,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: onOpenDialog,
+            child: const Text('View Results', style: TextStyle(fontWeight: FontWeight.w900)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EndGameDialog extends StatelessWidget {
+  const _EndGameDialog({
+    required this.adventure,
+    required this.historyRecords,
+    required this.onReplay,
+    required this.onOpenHistory,
+    required this.onHomepage,
+    required this.onClose,
+  });
+
+  final AdventureState adventure;
+  final List<GameRecord> historyRecords;
+  final VoidCallback onReplay;
+  final VoidCallback onOpenHistory;
+  final VoidCallback onHomepage;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final isVictory = adventure.victory;
+    final mode = adventure.config.mode;
+
+    // Filter mode records for podium
+    final modeRecords = historyRecords.where((r) => r.mode == mode).toList()
+      ..sort((a, b) {
+        final scoreComp = b.score.compareTo(a.score);
+        if (scoreComp != 0) return scoreComp;
+        return a.duration.compareTo(b.duration);
+      });
+    final podiumTop = modeRecords.take(3).toList();
+    final podiumEntries = [
+      for (final r in podiumTop)
+        _PodiumEntry(r.hero, '${r.score} pts', _formatDuration(r.duration)),
+    ];
+
+    // Filter hero career stats
+    final heroRecords = historyRecords.where((r) => r.hero == adventure.hero).toList();
+    final heroCount = heroRecords.length;
+    final avgScore = heroCount > 0
+        ? (heroRecords.fold<int>(0, (sum, r) => sum + r.score) / heroCount).toStringAsFixed(1)
+        : '${adventure.score}';
+    final avgSecs = heroCount > 0
+        ? heroRecords.fold<int>(0, (sum, r) => sum + r.duration.inSeconds) ~/ heroCount
+        : adventure.elapsed.inSeconds;
+    final avgDuration = Duration(seconds: avgSecs);
+    final wins = heroRecords.where((r) => r.isVictory).length;
+    final winRate = heroCount > 0
+        ? '${(wins / heroCount * 100).toStringAsFixed(0)}%'
+        : (isVictory ? '100%' : '0%');
+
+    return Dialog(
+      backgroundColor: const Color(0xff121019),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: isVictory ? const Color(0xff54e98a) : Colors.orangeAccent,
+          width: 2,
+        ),
+      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header Badge
+              Icon(
+                isVictory ? Icons.emoji_events : Icons.shield,
+                color: isVictory ? const Color(0xffffd700) : Colors.orangeAccent,
+                size: 54,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isVictory ? 'VICTORY !' : 'ADVENTURE OVER',
+                style: TextStyle(
+                  color: isVictory ? const Color(0xff54e98a) : Colors.orangeAccent,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              Text(
+                adventure.config.mode.label,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Run Summary Card
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _metricCol('Score', '${adventure.score} pts', heroAccent),
+                    _metricCol('Time', _formatDuration(adventure.elapsed), Colors.white),
+                    _metricCol('Health', '${adventure.health} HP', const Color(0xff54e98a)),
+                    _metricCol('Enemies', '${adventure.defeatedEnemies.length}', Colors.purpleAccent),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // Mode Podium
+              if (podiumEntries.isNotEmpty) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.military_tech, color: Color(0xffffd700), size: 18),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Podium - ${adventure.config.mode.label}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                _PodiumWidget(entries: podiumEntries),
+                const SizedBox(height: 12),
+              ],
+
+              // Hero Career Statistics
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundImage: AssetImage(adventure.hero.asset),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${adventure.hero.label} Stats',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '$heroCount run${heroCount > 1 ? 's' : ''}',
+                          style: const TextStyle(fontSize: 12, color: Colors.white60),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _metricCol('Avg Score', avgScore, Colors.white70),
+                        _metricCol('Avg Time', _formatDuration(avgDuration), Colors.white70),
+                        _metricCol('Win Rate', winRate, Colors.white70),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white30),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: onHomepage,
+                      icon: const Icon(Icons.home, size: 18),
+                      label: const Text('Homepage'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xff8f43ff)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: onOpenHistory,
+                      icon: const Icon(Icons.history, size: 18),
+                      label: const Text('History'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xff8f43ff),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: onReplay,
+                icon: const Icon(Icons.replay, size: 18),
+                label: const Text('Play Again'),
+              ),
+              const SizedBox(height: 6),
+              TextButton(
+                onPressed: onClose,
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white60,
+                ),
+                child: const Text('Review Map'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _metricCol(String label, String value, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            color: color,
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white60,
+            fontSize: 11,
+          ),
+        ),
+      ],
     );
   }
 }

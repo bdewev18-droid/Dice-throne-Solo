@@ -35,6 +35,22 @@ class HistoryRepository {
   @visibleForTesting
   static HistoryRepository instance = HistoryRepository._();
 
+  static List<GameRecord> deduplicate(List<GameRecord> records) {
+    final seen = <String>{};
+    final result = <GameRecord>[];
+    for (final r in records) {
+      final dateMinute =
+          '${r.date.year}-${r.date.month}-${r.date.day} ${r.date.hour}:${r.date.minute}';
+      final bKey = r.bossKey ?? '';
+      final key =
+          '${r.hero.name}_${r.mode.name}_${r.score}_${r.duration.inSeconds}_${bKey}_$dateMinute';
+      if (seen.add(key)) {
+        result.add(r);
+      }
+    }
+    return result;
+  }
+
   final _HistoryCache _cache = _HistoryCache();
 
   /// Charge l'historique : Supabase si connecté, sinon le cache local.
@@ -47,18 +63,18 @@ class HistoryRepository {
       try {
         final rows =
             await SupabaseService.instance.fetchHistory();
-        final records = rows
-            .map(GameRecord.fromSupabase)
-            .toList(growable: false);
+        final records = deduplicate(rows.map(GameRecord.fromSupabase).toList(growable: false));
+
+
         await _writeCache(records);
         return records;
       } catch (_) {
         // Réseau down / erreur : on retombe sur le cache local.
-        return _readCache();
+        return deduplicate(await _readCache());
       }
     }
     // Non connecté : on sert le cache local (au pire vide).
-    return _readCache();
+    return deduplicate(await _readCache());
   }
 
   /// Ajoute un record. Si connecté, l'insère dans Supabase et renvoie le
@@ -165,6 +181,7 @@ class HistoryRepository {
         'duration_ms': r.duration.inMilliseconds,
         'is_victory': r.isVictory,
         'played_at': r.date.toIso8601String(),
+        'boss_key': r.bossKey,
       };
 
   GameRecord _recordFromCache(Map<String, dynamic> m) {

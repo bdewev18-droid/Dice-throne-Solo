@@ -381,11 +381,19 @@ class _FightPageState extends State<FightPage> {
         (secondary == null || secondary.health <= 0);
   }
 
+  bool _combatEnded = false;
+
+  bool get _isRollPhase =>
+      _phase == CombatPhase.hero || _phase == CombatPhase.minionAttack;
+
   bool get _isResolutionMode =>
       _battleEnemyFled ||
-      widget.adventure.health <= 0 ||
-      ((_isNaraxus || enemy.rank == EnemyRank.naraxus) && enemy.health <= 0) ||
-      _allFightEnemiesDefeated;
+      _combatEnded ||
+      (!_isRollPhase &&
+          (widget.adventure.health <= 0 ||
+              ((_isNaraxus || enemy.rank == EnemyRank.naraxus) &&
+                  enemy.health <= 0) ||
+              _allFightEnemiesDefeated));
 
   bool get _isNaraxus =>
       enemy.profileKey == 'naraxus' ||
@@ -548,9 +556,23 @@ class _FightPageState extends State<FightPage> {
                           allFightEnemiesDefeated: _allFightEnemiesDefeated,
                           enemyFled: _battleEnemyFled,
                           onHistory: () {
+                            if (_primaryEnemy.health <= 0) {
+                              widget.adventure.completeCombat(_primaryEnemy);
+                            }
+                            if (_secondaryEnemy != null && _secondaryEnemy!.health <= 0) {
+                              widget.adventure.completeCombat(_secondaryEnemy!);
+                            }
+                            widget.onChanged();
                             widget.onGameOverHistory?.call();
                           },
                           onHomepage: () {
+                            if (_primaryEnemy.health <= 0) {
+                              widget.adventure.completeCombat(_primaryEnemy);
+                            }
+                            if (_secondaryEnemy != null && _secondaryEnemy!.health <= 0) {
+                              widget.adventure.completeCombat(_secondaryEnemy!);
+                            }
+                            widget.onChanged();
                             if (_isNaraxus || enemy.rank == EnemyRank.naraxus) {
                               widget.onFinished?.call();
                             } else {
@@ -1846,6 +1868,14 @@ class _FightPageState extends State<FightPage> {
   bool _heroConstrictUsed = false;
 
   void _setPhase(CombatPhase phase) {
+    if (_allFightEnemiesDefeated ||
+        widget.adventure.health <= 0 ||
+        ((_isNaraxus || enemy.rank == EnemyRank.naraxus) && enemy.health <= 0)) {
+      setState(() {
+        _combatEnded = true;
+      });
+      return;
+    }
     setState(() {
       if (_phase != phase &&
           phase != CombatPhase.heroUpkeep &&
@@ -10376,6 +10406,18 @@ class _FightPageState extends State<FightPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          _SettingsActionTile(
+                            icon: Icons.menu_book,
+                            label: 'Rulebooks',
+                            color: const Color(0xff8ab4f8),
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              showRulebooksDialog(
+                                context,
+                                isNaraxus: _isNaraxus || enemy.rank == EnemyRank.naraxus,
+                              );
+                            },
+                          ),
                           _SettingsActionTile(
                             icon: Icons.receipt_long,
                             label: 'Run log',

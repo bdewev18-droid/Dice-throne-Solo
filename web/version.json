@@ -1,6 +1,6 @@
-{
-  "version": "1.4.143",
-  "buildNumber": 455,
-  "apkUrl": "https://github.com/bdewev18-droid/Dice-throne-Solo/releases/latest/download/app-release.apk",
-  "releaseNotes": "Chimera extra-roll fixes, oval CP gain badges, minion balancing and performance improvements."
+﻿{
+    "version":  "1.5.0",
+    "buildNumber":  464,
+    "apkUrl":  "https://github.com/bdewev18-droid/Dice-throne-Solo/releases/latest/download/app-release.apk",
+    "releaseNotes":  "Chimera extra-roll fixes, oval CP gain badges, minion balancing and performance improvements."
 }

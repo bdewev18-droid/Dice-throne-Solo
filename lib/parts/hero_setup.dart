@@ -1032,9 +1032,9 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                   ),
                   _buildPackTile(
                     packKey: 'heritage',
-                    title: 'Heritage DTA minions',
-                    subtitle: 'Heritage campaign deck (Optional)',
-                    imageAsset: 'assets/packs/pack_dta.webp',
+                    title: 'Legacy deck DTA minions',
+                    subtitle: 'Legacy campaign deck (Optional)',
+                    imageAsset: 'assets/packs/pack_legacy.webp',
                   ),
                   _buildPackTile(
                     packKey: 'promo',
@@ -1068,6 +1068,124 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
     );
   }
 
+  void _openPackBestiary(String packKey, String packTitle) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        height: MediaQuery.of(ctx).size.height * 0.85,
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          color: Color(0xff0b1220),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: BestiaryPage(
+          initialPackKey: packKey,
+          isModal: true,
+        ),
+      ),
+    );
+  }
+
+  void _showPackImageDialog({
+    required String title,
+    required String imageAsset,
+    required String packKey,
+  }) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => Dialog(
+        backgroundColor: const Color(0xff121929),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xff4fa8ff), width: 1.5),
+        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                    tooltip: 'Close',
+                    onPressed: () => Navigator.of(dialogCtx).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  constraints: const BoxConstraints(maxHeight: 260),
+                  color: Colors.black,
+                  alignment: Alignment.center,
+                  child: Image.asset(
+                    imageAsset,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox(
+                      height: 180,
+                      child: Center(
+                        child: Icon(Icons.broken_image, size: 48, color: Colors.white38),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xff7a33cc),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.style_rounded, size: 18),
+                label: Text(
+                  'View $title Cards',
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                ),
+                onPressed: () {
+                  Navigator.of(dialogCtx).pop();
+                  _openPackBestiary(packKey, title);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  int _packMinionCount(String packKey) {
+    if (packKey == 'dta') {
+      return EnemyProfileRepository.all
+          .where((p) => p.sourcePack == 'dta' || p.sourcePack.isEmpty)
+          .length;
+    }
+    return EnemyProfileRepository.all
+        .where((p) => p.sourcePack == packKey)
+        .length;
+  }
+
   Widget _buildPackTile({
     required String packKey,
     required String title,
@@ -1076,6 +1194,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
     bool locked = false,
   }) {
     final isActive = locked || AppSettings.instance.isMinionPackActive(packKey);
+    final count = _packMinionCount(packKey);
     return Container(
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -1093,19 +1212,49 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: Container(
-              width: 44,
-              height: 44,
-              color: Colors.black,
-              child: Image.asset(
-                imageAsset,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: Colors.grey.shade900,
-                  child: const Icon(Icons.style, color: Colors.white38),
-                ),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => _showPackImageDialog(
+                title: title,
+                imageAsset: imageAsset,
+                packKey: packKey,
+              ),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      color: Colors.black,
+                      child: Image.asset(
+                        imageAsset,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey.shade900,
+                          child: const Icon(Icons.style, color: Colors.white38),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 2,
+                    bottom: 2,
+                    child: Container(
+                      padding: const EdgeInsets.all(1.5),
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: const Icon(
+                        Icons.zoom_in_rounded,
+                        size: 11,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -1134,14 +1283,54 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                     ],
                   ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: isActive ? Colors.white70 : Colors.white38,
-                    fontSize: 11,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 3),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$count minion${count > 1 ? 's' : ''}',
+                      style: TextStyle(
+                        color: isActive ? Colors.white70 : Colors.white38,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () => _openPackBestiary(packKey, title),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xff4fa8ff).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xff4fa8ff).withValues(alpha: 0.4),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'View cards',
+                              style: TextStyle(
+                                color: Color(0xff4fa8ff),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(width: 3),
+                            Icon(
+                              Icons.open_in_new_rounded,
+                              size: 10,
+                              color: Color(0xff4fa8ff),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -30,7 +30,7 @@ enum _BestiaryRankFilter {
 enum _BestiaryPackFilter {
   all('All packs', null, 'assets/packs/pack_dta.webp'),
   dta('DTA Minions', 'dta', 'assets/packs/pack_dta.webp'),
-  heritage('Heritage DTA minions', 'heritage', 'assets/packs/pack_dta.webp'),
+  heritage('Legacy deck DTA minions', 'heritage', 'assets/packs/pack_legacy.webp'),
   promo('Promo Pack', 'promo', 'assets/packs/pack_promo.webp'),
   santa("Santa's Pack", 'santa', 'assets/packs/pack_santa.webp'),
   community("Community's Cards", 'community', 'assets/packs/pack_community.webp');
@@ -183,11 +183,15 @@ class BestiaryPage extends StatefulWidget {
   const BestiaryPage({
     this.activeAdventure,
     this.historyRecords = const [],
+    this.initialPackKey,
+    this.isModal = false,
     super.key,
   });
 
   final AdventureState? activeAdventure;
   final List<GameRecord> historyRecords;
+  final String? initialPackKey;
+  final bool isModal;
 
   @override
   State<BestiaryPage> createState() => _BestiaryPageState();
@@ -199,6 +203,20 @@ class _BestiaryPageState extends State<BestiaryPage> {
   final Set<_BestiaryStatusFilter> _selectedStatuses = <_BestiaryStatusFilter>{};
   final Set<String> _selectedTokenLabels = <String>{};
   _BestiaryViewMode _viewMode = _BestiaryViewMode.grid3;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialPackKey != null) {
+      final pack = _BestiaryPackFilter.values.firstWhere(
+        (p) => p.packKey == widget.initialPackKey,
+        orElse: () => _BestiaryPackFilter.all,
+      );
+      if (pack.packKey != null) {
+        _selectedPacks.add(pack);
+      }
+    }
+  }
 
   static const List<double> _grayscaleMatrix = <double>[
     0.2126, 0.7152, 0.0722, 0, 0, //
@@ -983,6 +1001,13 @@ class _BestiaryPageState extends State<BestiaryPage> {
       backgroundColor: const Color(0xff0b1220),
       appBar: AppBar(
         backgroundColor: const Color(0xff09152b),
+        leading: widget.isModal
+            ? IconButton(
+                icon: const Icon(Icons.close_rounded, color: Colors.white),
+                tooltip: 'Close',
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
         title: const Text(
           'Bestiary',
           style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.4),
@@ -1916,6 +1941,7 @@ class _BestiaryEnemyDetailPageState extends State<BestiaryEnemyDetailPage> {
                       borderRadius: BorderRadius.circular(4),
                       child: Image.asset(
                         switch (profile.sourcePack) {
+                          'heritage' => 'assets/packs/pack_legacy.webp',
                           'promo' => 'assets/packs/pack_promo.webp',
                           'santa' => 'assets/packs/pack_santa.webp',
                           _ => 'assets/packs/pack_dta.webp',
@@ -1928,7 +1954,7 @@ class _BestiaryEnemyDetailPageState extends State<BestiaryEnemyDetailPage> {
                     const SizedBox(width: 8),
                     Text(
                       switch (profile.sourcePack) {
-                        'heritage' => 'Heritage DTA minions (Official)',
+                        'heritage' => 'Legacy deck DTA minions (Official)',
                         'promo' => 'Promo pack DTA (Official)',
                         'santa' => "Santa's workshop Promo pack DTA (Official)",
                         _ => 'DTA Minions (Core Game)',

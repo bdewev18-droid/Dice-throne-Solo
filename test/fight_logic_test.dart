@@ -2982,6 +2982,42 @@ void main() {
       expect(parsed.releaseNotes, 'Test notes');
       expect(parsed.buildNumber > appBuildNumber, isTrue);
     });
+
+    test('Adventure generated enemies retain profile name and defense effects across all ranks', () async {
+      await EnemyProfileRepository.load();
+      final config = const SurvivalConfig(mode: SurvivalMode.mediumFixed, targetScore: 33);
+      final adventure = AdventureState(hero: HeroType.barbare, config: config);
+
+      for (final enemy in adventure.enemies) {
+        expect(enemy.label, isNot(startsWith('Left ')));
+        expect(enemy.label, isNot(startsWith('Right ')));
+        expect(enemy.label, isNotEmpty);
+        if (enemy.profileKey != null) {
+          final profile = EnemyProfileRepository.byKey(enemy.profileKey!);
+          if (profile != null) {
+            expect(enemy.label, equals(profile.name));
+            expect(enemy.defenseEffects.length, equals(profile.defenseEffects.length));
+          }
+        }
+      }
+    });
+
+    test('Medium mode inverted ranks: Left 1 is Violet, Right 1 is Blue', () async {
+      await EnemyProfileRepository.load();
+      final config = const SurvivalConfig(mode: SurvivalMode.mediumFixed, targetScore: 33);
+      final adventure = AdventureState(hero: HeroType.barbare, config: config);
+
+      final leftMinions = adventure.enemies.where((e) => e.branch == BranchSide.left).toList();
+      final rightMinions = adventure.enemies.where((e) => e.branch == BranchSide.right).toList();
+
+      expect(leftMinions.isNotEmpty, isTrue);
+      expect(rightMinions.isNotEmpty, isTrue);
+
+      // 1st minion on left is Violet
+      expect(leftMinions.first.rank, EnemyRank.violet);
+      // 1st minion on right is Blue
+      expect(rightMinions.first.rank, EnemyRank.blue);
+    });
   });
 }
 

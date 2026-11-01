@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'active_adventure_storage.dart';
 import 'data/enemy_profile_repository.dart';
@@ -49,8 +50,8 @@ part 'parts/fight_logic/minion_passive_resolver.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.4.143';
-const int appBuildNumber = 455;
+const String appVersionLabel = 'Version 1.5.0';
+const int appBuildNumber = 464;
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -1267,6 +1268,10 @@ class AppSettings extends ChangeNotifier {
       _defeatedEnemyKeys = defeated == null
           ? {}
           : defeated.map((value) => value.toString()).toSet();
+      final remoteDefeated = SupabaseService.instance.currentUserMetadata?['defeated_enemies'] as List<dynamic>?;
+      if (remoteDefeated != null && remoteDefeated.isNotEmpty) {
+        _defeatedEnemyKeys.addAll(remoteDefeated.map((e) => e.toString()));
+      }
       final packs = json['activeMinionPacks'] as List<dynamic>?;
       _activeMinionPacks = packs == null
           ? {'dta'}
@@ -1303,7 +1308,7 @@ class AppSettings extends ChangeNotifier {
     }
     _defeatedEnemyKeys.add(key);
     notifyListeners();
-    await _save();
+    await _save(syncProfile: true);
   }
 
   Future<void> toggleEnemyEncountered(String key) async {
@@ -1329,7 +1334,7 @@ class AppSettings extends ChangeNotifier {
       _defeatedEnemyKeys.add(key);
     }
     notifyListeners();
-    await _save();
+    await _save(syncProfile: true);
   }
 
   Future<void> setDeveloperMode(bool value) async {
@@ -1384,6 +1389,13 @@ class AppSettings extends ChangeNotifier {
               debugPrint('Hero collection Supabase sync skipped: $error');
             }),
       );
+      unawaited(
+        SupabaseService.instance
+            .updateDefeatedEnemies(_defeatedEnemyKeys)
+            .catchError((error) {
+              debugPrint('Defeated enemies Supabase sync skipped: $error');
+            }),
+      );
     }
   }
 }
@@ -1404,6 +1416,7 @@ class GameRecord {
     this.enemiesDefeated = 0,
     this.duration = Duration.zero,
     this.isVictory = false,
+    this.bossKey,
   });
 
   /// Identifiant Supabase (UUID) quand le record est issu de la base.
@@ -1418,6 +1431,7 @@ class GameRecord {
   final int enemiesDefeated;
   final Duration duration;
   final bool isVictory;
+  final String? bossKey;
 
   /// Sérialisation pour Supabase (table game_records).
   /// Ne contient pas user_id (ajouté côté service via la session).
@@ -1431,6 +1445,7 @@ class GameRecord {
     'duration_ms': duration.inMilliseconds,
     'is_victory': isVictory,
     'played_at': date.toUtc().toIso8601String(),
+    if (bossKey != null) 'boss_key': bossKey,
   };
 
   /// Désérialisation depuis une ligne Supabase (game_records).
@@ -1439,6 +1454,7 @@ class GameRecord {
     final modeName = row['mode'] as String?;
     final playedAt = row['played_at'];
     final durationMs = (row['duration_ms'] as num?)?.toInt() ?? 0;
+    final bKey = row['boss_key'] as String? ?? (modeName == 'naraxus' ? 'naraxus' : null);
     return GameRecord(
       id: row['id'] as String?,
       hero: _enumByName(HeroType.values, heroName) ?? HeroType.alchemist,
@@ -1452,6 +1468,7 @@ class GameRecord {
       enemiesDefeated: (row['enemies_defeated'] as num?)?.toInt() ?? 0,
       duration: Duration(milliseconds: durationMs),
       isVictory: (row['is_victory'] as bool?) ?? false,
+      bossKey: bKey,
     );
   }
 
@@ -1911,7 +1928,9 @@ class AdventureState {
 
     if (health <= 0) {
       _endAdventure(false);
-    } else if (enemies.every((enemy) => enemy.defeated)) {
+    } else if (enemies.every((enemy) => enemy.defeated) ||
+        (targetScore > 0 && score >= targetScore) ||
+        (lockedBranch != null && _branchComplete(lockedBranch!))) {
       _endAdventure(true);
     }
     _refreshAvailability();
@@ -1928,7 +1947,9 @@ class AdventureState {
     }
     if (health <= 0) {
       _endAdventure(false);
-    } else if (enemies.every((enemy) => enemy.defeated)) {
+    } else if (enemies.every((enemy) => enemy.defeated) ||
+        (targetScore > 0 && score >= targetScore) ||
+        (lockedBranch != null && _branchComplete(lockedBranch!))) {
       _endAdventure(true);
     }
     _refreshAvailability();
