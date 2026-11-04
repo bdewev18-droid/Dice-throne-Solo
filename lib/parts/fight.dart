@@ -271,6 +271,7 @@ class _FightPageState extends State<FightPage> {
   bool _battleDiscardPositiveToken = false;
   bool _battleAttackFailedCompletely = false;
   bool _battleEnemyFled = false;
+  bool _handOfTheKingUsedThisTurn = false;
   bool _isApplyingUpkeep = false;
   bool _isApplyingHeroUpkeep = false;
   bool _discipleSummonLevel3 = false;
@@ -967,6 +968,8 @@ class _FightPageState extends State<FightPage> {
                     preyUsedCount: _preyUsedCount,
                     canUsePrey: _canUsePrey,
                     onUsePrey: _triggerPreyAttempt,
+                    minionHandOfTheKingCount: _minionHandOfTheKingCount,
+                    onUseHandOfTheKing: _triggerHandOfTheKingUltimateDefense,
                     windShearCount: _availableWindShearCount,
                     windShearActive: _windShearActive,
                     canUseWindShear: _canUseWindShear,
@@ -1959,9 +1962,11 @@ class _FightPageState extends State<FightPage> {
       _evasiveRollResolved = false;
       _flightPopinTriggered = false;
       _flightRollResolved = false;
-      if (phase == CombatPhase.minionUpkeep &&
-          enemy.profileKey == 'vert-vert-014') {
-        _druidFormRolledThisUpkeep = false;
+      if (phase == CombatPhase.minionUpkeep) {
+        _handOfTheKingUsedThisTurn = false;
+        if (enemy.profileKey == 'vert-vert-014') {
+          _druidFormRolledThisUpkeep = false;
+        }
       }
       _specialAttackReady = false;
       _specialAttackMode = false;
@@ -4434,6 +4439,47 @@ class _FightPageState extends State<FightPage> {
     widget.adventure.log(
       '[TOKEN] Damage bonus $value used by $targetName: +$value damage.',
     );
+    widget.onChanged();
+  }
+
+  int get _minionHandOfTheKingCount =>
+      enemy.alterations.where(_isHandOfTheKingToken).length;
+
+  Future<void> _triggerHandOfTheKingUltimateDefense() async {
+    final tokenIdx = enemy.alterations.indexWhere(_isHandOfTheKingToken);
+    if (tokenIdx < 0) return;
+    setState(() {
+      enemy.alterations.removeAt(tokenIdx);
+    });
+    widget.adventure.log(
+      '[TOKEN] Hand of the King: Spent 1 token to defend against Ultimate.',
+    );
+    final success = await HandOfTheKingDialog.show(
+      context,
+      enemy: enemy,
+      isDifficult: widget.adventure.config.isHandOfTheKingDifficult,
+      isUltimateDefense: true,
+    );
+    if (!mounted) return;
+    if (success) {
+      widget.adventure.log(
+        '[TOKEN] Hand of the King: SUCCESS! Hero must re-roll 1 die of their Ultimate.',
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Hand of the King SUCCESS: Hero must re-roll 1 die of their Ultimate!',
+          ),
+          backgroundColor: Color(0xff182b49),
+          duration: Duration(seconds: 4),
+        ),
+      );
+    } else {
+      widget.adventure.log(
+        '[TOKEN] Hand of the King: FAILURE. Ultimate proceeds unmodified.',
+      );
+    }
+    setState(() {});
     widget.onChanged();
   }
 
@@ -7427,6 +7473,44 @@ class _FightPageState extends State<FightPage> {
             '[PASSIVE] ${enemy.label}: Offensive Roll Phase failed. Rolled extra die (White face 1-3). Restarting Offensive Roll Phase!',
           );
           return;
+        }
+      }
+      if (enemy.alterations.any(_isHandOfTheKingToken) &&
+          !_handOfTheKingUsedThisTurn) {
+        _handOfTheKingUsedThisTurn = true;
+        final tokenIdx = enemy.alterations.indexWhere(_isHandOfTheKingToken);
+        if (tokenIdx >= 0) {
+          enemy.alterations.removeAt(tokenIdx);
+        }
+        widget.adventure.log(
+          '[TOKEN] Hand of the King triggered: 1 token spent on offensive failure.',
+        );
+        final success = await HandOfTheKingDialog.show(
+          context,
+          enemy: enemy,
+          isDifficult: widget.adventure.config.isHandOfTheKingDifficult,
+          isUltimateDefense: false,
+        );
+        if (success && mounted) {
+          setState(() {
+            _rollCount = 0;
+            for (final die in _dice) {
+              die.reserved = false;
+              die.isLocked = false;
+              die.value = null;
+              die.settled = true;
+            }
+            _resetBattleResolution();
+            _configureDiceForPhase(autoRollAttack: _aiMode);
+          });
+          widget.adventure.log(
+            '[TOKEN] Hand of the King: SUCCESS! Restarting Offensive Roll Phase for ${enemy.label}.',
+          );
+          return;
+        } else if (mounted) {
+          widget.adventure.log(
+            '[TOKEN] Hand of the King: FAILURE. Attack remains failed.',
+          );
         }
       }
     }
@@ -11488,9 +11572,13 @@ String _introAiMessage(
   EnemyNode enemy,
   List<GameRecord> historyRecords,
 ) {
+  final whoStarts = _firstCombatPhaseFor(enemy);
+  final starterLabel = whoStarts == CombatPhase.heroUpkeep
+      ? adventure.hero.label
+      : enemy.label;
   return [
     _openingAiLines(adventure, enemy, historyRecords),
-    '_Press the flashing arrow to start the first upkeep phase._',
+    '_Press the flashing arrow to start $starterLabel\'s upkeep phase._',
   ].join('\n');
 }
 
@@ -11562,9 +11650,16 @@ String _openingAiLines(
     );
   }
   lines.add('This is the ${_ordinal(encounter)} Minion Rush encounter.');
-  lines.add(
-    '${enemy.label} starts with ${enemy.health} HP, ${enemy.combatPoints} CP and ${enemy.alterations.length} token(s).',
-  );
+  final whoStarts = _firstCombatPhaseFor(enemy);
+  if (whoStarts == CombatPhase.heroUpkeep) {
+    lines.add(
+      '**${adventure.hero.label} starts first!** (${enemy.label} has ${enemy.health} HP, ${enemy.combatPoints} CP and ${enemy.alterations.length} token(s)).',
+    );
+  } else {
+    lines.add(
+      '**${enemy.label} starts first!** (${enemy.health} HP, ${enemy.combatPoints} CP and ${enemy.alterations.length} token(s)).',
+    );
+  }
   return lines.join('\n');
 }
 

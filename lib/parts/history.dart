@@ -2,7 +2,7 @@ part of '../main.dart';
 
 enum HistoryCategory {
   minionRush('Minion Rush', Icons.shield_rounded),
-  bosses('Bosses', Icons.local_fire_department_rounded);
+  bosses('Boss', Icons.local_fire_department_rounded);
 
   const HistoryCategory(this.label, this.icon);
   final String label;
@@ -125,7 +125,7 @@ class _HistoryPageState extends State<HistoryPage> {
                               DropdownMenuItem(
                                 value: 'all',
                                 child: Text(
-                                  'All Bosses',
+                                  'All',
                                   style: TextStyle(fontSize: 12),
                                 ),
                               ),
@@ -133,13 +133,6 @@ class _HistoryPageState extends State<HistoryPage> {
                                 value: 'naraxus',
                                 child: Text(
                                   'Naxarus',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'kaelen',
-                                child: Text(
-                                  'Kaelen Voss',
                                   style: TextStyle(fontSize: 12),
                                 ),
                               ),

@@ -2171,35 +2171,7 @@
             "extraRoll": null
           }
         ],
-        "conditionalRules": [
-          {
-            "condition": {
-              "type": "symbols",
-              "negate": false,
-              "and": [],
-              "white": 3,
-              "orange": 0,
-              "red": 1,
-              "inner": null
-            },
-            "effect": {
-              "heroTokens": [
-                "Poison"
-              ],
-              "minionTokens": [],
-              "damage": null,
-              "damageFormula": null,
-              "undefendable": false,
-              "lifeSteal": 0,
-              "loseHp": 0,
-              "cpSteal": 0,
-              "note": "Validated attack: hero receives Poison."
-            },
-            "displayRows": [],
-            "exclusive": true,
-            "minRollCount": 0
-          }
-        ],
+        "conditionalRules": [],
         "passives": [],
         "notes": [],
         "displayRows": []

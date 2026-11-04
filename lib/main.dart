@@ -32,6 +32,7 @@ part 'parts/fight_widgets/enemy_rules_panel.dart';
 part 'parts/fight_widgets/nanobot_detonation_dialog.dart';
 part 'parts/fight_widgets/dice_panel.dart';
 part 'parts/fight_widgets/token_animation_dialog.dart';
+part 'parts/fight_widgets/hand_of_the_king_dialog.dart';
 part 'parts/fight_widgets/turn_phase_panel.dart';
 part 'parts/fight_widgets/ninjitsu_choice_dialog.dart';
 part 'parts/fight_widgets/lose_hp_badge.dart';
@@ -50,8 +51,8 @@ part 'parts/fight_logic/minion_passive_resolver.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.5.0';
-const int appBuildNumber = 465;
+const String appVersionLabel = 'Version 1.5.2';
+const int appBuildNumber = 467;
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -1495,18 +1496,25 @@ class SurvivalConfig {
     required this.mode,
     required this.targetScore,
     this.freeCounts = const {},
+    this.handOfTheKingDifficult = false,
   });
 
   final SurvivalMode mode;
   final int targetScore;
   final Map<EnemyRank, int> freeCounts;
+  final bool handOfTheKingDifficult;
 
   bool get isNaraxusMode => mode == SurvivalMode.naraxus;
+
+  bool get isHandOfTheKingDifficult =>
+      (mode == SurvivalMode.hardFixed || mode == SurvivalMode.hardRandom) ||
+      (mode == SurvivalMode.free && handOfTheKingDifficult);
 
   Map<String, dynamic> toJson() => {
     'mode': mode.name,
     'targetScore': targetScore,
     'freeCounts': freeCounts.map((rank, count) => MapEntry(rank.name, count)),
+    'handOfTheKingDifficult': handOfTheKingDifficult,
   };
 
   factory SurvivalConfig.fromJson(Map<String, dynamic> json) {
@@ -1521,6 +1529,7 @@ class SurvivalConfig {
           (value as num).toInt(),
         ),
       ),
+      handOfTheKingDifficult: json['handOfTheKingDifficult'] as bool? ?? false,
     );
   }
 
@@ -1928,9 +1937,7 @@ class AdventureState {
 
     if (health <= 0) {
       _endAdventure(false);
-    } else if (enemies.every((enemy) => enemy.defeated) ||
-        (targetScore > 0 && score >= targetScore) ||
-        (lockedBranch != null && _branchComplete(lockedBranch!))) {
+    } else if (enemies.every((enemy) => enemy.defeated)) {
       _endAdventure(true);
     }
     _refreshAvailability();
@@ -1947,9 +1954,7 @@ class AdventureState {
     }
     if (health <= 0) {
       _endAdventure(false);
-    } else if (enemies.every((enemy) => enemy.defeated) ||
-        (targetScore > 0 && score >= targetScore) ||
-        (lockedBranch != null && _branchComplete(lockedBranch!))) {
+    } else if (enemies.every((enemy) => enemy.defeated)) {
       _endAdventure(true);
     }
     _refreshAvailability();

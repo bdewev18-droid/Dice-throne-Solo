@@ -81,6 +81,8 @@ class CombatAiChatDock extends StatefulWidget {
     this.preyUsedCount = 0,
     this.canUsePrey = false,
     this.onUsePrey,
+    this.minionHandOfTheKingCount = 0,
+    this.onUseHandOfTheKing,
     this.windShearCount = 0,
     this.windShearActive = false,
     this.canUseWindShear = false,
@@ -179,6 +181,8 @@ class CombatAiChatDock extends StatefulWidget {
   final int preyUsedCount;
   final bool canUsePrey;
   final VoidCallback? onUsePrey;
+  final int minionHandOfTheKingCount;
+  final VoidCallback? onUseHandOfTheKing;
   final int windShearCount;
   final bool windShearActive;
   final bool canUseWindShear;
@@ -411,6 +415,8 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
     final preyUsedCount = widget.preyUsedCount;
     final canUsePrey = widget.canUsePrey;
     final onUsePrey = widget.onUsePrey;
+    final minionHandOfTheKingCount = widget.minionHandOfTheKingCount;
+    final onUseHandOfTheKing = widget.onUseHandOfTheKing;
     final windShearCount = widget.windShearCount;
     final windShearActive = widget.windShearActive;
     final canUseWindShear = widget.canUseWindShear;
@@ -478,6 +484,7 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
         salveCount > 0 ||
         windShearCount > 0 ||
         defenderPreyCount > 0 ||
+        minionHandOfTheKingCount > 0 ||
         attackerCritCount > 0 ||
         attackerAccuracyCount > 0 ||
         honorCount > 0 ||
@@ -1796,6 +1803,20 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
                     showUseButton: preyUsedCount < defenderPreyCount,
                     canUse: canUsePrey,
                     onUse: onUsePrey,
+                  ),
+                if (phase == CombatPhase.hero && minionHandOfTheKingCount > 0)
+                  _TokenActionRow(
+                    ownerWidget: tokenOwnerAvatar('Hand of the King'),
+                    tokenLabel: 'Hand of the King',
+                    tokenAsset: 'assets/token/main_du_roi.webp',
+                    text: minionHandOfTheKingCount > 1
+                        ? 'Hand of the King x$minionHandOfTheKingCount'
+                        : 'Hand of the King',
+                    isActive: false,
+                    activeText: '',
+                    showUseButton: true,
+                    canUse: onUseHandOfTheKing != null,
+                    onUse: onUseHandOfTheKing,
                   ),
                 if (attackerCritCount > 0 || critUsed)
                   _TokenActionRow(

@@ -790,6 +790,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
   bool _randomRoute = false;
   bool _expertFreeMode = false;
   bool _expansionsExpanded = false;
+  bool _freeHandOfTheKingDifficult = false;
   final Map<EnemyRank, int> _freeCounts = {
     EnemyRank.green: 1,
     EnemyRank.blue: 0,
@@ -838,6 +839,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
             mode: SurvivalMode.free,
             targetScore: _freeScore,
             freeCounts: Map<EnemyRank, int>.from(_freeCounts),
+            handOfTheKingDifficult: _freeHandOfTheKingDifficult,
           )
         : SurvivalConfig(
             mode: effectiveMode,
@@ -931,6 +933,8 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                         ),
                       ),
                   ],
+                  const SizedBox(height: 10),
+                  _buildHandOfTheKingInfoRow(),
                 ],
               ),
             ),
@@ -953,6 +957,91 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHandOfTheKingInfoRow() {
+    final isFree = _mode == SurvivalMode.free;
+    final isDiff =
+        _mode == SurvivalMode.hardFixed || _mode == SurvivalMode.hardRandom;
+    final currentDifficult = isFree ? _freeHandOfTheKingDifficult : isDiff;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xffffb300).withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Image.asset(
+                'assets/token/main_du_roi.webp',
+                width: 22,
+                height: 22,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.pan_tool_alt_rounded,
+                  color: Color(0xffffb300),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Hand of the King',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Colors.white,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                currentDifficult
+                    ? 'Difficult: 3, 4, 5, 6 (1-2 Fail)'
+                    : 'Medium: 4, 5, 6 (1-3 Fail)',
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xffffd54f),
+                ),
+              ),
+            ],
+          ),
+          if (isFree) ...[
+            const SizedBox(height: 8),
+            SegmentedButton<bool>(
+              style: const ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              segments: const [
+                ButtonSegment<bool>(
+                  value: false,
+                  label: Text(
+                    'Medium (4-6)',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                ),
+                ButtonSegment<bool>(
+                  value: true,
+                  label: Text(
+                    'Difficult (3-6)',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                ),
+              ],
+              selected: {_freeHandOfTheKingDifficult},
+              onSelectionChanged: (set) =>
+                  setState(() => _freeHandOfTheKingDifficult = set.first),
+            ),
+          ],
+        ],
       ),
     );
   }

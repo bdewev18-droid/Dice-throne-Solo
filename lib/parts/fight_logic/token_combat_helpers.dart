@@ -132,6 +132,16 @@ bool _isPreyToken(String t) {
   return k == 'prey' || k == 'proie';
 }
 
+bool _isHandOfTheKingToken(String t) {
+  final k = _normalizeTokenKey(t);
+  return k == 'mainduroi' ||
+      k == 'kingshand' ||
+      k == 'handoftheking' ||
+      k == 'handofking';
+}
+
+bool isHandOfTheKingToken(String t) => _isHandOfTheKingToken(t);
+
 bool _isAccuracyToken(String t) {
   final k = _normalizeTokenKey(t);
   return k == 'accuracy' || k == 'précision' || k == 'precision';

@@ -22,7 +22,7 @@ enum _BestiaryRankFilter {
       _BestiaryRankFilter.violet => profile.rank == EnemyRank.violet,
       _BestiaryRankFilter.orange => profile.rank == EnemyRank.orange,
       _BestiaryRankFilter.boss =>
-        profile.key == 'naraxus' || profile.key == 'kaelen-voss',
+        profile.key == 'naraxus',
     };
   }
 }
@@ -245,9 +245,6 @@ class _BestiaryPageState extends State<BestiaryPage> {
     byKey.putIfAbsent(viseer.key, () => viseer);
     final naxarus = EnemyProfileRepository.byKey('naraxus') ?? naraxusProfile;
     byKey.putIfAbsent(naxarus.key, () => naxarus);
-    final kaelenVoss =
-        EnemyProfileRepository.byKey('kaelen-voss') ?? kaelenVossProfile;
-    byKey.putIfAbsent(kaelenVoss.key, () => kaelenVoss);
 
     int rankOrder(EnemyRank r) => switch (r) {
       EnemyRank.green => 0,
@@ -2134,8 +2131,6 @@ class BossBattleSelectionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final naxarus = EnemyProfileRepository.byKey('naraxus') ?? naraxusProfile;
-    final kaelenVoss =
-        EnemyProfileRepository.byKey('kaelen-voss') ?? kaelenVossProfile;
 
     return Scaffold(
       backgroundColor: const Color(0xff0b090e),
@@ -2153,79 +2148,8 @@ class BossBattleSelectionPage extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
           children: [
-            // Monthly Boss Event banner
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xff3a1d5c).withValues(alpha: 0.85),
-                    const Color(0xff1a1226).withValues(alpha: 0.95),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xffffb300).withValues(alpha: 0.75),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.45),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xffffb300).withValues(alpha: 0.18),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xffffb300),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.calendar_month_rounded,
-                      color: Color(0xffffd54f),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'MONTHLY BOSS EVENT',
-                          style: TextStyle(
-                            color: Color(0xffffd54f),
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'One new custom monster is created every month!',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
             const Text(
-              'CHOOSE YOUR OPPONENT (2 BOSSES)',
+              'CHOOSE YOUR OPPONENT (1 BOSS)',
               style: TextStyle(
                 color: Colors.white70,
                 fontSize: 12,
@@ -2251,30 +2175,6 @@ class BossBattleSelectionPage extends StatelessWidget {
                       isBossOfTheMonth: false,
                       onChooseHeroAndFight: () {
                         onStartBossWithHero(naxarus.key);
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 18),
-            // Option 2: Kaelen Voss (Unofficial + Boss of the Month)
-            _BossChoiceCard(
-              profile: kaelenVoss,
-              subtitle: 'Boss of the Month • Exclusive Monthly Challenger',
-              isUnofficial: true,
-              isBossOfTheMonth: true,
-              accentColor: const Color(0xff9b58ff),
-              imageAlignment: const Alignment(0, -0.75),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (detailContext) => BossBattleDetailPage(
-                      profile: kaelenVoss,
-                      isUnofficial: true,
-                      isBossOfTheMonth: true,
-                      onChooseHeroAndFight: () {
-                        onStartBossWithHero(kaelenVoss.key);
                       },
                     ),
                   ),

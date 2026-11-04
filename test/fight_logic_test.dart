@@ -3018,6 +3018,72 @@ void main() {
       // 1st minion on right is Blue
       expect(rightMinions.first.rank, EnemyRank.blue);
     });
+
+    test('Adventure does not end after 1 branch is complete; requires all enemies defeated', () {
+      final config = const SurvivalConfig(mode: SurvivalMode.mediumFixed, targetScore: 33);
+      final adventure = AdventureState(hero: HeroType.barbare, config: config);
+
+      // Lock left branch
+      adventure.lockBranch(BranchSide.left);
+
+      // Defeat start minion and all left branch minions
+      adventure.enemies[0].defeated = true;
+      for (final enemy in adventure.enemies.where((e) => e.branch == BranchSide.left)) {
+        enemy.health = 0;
+        adventure.completeCombat(enemy);
+      }
+
+      // Adventure MUST NOT be finished after left branch
+      expect(adventure.finished, isFalse);
+      expect(adventure.lockedBranch, equals(BranchSide.right));
+
+      // Now defeat right branch minions
+      for (final enemy in adventure.enemies.where((e) => e.branch == BranchSide.right)) {
+        enemy.health = 0;
+        adventure.completeCombat(enemy);
+      }
+
+      // NOW the adventure finishes with victory
+      expect(adventure.finished, isTrue);
+      expect(adventure.victory, isTrue);
+    });
+
+    test('Serpentyne profile has no duplicate Poison in conditionalRules', () async {
+      await EnemyProfileRepository.load();
+      final serp = EnemyProfileRepository.byKey('vert-vert-013');
+      expect(serp, isNotNull);
+      expect(serp!.attackPlan.conditionalRules.isEmpty, isTrue);
+      expect(serp.attackPlan.goals.length, equals(2));
+      expect(serp.attackPlan.goals[1].effect?.heroTokens, equals(['Poison']));
+    });
+
+    test('Hand of the King token helper and difficulty logic in SurvivalConfig', () {
+      expect(isHandOfTheKingToken('Main du roi'), isTrue);
+      expect(isHandOfTheKingToken('mainduroi'), isTrue);
+      expect(isHandOfTheKingToken("King's Hand"), isTrue);
+      expect(isHandOfTheKingToken('Hand of the King'), isTrue);
+      expect(isHandOfTheKingToken('Poison'), isFalse);
+
+      const medConfig = SurvivalConfig(mode: SurvivalMode.mediumFixed, targetScore: 33);
+      expect(medConfig.isHandOfTheKingDifficult, isFalse);
+
+      const hardConfig = SurvivalConfig(mode: SurvivalMode.hardFixed, targetScore: 52);
+      expect(hardConfig.isHandOfTheKingDifficult, isTrue);
+
+      const freeMed = SurvivalConfig(
+        mode: SurvivalMode.free,
+        targetScore: 25,
+        handOfTheKingDifficult: false,
+      );
+      expect(freeMed.isHandOfTheKingDifficult, isFalse);
+
+      const freeDiff = SurvivalConfig(
+        mode: SurvivalMode.free,
+        targetScore: 25,
+        handOfTheKingDifficult: true,
+      );
+      expect(freeDiff.isHandOfTheKingDifficult, isTrue);
+    });
   });
 }
 

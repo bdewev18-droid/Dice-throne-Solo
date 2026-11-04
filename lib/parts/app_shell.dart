@@ -674,9 +674,9 @@ class _HomePageState extends State<HomePage> {
                                     subtitle: '$validatedMonsters Monsters',
                                     subtitleColor: const Color(0xffffe22d),
                                     imageAsset:
-                                        'assets/enemy_previews/naxarus_head.png',
-                                    imageAlignment: const Alignment(0.4, 0.0),
-                                    borderColor: const Color(0xffd51f2a),
+                                        'assets/enemy_previews/bleu-001.webp',
+                                    imageAlignment: const Alignment(0.0, -0.7),
+                                    borderColor: const Color(0xff3bb9ff),
                                     onPressed: widget.onBestiary,
                                   ),
                                 ),
@@ -1521,11 +1521,11 @@ class ImageActionButton extends StatelessWidget {
 class BossBattleActionButton extends StatelessWidget {
   const BossBattleActionButton({
     required this.onPressed,
-    this.bossName = 'KAELEN VOSS',
-    this.bossImage = 'assets/enemy_previews/kaelen-voss.webp',
-    this.bossImageAlignment = const Alignment(0.0, -0.85),
-    this.bossImageOffset = const Offset(35.0, 0.0),
-    this.badgeLabel = 'BOSS OF THE MONTH',
+    this.bossName = 'NAXARUS',
+    this.bossImage = 'assets/enemy_previews/naraxus.webp',
+    this.bossImageAlignment = const Alignment(0.0, -0.34),
+    this.bossImageOffset = Offset.zero,
+    this.badgeLabel = '',
     super.key,
   });
 
@@ -1673,10 +1673,11 @@ class BossBattleActionButton extends StatelessWidget {
           ),
         ),
         // Top-right compact patch / tag
-        Positioned(
-          top: -8,
-          right: 8,
-          child: IgnorePointer(
+        if (badgeLabel.isNotEmpty)
+          Positioned(
+            top: -8,
+            right: 8,
+            child: IgnorePointer(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(

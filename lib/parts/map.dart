@@ -1022,23 +1022,71 @@ void showRulebooksDialog(BuildContext context, {bool isNaraxus = false}) {
                                     ),
                                     onPressed: () async {
                                       try {
-                                        final uri = Uri.base.resolve('rules/${item.pdfFileName}');
-                                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                        final String urlStr;
+                                        if (kIsWeb) {
+                                          final origin = Uri.base.origin;
+                                          final pathSegments = Uri.base.pathSegments
+                                              .where((s) => s.isNotEmpty)
+                                              .toList();
+                                          final hasDiceThroneSolo = pathSegments
+                                              .contains('Dice-throne-Solo');
+                                          final prefix = hasDiceThroneSolo
+                                              ? '/Dice-throne-Solo/'
+                                              : '/';
+                                          urlStr =
+                                              '$origin${prefix}rules/${item.pdfFileName}';
+                                        } else {
+                                          urlStr =
+                                              'https://bdewev18-droid.github.io/Dice-throne-Solo/rules/${item.pdfFileName}';
+                                        }
+                                        final uri = Uri.parse(urlStr);
+                                        bool ok = false;
+                                        try {
+                                          ok = await launchUrl(
+                                            uri,
+                                            mode:
+                                                LaunchMode.externalApplication,
+                                          );
+                                        } catch (_) {}
+                                        if (!ok) {
+                                          ok = await launchUrl(
+                                            uri,
+                                            mode: LaunchMode.platformDefault,
+                                          );
+                                        }
+                                        if (!ok) {
+                                          throw Exception(
+                                            'Could not open browser for $urlStr',
+                                          );
+                                        }
                                         if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             SnackBar(
-                                              content: Text('Downloading ${item.title}...'),
-                                              backgroundColor: const Color(0xff182b49),
-                                              duration: const Duration(seconds: 2),
+                                              content: Text(
+                                                'Downloading ${item.title}...',
+                                              ),
+                                              backgroundColor: const Color(
+                                                0xff182b49,
+                                              ),
+                                              duration: const Duration(
+                                                seconds: 2,
+                                              ),
                                             ),
                                           );
                                         }
                                       } catch (e) {
                                         if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             SnackBar(
-                                              content: Text('Could not open PDF: $e'),
-                                              backgroundColor: Colors.red.shade900,
+                                              content: Text(
+                                                'Could not open PDF: $e',
+                                              ),
+                                              backgroundColor:
+                                                  Colors.red.shade900,
                                             ),
                                           );
                                         }

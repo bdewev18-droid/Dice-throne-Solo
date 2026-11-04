@@ -1718,15 +1718,15 @@
             "maxStack": 99,
             "persistent": true,
             "removable": true,
-            "appSupported": false,
+            "appSupported": true,
             "imageAsset": "assets/token/main_du_roi.webp",
             "description": "If a player rolls an Ultimate, the spent token allows the rolling of 1 d6. The value for success depends on which scenario is being played. A successful roll means that the player must re-roll one of the dice of their Ultimate.\nIf the character with one of these tokens fails to have a successful Offensive Roll Phase, it spends the token and rolls 1 d6. The value for success depends on which scenario is being played. A successful roll means that the character has an additional Offensive Roll Phase.",
             "aliases": [
                 "King's Hand",
                 "Main du roi"
             ],
-            "appDetails": "Non codé automatiquement dans l'engine (gestion manuelle).",
-            "appAnimation": false,
+            "appDetails": "Automated: on offensive failure rolls 1 D6 for a second chance (4-6 Medium, 3-6 Difficult). During hero roll phase, can be used to defend against an Ultimate.",
+            "appAnimation": true,
             "minionAllowed": true,
             "editorVisible": true,
             "persistence": "persistent"
