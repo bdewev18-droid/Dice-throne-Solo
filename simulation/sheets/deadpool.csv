@@ -1,0 +1,65 @@
+atk,6,0,10,9,,,
+atk imparable ,,,,,6,4,4
+donuts / heal,,,1,6,3,,1
+rps dégât ,,,2,2,2,,0
+rps (perdu/gagné),,,perdu mais shift shoot,gagné ,gagné ,,perdu 2 fois
+contre attaque défense ,1,1,2,1,,,2
+heal défense ,1,1,1,1,1,1,1
+def ,,,,,,6,
+vie Deadpool ,51,52,54,61,65,65,67
+vie ennemie,43,42,28,16,8,4,-2
+,,,,,,,
+atk,,,,,,,
+atk imparable ,8,6,4,4,4,11,
+donuts / heal,,,,3,1,,
+rps dégât ,3,3,,,3,,
+rps (perdu/gagné),win,"1 win, 1 lose",,,win,,
+contre attaque défense ,1,,1,1,1,2,
+heal défense ,1,1,1,1,2,2,
+def ,,,,,,,
+vie Deadpool ,51,52,53,57,60,62,
+vie ennemie,39,30,25,20,12,-1,
+,,,,,,,
+atk,0,,5,6,9,,
+atk imparable ,,7,,,,4,8
+donuts / heal,,3,,5,,3,6
+rps dégât ,,,,,3,,2
+rps (perdu/gagné),,,,,win,,win shift shoot card
+contre attaque défense ,1,,,3,1,1,1
+heal défense ,1,1,1,1,1,1,1
+def ,,,,,,,6
+vie Deadpool ,51,54,55,61,62,66,73
+vie ennemie,49,42,37,28,15,10,-1
+,,,,,,,
+atk,,,,,,,
+atk imparable ,6,4,6,11,11,4,
+donuts / heal,,,1,,,5,
+rps dégât ,,,3,3,,,
+rps (perdu/gagné),,,win,win,,,
+contre attaque défense ,2,1,,,1,1,
+heal défense ,2,2,2,2,2,2,
+def ,,,,,6,,
+vie Deadpool ,52,54,57,59,61,68,
+vie ennemie,42,37,28,14,2,-3,
+,,,,,,,
+atk,9,11,,10,11,,
+atk imparable ,,,3,,,,
+donuts / heal,,,,1,,,
+rps dégât ,,,,2,0,,
+rps (perdu/gagné),,,,win shift shoot card,lose,,
+contre attaque défense ,1,1,2,2,2,,
+heal défense ,1,1,1,1,1,,
+def ,,,,,,,
+vie Deadpool ,51,52,53,55,56,,
+vie ennemie,40,28,23,9,-4,,
+,,,,,,,
+atk,11,,,8,8,,
+atk imparable ,3,6,4,,,,
+donuts / heal,3,3,1,2,3,,
+rps dégât ,2,3,,3,2,,
+rps (perdu/gagné),win shift shoot card,win,,win,win shift shoot card,,
+contre attaque défense ,2,1,,2,,,
+heal défense ,1,1,1,1,1,,
+def ,,,,,,,
+vie Deadpool ,54,58,60,63,67,,
+vie ennemie,32,22,17,4,-7,,
