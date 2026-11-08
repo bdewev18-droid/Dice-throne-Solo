@@ -13645,7 +13645,7 @@
             "align": "left",
             "condition": {
               "type": "number",
-              "value": 0
+              "value": 1
             },
             "label": "",
             "undefendable": false,
@@ -13684,7 +13684,7 @@
             "align": "left",
             "condition": {
               "type": "number",
-              "value": 0
+              "value": 6
             },
             "label": "",
             "undefendable": false,
@@ -13713,7 +13713,7 @@
             "align": "left",
             "condition": {
               "type": "number",
-              "value": 0
+              "value": 1
             },
             "label": "Swoop",
             "damage": 3,
@@ -13736,7 +13736,7 @@
             "align": "left",
             "condition": {
               "type": "number",
-              "value": 0
+              "value": 2
             },
             "label": "Ember Spark",
             "damage": 8,
@@ -13759,7 +13759,7 @@
             "align": "left",
             "condition": {
               "type": "number",
-              "value": 0
+              "value": 3
             },
             "label": "Gashing Bite",
             "damage": 0,
@@ -13792,7 +13792,7 @@
             "align": "left",
             "condition": {
               "type": "number",
-              "value": 0
+              "value": 4
             },
             "label": "Hoarding",
             "damage": 9,
@@ -13815,7 +13815,7 @@
             "align": "left",
             "condition": {
               "type": "number",
-              "value": 0
+              "value": 5
             },
             "label": "Thundering Roar",
             "damage": 8,
@@ -13838,7 +13838,7 @@
             "align": "left",
             "condition": {
               "type": "number",
-              "value": 0
+              "value": 6
             },
             "label": "Dragon's Might",
             "damage": 10,
@@ -13870,7 +13870,7 @@
         "notes": [],
         "displayRows": []
       },
-      "defense": "",
+      "defense": "Defense roll 1 die: 1 prevents 1, 2-5 prevents 3, 6 prevents 5.",
       "passives": [],
       "passiveDisplayRows": [],
       "validatedAtk": true,
@@ -13878,22 +13878,20 @@
       "validated": true
     },
     {
-      "key": "kaelen-voss",
-      "name": "Kaelen Voss",
+      "key": "ourokhor",
+      "name": "Ourokhor",
       "rank": "naraxus",
       "maxHealth": 50,
       "cp": 0,
-      "cardAsset": "assets/enemy_previews/kaelen-voss.webp",
+      "cardAsset": "assets/enemy_previews/ourokhor.jpg",
       "initialTokens": [],
       "rewardChests": 0,
       "rewardRank": null,
+      "attackDice": 3,
       "attacks": [
-        "Swoop: 1 = remove 1 random Naxarus token, heal 4 HP, deal 3 undefendable damage.",
-        "Ember Spark: 2 = hero moves top 3 deck cards to discard, then takes 8 damage.",
-        "Gashing Bite: 3 = roll 4 dice, deal damage equal to the 2 highest dice.",
-        "Hoarding: 4 = hero loses 1 die next battle phase, then takes 9 damage.",
-        "Thundering Roar: 5 = hero discards 1 card and takes 8 undefendable damage.",
-        "Dragon's Might: 6 = deal 10 damage and roll 1 extra die; on 5-6 also Swoop."
+        "Atk 1 (2 White): 3 undefendable damage and 1 Poison.",
+        "Atk 2 (2 Orange): 6 damage, 1 Poison and 1 Delayed Poison.",
+        "Atk 3 (2 Red): 7 undefendable damage and 2 Delayed Poison."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -13902,29 +13900,14 @@
           {
             "align": "left",
             "condition": {
-              "type": "number",
-              "value": 0
+              "type": "symbols",
+              "symbols": {
+                "white": 1,
+                "orange": 0,
+                "red": 0
+              }
             },
-            "label": "",
-            "undefendable": false,
-            "prevent": 1,
-            "returnDamage": 0,
-            "stealHp": 0,
-            "loseHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": []
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "range"
-            },
-            "label": "",
+            "label": "White (1-3)",
             "undefendable": false,
             "prevent": 3,
             "returnDamage": 0,
@@ -13941,12 +13924,16 @@
           {
             "align": "left",
             "condition": {
-              "type": "number",
-              "value": 0
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 1,
+                "red": 0
+              }
             },
-            "label": "",
+            "label": "Orange (4-5)",
             "undefendable": false,
-            "prevent": 5,
+            "prevent": 3,
             "returnDamage": 0,
             "stealHp": 0,
             "loseHp": 0,
@@ -13954,8 +13941,39 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "tokens": [],
+            "tokens": [
+              "Delayed Poison"
+            ],
             "formulas": [],
+            "notes": []
+          },
+          {
+            "align": "left",
+            "condition": {
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 0,
+                "red": 1
+              }
+            },
+            "label": "Red (6)",
+            "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
+            "stealHp": 0,
+            "loseHp": 0,
+            "stealCp": 0,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "tokens": [
+              "Delayed Poison",
+              "Poison"
+            ],
+            "formulas": [
+              "prevent = ceil(incomingDamage / 2)"
+            ],
             "notes": []
           }
         ],
@@ -13963,17 +13981,37 @@
         "displayRows": []
       },
       "attackPlan": {
-        "style": "none",
-        "goals": [],
-        "name": "Naxarus",
+        "style": "symbols",
+        "goals": [
+          {
+            "white": 2,
+            "orange": 0,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 2,
+            "red": 0
+          },
+          {
+            "white": 0,
+            "orange": 0,
+            "red": 2
+          }
+        ],
+        "name": "Ourokhor",
         "actions": [
           {
             "align": "left",
             "condition": {
-              "type": "number",
-              "value": 0
+              "type": "symbols",
+              "symbols": {
+                "white": 2,
+                "orange": 0,
+                "red": 0
+              }
             },
-            "label": "Swoop",
+            "label": "Toxic Fang",
             "damage": 3,
             "undefendable": true,
             "prevent": 0,
@@ -13981,79 +14019,29 @@
             "stealHp": 0,
             "loseHp": 0,
             "stealCp": 0,
-            "heal": 4,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "topDeckToDiscard": 0,
-            "extraRoll": null
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "number",
-              "value": 0
-            },
-            "label": "Ember Spark",
-            "damage": 8,
-            "undefendable": false,
-            "prevent": 0,
-            "returnDamage": 0,
-            "stealHp": 0,
-            "loseHp": 0,
-            "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "topDeckToDiscard": 0,
-            "extraRoll": null
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "number",
-              "value": 0
-            },
-            "label": "Gashing Bite",
-            "damage": 0,
-            "undefendable": false,
-            "prevent": 0,
-            "returnDamage": 0,
-            "stealHp": 0,
-            "loseHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [
-              "damage = sumHighest(extraRollDice",
-              "2)"
+            "tokens": [
+              "Poison"
             ],
+            "formulas": [],
             "notes": [],
             "topDeckToDiscard": 0,
-            "extraRoll": {
-              "dice": 4,
-              "mode": "perFace",
-              "align": "left",
-              "rollText": "",
-              "displayRows": [],
-              "outcomes": []
-            }
+            "extraRoll": null
           },
           {
             "align": "left",
             "condition": {
-              "type": "number",
-              "value": 0
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 2,
+                "red": 0
+              }
             },
-            "label": "Hoarding",
-            "damage": 9,
+            "label": "Corrosive Spit",
+            "damage": 6,
             "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
@@ -14063,7 +14051,10 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "tokens": [],
+            "tokens": [
+              "Poison",
+              "Delayed Poison"
+            ],
             "formulas": [],
             "notes": [],
             "topDeckToDiscard": 0,
@@ -14072,11 +14063,15 @@
           {
             "align": "left",
             "condition": {
-              "type": "number",
-              "value": 0
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 0,
+                "red": 2
+              }
             },
-            "label": "Thundering Roar",
-            "damage": 8,
+            "label": "Apocalyptic Surge",
+            "damage": 7,
             "undefendable": true,
             "prevent": 0,
             "returnDamage": 0,
@@ -14085,51 +14080,50 @@
             "stealCp": 0,
             "heal": 0,
             "drawCards": 0,
-            "discardCards": 1,
-            "tokens": [],
+            "discardCards": 0,
+            "tokens": [
+              "Delayed Poison",
+              "Delayed Poison"
+            ],
             "formulas": [],
             "notes": [],
             "topDeckToDiscard": 0,
             "extraRoll": null
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "number",
-              "value": 0
-            },
-            "label": "Dragon's Might",
-            "damage": 10,
-            "undefendable": false,
-            "prevent": 0,
-            "returnDamage": 0,
-            "stealHp": 0,
-            "loseHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [],
-            "formulas": [],
-            "notes": [],
-            "topDeckToDiscard": 0,
-            "extraRoll": {
-              "dice": 1,
-              "mode": "perFace",
-              "align": "left",
-              "rollText": "",
-              "displayRows": [],
-              "outcomes": []
-            }
           }
         ],
         "conditionalRules": [],
-        "passives": [],
+        "passives": [
+          {
+            "text": "Passive - Toxic Escalation: Gains cumulative tokens based on Venom Gauge every turn (5: Damage bonus 2, 10: Riposte, 15: Evasive, 20: Damage bonus 3, 25: Hex inflicted on hero every turn).",
+            "timing": "minionUpkeep",
+            "type": "custom",
+            "target": "custom"
+          },
+          {
+            "text": "Passive - Venom Leech: If Offensive Roll fails, heals HP equal to the Venom Gauge (total poison damage suffered by the hero across the battle, 1 to 25).",
+            "timing": "offensive_roll_failed",
+            "type": "offensive_failure",
+            "target": "custom"
+          }
+        ],
         "notes": [],
         "displayRows": []
       },
-      "defense": "",
-      "passives": [],
+      "defense": "Defense roll 1 die: White (1-3): prevents 3 damage. Orange (4-5): prevents 3 damage and inflicts Delayed Poison. Red (6): prevents half incoming damage, inflicts Delayed Poison and Poison.",
+      "passives": [
+        {
+          "text": "Passive - Toxic Escalation: Gains cumulative tokens based on Venom Gauge every turn (5: Damage bonus 2, 10: Riposte, 15: Evasive, 20: Damage bonus 3, 25: Hex inflicted on hero every turn).",
+          "timing": "minionUpkeep",
+          "type": "custom",
+          "target": "custom"
+        },
+        {
+          "text": "Passive - Venom Leech: If Offensive Roll fails, heals HP equal to the Venom Gauge (total poison damage suffered by the hero across the battle, 1 to 25).",
+          "timing": "offensive_roll_failed",
+          "type": "offensive_failure",
+          "target": "custom"
+        }
+      ],
       "passiveDisplayRows": [],
       "validatedAtk": true,
       "validatedDef": true,

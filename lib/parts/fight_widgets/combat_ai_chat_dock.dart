@@ -505,7 +505,9 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
         ? heroAccent
         : enemy.rank.color;
     final enemyCpInfinity =
-        enemy.profileKey == 'naraxus' || enemy.profileKey == 'viseer';
+        enemy.profileKey == 'naraxus' ||
+        enemy.profileKey == 'ourokhor' ||
+        enemy.profileKey == 'viseer';
     final cleanHeroTokens = heroTokens
         .map((t) => t.replaceAll(RegExp(r'_active', caseSensitive: false), ''))
         .toList();

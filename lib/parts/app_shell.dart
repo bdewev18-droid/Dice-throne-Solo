@@ -380,6 +380,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
                       MaterialPageRoute<void>(
                         builder: (_) => NaraxusBattlePage(
                           hero: hero,
+                          bossKey: bossKey,
                           historyRecords: _history,
                           onRecord: (record) => _handleAddRecord(record),
                           onOpenHistory: () => _openHistory(
@@ -674,9 +675,9 @@ class _HomePageState extends State<HomePage> {
                                     subtitle: '$validatedMonsters Monsters',
                                     subtitleColor: const Color(0xffffe22d),
                                     imageAsset:
-                                        'assets/enemy_previews/bleu-001.webp',
-                                    imageAlignment: const Alignment(0.0, -0.7),
-                                    borderColor: const Color(0xff3bb9ff),
+                                        'assets/enemy_previews/naxarus_head.png',
+                                    imageAlignment: const Alignment(0.4, 0.0),
+                                    borderColor: const Color(0xffd51f2a),
                                     onPressed: widget.onBestiary,
                                   ),
                                 ),
@@ -805,6 +806,167 @@ Widget _buildOfficialLink({required String label, required String url}) {
             ),
           ),
         ],
+      ),
+    ),
+  );
+}
+
+void showHowToPlayVideoDialog(BuildContext context) {
+  const videoUrl = 'https://www.youtube.com/watch?v=js_cZrv6cZY';
+  showDialog<void>(
+    context: context,
+    builder: (dialogCtx) => Dialog(
+      backgroundColor: const Color(0xff121929),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xffe53935), width: 1.5),
+      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xffc4302b),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.play_circle_fill_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'How to Play Video Guide',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        Text(
+                          'Learn Dice Throne Adventures in 10 minutes',
+                          style: TextStyle(fontSize: 11.5, color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                    tooltip: 'Close',
+                    onPressed: () => Navigator.of(dialogCtx).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              // Thumbnail preview container
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () async {
+                  await launchUrl(
+                    Uri.parse(videoUrl),
+                    mode: LaunchMode.externalApplication,
+                  );
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        height: 200,
+                        width: double.infinity,
+                        color: Colors.black,
+                        child: Image.network(
+                          'https://img.youtube.com/vi/js_cZrv6cZY/hqdefault.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: const Color(0xff1a233a),
+                            child: const Center(
+                              child: Icon(
+                                Icons.video_library_rounded,
+                                size: 54,
+                                color: Colors.white30,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        height: 200,
+                        color: Colors.black.withValues(alpha: 0.35),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xffc4302b),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'This tutorial covers the physical setup, hero turn sequence, minion roll phase, loot rewards, and token mechanics.',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xffc4302b),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                label: const Text(
+                  'Watch on YouTube',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5),
+                ),
+                onPressed: () async {
+                  await launchUrl(
+                    Uri.parse(videoUrl),
+                    mode: LaunchMode.externalApplication,
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     ),
   );
@@ -973,6 +1135,71 @@ void _showPhysicalRequirementsDialog(BuildContext context) {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 14),
+                      // Section 4: How to Play (Video Tutorial)
+                      _buildRequirementCard(
+                        badge: _buildHpButtonBadge(type: 'video'),
+                        title: '4. How to Play (Video Tutorial)',
+                        description:
+                            'Discover or review the complete gameplay flow of Dice Throne Adventures with this video guide. It explains physical card setup, turn phases, combat rolls, and token management.',
+                        actionLink: _buildOfficialLink(
+                          label: 'Watch Video Tutorial on YouTube',
+                          url: 'https://www.youtube.com/watch?v=js_cZrv6cZY',
+                        ),
+                        imageWidget: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: InkWell(
+                            onTap: () => showHowToPlayVideoDialog(ctx),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Container(
+                                  height: 140,
+                                  width: double.infinity,
+                                  color: Colors.black,
+                                  child: Image.network(
+                                    'https://img.youtube.com/vi/js_cZrv6cZY/hqdefault.jpg',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: const Color(0xff1e293b),
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.smart_display_rounded,
+                                          color: Colors.white38,
+                                          size: 48,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  height: 140,
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xffe53935),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.5),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.play_arrow_rounded,
+                                    color: Colors.white,
+                                    size: 32,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 12),
                     ],
                   ),
@@ -1066,6 +1293,38 @@ Widget _buildHpButtonBadge({required String type}) {
             'RUSH',
             style: TextStyle(
               color: Color(0xffc084fc),
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  } else if (type == 'video') {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xff181920),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xffe53935), width: 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xffe53935).withValues(alpha: 0.25),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Icon(Icons.play_circle_fill, size: 14, color: Color(0xffef5350)),
+          SizedBox(width: 4),
+          Text(
+            'HOW TO PLAY',
+            style: TextStyle(
+              color: Colors.white,
               fontSize: 11,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.6,
@@ -1521,20 +1780,26 @@ class ImageActionButton extends StatelessWidget {
 class BossBattleActionButton extends StatelessWidget {
   const BossBattleActionButton({
     required this.onPressed,
-    this.bossName = 'NAXARUS',
-    this.bossImage = 'assets/enemy_previews/naraxus.webp',
-    this.bossImageAlignment = const Alignment(0.0, -0.34),
-    this.bossImageOffset = Offset.zero,
-    this.badgeLabel = '',
+    this.bossSubtitle = 'New Monster Monthly',
+    this.bossImage = 'assets/enemy_previews/ourokhor.jpg',
+    this.bossImageAlignment = const Alignment(0.0, -0.65),
+    this.imageOffsetLeft = 60.0,
+    this.bossImageScale = 1.05,
+    this.topRatio = 0.58,
+    this.bottomRatio = 0.44,
+    this.borderColor = const Color(0xff9b58ff),
     super.key,
   });
 
   final VoidCallback? onPressed;
-  final String bossName;
+  final String bossSubtitle;
   final String bossImage;
   final Alignment bossImageAlignment;
-  final Offset bossImageOffset;
-  final String badgeLabel;
+  final double imageOffsetLeft;
+  final double bossImageScale;
+  final double topRatio;
+  final double bottomRatio;
+  final Color borderColor;
 
   @override
   Widget build(BuildContext context) {
@@ -1557,162 +1822,127 @@ class BossBattleActionButton extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    // Right-side boss wedge artwork
+                    // Right-side boss wedge artwork (shifted ~0.5 cm right)
                     Positioned.fill(
                       child: ClipPath(
-                        clipper: const _BossWedgeClipper(),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Transform.translate(
-                              offset: bossImageOffset,
-                              child: Image.asset(
-                                bossImage,
-                                fit: BoxFit.cover,
-                                alignment: bossImageAlignment,
-                              ),
-                            ),
-                            // Dark gradient overlay for text readability
-                            Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.black.withValues(alpha: 0.15),
-                                    Colors.black.withValues(alpha: 0.8),
-                                  ],
-                                  stops: const [0.45, 1.0],
+                        clipper: _BossWedgeClipper(
+                          topRatio: topRatio,
+                          bottomRatio: bottomRatio,
+                        ),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final effectiveLeft = max(
+                              imageOffsetLeft,
+                              constraints.maxWidth * bottomRatio - 15,
+                            );
+                            return Stack(
+                              children: [
+                                Positioned(
+                                  left: effectiveLeft,
+                                  top: 0,
+                                  bottom: 0,
+                                  right: -10,
+                                  child: ClipRect(
+                                    child: Transform.scale(
+                                      scale: bossImageScale,
+                                      alignment: bossImageAlignment,
+                                      child: Image.asset(
+                                        bossImage,
+                                        fit: BoxFit.cover,
+                                        alignment: bossImageAlignment,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
+                                // Dark gradient overlay for artwork depth & contrast
+                                Positioned.fill(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Colors.black.withValues(alpha: 0.05),
+                                          Colors.black.withValues(alpha: 0.65),
+                                        ],
+                                        stops: const [0.55, 1.0],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ),
-                    // Gold diagonal divider line
+                    // Violet diagonal divider line
                     Positioned.fill(
                       child: CustomPaint(
-                        painter: const _BossWedgeBorderPainter(),
-                      ),
-                    ),
-                    // Left-side "BOSS BATTLE" text
-                    Positioned(
-                      left: 12,
-                      top: 0,
-                      bottom: 0,
-                      right: 76,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
-                                'BOSS',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  height: 1.05,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              Text(
-                                'BATTLE',
-                                style: TextStyle(
-                                  color: Color(0xffffe22d),
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  height: 1.05,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
+                        painter: _BossWedgeBorderPainter(
+                          topRatio: topRatio,
+                          bottomRatio: bottomRatio,
+                          color: borderColor,
                         ),
                       ),
                     ),
-                    // Bottom-right boss name
-                    Positioned(
-                      right: 6,
-                      bottom: 4,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 1.5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.65),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: const Color(
-                              0xffffb300,
-                            ).withValues(alpha: 0.4),
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Text(
-                          bossName,
-                          style: const TextStyle(
-                            color: Color(0xffffe22d),
-                            fontSize: 9,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
+                    // Left-side 3-line text block (matching Minion Rush styling)
+                    Positioned.fill(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final effectiveRight = constraints.maxWidth > 250
+                              ? constraints.maxWidth * (1.0 - topRatio) + 12.0
+                              : 56.0;
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              left: 14,
+                              right: effectiveRight,
+                            ),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'BOSS',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1.05,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'BATTLE',
+                                    style: TextStyle(
+                                      color: Color(0xffc084fc), // Purple / violet
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1.05,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    bossSubtitle,
+                                    style: const TextStyle(
+                                      color: Color(0xffffe22d), // Gold/yellow like '3 Game Modes'
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-          ),
-        ),
-        // Top-right compact patch / tag
-        if (badgeLabel.isNotEmpty)
-          Positioned(
-            top: -8,
-            right: 8,
-            child: IgnorePointer(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xff4a1942), Color(0xff231032)],
-                ),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: const Color(0xffffb300), width: 1.2),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black87,
-                    blurRadius: 4,
-                    offset: Offset(0, 1.5),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.stars_rounded,
-                    size: 10,
-                    color: Color(0xffffe22d),
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    badgeLabel,
-                    style: const TextStyle(
-                      color: Color(0xffffe22d),
-                      fontSize: 8,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
               ),
             ),
           ),
@@ -1723,15 +1953,17 @@ class BossBattleActionButton extends StatelessWidget {
 }
 
 class _BossWedgeClipper extends CustomClipper<Path> {
-  const _BossWedgeClipper();
+  final double topRatio;
+  final double bottomRatio;
+  const _BossWedgeClipper({this.topRatio = 0.58, this.bottomRatio = 0.44});
 
   @override
   Path getClip(Size size) {
     final path = Path();
-    path.moveTo(size.width * 0.48, 0);
+    path.moveTo(size.width * topRatio, 0);
     path.lineTo(size.width, 0);
     path.lineTo(size.width, size.height);
-    path.lineTo(size.width * 0.32, size.height);
+    path.lineTo(size.width * bottomRatio, size.height);
     path.close();
     return path;
   }
@@ -1741,24 +1973,120 @@ class _BossWedgeClipper extends CustomClipper<Path> {
 }
 
 class _BossWedgeBorderPainter extends CustomPainter {
-  const _BossWedgeBorderPainter();
+  final double topRatio;
+  final double bottomRatio;
+  final Color color;
+  const _BossWedgeBorderPainter({
+    this.topRatio = 0.58,
+    this.bottomRatio = 0.44,
+    this.color = const Color(0xff9b58ff),
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xffffb300).withValues(alpha: 0.9)
+      ..color = color.withValues(alpha: 0.9)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
     final path = Path()
-      ..moveTo(size.width * 0.48, 0)
-      ..lineTo(size.width * 0.32, size.height);
+      ..moveTo(size.width * topRatio, 0)
+      ..lineTo(size.width * bottomRatio, size.height);
 
     canvas.drawPath(path, paint);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldPainter) => false;
+}
+
+class PulsingBlink extends StatefulWidget {
+  const PulsingBlink({
+    required this.child,
+    this.active = true,
+    this.duration = const Duration(milliseconds: 750),
+    this.minOpacity = 0.25,
+    this.maxOpacity = 1.0,
+    this.minScale = 0.98,
+    this.maxScale = 1.03,
+    this.enableScale = false,
+    super.key,
+  });
+
+  final Widget child;
+  final bool active;
+  final Duration duration;
+  final double minOpacity;
+  final double maxOpacity;
+  final double minScale;
+  final double maxScale;
+  final bool enableScale;
+
+  @override
+  State<PulsingBlink> createState() => _PulsingBlinkState();
+}
+
+class _PulsingBlinkState extends State<PulsingBlink>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.duration,
+    );
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+    if (widget.active) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant PulsingBlink oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.active && _controller.isAnimating) {
+      _controller.stop();
+      _controller.value = 1.0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.active) {
+      return widget.child;
+    }
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        final t = _animation.value;
+        final opacity = widget.minOpacity + (widget.maxOpacity - widget.minOpacity) * t;
+        Widget current = Opacity(
+          opacity: opacity.clamp(0.0, 1.0),
+          child: child,
+        );
+        if (widget.enableScale) {
+          final scale = widget.minScale + (widget.maxScale - widget.minScale) * t;
+          current = Transform.scale(scale: scale, child: current);
+        }
+        return current;
+      },
+      child: widget.child,
+    );
+  }
 }
 
 class WedgeActionButton extends StatelessWidget {
@@ -1778,6 +2106,7 @@ class WedgeActionButton extends StatelessWidget {
     this.bottomRatio = 0.44,
     this.imageOffsetLeft = 45.0,
     this.imageScale = 1.0,
+    this.blinkTitle = false,
     super.key,
   });
 
@@ -1796,6 +2125,7 @@ class WedgeActionButton extends StatelessWidget {
   final double bottomRatio;
   final double imageOffsetLeft;
   final double imageScale;
+  final bool blinkTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -1918,14 +2248,17 @@ class WedgeActionButton extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     if (titleAccent != null) ...[
-                                      Text(
-                                        title,
-                                        style: TextStyle(
-                                          color: titleColor,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w900,
-                                          height: 1.05,
-                                          letterSpacing: 0.5,
+                                      PulsingBlink(
+                                        active: blinkTitle,
+                                        child: Text(
+                                          title,
+                                          style: TextStyle(
+                                            color: titleColor,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w900,
+                                            height: 1.05,
+                                            letterSpacing: 0.5,
+                                          ),
                                         ),
                                       ),
                                       Text(
@@ -1941,14 +2274,17 @@ class WedgeActionButton extends StatelessWidget {
                                         ),
                                       ),
                                     ] else ...[
-                                      Text(
-                                        title,
-                                        style: TextStyle(
-                                          color: titleColor,
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w900,
-                                          height: 1.05,
-                                          letterSpacing: 0.5,
+                                      PulsingBlink(
+                                        active: blinkTitle,
+                                        child: Text(
+                                          title,
+                                          style: TextStyle(
+                                            color: titleColor,
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.w900,
+                                            height: 1.05,
+                                            letterSpacing: 0.5,
+                                          ),
                                         ),
                                       ),
                                     ],

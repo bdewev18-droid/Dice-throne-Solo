@@ -177,10 +177,10 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.58,
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 0.62,
                 ),
                 itemCount: heroes.length + 1,
                 itemBuilder: (context, index) {
@@ -278,14 +278,10 @@ class HeroSegmentFilters extends StatelessWidget {
               selected: selectedSegments.isEmpty,
               onSelected: (_) => onChanged(null, true),
             ),
-            ...const [
-              HeroSegment.santaKrampus,
-            ].map(
-              (segment) => FilterChip(
-                label: Text(segment.label),
-                selected: selectedSegments.contains(segment),
-                onSelected: (selected) => onChanged(segment, selected),
-              ),
+            FilterChip(
+              label: Text(HeroSegment.other.label),
+              selected: selectedSegments.contains(HeroSegment.other),
+              onSelected: (selected) => onChanged(HeroSegment.other, selected),
             ),
           ],
         ),
@@ -316,7 +312,6 @@ class HeroSegmentFilters extends StatelessWidget {
               HeroSegment.xmen,
               HeroSegment.outcast,
               HeroSegment.vanguard,
-              HeroSegment.other,
             ].map(
               (segment) => FilterChip(
                 label: Text(segment.label),
@@ -535,7 +530,7 @@ class _RandomHeroCardState extends State<RandomHeroCard>
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -543,8 +538,10 @@ class _RandomHeroCardState extends State<RandomHeroCard>
                         Text(
                           selectedHero.label,
                           textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 11,
                             color: selectedHero.color,
                             fontWeight: FontWeight.w900,
                           ),
@@ -552,8 +549,11 @@ class _RandomHeroCardState extends State<RandomHeroCard>
                       const Text(
                         'Random hero',
                         textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 21,
+                          fontSize: 13,
+                          height: 1.15,
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
                         ),
@@ -597,11 +597,11 @@ class _HeroComplexityBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final image = Image.asset(
       hero.complexityAsset,
-      height: 24,
+      height: 18,
       fit: BoxFit.contain,
       errorBuilder: (context, error, stackTrace) => Text(
         'Complexity ${hero.complexity}',
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
       ),
     );
     return Semantics(label: 'Complexity ${hero.complexity}', child: image);
@@ -693,17 +693,20 @@ class HeroCard extends StatelessWidget {
                 ),
               ),
               Positioned(
-                top: 8,
-                left: 8,
-                right: 58,
+                top: 6,
+                left: 6,
+                right: 36,
                 child: Center(child: _HeroComplexityBadge(hero: hero)),
               ),
               Positioned(
-                top: 8,
-                right: 8,
+                top: 6,
+                right: 6,
                 child: IconButton.filledTonal(
                   tooltip: owned ? 'In my collection' : 'Not in my collection',
                   onPressed: onToggleOwned,
+                  constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                  padding: EdgeInsets.zero,
+                  iconSize: 15,
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.black.withValues(alpha: 0.58),
                     foregroundColor: owned ? Colors.white : Colors.white54,
@@ -717,15 +720,18 @@ class HeroCard extends StatelessWidget {
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         hero.label,
                         textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 21,
+                          fontSize: 13,
+                          height: 1.15,
                           color: selected ? hero.color : Colors.white,
                           fontWeight: FontWeight.w900,
                         ),
@@ -933,11 +939,11 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                         ),
                       ),
                   ],
-                  const SizedBox(height: 10),
-                  _buildHandOfTheKingInfoRow(),
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+            _buildHandOfTheKingCard(),
             const SizedBox(height: 12),
             _buildMinionPacksCard(),
             const SizedBox(height: 16),
@@ -945,6 +951,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
               title: 'START',
               titleAccent: 'RUN',
               titleAccentColor: const Color(0xff54e98a),
+              blinkTitle: canStart,
               subtitle: widget.hero.label.toUpperCase(),
               subtitleColor: const Color(0xffffe22d),
               imageAsset: widget.hero.asset,
@@ -961,21 +968,15 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
     );
   }
 
-  Widget _buildHandOfTheKingInfoRow() {
+  Widget _buildHandOfTheKingCard() {
     final isFree = _mode == SurvivalMode.free;
     final isDiff =
         _mode == SurvivalMode.hardFixed || _mode == SurvivalMode.hardRandom;
     final currentDifficult = isFree ? _freeHandOfTheKingDifficult : isDiff;
+    final successRolls = currentDifficult ? '3, 4, 5, 6' : '4, 5, 6';
+    final failRolls = currentDifficult ? '1, 2' : '1, 2, 3';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: const Color(0xffffb300).withValues(alpha: 0.35),
-        ),
-      ),
+    return InfoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -983,8 +984,8 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
             children: [
               Image.asset(
                 'assets/token/main_du_roi.webp',
-                width: 22,
-                height: 22,
+                width: 20,
+                height: 20,
                 errorBuilder: (_, __, ___) => const Icon(
                   Icons.pan_tool_alt_rounded,
                   color: Color(0xffffb300),
@@ -992,29 +993,148 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Hand of the King',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: Colors.white,
+              const Expanded(
+                child: Text(
+                  'HAND OF THE KING',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
                 ),
               ),
-              const Spacer(),
-              Text(
-                currentDifficult
-                    ? 'Difficult: 3, 4, 5, 6 (1-2 Fail)'
-                    : 'Medium: 4, 5, 6 (1-3 Fail)',
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xffffd54f),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: currentDifficult
+                      ? const Color(0xffef5350).withValues(alpha: 0.18)
+                      : const Color(0xffffb300).withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: currentDifficult
+                        ? const Color(0xffef5350).withValues(alpha: 0.5)
+                        : const Color(0xffffb300).withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Text(
+                  currentDifficult ? 'DIFFICULT' : 'MEDIUM',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                    color: currentDifficult
+                        ? const Color(0xffef9a9a)
+                        : const Color(0xffffd54f),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff14351d),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xff43a047).withValues(alpha: 0.6),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        size: 16,
+                        color: Color(0xff66bb6a),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              successRolls,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const Text(
+                              'Success (Reroll)',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xffa5d6a7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff39141a),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xffe53935).withValues(alpha: 0.6),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.cancel_rounded,
+                        size: 16,
+                        color: Color(0xffef5350),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              failRolls,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const Text(
+                              'Fail (Cancelled)',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xffef9a9a),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
           if (isFree) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             SegmentedButton<bool>(
               style: const ButtonStyle(
                 visualDensity: VisualDensity.compact,
@@ -1023,10 +1143,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
               segments: const [
                 ButtonSegment<bool>(
                   value: false,
-                  label: Text(
-                    'Medium (4-6)',
-                    style: TextStyle(fontSize: 11),
-                  ),
+                  label: Text('Medium (4-6)', style: TextStyle(fontSize: 11)),
                 ),
                 ButtonSegment<bool>(
                   value: true,

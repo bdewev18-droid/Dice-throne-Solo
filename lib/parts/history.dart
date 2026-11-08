@@ -34,12 +34,15 @@ class _HistoryPageState extends State<HistoryPage> {
       ? HistoryCategory.bosses
       : HistoryCategory.minionRush;
   String _selectedBossKey = 'all';
+  String _selectedBossDifficulty = 'all';
   late RunDifficulty _difficulty =
       (widget.initialDifficulty == RunDifficulty.naraxus)
       ? RunDifficulty.medium
       : (widget.initialDifficulty ?? RunDifficulty.medium);
   RandomFilter _randomFilter = RandomFilter.both;
   bool _deleteMode = false;
+  bool _isGridView = false;
+  HeroType? _selectedGridHero;
   final Set<GameRecord> _selectedForDelete = {};
   final Set<HeroType> _expandedHeroes = {};
 
@@ -84,16 +87,30 @@ class _HistoryPageState extends State<HistoryPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: _HistoryCategorySlider(
-                  category: _category,
-                  onChanged: (cat) {
-                    setState(() {
-                      _category = cat;
-                      _selectedForDelete.clear();
-                    });
-                  },
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _HistoryCategorySlider(
+                    category: _category,
+                    onChanged: (cat) {
+                      setState(() {
+                        _category = cat;
+                        _selectedForDelete.clear();
+                        _selectedGridHero = null;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _HistoryViewToggle(
+                    isGrid: _isGridView,
+                    onChanged: (val) {
+                      setState(() {
+                        _isGridView = val;
+                        _selectedGridHero = null;
+                      });
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               Row(
@@ -136,11 +153,75 @@ class _HistoryPageState extends State<HistoryPage> {
                                   style: TextStyle(fontSize: 12),
                                 ),
                               ),
+                              DropdownMenuItem(
+                                value: 'ourokhor',
+                                child: Text(
+                                  'Ourokhor',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
                             ],
                             onChanged: (val) {
                               if (val != null) {
                                 setState(() {
                                   _selectedBossKey = val;
+                                  _selectedForDelete.clear();
+                                });
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text(
+                            'Mode',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedBossDifficulty,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'all',
+                                child: Text(
+                                  'All',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'normal',
+                                child: Text(
+                                  'Normal',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'difficult',
+                                child: Text(
+                                  'Difficult',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() {
+                                  _selectedBossDifficulty = val;
                                   _selectedForDelete.clear();
                                 });
                               }
@@ -289,26 +370,66 @@ class _HistoryPageState extends State<HistoryPage> {
                     style: TextStyle(color: Color(0xffbbcbbb), fontSize: 12),
                   ),
                 ),
-              const SizedBox(height: 16),
-              _buildPodiumSection(
-                flatMode ? records : grouped.entries.toList(),
-                flatMode,
-              ),
-              const SizedBox(height: 16),
-              _HistoryHeaderRow(
-                isBossMode: _category == HistoryCategory.bosses,
-                difficulty: _difficulty,
-                allRecords: widget.records,
-              ),
-              const Divider(),
+              const SizedBox(height: 12),
               Expanded(
-                child: flatMode
-                    ? (records.isEmpty
-                          ? const Center(
+                child: ListView(
+                  children: [
+                    if (!_isGridView) ...[
+                      _buildPodiumSection(
+                        flatMode ? records : grouped.entries.toList(),
+                        flatMode,
+                      ),
+                      const SizedBox(height: 16),
+                      _HistoryHeaderRow(
+                        isBossMode: _category == HistoryCategory.bosses,
+                        difficulty: _difficulty,
+                        allRecords: widget.records,
+                      ),
+                      const Divider(),
+                      if (flatMode)
+                        if (records.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40),
+                            child: Center(
                               child: Text('No game for this filter.'),
-                            )
-                          : _buildFlatList(records))
-                    : _buildGroupedList(grouped),
+                            ),
+                          )
+                        else
+                          ...records.map(
+                            (r) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: _RunDetailRow(
+                                record: r,
+                                deleteMode: _deleteMode,
+                                selected: _selectedForDelete.contains(r),
+                                onSelected: (value) => _toggleRecord(r, value),
+                                showHero: true,
+                              ),
+                            ),
+                          )
+                      else
+                        ..._buildGroupedChildren(grouped),
+                    ] else ...[
+                      if (grouped.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: Center(
+                            child: Text('No game for this filter.'),
+                          ),
+                        )
+                      else ...[
+                        _buildGridSection(grouped),
+                        if (_selectedGridHero != null &&
+                            grouped.containsKey(_selectedGridHero))
+                          _buildHeroDetailSection(
+                            _selectedGridHero!,
+                            grouped[_selectedGridHero]!,
+                          ),
+                      ],
+                    ],
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
               if (_deleteMode)
                 FilledButton.icon(
@@ -335,21 +456,28 @@ class _HistoryPageState extends State<HistoryPage> {
           record.bossKey != null ||
           record.mode.name.toLowerCase().contains('boss') ||
           record.mode.name.toLowerCase().contains('naxarus') ||
+          record.mode.name.toLowerCase().contains('ourokhor') ||
           record.mode.name.toLowerCase().contains('kaelen');
       if (!isBoss) return false;
       if (_selectedBossKey != 'all') {
         if (_selectedBossKey == 'naraxus') {
-          final isNaraxus =
-              (record.bossKey == 'naraxus') ||
-              record.mode.difficulty == RunDifficulty.naraxus ||
-              record.mode.name.toLowerCase().contains('naxarus');
+          final isNaraxus = (record.bossKey == 'naraxus') ||
+              (record.bossKey == null &&
+                  (record.mode.difficulty == RunDifficulty.naraxus ||
+                      record.mode.name.toLowerCase().contains('naxarus')));
           if (!isNaraxus) return false;
-        } else if (_selectedBossKey == 'kaelen') {
-          final isKaelen =
-              (record.bossKey == 'kaelen') ||
-              record.mode.name.toLowerCase().contains('kaelen');
-          if (!isKaelen) return false;
+        } else {
+          final isTargetBoss = (record.bossKey == _selectedBossKey) ||
+              record.mode.name.toLowerCase().contains(_selectedBossKey);
+          if (!isTargetBoss) return false;
         }
+      }
+      if (_selectedBossDifficulty != 'all') {
+        final isHard = record.mode == SurvivalMode.naraxusHard ||
+            record.mode.name.toLowerCase().contains('hard') ||
+            record.mode.name.toLowerCase().contains('difficult');
+        if (_selectedBossDifficulty == 'difficult' && !isHard) return false;
+        if (_selectedBossDifficulty == 'normal' && isHard) return false;
       }
       return true;
     }
@@ -359,6 +487,7 @@ class _HistoryPageState extends State<HistoryPage> {
         record.bossKey != null ||
         record.mode.name.toLowerCase().contains('boss') ||
         record.mode.name.toLowerCase().contains('naxarus') ||
+        record.mode.name.toLowerCase().contains('ourokhor') ||
         record.mode.name.toLowerCase().contains('kaelen');
     if (isBoss) return false;
 
@@ -485,7 +614,7 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  Widget _buildGroupedList(Map<HeroType, List<GameRecord>> grouped) {
+  List<Widget> _buildGroupedChildren(Map<HeroType, List<GameRecord>> grouped) {
     final isBoss = _category == HistoryCategory.bosses;
     final unplayedHeroes =
         HeroType.values
@@ -493,193 +622,473 @@ class _HistoryPageState extends State<HistoryPage> {
             .toList()
           ..sort((a, b) => a.label.compareTo(b.label));
 
-    return ListView(
-      children: [
-        ...grouped.entries.map((entry) {
-          final hero = entry.key;
-          final runs = entry.value;
-          final expanded = _expandedHeroes.contains(hero);
-          return Column(
-            children: [
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    if (expanded) {
-                      _expandedHeroes.remove(hero);
-                    } else {
-                      _expandedHeroes.add(hero);
-                    }
-                  });
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 4,
-                        child: Row(
-                          children: [
-                            _deleteMode
-                                ? Checkbox(
-                                    value: runs.every(
-                                      _selectedForDelete.contains,
-                                    ),
-                                    onChanged: (value) =>
-                                        _toggleRuns(runs, value),
-                                  )
-                                : HeroAvatar(hero: hero, size: 36),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                hero.label,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+    return [
+      ...grouped.entries.map((entry) {
+        final hero = entry.key;
+        final runs = entry.value;
+        final expanded = _expandedHeroes.contains(hero);
+        return Column(
+          children: [
+            InkWell(
+              onTap: () {
+                setState(() {
+                  if (expanded) {
+                    _expandedHeroes.remove(hero);
+                  } else {
+                    _expandedHeroes.add(hero);
+                  }
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Row(
+                        children: [
+                          _deleteMode
+                              ? Checkbox(
+                                  value: runs.every(
+                                    _selectedForDelete.contains,
+                                  ),
+                                  onChanged: (value) =>
+                                      _toggleRuns(runs, value),
+                                )
+                              : HeroAvatar(hero: hero, size: 36),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              hero.label,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: _HistoryMetricText(runs.length.toString()),
-                      ),
-                      if (!isBoss)
-                        Expanded(
-                          child: _HistoryMetricText(
-                            _roundedAverageLabel(_averageEnemies(runs)),
-                          ),
-                        ),
-                      Expanded(
-                        child: _HistoryMetricText(
-                          _roundedAverageLabel(_averageHp(runs)),
-                        ),
-                      ),
-                      Expanded(
-                        flex: isBoss ? 2 : 1,
-                        child: _HistoryMetricText(
-                          _formatSmartDuration(
-                            Duration(
-                              seconds: _averageDurationSeconds(runs).round(),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
+                        ],
                       ),
+                    ),
+                    Expanded(
+                      child: _HistoryMetricText(runs.length.toString()),
+                    ),
+                    if (!isBoss)
                       Expanded(
                         child: _HistoryMetricText(
-                          _formatNumber(_averageScore(runs)),
+                          _roundedAverageLabel(_averageEnemies(runs)),
                         ),
                       ),
-                    ],
-                  ),
+                    Expanded(
+                      child: _HistoryMetricText(
+                        _roundedAverageLabel(_averageHp(runs)),
+                      ),
+                    ),
+                    Expanded(
+                      flex: isBoss ? 2 : 1,
+                      child: _HistoryMetricText(
+                        _formatSmartDuration(
+                          Duration(
+                            seconds: _averageDurationSeconds(runs).round(),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: _HistoryMetricText(
+                        _formatNumber(_averageScore(runs)),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              if (expanded)
-                Padding(
-                  padding: const EdgeInsets.only(left: 12, bottom: 8),
-                  child: Column(
-                    children: runs
-                        .map(
-                          (r) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: _RunDetailRow(
-                              record: r,
-                              deleteMode: _deleteMode,
-                              selected: _selectedForDelete.contains(r),
-                              onSelected: (value) => _toggleRecord(r, value),
+            ),
+            if (expanded)
+              Padding(
+                padding: const EdgeInsets.only(left: 12, bottom: 8),
+                child: Column(
+                  children: runs
+                      .map(
+                        (r) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: _RunDetailRow(
+                            record: r,
+                            deleteMode: _deleteMode,
+                            selected: _selectedForDelete.contains(r),
+                            onSelected: (value) => _toggleRecord(r, value),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            const Divider(height: 1),
+          ],
+        );
+      }),
+      if (unplayedHeroes.isNotEmpty) ...[
+        ...unplayedHeroes.map((hero) {
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Row(
+                        children: [
+                          Opacity(
+                            opacity: 0.38,
+                            child: ColorFiltered(
+                              colorFilter: const ColorFilter.matrix(<double>[
+                                0.2126,
+                                0.7152,
+                                0.0722,
+                                0,
+                                0,
+                                0.2126,
+                                0.7152,
+                                0.0722,
+                                0,
+                                0,
+                                0.2126,
+                                0.7152,
+                                0.0722,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                1,
+                                0,
+                              ]),
+                              child: HeroAvatar(hero: hero, size: 36),
                             ),
                           ),
-                        )
-                        .toList(),
-                  ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              hero.label,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white38,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Expanded(
+                      child: _HistoryMetricText('-', color: Colors.white24),
+                    ),
+                    if (!isBoss)
+                      const Expanded(
+                        child: _HistoryMetricText('-', color: Colors.white24),
+                      ),
+                    const Expanded(
+                      child: _HistoryMetricText('-', color: Colors.white24),
+                    ),
+                    Expanded(
+                      flex: isBoss ? 2 : 1,
+                      child: const _HistoryMetricText(
+                        '-',
+                        color: Colors.white24,
+                      ),
+                    ),
+                    const Expanded(
+                      child: _HistoryMetricText('-', color: Colors.white24),
+                    ),
+                  ],
                 ),
+              ),
               const Divider(height: 1),
             ],
           );
         }),
+      ],
+    ];
+  }
+
+  Widget _buildGroupedList(Map<HeroType, List<GameRecord>> grouped) {
+    return ListView(children: _buildGroupedChildren(grouped));
+  }
+
+  int _bestScore(List<GameRecord> runs) {
+    if (runs.isEmpty) return 0;
+    return runs.map((r) => r.score).reduce((a, b) => a > b ? a : b);
+  }
+
+  Widget _buildGridSection(Map<HeroType, List<GameRecord>> grouped) {
+    final entries = grouped.entries.toList();
+    final unplayedHeroes = HeroType.values
+        .where((h) => h != HeroType.benjamin && !grouped.containsKey(h))
+        .toList()
+      ..sort((a, b) => a.label.compareTo(b.label));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: entries.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 0.72,
+          ),
+          itemBuilder: (context, index) {
+            final entry = entries[index];
+            final hero = entry.key;
+            final runs = entry.value;
+            final score = _sort == HistorySort.best
+                ? _bestScore(runs).toDouble()
+                : _averageScore(runs);
+            return _HeroGridCard(
+              hero: hero,
+              rank: index + 1,
+              score: score,
+              runsCount: runs.length,
+              isSelected: _selectedGridHero == hero,
+              onTap: () {
+                setState(() {
+                  _selectedGridHero =
+                      (_selectedGridHero == hero ? null : hero);
+                });
+              },
+            );
+          },
+        ),
         if (unplayedHeroes.isNotEmpty) ...[
-          ...unplayedHeroes.map((hero) {
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 4,
-                        child: Row(
-                          children: [
-                            Opacity(
-                              opacity: 0.38,
-                              child: ColorFiltered(
-                                colorFilter: const ColorFilter.matrix(<double>[
-                                  0.2126,
-                                  0.7152,
-                                  0.0722,
-                                  0,
-                                  0,
-                                  0.2126,
-                                  0.7152,
-                                  0.0722,
-                                  0,
-                                  0,
-                                  0.2126,
-                                  0.7152,
-                                  0.0722,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  0,
-                                  1,
-                                  0,
-                                ]),
-                                child: HeroAvatar(hero: hero, size: 36),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                hero.label,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white38,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Expanded(
-                        child: _HistoryMetricText('-', color: Colors.white24),
-                      ),
-                      if (!isBoss)
-                        const Expanded(
-                          child: _HistoryMetricText('-', color: Colors.white24),
-                        ),
-                      const Expanded(
-                        child: _HistoryMetricText('-', color: Colors.white24),
-                      ),
-                      Expanded(
-                        flex: isBoss ? 2 : 1,
-                        child: const _HistoryMetricText(
-                          '-',
-                          color: Colors.white24,
-                        ),
-                      ),
-                      const Expanded(
-                        child: _HistoryMetricText('-', color: Colors.white24),
-                      ),
-                    ],
+          const SizedBox(height: 16),
+          const Text(
+            'Unplayed heroes',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.white38,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: unplayedHeroes.map((hero) {
+              return Tooltip(
+                message: '${hero.label} (No runs)',
+                child: Opacity(
+                  opacity: 0.35,
+                  child: ColorFiltered(
+                    colorFilter: const ColorFilter.matrix(<double>[
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0.2126,
+                      0.7152,
+                      0.0722,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1,
+                      0,
+                    ]),
+                    child: HeroAvatar(hero: hero, size: 36),
                   ),
                 ),
-                const Divider(height: 1),
-              ],
-            );
-          }),
+              );
+            }).toList(),
+          ),
         ],
       ],
+    );
+  }
+
+  Widget _buildHeroDetailSection(HeroType hero, List<GameRecord> runs) {
+    final isBoss = _category == HistoryCategory.bosses;
+    return Container(
+      margin: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xff181a26),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: hero.color.withValues(alpha: 0.7),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: hero.color.withValues(alpha: 0.2),
+            blurRadius: 14,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              HeroAvatar(hero: hero, size: 38),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hero.label,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: hero.color,
+                      ),
+                    ),
+                    Text(
+                      '${runs.length} played run(s)',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, size: 20),
+                onPressed: () => setState(() => _selectedGridHero = null),
+                tooltip: 'Close details',
+              ),
+            ],
+          ),
+          const Divider(height: 18),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _buildDetailChip(
+                icon: Icons.games_rounded,
+                label: 'Runs',
+                value: runs.length.toString(),
+              ),
+              if (!isBoss)
+                _buildDetailChip(
+                  icon: Icons.shield_rounded,
+                  label: 'Avg Enemies',
+                  value: _roundedAverageLabel(_averageEnemies(runs)),
+                ),
+              _buildDetailChip(
+                icon: Icons.favorite_rounded,
+                label: 'Avg HP',
+                value: _roundedAverageLabel(_averageHp(runs)),
+                color: Colors.redAccent,
+              ),
+              _buildDetailChip(
+                icon: Icons.timer_rounded,
+                label: 'Avg Time',
+                value: _formatSmartDuration(
+                  Duration(seconds: _averageDurationSeconds(runs).round()),
+                ),
+                color: Colors.amberAccent,
+              ),
+              _buildDetailChip(
+                icon: Icons.stars_rounded,
+                label: 'Avg Score',
+                value: '${_formatNumber(_averageScore(runs))} pts',
+                color: const Color(0xff57b966),
+              ),
+              _buildDetailChip(
+                icon: Icons.emoji_events_rounded,
+                label: 'Best Score',
+                value: '${_bestScore(runs)} pts',
+                color: const Color(0xffFFD700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Individual Runs',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white70,
+                ),
+              ),
+              Text(
+                '${runs.length} total',
+                style: const TextStyle(fontSize: 11, color: Colors.white38),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 128,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: runs.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final r = runs[index];
+                return _HeroUnitRunCard(
+                  record: r,
+                  index: runs.length - index,
+                  deleteMode: _deleteMode,
+                  selected: _selectedForDelete.contains(r),
+                  onToggleSelect: (val) => _toggleRecord(r, val),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailChip({
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? color,
+  }) {
+    final c = color ?? Colors.white70;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xff12131d),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: c),
+          const SizedBox(width: 4),
+          Text(
+            '$label: ',
+            style: const TextStyle(fontSize: 10, color: Colors.white54),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: c,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1388,6 +1797,383 @@ class _HistoryCategorySlider extends StatelessWidget {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+}
+
+class _HistoryViewToggle extends StatelessWidget {
+  const _HistoryViewToggle({
+    required this.isGrid,
+    required this.onChanged,
+  });
+
+  final bool isGrid;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xff16171f),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white12, width: 1.2),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildItem(
+            icon: Icons.table_rows_rounded,
+            isSelected: !isGrid,
+            tooltip: 'Table view',
+            onTap: () => onChanged(false),
+          ),
+          _buildItem(
+            icon: Icons.grid_view_rounded,
+            isSelected: isGrid,
+            tooltip: 'Grid view',
+            onTap: () => onChanged(true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItem({
+    required IconData icon,
+    required bool isSelected,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xff7a33cc) : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xff7a33cc).withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: isSelected ? Colors.white : Colors.white54,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroGridCard extends StatelessWidget {
+  const _HeroGridCard({
+    required this.hero,
+    required this.rank,
+    required this.score,
+    required this.runsCount,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final HeroType hero;
+  final int rank;
+  final double score;
+  final int runsCount;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    Color? rankColor;
+    String rankLabel = '#$rank';
+    if (rank == 1) {
+      rankColor = const Color(0xffFFD700);
+    } else if (rank == 2) {
+      rankColor = const Color(0xffC0C0C0);
+    } else if (rank == 3) {
+      rankColor = const Color(0xffCD7F32);
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected
+                  ? hero.color
+                  : (rankColor != null
+                      ? rankColor.withValues(alpha: 0.8)
+                      : Colors.white24),
+              width: isSelected ? 3.0 : (rankColor != null ? 1.5 : 1),
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: hero.color.withValues(alpha: 0.5),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8.5),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Transform.scale(
+                  scale: hero.imageScale,
+                  child: Image.asset(
+                    hero.asset,
+                    fit: BoxFit.cover,
+                    alignment: hero.imageAlignment,
+                  ),
+                ),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Color.fromRGBO(0, 0, 0, 0.45),
+                        Colors.transparent,
+                        Color.fromRGBO(0, 0, 0, 0.90),
+                      ],
+                      stops: [0.0, 0.35, 1.0],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 5,
+                  left: 5,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.70),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: rankColor ?? Colors.white24,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (rank == 1) ...[
+                          const Icon(
+                            Icons.emoji_events,
+                            size: 11,
+                            color: Color(0xffFFD700),
+                          ),
+                          const SizedBox(width: 2),
+                        ],
+                        Text(
+                          rankLabel,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: rankColor ?? Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 6,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          hero.label,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11.5,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                blurRadius: 4,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 3),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 1.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.65),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: (rankColor ?? const Color(0xff7cc5ff))
+                                  .withValues(alpha: 0.5),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Text(
+                            '${score.round()} pts',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: rankColor ?? const Color(0xff7cc5ff),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroUnitRunCard extends StatelessWidget {
+  const _HeroUnitRunCard({
+    required this.record,
+    required this.index,
+    required this.deleteMode,
+    required this.selected,
+    required this.onToggleSelect,
+  });
+
+  final GameRecord record;
+  final int index;
+  final bool deleteMode;
+  final bool selected;
+  final ValueChanged<bool?> onToggleSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 170,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xff12131c),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: selected ? Colors.redAccent : Colors.white12,
+          width: selected ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Run #$index',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  color: Colors.white70,
+                ),
+              ),
+              if (deleteMode)
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: Checkbox(
+                    value: selected,
+                    onChanged: onToggleSelect,
+                  ),
+                )
+              else
+                Text(
+                  '${record.date.day.toString().padLeft(2, '0')}/${record.date.month.toString().padLeft(2, '0')}/${record.date.year}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.white38,
+                  ),
+                ),
+            ],
+          ),
+          Row(
+            children: [
+              const Icon(
+                Icons.stars_rounded,
+                size: 15,
+                color: Color(0xffFFD700),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${record.score} pts',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xffFFD700),
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              const Icon(Icons.favorite, size: 12, color: Colors.redAccent),
+              const SizedBox(width: 3),
+              Text(
+                '${record.healthRemaining ?? '-'} HP',
+                style: const TextStyle(fontSize: 11, color: Colors.white70),
+              ),
+              const Spacer(),
+              const Icon(Icons.timer, size: 12, color: Colors.amberAccent),
+              const SizedBox(width: 3),
+              Text(
+                '${record.duration.inMinutes}m',
+                style: const TextStyle(fontSize: 11, color: Colors.white70),
+              ),
+            ],
+          ),
+          if (record.enemiesDefeated > 0)
+            Row(
+              children: [
+                const Icon(Icons.shield, size: 11, color: Colors.white38),
+                const SizedBox(width: 3),
+                Text(
+                  '${record.enemiesDefeated} defeated',
+                  style: const TextStyle(fontSize: 10, color: Colors.white54),
+                ),
+              ],
+            ),
+        ],
       ),
     );
   }

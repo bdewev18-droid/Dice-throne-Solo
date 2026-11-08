@@ -67,7 +67,7 @@ List<EnemyRank> _ranksForMode(SurvivalConfig config) {
     SurvivalMode.mediumRandom => _randomRanks(config.targetScore, hard: false),
     SurvivalMode.hardRandom => _randomRanks(config.targetScore, hard: true),
     SurvivalMode.free => _freeModeRanks(config.freeCounts),
-    SurvivalMode.naraxus => [EnemyRank.naraxus],
+    SurvivalMode.naraxus || SurvivalMode.naraxusHard => [EnemyRank.naraxus],
   };
 }
 
@@ -79,6 +79,7 @@ SurvivalMode _randomModeFor(SurvivalMode mode) {
     SurvivalMode.hardRandom => SurvivalMode.hardRandom,
     SurvivalMode.free => SurvivalMode.free,
     SurvivalMode.naraxus => SurvivalMode.naraxus,
+    SurvivalMode.naraxusHard => SurvivalMode.naraxusHard,
   };
 }
 
@@ -271,6 +272,7 @@ EnemyNode _enemy(
     attacks: selectedProfile.attacks,
     defense: selectedProfile.defense,
     defenseDice: selectedProfile.defenseDice,
+    attackDice: selectedProfile.attackDice,
     attackPlan: selectedProfile.attackPlan,
     cardAsset: selectedProfile.cardAsset,
     profileKey: selectedProfile.key,

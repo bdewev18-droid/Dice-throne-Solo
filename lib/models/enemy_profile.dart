@@ -39,6 +39,7 @@ class EnemyProfile {
     required this.defense,
     required this.defenseDice,
     required this.attackPlan,
+    this.attackDice = 5,
     this.initialTokens = const [],
     this.rewardChests = 1,
     this.rewardRank,
@@ -62,6 +63,7 @@ class EnemyProfile {
   final List<String> attacks;
   final String defense;
   final int defenseDice;
+  final int attackDice;
   final MinionAttackPlan attackPlan;
   final List<String> initialTokens;
   final int rewardChests;
@@ -77,9 +79,8 @@ class EnemyProfile {
   final String sourcePack;
 
   /// Whether the minion is 100% validated (both attack and defense approved).
-  /// Fixed bosses (Viseer, Naraxus) are always considered valid.
+  /// Naraxus bosses are considered valid. Viseer requires explicit validation.
   bool get isFullyValidated =>
-      rank == EnemyRank.viseer ||
       rank == EnemyRank.naraxus ||
       (validated || (validatedAtk && validatedDef));
 
@@ -88,8 +89,8 @@ class EnemyProfile {
     if (key == 'naraxus') {
       return 'assets/enemy_previews/naraxus.webp';
     }
-    if (key == 'kaelen-voss') {
-      return 'assets/enemy_previews/kaelen-voss.webp';
+    if (key == 'ourokhor' || key == 'kaelen-voss') {
+      return 'assets/enemy_previews/ourokhor.jpg';
     }
     if (key == 'viseer') {
       return 'assets/enemy_previews/orange-viseer.webp';

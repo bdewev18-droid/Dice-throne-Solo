@@ -75,6 +75,7 @@ class _FightStepSnapshot {
     required this.minionRealityWarpThisAttack,
     required this.heroSilenceThisAttack,
     required this.minionSilenceThisAttack,
+    this.ourokhorPoisonGauge = 0,
   });
 
   final CombatPhase phase;
@@ -118,6 +119,7 @@ class _FightStepSnapshot {
   final bool minionRealityWarpThisAttack;
   final bool heroSilenceThisAttack;
   final bool minionSilenceThisAttack;
+  final int ourokhorPoisonGauge;
 }
 
 class _DieSnapshot {
@@ -318,6 +320,7 @@ class _FightPageState extends State<FightPage> {
   final List<String> _naraxusRollHistory = [];
   bool _diceAnimationPending = false;
   bool _druidFormRolledThisUpkeep = false;
+  int _ourokhorPoisonGauge = 0;
   bool _viseerDefensePassivePending = false;
   bool _viseerRewardGranted = false;
   bool _minionEntangledThisAttack = false;
@@ -398,15 +401,19 @@ class _FightPageState extends State<FightPage> {
 
   bool get _isNaraxus =>
       enemy.profileKey == 'naraxus' ||
-      (enemy.profileKey == 'kaelen-voss' &&
+      ((enemy.profileKey == 'ourokhor' || enemy.profileKey == 'kaelen-voss') &&
           enemy.attackPlan.style == MinionAttackStyle.none &&
           enemy.attackPlan.displayRows.isEmpty);
+
+  bool get _isNaraxusHard =>
+      _isNaraxus && widget.adventure.config.mode == SurvivalMode.naraxusHard;
 
   bool _isViseerNode(EnemyNode node) => node.profileKey == 'viseer';
 
   bool _enemyHasInfiniteCp(EnemyNode node) =>
       node.rank == EnemyRank.naraxus ||
       node.profileKey == 'naraxus' ||
+      node.profileKey == 'ourokhor' ||
       _isViseerNode(node);
 
   @override
@@ -608,6 +615,29 @@ class _FightPageState extends State<FightPage> {
                               side: const BorderSide(color: Color(0xff8f43ff)),
                             ),
                             child: const Text('Revenir Ã  l\'Ã©cran de fin'),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        if (enemy.profileKey == 'ourokhor') ...[
+                          OurokhorPoisonGaugeCard(
+                            value: _ourokhorPoisonGauge,
+                            onChanged: (delta) {
+                              setState(() {
+                                _captureStepUndo();
+                                final oldVal = _ourokhorPoisonGauge;
+                                _ourokhorPoisonGauge = (_ourokhorPoisonGauge + delta).clamp(0, 25);
+                                if (delta > 0) {
+                                  enemy.health = (enemy.health + delta).clamp(0, enemy.maxHealth);
+                                  widget.adventure.log(
+                                    '[MANUAL] Venom Gauge adjusted to $_ourokhorPoisonGauge/25 (+${delta} HP to Ourokhor).',
+                                  );
+                                } else {
+                                  widget.adventure.log(
+                                    '[MANUAL] Venom Gauge adjusted to $_ourokhorPoisonGauge/25 (was $oldVal).',
+                                  );
+                                }
+                              });
+                            },
                           ),
                           const SizedBox(height: 12),
                         ],
@@ -2622,6 +2652,7 @@ class _FightPageState extends State<FightPage> {
       minionRealityWarpThisAttack: _minionRealityWarpThisAttack,
       heroSilenceThisAttack: _heroSilenceThisAttack,
       minionSilenceThisAttack: _minionSilenceThisAttack,
+      ourokhorPoisonGauge: _ourokhorPoisonGauge,
     );
   }
 
@@ -2694,6 +2725,7 @@ class _FightPageState extends State<FightPage> {
       _minionRealityWarpThisAttack = snapshot.minionRealityWarpThisAttack;
       _heroSilenceThisAttack = snapshot.heroSilenceThisAttack;
       _minionSilenceThisAttack = snapshot.minionSilenceThisAttack;
+      _ourokhorPoisonGauge = snapshot.ourokhorPoisonGauge;
       _stepUndo = null;
     });
     widget.onChanged();
@@ -2722,6 +2754,7 @@ class _FightPageState extends State<FightPage> {
       _lastBattleOutcomeMessage = '';
       _extraDiceOutcomeMessage = '';
       _druidFormRolledThisUpkeep = false;
+      _ourokhorPoisonGauge = 0;
       _stepUndo = null;
       _resetBattleResolution();
       _configureDiceForPhase(autoRollAttack: false);
@@ -2744,13 +2777,14 @@ class _FightPageState extends State<FightPage> {
   void _configureDiceForPhase({required bool autoRollAttack}) {
     _resetDice();
     if (_phase == CombatPhase.hero) {
-      _diceToRoll = enemy.defenseDice.clamp(0, 5);
+      _diceToRoll =
+          (_isNaraxus && _isNaraxusHard) ? 2 : enemy.defenseDice.clamp(0, 5);
     } else if (_phase == CombatPhase.intro ||
         _phase == CombatPhase.heroUpkeep ||
         _phase == CombatPhase.minionUpkeep) {
       _diceToRoll = 0;
     } else if (_phase == CombatPhase.minionAttack) {
-      _diceToRoll = _isNaraxus ? 1 : 5;
+      _diceToRoll = _isNaraxus ? (_isNaraxusHard ? 2 : 1) : (enemy.attackDice > 0 ? enemy.attackDice : 5);
       if (autoRollAttack) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted &&
@@ -2787,7 +2821,8 @@ class _FightPageState extends State<FightPage> {
       return 1;
     }
     if (_phase == CombatPhase.minionAttack) {
-      return _isNaraxus ? 1 : 5;
+      if (_isNaraxus) return _isNaraxusHard ? 2 : 1;
+      return enemy.attackDice > 0 ? enemy.attackDice : 5;
     }
     return _diceToRoll.clamp(0, 5);
   }
@@ -5159,10 +5194,14 @@ class _FightPageState extends State<FightPage> {
       return 'Viseer passive extra roll';
     }
     if (_isNaraxus && _dice.first.value == 3) {
-      return 'Gashing Bite extra roll';
+      return enemy.profileKey == 'ourokhor'
+          ? 'Corrosive Maw extra roll'
+          : 'Gashing Bite extra roll';
     }
     if (_isNaraxus && _dice.first.value == 6) {
-      return "Dragon's Might extra roll";
+      return enemy.profileKey == 'ourokhor'
+          ? 'Apocalyptic Surge extra roll'
+          : "Dragon's Might extra roll";
     }
     if (enemy.profileKey == 'oni-delirant') {
       return 'Onisima extra roll';
@@ -5243,7 +5282,7 @@ class _FightPageState extends State<FightPage> {
       if (_influenceRollReduction >= 3) return 0;
       return 1;
     }
-    if (_isNaraxus) return 1;
+    if (_isNaraxus || enemy.profileKey == 'ourokhor') return 1;
     if (_phase == CombatPhase.minionAttack) {
       if (_minionKnockdownSkippedRoll) return 0;
       if (enemy.alterations.any(_isBarbedVineToken) &&
@@ -5371,13 +5410,21 @@ class _FightPageState extends State<FightPage> {
 
     switch (enemy.profileKey) {
       case 'naraxus':
-        final value = rolled.first.value ?? 0;
+        final value = (_isNaraxusHard && rolled.length > 1)
+            ? rolled.map((d) => d.value ?? 0).reduce(max)
+            : (rolled.first.value ?? 0);
         prevented = switch (value) {
           1 => 1,
           6 => 5,
           _ => 3,
         };
-        notes.add('Naxarus defense: D6 $value prevents $prevented damage.');
+        if (_isNaraxusHard && rolled.length > 1) {
+          notes.add(
+            'Naxarus defense (Difficult): rolled ${rolled.map((d) => d.value).join(", ")}, kept $value (prevents $prevented damage).',
+          );
+        } else {
+          notes.add('Naxarus defense: D6 $value prevents $prevented damage.');
+        }
       case 'fee':
         if (yellow >= 2) {
           prevented = 3;
@@ -5880,6 +5927,15 @@ class _FightPageState extends State<FightPage> {
 
     switch (enemy.profileKey) {
       case 'naraxus':
+        if (_isNaraxusHard && rolled.length > 1) {
+          final maxVal = rolled.map((d) => d.value ?? 0).reduce(max);
+          final bestDie = rolled.firstWhere(
+            (d) => (d.value ?? 0) == maxVal,
+            orElse: () => rolled.first,
+          );
+          return [bestDie.id];
+        }
+        return rolled.take(1).map((die) => die.id);
       case 'ronin-vagabond':
         return rolled.take(1).map((die) => die.id);
       case 'fee':
@@ -6300,6 +6356,7 @@ class _FightPageState extends State<FightPage> {
         enemy: enemy,
         hasValidAttack: false,
         rollPhaseFinished: true,
+        poisonGauge: _ourokhorPoisonGauge,
       );
       if (failOutcome.triggered) {
         if (failOutcome.damage > 0) {
@@ -6598,55 +6655,126 @@ class _FightPageState extends State<FightPage> {
   }
 
   void _resolveNaraxusAttackFromDice() {
-    final first = _dice.first.value;
-    if (first == null) {
+    final rolled = _activeDice.where((die) => die.value != null).toList();
+    if (rolled.isEmpty) {
       return;
     }
+    final bestDie = (_isNaraxusHard && rolled.length > 1)
+        ? (rolled.toList()..sort((a, b) => b.value!.compareTo(a.value!))).first
+        : rolled.first;
+    final first = bestDie.value!;
+    _markExtraDiceSelection(_dice, [bestDie.id]);
     _extraDiceOutcomeMessage = '';
     final notes = <String>[];
+    if (_isNaraxusHard && rolled.length > 1) {
+      notes.add(
+        'Naxarus attack (Difficult): rolled ${rolled.map((d) => d.value).join(", ")}, kept highest ($first).',
+      );
+    }
     var attack = 0;
     var enemyHeal = 0;
     final heroTokens = <String>[];
 
+    final isOurokhor = enemy.profileKey == 'ourokhor';
+
     switch (first) {
       case 1:
-        attack = 3;
-        _battleAttackUndefendable = true;
-        enemyHeal = 4;
-        _removeRandomEnemyToken();
-        notes.add('Swoop: Naxarus removes 1 random token and heals 4 HP.');
-        notes.add('Swoop: 3 undefendable damage.');
+        if (isOurokhor) {
+          attack = 4;
+          _battleAttackUndefendable = true;
+          heroTokens.add('Poison');
+          notes.add('Venomous Spit: 4 undefendable damage.');
+          notes.add('Venomous Spit: hero receives 1 Poison.');
+        } else {
+          attack = 3;
+          _battleAttackUndefendable = true;
+          enemyHeal = 4;
+          _removeRandomEnemyToken();
+          notes.add('Swoop: Naxarus removes 1 random token and heals 4 HP.');
+          notes.add('Swoop: 3 undefendable damage.');
+        }
       case 2:
-        attack = 8;
-        _battleAttackUndefendable = false;
-        notes.add('Ember Spark: hero moves top 3 deck cards to discard.');
-        notes.add('Ember Spark: 8 damage.');
+        if (isOurokhor) {
+          attack = 7;
+          _battleAttackUndefendable = false;
+          heroTokens.addAll(['Poison', 'Poison']);
+          notes.add('Toxic Miasma: hero receives 2x Poison.');
+          notes.add('Toxic Miasma: 7 damage.');
+        } else {
+          attack = 8;
+          _battleAttackUndefendable = false;
+          notes.add('Ember Spark: hero moves top 3 deck cards to discard.');
+          notes.add('Ember Spark: 8 damage.');
+        }
       case 3:
         attack = 0;
         _battleAttackUndefendable = false;
-        notes.add(
-          'Gashing Bite: the player rolls 4 dice in the extra dice phase.',
-        );
-        notes.add(
-          'Damage will equal the 2 highest dice after hero interactions.',
-        );
+        if (isOurokhor) {
+          notes.add(
+            'Corrosive Maw: the player rolls 4 dice in the extra dice phase.',
+          );
+          notes.add(
+            'Damage will equal the 2 highest dice, and Ourokhor heals 3 HP.',
+          );
+        } else {
+          notes.add(
+            'Gashing Bite: the player rolls 4 dice in the extra dice phase.',
+          );
+          notes.add(
+            'Damage will equal the 2 highest dice after hero interactions.',
+          );
+        }
       case 4:
-        attack = 9;
-        _battleAttackUndefendable = false;
-        heroTokens.add('Hoarding');
-        notes.add('Hoarding: hero loses 1 die on the next battle roll.');
-        notes.add('Hoarding: 9 damage.');
+        if (isOurokhor) {
+          final heroPoisoned = widget.adventure.alterations.any(
+            (t) => _normalizeTokenKey(t) == 'poison',
+          );
+          attack = heroPoisoned ? 10 : 8;
+          _battleAttackUndefendable = false;
+          _battleCpSteal = 1;
+          notes.add('Constricting Coil: hero loses 1 CP.');
+          notes.add(
+            heroPoisoned
+                ? 'Constricting Coil: 10 damage (hero is Poisoned).'
+                : 'Constricting Coil: 8 damage.',
+          );
+        } else {
+          attack = 9;
+          _battleAttackUndefendable = false;
+          heroTokens.add('Hoarding');
+          notes.add('Hoarding: hero loses 1 die on the next battle roll.');
+          notes.add('Hoarding: 9 damage.');
+        }
       case 5:
-        attack = 8;
-        _battleAttackUndefendable = true;
-        notes.add('Thundering Roar: hero discards 1 card.');
-        notes.add('Thundering Roar: 8 undefendable damage.');
+        if (isOurokhor) {
+          attack = 4;
+          _battleAttackUndefendable = true;
+          enemyHeal = 6;
+          _removeRandomEnemyToken();
+          notes.add('Shedding & Slough: Ourokhor removes 1 negative token and heals 6 HP.');
+          notes.add('Shedding & Slough: 4 undefendable damage.');
+        } else {
+          attack = 8;
+          _battleAttackUndefendable = true;
+          notes.add('Thundering Roar: hero discards 1 card.');
+          notes.add('Thundering Roar: 8 undefendable damage.');
+        }
       case 6:
         if (_minionHexedThisAttack) {
           attack = 0;
           _battleAttackUndefendable = false;
           notes.add(
-            "Dragon's Might: canceled by Hex token (0 damage, no effect).",
+            isOurokhor
+                ? 'Apocalyptic Surge: canceled by Hex token (0 damage, no effect).'
+                : "Dragon's Might: canceled by Hex token (0 damage, no effect).",
+          );
+        } else if (isOurokhor) {
+          attack = 10;
+          _battleAttackUndefendable = false;
+          heroTokens.add('Poison');
+          notes.add('Apocalyptic Surge: 10 damage and 1 Poison.');
+          notes.add(
+            'Apocalyptic Surge: the player rolls 1 die in the extra dice phase; on 5-6, Shedding & Slough also triggers.',
           );
         } else {
           attack = 10;
@@ -6670,8 +6798,8 @@ class _FightPageState extends State<FightPage> {
     _battleAttackValue = attack.clamp(0, 99);
     _battleLifeSteal = 0;
     _battleEnemyHeal = enemyHeal.clamp(0, 99);
-    _battleCpSteal = 0;
-    _battleDiscardCards = (first == 5 ? 1 : 0);
+    _battleCpSteal = (isOurokhor && first == 4 ? 1 : 0);
+    _battleDiscardCards = (first == 5 && !isOurokhor ? 1 : 0);
     _battleHeroTokens
       ..clear()
       ..addAll(heroTokens);
@@ -7233,6 +7361,7 @@ class _FightPageState extends State<FightPage> {
       return;
     }
     setState(() {
+      final isOurokhor = enemy.profileKey == 'ourokhor';
       if (baseAttack == 3) {
         final topTwoDice = rolledDice.take(2).toList();
         final topTwo = topTwoDice.map((die) => die.value!).toList();
@@ -7240,45 +7369,57 @@ class _FightPageState extends State<FightPage> {
         final damage = topTwo.fold<int>(0, (sum, value) => sum + value);
         _battleAttackValue = damage.clamp(0, 99);
         _battleAttackUndefendable = false;
-        _battleEnemyHeal = 0;
+        final heal = isOurokhor ? 3 : 0;
+        _battleEnemyHeal = heal;
         _battleHeroTokens.clear();
+        final attackName = isOurokhor ? 'Corrosive Maw' : 'Gashing Bite';
         _battleNotes
           ..clear()
           ..add(
-            'Gashing Bite: top dice ${topTwo.join(' + ')} deal $damage damage.',
+            '$attackName: top dice ${topTwo.join(' + ')} deal $damage damage${heal > 0 ? ' and Ourokhor heals $heal HP' : ''}.',
           );
         _extraDiceOutcomeMessage =
-            'Gashing Bite extra roll: ${rolledDice.map((die) => die.value!).toList().reversed.join('/')}.\n'
-            'Naxarus inflicts $damage damage with the 2 highest dice (${topTwo.join(' + ')}).';
+            '$attackName extra roll: ${rolledDice.map((die) => die.value!).toList().reversed.join('/')}.\n'
+            '${enemy.label} inflicts $damage damage with the 2 highest dice (${topTwo.join(' + ')})${heal > 0 ? ' and heals $heal HP' : ''}.';
       } else if (baseAttack == 6) {
         final extraDie = rolledDice.first;
         _markExtraDiceSelection(extraDice, [extraDie.id]);
         final extra = extraDie.value!;
         var damage = 10;
         var heal = 0;
-        final notes = <String>["Dragon's Might: 10 damage."];
+        final mainName = isOurokhor ? 'Apocalyptic Surge' : "Dragon's Might";
+        final subName = isOurokhor ? 'Shedding & Slough' : 'Swoop';
+        final notes = <String>['$mainName: 10 damage.'];
         if (extra >= 5) {
-          damage += 3;
-          heal = 4;
-          notes.add('Extra die $extra: Swoop is added.');
+          final addedDmg = isOurokhor ? 4 : 3;
+          final addedHeal = isOurokhor ? 6 : 4;
+          damage += addedDmg;
+          heal = addedHeal;
+          if (isOurokhor) {
+            _removeRandomEnemyToken();
+          }
+          notes.add('Extra die $extra: $subName is added.');
           notes.add(
-            'Swoop: Naxarus heals 4 HP and deals 3 undefendable damage.',
+            '$subName: ${enemy.label} heals $addedHeal HP and deals $addedDmg undefendable damage.',
           );
         } else {
-          notes.add('Extra die $extra: no Swoop added.');
+          notes.add('Extra die $extra: no $subName added.');
         }
         _battleAttackValue = damage.clamp(0, 99);
         _battleAttackUndefendable = false;
         _battleEnemyHeal = heal;
         _battleHeroTokens.clear();
+        if (isOurokhor) {
+          _battleHeroTokens.add('Poison');
+        }
         _battleNotes
           ..clear()
           ..addAll(notes);
         _extraDiceOutcomeMessage = extra >= 5
-            ? "Dragon's Might extra die: $extra.\n"
-                  'Swoop is added: Naxarus inflicts 13 damage and heals 4 HP.'
-            : "Dragon's Might extra die: $extra.\n"
-                  'No Swoop: Naxarus inflicts 10 defendable damage.';
+            ? "$mainName extra die: $extra.\n"
+                  '$subName is added: ${enemy.label} inflicts $damage damage and heals $heal HP.'
+            : "$mainName extra die: $extra.\n"
+                  'No $subName: ${enemy.label} inflicts 10 defendable damage.';
       }
     });
   }
@@ -7525,6 +7666,7 @@ class _FightPageState extends State<FightPage> {
           enemy: enemy,
           hasValidAttack: false,
           rollPhaseFinished: true,
+          poisonGauge: _ourokhorPoisonGauge,
         );
         if (failOutcome.triggered) {
           if (failOutcome.damage > 0 && _battleAttackValue == 0) {
@@ -7714,12 +7856,11 @@ class _FightPageState extends State<FightPage> {
           }
         }
         final oldEnemyHealth = enemy.health;
-        final netHealthAfterAttackAndHeal =
-            (oldEnemyHealth - netDamage + _battleEnemyHeal).clamp(
-          0,
-          enemy.maxHealth,
-        );
-        enemy.health = netHealthAfterAttackAndHeal;
+        final netEnemyHealthRaw =
+            oldEnemyHealth - netDamage + _battleEnemyHeal + _battleLifeSteal;
+        enemy.health = netEnemyHealthRaw <= 0
+            ? 0
+            : netEnemyHealthRaw.clamp(0, enemy.maxHealth);
         bool hydraRevived = false;
         if (enemy.health <= 0 && isHydraEnemy(enemy)) {
           hydraRevived = checkAndApplyHydraRevival(
@@ -7763,15 +7904,6 @@ class _FightPageState extends State<FightPage> {
           buffer.writeln('[HP] Enemy HP: $oldEnemyHealth ➔ ${enemy.health}');
         }
 
-        if (_heroBarbedVineDamagePending > 0) {
-          final dmg = _heroBarbedVineDamagePending;
-          final currentHp = widget.adventure.health;
-          widget.adventure.health = (currentHp - dmg).clamp(0, 99);
-          buffer.writeln(
-            '[TOKEN:Barbed Vine] Hero took $dmg damage after their rolls.',
-          );
-          _heroBarbedVineDamagePending = 0;
-        }
         if (_battleCpSteal > 0) {
           widget.adventure.setHeroPc(
             widget.adventure.combatPoints - _battleCpSteal,
@@ -7783,39 +7915,54 @@ class _FightPageState extends State<FightPage> {
             99,
           );
           buffer.writeln(
-            '[CP] Enemy CP: $oldEnemyCp âž” ${enemy.combatPoints} (Stolen from hero)',
+            '[CP] Enemy CP: $oldEnemyCp ➔ ${enemy.combatPoints} (Stolen from hero)',
+          );
+        }
+
+        final hasSunMarked = enemy.alterations.any(
+          (t) =>
+              _normalizeTokenKey(t).contains('sun-marked') ||
+              _normalizeTokenKey(t).contains('sun marked') ||
+              _normalizeTokenKey(t).contains('sunmarked'),
+        );
+        final sunMarkedHeal = (_battleAttackValue > 0 && hasSunMarked) ? 2 : 0;
+        final barbedVineDmg = _heroBarbedVineDamagePending;
+        _heroBarbedVineDamagePending = 0;
+        final totalHeroDamage =
+            barbedVineDmg + _battleReturnDamage + _battleLifeSteal + _battleLoseHp;
+        final oldHeroHp = widget.adventure.health;
+        final netHeroHpRaw = oldHeroHp - totalHeroDamage + sunMarkedHeal;
+        final finalHeroHp = netHeroHpRaw <= 0
+            ? 0
+            : netHeroHpRaw.clamp(0, widget.adventure.maxHealth);
+        widget.adventure.setHeroHealth(finalHeroHp, source: 'Roll phase');
+
+        if (barbedVineDmg > 0) {
+          buffer.writeln(
+            '[TOKEN:Barbed Vine] Hero took $barbedVineDmg damage after their rolls.',
           );
         }
         if (_battleReturnDamage > 0) {
-          widget.adventure.setHeroHealth(
-            widget.adventure.health - _battleReturnDamage,
-            source: 'Reflect damage',
-          );
           buffer.writeln(
             '[HP] Hero loses $_battleReturnDamage HP (Return damage)',
           );
         }
         if (_battleLifeSteal > 0) {
-          widget.adventure.setHeroHealth(
-            widget.adventure.health - _battleLifeSteal,
-            source: 'Lifesteal',
-          );
-          final oldEnemyHealthAfterDamage = enemy.health;
-          enemy.health = (enemy.health + _battleLifeSteal).clamp(
-            0,
-            enemy.maxHealth,
-          );
           buffer.writeln(
-            '[HP] Enemy HP: $oldEnemyHealthAfterDamage ➔ ${enemy.health} (Lifesteal)',
+            '[HP] Hero loses $_battleLifeSteal HP (Lifesteal)',
           );
         }
         if (_battleLoseHp > 0) {
-          widget.adventure.setHeroHealth(
-            widget.adventure.health - _battleLoseHp,
-            source: 'Life loss',
-          );
           buffer.writeln(
             '[HP] Hero loses $_battleLoseHp HP (Life loss from defense)',
+          );
+        }
+        if (sunMarkedHeal > 0) {
+          buffer.writeln(
+            '[TOKEN:Sun-Marked] Hero heals 2 HP from Sun-Marked on ${enemy.label}.',
+          );
+          widget.adventure.log(
+            '[TOKEN] Hero heals 2 HP from Sun-Marked on ${enemy.label}.',
           );
         }
         if (_battleSecondaryEnemyHeal > 0 &&
@@ -8003,24 +8150,7 @@ class _FightPageState extends State<FightPage> {
             '[TOKEN:Shame] Hero Shame activated (-1 damage) and removed.',
           );
         }
-        if (_battleAttackValue > 0 &&
-            enemy.alterations.any(
-              (t) =>
-                  _normalizeTokenKey(t).contains('sun-marked') ||
-                  _normalizeTokenKey(t).contains('sun marked') ||
-                  _normalizeTokenKey(t).contains('sunmarked'),
-            )) {
-          widget.adventure.setHeroHealth(
-            widget.adventure.health + 2,
-            source: 'Sun-Marked Heal',
-          );
-          buffer.writeln(
-            '[TOKEN:Sun-Marked] Hero heals 2 HP from Sun-Marked on ${enemy.label}.',
-          );
-          widget.adventure.log(
-            '[TOKEN] Hero heals 2 HP from Sun-Marked on ${enemy.label}.',
-          );
-        }
+
 
         if (widget.adventure.alterations.any(_isDiceCubeToken)) {
           widget.adventure.alterations.removeWhere(_isDiceCubeToken);
@@ -8593,6 +8723,9 @@ class _FightPageState extends State<FightPage> {
         widget.adventure.log(
           '[TOKEN] ${widget.adventure.hero.label} took $damage dmg from Delayed Poison, token(s) removed.',
         );
+        if (enemy.profileKey == 'ourokhor' && damage > 0) {
+          _advanceOurokhorPoisonGauge(damage, reason: 'Delayed Poison ($damage dmg)');
+        }
       } else {
         enemy.health = (enemy.health - damage).clamp(0, 99);
         widget.adventure.log(
@@ -8691,6 +8824,7 @@ class _FightPageState extends State<FightPage> {
       attacks: profile.attacks,
       defense: profile.defense,
       defenseDice: profile.defenseDice,
+      attackDice: profile.attackDice,
       attackPlan: profile.attackPlan,
       cardAsset: profile.cardAsset,
       profileKey: profile.key,
@@ -9935,6 +10069,12 @@ class _FightPageState extends State<FightPage> {
           widget.adventure.log('[TOKEN] ${widget.adventure.hero.label}: $part');
         }
       }
+      if (enemy.profileKey == 'ourokhor') {
+        final poisonDmg = widget.adventure.alterations.where((t) => _isPoisonToken(t)).length;
+        if (poisonDmg > 0) {
+          _advanceOurokhorPoisonGauge(poisonDmg, reason: 'Poison upkeep ($poisonDmg dmg)');
+        }
+      }
       widget.onChanged();
     });
     if (heroOutcome != null && heroOutcome!.notes.isNotEmpty) {
@@ -10022,6 +10162,9 @@ class _FightPageState extends State<FightPage> {
       }
       if (_isViseerNode(enemy)) {
         passiveLog = _resolveViseerPassive(source: 'Viseer upkeep');
+      }
+      if (enemy.profileKey == 'ourokhor') {
+        _applyOurokhorUpkeepPassives();
       }
       final skip = <String>{};
       if (resolvedInPopin.contains('bleed')) {
@@ -10199,6 +10342,47 @@ class _FightPageState extends State<FightPage> {
     _lastBattleOutcomeMessage = _lastBattleOutcomeMessage.isEmpty
         ? message
         : '$_lastBattleOutcomeMessage\n$message';
+  }
+
+  void _applyOurokhorUpkeepPassives() {
+    if (enemy.profileKey != 'ourokhor' || enemy.health <= 0) return;
+    final tokensToGrant = OurokhorLogic.evaluateUpkeepTokens(
+      gauge: _ourokhorPoisonGauge,
+      enemyAlterations: enemy.alterations,
+    );
+    final granted = <String>[];
+    for (final tok in tokensToGrant) {
+      enemy.alterations.add(tok);
+      granted.add(tok);
+    }
+    if (OurokhorLogic.shouldInflictHexToHero(
+      gauge: _ourokhorPoisonGauge,
+      heroAlterations: widget.adventure.alterations,
+    )) {
+      widget.adventure.alterations.add('Hex');
+      widget.adventure.log(
+        '[PASSIVE] Ourokhor Venom Gauge ($_ourokhorPoisonGauge/25): Inflicted Hex on ${widget.adventure.hero.label} (max stack: 1).',
+      );
+    }
+    if (granted.isNotEmpty) {
+      widget.adventure.log(
+        '[PASSIVE] Ourokhor Venom Gauge ($_ourokhorPoisonGauge/25): Gained ${granted.join(', ')} every turn (stack limits enforced: max 2 Damage bonus, max 1 Riposte, max 3 Evasive).',
+      );
+    }
+    _syncAfterTokensChanged();
+  }
+
+  void _advanceOurokhorPoisonGauge(int amount, {String reason = ''}) {
+    if (enemy.profileKey != 'ourokhor' || amount <= 0 || enemy.health <= 0) return;
+    final oldGauge = _ourokhorPoisonGauge;
+    _ourokhorPoisonGauge = OurokhorLogic.advanceGauge(
+      currentGauge: _ourokhorPoisonGauge,
+      poisonDamage: amount,
+    );
+    widget.adventure.log(
+      '[VENOM GAUGE] +$amount from $reason -> Venom Gauge: $_ourokhorPoisonGauge/25 (was $oldGauge).',
+    );
+    widget.onChanged();
   }
 
   void _applyMinionDiceStrategy() {
@@ -10934,6 +11118,56 @@ InlineSpan? _chatTagVisualSpan(
   required Color enemyColor,
 }) {
   final normalized = value.toLowerCase().trim();
+  if (tag == 'video') {
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: Builder(
+        builder: (context) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => showHowToPlayVideoDialog(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xffc4302b), Color(0xff8f1d19)],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x55c4302b),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(
+                    Icons.play_circle_fill_rounded,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Watch Video: How to Play',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
   if (tag == 'die' || tag == 'dice') {
     if (normalized == 'any' || normalized == 'd6') {
       return const WidgetSpan(
@@ -11576,8 +11810,16 @@ String _introAiMessage(
   final starterLabel = whoStarts == CombatPhase.heroUpkeep
       ? adventure.hero.label
       : enemy.label;
+  final encounter = adventure.defeatedEnemies.length + 1;
+  final isFirstMinion = encounter == 1 &&
+      adventure.config.mode != SurvivalMode.naraxus &&
+      adventure.config.mode != SurvivalMode.naraxusHard;
+  final isBossMode = adventure.config.mode == SurvivalMode.naraxus ||
+      adventure.config.mode == SurvivalMode.naraxusHard ||
+      enemy.rank == EnemyRank.naraxus;
   return [
     _openingAiLines(adventure, enemy, historyRecords),
+    if (isFirstMinion || isBossMode) '{video:how_to_play}',
     '_Press the flashing arrow to start $starterLabel\'s upkeep phase._',
   ].join('\n');
 }
@@ -11721,7 +11963,9 @@ String _minionUpkeepAiMessage(
     currentCp: enemy.combatPoints,
   );
   final isNaxOrViseer =
-      enemy.profileKey == 'naraxus' || enemy.profileKey == 'viseer';
+      enemy.profileKey == 'naraxus' ||
+      enemy.profileKey == 'ourokhor' ||
+      enemy.profileKey == 'viseer';
   final hasCoal4 = enemy.alterations.where(_isCoalToken).length >= 4;
   final coalSpent = (coalTriggered || hasCoal4) && !isNaxOrViseer;
   final lines = <String>[
@@ -12006,16 +12250,19 @@ String _minionAttackAiMessage(
         'Kept dice: ${kept.isEmpty ? 'nothing' : kept.join('/')}.';
   }
 
+  final isSingleRollBoss = enemy.profileKey == 'ourokhor';
+  final maxSymbolRolls = isSingleRollBoss ? 1 : 3;
+
   final rawSymbolDamage = _bestSymbolAttackDamage(
     enemy,
     dice,
-    includeFallbackZero: rollCount >= 3,
+    includeFallbackZero: rollCount >= maxSymbolRolls,
   );
   final symbolDamage = rawSymbolDamage != null
       ? adjustDamage(rawSymbolDamage)
       : null;
   final rollLabel = _rollLabel(rollCount);
-  if (rollCount >= 3) {
+  if (rollCount >= maxSymbolRolls) {
     if (symbolDamage == null) {
       final failOutcome = MinionPassiveResolver.resolveOffensiveFailure(
         enemy: enemy,
@@ -12024,7 +12271,9 @@ String _minionAttackAiMessage(
       );
       if (failOutcome.triggered) {
         final lines = <String>[
-          'After my 3 attack rolls, no valid attack combination was made.$blLine',
+          isSingleRollBoss
+              ? 'After my attack roll, no valid attack combination was made.$blLine'
+              : 'After my 3 attack rolls, no valid attack combination was made.$blLine',
           ...failOutcome.notes,
         ];
         if (failOutcome.damage > 0) {
@@ -12040,10 +12289,15 @@ String _minionAttackAiMessage(
         }
         return lines.join('\n');
       }
-      return 'After my 3 attack rolls, no valid attack combination was made.$blLine';
+      return isSingleRollBoss
+          ? 'After my attack roll, no valid attack combination was made.$blLine'
+          : 'After my 3 attack rolls, no valid attack combination was made.$blLine';
     }
-    return 'After my 3 attack rolls, the attack is validated with ${_reservedDiceText(dice)}.$blLine\n'
-        '${_defenseInstruction(adventure, symbolDamage)}';
+    return isSingleRollBoss
+        ? 'Attack is validated with ${_reservedDiceText(dice)}.$blLine\n'
+            '${_defenseInstruction(adventure, symbolDamage)}'
+        : 'After my 3 attack rolls, the attack is validated with ${_reservedDiceText(dice)}.$blLine\n'
+            '${_defenseInstruction(adventure, symbolDamage)}';
   }
   if (symbolDamage != null) {
     if (hasBarbedVine) {
@@ -12149,13 +12403,49 @@ String _naraxusAiMessage(
   AdventureState adventure,
   String extraDiceOutcome,
 ) {
+  final isOurokhor = enemy.profileKey == 'ourokhor';
+  final bossName = isOurokhor ? 'Ourokhor' : 'Naxarus';
   if (rolled.isEmpty || rolled.first.value == null) {
     return '**Battle phase.**\n'
-        'Naxarus battle phase.\n'
-        'Roll 1 die to choose the dragon attack.\n'
-        'The result will feed the sword counter.';
+        '$bossName battle phase.\n'
+        'Roll 1 die to choose the boss attack.\n'
+        'The result will feed the battle counter.';
   }
   final value = rolled.first.value!;
+  if (isOurokhor) {
+    final result = switch (value) {
+      1 =>
+        'Ourokhor rolled 1 on the attack die and performs Venomous Spit.\n'
+            'Venomous Spit deals 4 undefendable damage and inflicts 1 Poison on the hero.\n'
+            '${adventure.hero.label} has no defense unless a card changes the attack.',
+      2 =>
+        'Ourokhor rolled 2 on the attack die and performs Toxic Miasma.\n'
+            'The hero receives 2x Poison tokens and takes 7 damage.\n'
+            '${adventure.hero.label} must perform a defensive phase.',
+      3 =>
+        'Ourokhor rolled 3 on the attack die and performs Corrosive Maw.\n'
+            'The player must roll 4 dice in the extra dice phase.\n'
+            'Damage equals the 2 highest dice, and Ourokhor heals 3 HP.\n'
+            '${extraDiceOutcome.isEmpty ? '' : '$extraDiceOutcome\n'}'
+            '${adventure.hero.label} must perform a defensive phase.',
+      4 =>
+        'Ourokhor rolled 4 on the attack die and performs Constricting Coil.\n'
+            'The hero loses 1 CP and takes 8 damage (10 damage if hero is Poisoned).\n'
+            '${adventure.hero.label} must perform a defensive phase.',
+      5 =>
+        'Ourokhor rolled 5 on the attack die and performs Shedding & Slough.\n'
+            'Ourokhor removes 1 negative status token, heals 6 HP, and deals 4 undefendable damage.\n'
+            '${adventure.hero.label} has no defense unless a card changes the attack.',
+      6 =>
+        'Ourokhor rolled 6 on the attack die and performs Apocalyptic Surge.\n'
+            'Apocalyptic Surge inflicts 10 damage and 1 Poison.\n'
+            'The player must roll 1 extra die.\n'
+            'On 5 or 6, Shedding & Slough also triggers.\n'
+            '${extraDiceOutcome.isEmpty ? '' : extraDiceOutcome}',
+      _ => 'Ourokhor coils and waits.',
+    };
+    return '**Battle phase.**\n$result';
+  }
   final result = switch (value) {
     1 =>
       'Naxarus rolled 1 on his attack die and performs Swoop.\n'
@@ -13076,11 +13366,13 @@ class _AttackResultLine extends StatelessWidget {
   const _AttackResultLine({
     required this.goal,
     required this.result,
+    this.label,
     this.align = 'left',
   });
 
   final SymbolGoal goal;
   final List<Widget> result;
+  final Widget? label;
   final String align;
 
   @override
@@ -13131,6 +13423,7 @@ class _AttackResultLine extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             leftSymbolView,
+            if (label != null) label!,
             if (result.isNotEmpty)
               Wrap(
                 spacing: 5,
@@ -13154,14 +13447,22 @@ class _AttackResultLine extends StatelessWidget {
         children: [
           leftSymbolView,
           const SizedBox(width: 8),
-          Expanded(
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              alignment: WrapAlignment.end,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: result,
+          if (label != null) ...[
+            Expanded(
+              child: Center(
+                child: label!,
+              ),
             ),
+            const SizedBox(width: 8),
+          ] else ...[
+            const Spacer(),
+          ],
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            alignment: WrapAlignment.end,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: result,
           ),
         ],
       ),
@@ -13190,18 +13491,21 @@ class InlineTokenText extends StatelessWidget {
     this.text, {
     required this.color,
     this.style,
+    this.textAlign,
     super.key,
   });
 
   final String text;
   final Color color;
   final TextStyle? style;
+  final TextAlign? textAlign;
 
   @override
   Widget build(BuildContext context) {
     final spans = _buildSpans(context, text, color, style);
     return Text.rich(
       TextSpan(children: spans),
+      textAlign: textAlign,
       style: style ?? const TextStyle(fontSize: 12, color: Color(0xffcbd8cc)),
     );
   }
@@ -15220,6 +15524,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
                       _CombatBadgeButton(
                         onTap:
                             enemy.profileKey == 'naraxus' ||
+                                enemy.profileKey == 'ourokhor' ||
                                 enemy.profileKey == 'viseer'
                             ? () {}
                             : onEnemyCp,
@@ -15229,6 +15534,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
                             value: enemy.combatPoints,
                             infinity:
                                 enemy.profileKey == 'naraxus' ||
+                                enemy.profileKey == 'ourokhor' ||
                                 enemy.profileKey == 'viseer',
                           ),
                         ),
@@ -15349,6 +15655,7 @@ class CombatVersusStatusPanel extends StatelessWidget {
                   hpStyle: _CombatHpStyle.enemy,
                   infiniteCp:
                       enemy.profileKey == 'naraxus' ||
+                      enemy.profileKey == 'ourokhor' ||
                       enemy.profileKey == 'viseer',
                   onHp: onEnemyHp,
                   onCp: onEnemyCp,

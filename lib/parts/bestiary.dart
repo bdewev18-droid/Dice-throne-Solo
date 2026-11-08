@@ -22,7 +22,9 @@ enum _BestiaryRankFilter {
       _BestiaryRankFilter.violet => profile.rank == EnemyRank.violet,
       _BestiaryRankFilter.orange => profile.rank == EnemyRank.orange,
       _BestiaryRankFilter.boss =>
-        profile.key == 'naraxus',
+        profile.key == 'naraxus' ||
+        profile.key == 'ourokhor' ||
+        profile.key == 'kaelen-voss',
     };
   }
 }
@@ -168,7 +170,9 @@ List<StatusTokenRule> _profileTokenRules(EnemyProfile profile) {
   }
   scanDisplayRows(profile.passiveDisplayRows);
 
-  if ((profile.key == 'naraxus' || profile.key == 'kaelen-voss') &&
+  if ((profile.key == 'naraxus' ||
+          profile.key == 'ourokhor' ||
+          profile.key == 'kaelen-voss') &&
       profile.attackPlan.style == MinionAttackStyle.none &&
       profile.attackPlan.displayRows.isEmpty) {
     for (final bToken in ['Poison', 'Brûlure', 'Commotion', 'À Terre', 'Cécité']) {
@@ -239,12 +243,15 @@ class _BestiaryPageState extends State<BestiaryPage> {
       }
       byKey[profile.key] = profile;
     }
-    final viseer =
-        EnemyProfileRepository.byKey('viseer') ??
-        defaultProfileFor(EnemyRank.viseer);
-    byKey.putIfAbsent(viseer.key, () => viseer);
+    final viseer = EnemyProfileRepository.byKey('viseer');
+    if (viseer != null && viseer.isFullyValidated) {
+      byKey.putIfAbsent(viseer.key, () => viseer);
+    }
     final naxarus = EnemyProfileRepository.byKey('naraxus') ?? naraxusProfile;
     byKey.putIfAbsent(naxarus.key, () => naxarus);
+    final ourokhor =
+        EnemyProfileRepository.byKey('ourokhor') ?? ourokhorProfile;
+    byKey.putIfAbsent(ourokhor.key, () => ourokhor);
 
     int rankOrder(EnemyRank r) => switch (r) {
       EnemyRank.green => 0,
@@ -1322,11 +1329,12 @@ class _BestiaryListRow extends StatelessWidget {
     final tokens = _profileTokenRules(profile);
     final accent = profile.rank.color;
     final isBoss = profile.key == 'naraxus' ||
+        profile.key == 'ourokhor' ||
         profile.key == 'kaelen-voss' ||
         profile.rank == EnemyRank.naraxus;
     final previewAsset = switch (profile.key) {
       'naraxus' => 'assets/enemy_previews/naraxus.webp',
-      'kaelen-voss' => 'assets/enemy_previews/kaelen-voss.webp',
+      'ourokhor' || 'kaelen-voss' => 'assets/enemy_previews/ourokhor.jpg',
       'viseer' => 'assets/enemy_previews/orange-viseer.webp',
       _ => profile.rank.asset,
     };
@@ -1510,6 +1518,7 @@ class _BestiaryYgoCard extends StatelessWidget {
       attacks: profile.attacks,
       defense: profile.defense,
       defenseDice: profile.defenseDice,
+      attackDice: profile.attackDice,
       attackPlan: profile.attackPlan,
       cardAsset: profile.cardAsset,
       profileKey: profile.key,
@@ -1775,6 +1784,7 @@ class _BestiaryEnemyDetailPageState extends State<BestiaryEnemyDetailPage> {
       attacks: widget.profile.attacks,
       defense: widget.profile.defense,
       defenseDice: widget.profile.defenseDice,
+      attackDice: widget.profile.attackDice,
       attackPlan: widget.profile.attackPlan,
       cardAsset: widget.profile.cardAsset,
       profileKey: widget.profile.key,
@@ -2131,6 +2141,8 @@ class BossBattleSelectionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final naxarus = EnemyProfileRepository.byKey('naraxus') ?? naraxusProfile;
+    final ourokhor =
+        EnemyProfileRepository.byKey('ourokhor') ?? ourokhorProfile;
 
     return Scaffold(
       backgroundColor: const Color(0xff0b090e),
@@ -2148,8 +2160,79 @@ class BossBattleSelectionPage extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
           children: [
+            // Monthly Boss Event banner
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xff3a1d5c).withValues(alpha: 0.85),
+                    const Color(0xff1a1226).withValues(alpha: 0.95),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xffffb300).withValues(alpha: 0.75),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xffffb300).withValues(alpha: 0.18),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xffffb300),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.calendar_month_rounded,
+                      color: Color(0xffffd54f),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'MONTHLY BOSS EVENT',
+                          style: TextStyle(
+                            color: Color(0xffffd54f),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'One new custom monster is created every month!',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             const Text(
-              'CHOOSE YOUR OPPONENT (1 BOSS)',
+              'CHOOSE YOUR OPPONENT (2 BOSSES)',
               style: TextStyle(
                 color: Colors.white70,
                 fontSize: 12,
@@ -2175,6 +2258,30 @@ class BossBattleSelectionPage extends StatelessWidget {
                       isBossOfTheMonth: false,
                       onChooseHeroAndFight: () {
                         onStartBossWithHero(naxarus.key);
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 18),
+            // Option 2: Ourokhor (Unofficial + Boss of the Month)
+            _BossChoiceCard(
+              profile: ourokhor,
+              subtitle: 'Boss of the Month • Poison & Cyclic Regeneration',
+              isUnofficial: true,
+              isBossOfTheMonth: true,
+              accentColor: const Color(0xff22c55e),
+              imageAlignment: const Alignment(0, -0.6),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (detailContext) => BossBattleDetailPage(
+                      profile: ourokhor,
+                      isUnofficial: true,
+                      isBossOfTheMonth: true,
+                      onChooseHeroAndFight: () {
+                        onStartBossWithHero(ourokhor.key);
                       },
                     ),
                   ),
@@ -2770,6 +2877,7 @@ EnemyNode _bestiaryNodeFromProfile(EnemyProfile profile) {
     attacks: profile.attacks,
     defense: profile.defense,
     defenseDice: profile.defenseDice,
+    attackDice: profile.attackDice,
     attackPlan: profile.attackPlan,
     cardAsset: profile.cardAsset,
     profileKey: profile.key,
@@ -2787,6 +2895,7 @@ EnemyNode _bestiaryNodeFromProfile(EnemyProfile profile) {
 Alignment _bestiaryPreviewAlignment(String profileKey) {
   return switch (profileKey) {
     'naraxus' => const Alignment(0, -0.34),
+    'ourokhor' => const Alignment(0, -0.6),
     'kaelen-voss' => const Alignment(0, -0.75),
     _ => Alignment.topCenter,
   };

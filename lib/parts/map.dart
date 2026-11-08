@@ -52,18 +52,21 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
   late final AdventureState _adventure = _createAdventure();
   bool _recorded = false;
   bool _introCompleted = false;
+  bool _difficultMode = false;
 
   AdventureState _createAdventure() {
     final adventure = AdventureState(
       hero: widget.hero,
-      config: const SurvivalConfig(
-        mode: SurvivalMode.naraxus,
+      config: SurvivalConfig(
+        mode: _difficultMode ? SurvivalMode.naraxusHard : SurvivalMode.naraxus,
         targetScore: 100,
       ),
     );
     final bossProfile =
         _profileByKey(widget.bossKey) ??
-        (widget.bossKey == 'kaelen-voss' ? kaelenVossProfile : naraxusProfile);
+        (widget.bossKey == 'ourokhor' || widget.bossKey == 'kaelen-voss'
+            ? ourokhorProfile
+            : naraxusProfile);
     unawaited(AppSettings.instance.markEnemyEncountered(bossProfile.key));
     final bossNode = EnemyNode(
       id: 0,
@@ -74,6 +77,7 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
       attacks: bossProfile.attacks,
       defense: bossProfile.defense,
       defenseDice: bossProfile.defenseDice,
+      attackDice: bossProfile.attackDice,
       attackPlan: bossProfile.attackPlan,
       cardAsset: bossProfile.cardAsset,
       profileKey: bossProfile.key,
@@ -103,6 +107,16 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
         adventure: _adventure,
         enemy: _adventure.enemyById(0),
         historyRecords: widget.historyRecords,
+        isBossDifficult: _difficultMode,
+        onBossDifficultyChanged: (val) {
+          setState(() {
+            _difficultMode = val;
+            _adventure.config = SurvivalConfig(
+              mode: val ? SurvivalMode.naraxusHard : SurvivalMode.naraxus,
+              targetScore: 100,
+            );
+          });
+        },
         onNext: () async {
           if (mounted) {
             setState(() => _introCompleted = true);
@@ -140,7 +154,7 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
           hero: widget.hero,
           date: DateTime.now(),
           score: success ? 100 : 0,
-          mode: SurvivalMode.naraxus,
+          mode: _difficultMode ? SurvivalMode.naraxusHard : SurvivalMode.naraxus,
           healthRemaining: _adventure.health,
           bossHealthRemaining: naraxus.health,
           enemiesDefeated: success ? 1 : 0,
@@ -875,16 +889,16 @@ void showRulebooksDialog(BuildContext context, {bool isNaraxus = false}) {
       title: 'Dice Throne (Classic Rules & Errata)',
       subtitle: 'Official core rules errata v2.2, attack modifiers, damage types table & hero clarifications.',
       imageAsset: 'assets/rules/rule_dt.webp',
-      pdfFileName: 'dice_throne_rules.pdf',
-      fileSizeLabel: '1.5 MB',
+      pdfFileName: 'dice_throne_rules_compressed.pdf',
+      fileSizeLabel: '8.6 MB',
     ),
     const _RulebookItem(
       id: 'dta',
       title: 'Dice Throne Adventures',
       subtitle: 'Complete DTA rulebook: Portal crawl, minion turn flow, loot table, shop & boss battle rules.',
       imageAsset: 'assets/rules/rule_dta.webp',
-      pdfFileName: 'dice_throne_adventures_rules.pdf',
-      fileSizeLabel: '20.8 MB',
+      pdfFileName: 'dice_throne_adventures_rules_compressed.pdf',
+      fileSizeLabel: '9.5 MB',
     ),
     if (!isNaraxus)
       const _RulebookItem(
@@ -892,8 +906,8 @@ void showRulebooksDialog(BuildContext context, {bool isNaraxus = false}) {
         title: 'Minion Rush (DTA Unchained)',
         subtitle: 'Official Minion Rush rules: solo & co-op mode, One-Shot Loot Table, card tree setup & scoring.',
         imageAsset: 'assets/rules/rule_unchained.webp',
-        pdfFileName: 'dice_throne_unchained_rules.pdf',
-        fileSizeLabel: '8.5 MB',
+        pdfFileName: 'dice_throne_unchained_rules_compressed.pdf',
+        fileSizeLabel: '1.6 MB',
       ),
   ];
 
@@ -945,6 +959,91 @@ void showRulebooksDialog(BuildContext context, {bool isNaraxus = false}) {
                 ],
               ),
               const SizedBox(height: 14),
+              // Video Tutorial Card
+              Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xff2d124d), Color(0xff180d2e)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xff8f43ff).withValues(alpha: 0.6),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xffc4302b),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xffc4302b).withValues(alpha: 0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'How to Play Video Guide',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Watch the complete rules & turn flow tutorial',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xffc4302b),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      icon: const Icon(Icons.open_in_new_rounded, size: 14),
+                      label: const Text(
+                        'Watch',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      onPressed: () => showHowToPlayVideoDialog(context),
+                    ),
+                  ],
+                ),
+              ),
               Flexible(
                 child: SingleChildScrollView(
                   child: Column(
@@ -1617,20 +1716,29 @@ class CurrentTargetCard extends StatelessWidget {
                 ],
                 SizedBox(
                   height: 58,
-                  child: FilledButton(
-                    onPressed: onFight,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: accent,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  child: PulsingBlink(
+                    active: onFight != null,
+                    enableScale: true,
+                    minScale: 0.98,
+                    maxScale: 1.03,
+                    minOpacity: 0.82,
+                    maxOpacity: 1.0,
+                    duration: const Duration(milliseconds: 700),
+                    child: FilledButton(
+                      onPressed: onFight,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: accent,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
-                      textStyle: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                      ),
+                      child: const Text('FIGHT'),
                     ),
-                    child: const Text('FIGHT'),
                   ),
                 ),
               ],
@@ -2391,6 +2499,8 @@ class EnemyIntroPage extends StatefulWidget {
     required this.onNext,
     this.historyRecords = const [],
     this.showNext = true,
+    this.isBossDifficult = false,
+    this.onBossDifficultyChanged,
     super.key,
   });
 
@@ -2399,6 +2509,8 @@ class EnemyIntroPage extends StatefulWidget {
   final Future<void> Function() onNext;
   final List<GameRecord> historyRecords;
   final bool showNext;
+  final bool isBossDifficult;
+  final ValueChanged<bool>? onBossDifficultyChanged;
 
   @override
   State<EnemyIntroPage> createState() => _EnemyIntroPageState();
@@ -2444,6 +2556,24 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                     tooltip: 'Back',
                     onPressed: () => Navigator.of(context).maybePop(),
                     icon: const Icon(Icons.arrow_back),
+                  ),
+                ),
+              ),
+            ),
+          if (widget.showNext)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: IconButton.filled(
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xffc4302b),
+                      foregroundColor: Colors.white,
+                    ),
+                    tooltip: 'How to play video',
+                    onPressed: () => showHowToPlayVideoDialog(context),
+                    icon: const Icon(Icons.play_circle_fill_rounded),
                   ),
                 ),
               ),
@@ -2529,42 +2659,105 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: isNaraxus
-                        ? IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Expanded(
-                                  child: _NaxarusIntroStatsPanel(
-                                    enemy: enemy,
-                                    hero: widget.adventure.hero,
-                                    historyRecords: widget.historyRecords,
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (widget.showNext) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
                                   ),
-                                ),
-                                if (widget.showNext) ...[
-                                  const SizedBox(width: 10),
-                                  SizedBox(
-                                    width: 58,
-                                    child: _IntroPulse(
-                                      active: true,
-                                      child: IconButton.filled(
-                                        style: IconButton.styleFrom(
-                                          backgroundColor:
-                                              const Color(0xff8f43ff),
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.75),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.white24),
+                                  ),
+                                  child: SegmentedButton<bool>(
+                                    style: const ButtonStyle(
+                                      visualDensity: VisualDensity.compact,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    segments: const [
+                                      ButtonSegment<bool>(
+                                        value: false,
+                                        label: Text(
+                                          'Normal',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        tooltip: 'Start fight',
-                                        onPressed: _continueToFight,
-                                        icon: const Icon(Icons.arrow_forward),
+                                        icon: Icon(
+                                          Icons.shield_outlined,
+                                          size: 14,
+                                        ),
+                                      ),
+                                      ButtonSegment<bool>(
+                                        value: true,
+                                        label: Text(
+                                          'Difficult (+1 die)',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        icon: Icon(
+                                          Icons.local_fire_department_rounded,
+                                          size: 14,
+                                        ),
+                                      ),
+                                    ],
+                                    selected: {widget.isBossDifficult},
+                                    onSelectionChanged: (set) => widget
+                                        .onBossDifficultyChanged
+                                        ?.call(set.first),
+                                  ),
+                                ),
+                              ],
+                              IntrinsicHeight(
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(
+                                      child: _NaxarusIntroStatsPanel(
+                                        enemy: enemy,
+                                        hero: widget.adventure.hero,
+                                        historyRecords: widget.historyRecords,
+                                        isDifficult: widget.isBossDifficult,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ],
-                            ),
+                                    if (widget.showNext) ...[
+                                      const SizedBox(width: 10),
+                                      SizedBox(
+                                        width: 58,
+                                        child: _IntroPulse(
+                                          active: true,
+                                          child: IconButton.filled(
+                                            style: IconButton.styleFrom(
+                                              backgroundColor:
+                                                  const Color(0xff8f43ff),
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                            ),
+                                            tooltip: 'Start fight',
+                                            onPressed: _continueToFight,
+                                            icon:
+                                                const Icon(Icons.arrow_forward),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
                           )
                         : SizedBox(
                             height: 114,
@@ -2672,25 +2865,50 @@ class _NaxarusIntroStatsPanel extends StatelessWidget {
     required this.enemy,
     required this.hero,
     required this.historyRecords,
+    this.isDifficult = false,
   });
 
   final EnemyNode enemy;
   final HeroType hero;
   final List<GameRecord> historyRecords;
+  final bool isDifficult;
 
   static bool _isWin(GameRecord r) => r.isVictory || r.score >= 100;
 
   @override
   Widget build(BuildContext context) {
-    final naxarusRuns = historyRecords
-        .where((r) => r.mode.difficulty == RunDifficulty.naraxus)
-        .toList();
-    final globalTotal = naxarusRuns.length;
-    final globalWins = naxarusRuns.where(_isWin).length;
+    final currentBossKey = (enemy.profileKey != null && enemy.profileKey!.isNotEmpty)
+        ? enemy.profileKey!
+        : 'naraxus';
+    final isNaraxus = currentBossKey == 'naraxus';
+
+    final allBossRuns = historyRecords.where((r) {
+      if (isNaraxus) {
+        return (r.bossKey == 'naraxus') ||
+            (r.bossKey == null &&
+                (r.mode.difficulty == RunDifficulty.naraxus ||
+                    r.mode == SurvivalMode.naraxus ||
+                    r.mode == SurvivalMode.naraxusHard));
+      } else {
+        return (r.bossKey == currentBossKey) ||
+            r.mode.name.toLowerCase().contains(currentBossKey.toLowerCase());
+      }
+    }).toList();
+
+    final modeSpecificRuns = allBossRuns.where((r) {
+      final isHard = r.mode == SurvivalMode.naraxusHard ||
+          r.mode.name.toLowerCase().contains('hard') ||
+          r.mode.name.toLowerCase().contains('difficult');
+      return isDifficult ? isHard : !isHard;
+    }).toList();
+    final bossRuns =
+        modeSpecificRuns.isNotEmpty ? modeSpecificRuns : allBossRuns;
+    final globalTotal = bossRuns.length;
+    final globalWins = bossRuns.where(_isWin).length;
     final globalWinRate =
         globalTotal == 0 ? 0 : ((globalWins / globalTotal) * 100).round();
 
-    final heroRuns = naxarusRuns.where((r) => r.hero == hero).toList();
+    final heroRuns = bossRuns.where((r) => r.hero == hero).toList();
     final heroTotal = heroRuns.length;
     final heroWins = heroRuns.where(_isWin).length;
     final heroWinRate =
@@ -2705,7 +2923,7 @@ class _NaxarusIntroStatsPanel extends StatelessWidget {
         : heroHpValues.fold<int>(0, (s, v) => s + v) / heroHpValues.length;
 
     final grouped = <HeroType, List<GameRecord>>{};
-    for (final r in naxarusRuns) {
+    for (final r in bossRuns) {
       grouped.putIfAbsent(r.hero, () => []).add(r);
     }
     double avgScore(List<GameRecord> runs) =>
@@ -2731,7 +2949,7 @@ class _NaxarusIntroStatsPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Naxarus HP + Global Stats (No chest)
+          // 1. Boss HP + Global Stats (No chest)
           Row(
             children: [
               Icon(Icons.favorite, color: enemy.rank.color, size: 19),
@@ -2762,7 +2980,9 @@ class _NaxarusIntroStatsPanel extends StatelessWidget {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      'Global: $globalWinRate% ($globalWins/$globalTotal)',
+                      globalTotal == 0
+                          ? 'Global: - (0/0)'
+                          : 'Global: $globalWinRate% ($globalWins/$globalTotal)',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11.5,
@@ -2775,7 +2995,7 @@ class _NaxarusIntroStatsPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          // 2. Current Hero vs Naxarus Stats
+          // 2. Current Hero vs Boss Stats
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
@@ -2804,7 +3024,7 @@ class _NaxarusIntroStatsPanel extends StatelessWidget {
                       ),
                       Text(
                         heroTotal == 0
-                            ? '0 runs • First battle vs Naxarus'
+                            ? '0 runs • First battle vs ${enemy.label}'
                             : '$heroTotal run${heroTotal > 1 ? 's' : ''} • $heroWinRate% win ($heroWins/$heroTotal)'
                                   '${heroAvgHp != null ? ' • Avg ${_formatNumber(heroAvgHp)} HP' : ''}',
                         maxLines: 1,
@@ -2831,9 +3051,9 @@ class _NaxarusIntroStatsPanel extends StatelessWidget {
                 color: Color(0xffffe22d),
               ),
               const SizedBox(width: 4),
-              const Text(
-                'TOP 3 VS NAXARUS',
-                style: TextStyle(
+              Text(
+                'TOP 3 VS ${enemy.label.toUpperCase()}',
+                style: const TextStyle(
                   color: Color(0xffffe22d),
                   fontSize: 10.5,
                   fontWeight: FontWeight.w900,
@@ -2844,9 +3064,9 @@ class _NaxarusIntroStatsPanel extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           if (top3.isEmpty)
-            const Text(
-              'No Naxarus battles recorded yet.',
-              style: TextStyle(
+            Text(
+              'No ${enemy.label} battles recorded yet.',
+              style: const TextStyle(
                 color: Colors.white54,
                 fontSize: 11,
                 fontStyle: FontStyle.italic,

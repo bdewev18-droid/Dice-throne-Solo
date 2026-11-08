@@ -1115,7 +1115,8 @@ class MinionAttackSummary extends StatelessWidget {
           );
         }
         if (enemy.profileKey == 'naraxus' ||
-            (enemy.profileKey == 'kaelen-voss' &&
+            ((enemy.profileKey == 'ourokhor' ||
+                    enemy.profileKey == 'kaelen-voss') &&
                 enemy.attackPlan.style == MinionAttackStyle.none &&
                 enemy.attackPlan.displayRows.isEmpty)) {
           return _NaxarusAttackSummary(enemy: enemy);
@@ -1423,18 +1424,18 @@ class MinionAttackSummary extends StatelessWidget {
                   final align = effect?.align ?? 'left';
                   final damage = _damageForSymbolGoal(enemy, goal);
                   final result = <Widget>[];
+                  Widget? labelWidget;
 
                   if (effect != null) {
                     if (effect.label != null && effect.label!.isNotEmpty) {
-                      result.add(
-                        InlineTokenText(
-                          effect.label!,
-                          color: enemy.rank.color,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xffcbd8cc),
-                          ),
+                      labelWidget = InlineTokenText(
+                        effect.label!,
+                        color: enemy.rank.color,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xffcbd8cc),
                         ),
                       );
                     }
@@ -1503,6 +1504,7 @@ class MinionAttackSummary extends StatelessWidget {
                   return _AttackResultLine(
                     goal: goal,
                     result: result,
+                    label: labelWidget,
                     align: align,
                   );
                 }),
@@ -1902,7 +1904,8 @@ class MinionDefenseSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (enemy.profileKey == 'naraxus' ||
-        (enemy.profileKey == 'kaelen-voss' &&
+        ((enemy.profileKey == 'ourokhor' ||
+                enemy.profileKey == 'kaelen-voss') &&
             enemy.defenseDisplayRows.isEmpty &&
             enemy.defenseEffects.every(
               (e) => e.white == 0 && e.orange == 0 && e.red == 0,

@@ -67,20 +67,23 @@ class MinionPassiveResolver {
     required EnemyNode enemy,
     required bool hasValidAttack,
     required bool rollPhaseFinished,
+    int poisonGauge = 0,
   }) {
     if (hasValidAttack || !rollPhaseFinished) {
       return MinionOffensiveFailureOutcome.empty;
     }
 
+    final isOurokhor = enemy.profileKey == 'ourokhor';
     final failurePassives = enemy.passives.where((p) {
       final t = (p.type ?? '').toLowerCase().trim();
       final tm = (p.timing ?? '').toLowerCase().trim();
       return t == 'offensive_failure' ||
           tm == 'offensiverollfailed' ||
-          tm == 'offensive_roll_failed';
+          tm == 'offensive_roll_failed' ||
+          tm == 'offensive_failure';
     }).toList();
 
-    if (failurePassives.isEmpty) {
+    if (failurePassives.isEmpty && !isOurokhor) {
       return MinionOffensiveFailureOutcome.empty;
     }
 
@@ -158,6 +161,16 @@ class MinionPassiveResolver {
 
       final noteDesc = StringBuffer('Passive triggered: ${p.text}');
       notes.add(noteDesc.toString());
+    }
+
+    if (isOurokhor) {
+      final ourokhorHeal = OurokhorLogic.failureRollHeal(poisonGauge);
+      if (ourokhorHeal > 0) {
+        heal += ourokhorHeal;
+      }
+      notes.add(
+        'Passive 2 (Venom Leech): Offensive roll failed, Ourokhor heals $ourokhorHeal HP (equal to Poison Gauge: $poisonGauge/25).',
+      );
     }
 
     // Consolidate offensive failure notes if multiple failure passives triggered

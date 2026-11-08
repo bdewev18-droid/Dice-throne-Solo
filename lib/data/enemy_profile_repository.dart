@@ -111,6 +111,7 @@ class EnemyProfileJson {
       attacks: _stringList(json['attacks']),
       defense: json['defense'] as String? ?? '',
       defenseDice: _intValue(json['defenseDice'], fallback: 0),
+      attackDice: _intValue(json['attackDice'], fallback: 5),
       attackPlan: _attackPlanFromJson(json['attackPlan']),
       passives: _passivesFromJson(json),
       defenseDisplayRows: _defenseDisplayRowsFromJson(json['defensePlan']),

@@ -30,6 +30,7 @@ class _CombatResolutionPanel extends StatelessWidget {
     final isNaraxus =
         enemy.rank == EnemyRank.naraxus ||
         enemy.profileKey == 'naraxus' ||
+        enemy.profileKey == 'ourokhor' ||
         enemy.profileKey == 'kaelen-voss';
 
     final String title;

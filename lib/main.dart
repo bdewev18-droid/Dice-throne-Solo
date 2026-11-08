@@ -43,16 +43,18 @@ part 'parts/fight_widgets/discard_card_dialog.dart';
 part 'parts/fight_widgets/discard_positive_token_dialog.dart';
 part 'parts/fight_widgets/druid_form_dialog.dart';
 part 'parts/fight_widgets/chimera_failure_dialog.dart';
+part 'parts/fight_widgets/poison_gauge_card.dart';
 part 'parts/fight_logic/token_combat_helpers.dart';
 part 'parts/fight_logic/defense_formula_evaluator.dart';
 part 'parts/fight_logic/hydra_logic.dart';
 part 'parts/fight_logic/minion_dice_strategy.dart';
 part 'parts/fight_logic/minion_passive_resolver.dart';
+part 'parts/fight_logic/ourokhor_logic.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.5.2';
-const int appBuildNumber = 467;
+const String appVersionLabel = 'Version 1.5.19';
+const int appBuildNumber = 484;
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -143,8 +145,7 @@ enum HeroSegment {
   xmen('X-Men'),
   outcast('Outcasts'),
   vanguard('Vanguard'),
-  santaKrampus('Santa & Krampus'),
-  other('Single');
+  other('Special Edition');
 
   const HeroSegment(this.label);
 
@@ -325,7 +326,7 @@ enum HeroType {
     'assets/personnages/Krampus.png',
     Alignment.center,
     Color(0xffb44335),
-    [HeroSegment.santaKrampus],
+    [HeroSegment.other],
     4,
   ),
   loki(
@@ -429,7 +430,7 @@ enum HeroType {
     'assets/personnages/Santa.png',
     Alignment.center,
     Color(0xffde2f3f),
-    [HeroSegment.santaKrampus],
+    [HeroSegment.other],
     2,
   ),
   scarletWitch(
@@ -702,6 +703,7 @@ enum CombatPhase {
 CombatPhase _firstCombatPhaseFor(EnemyNode enemy) {
   if (enemy.rank == EnemyRank.naraxus ||
       enemy.profileKey == 'naraxus' ||
+      enemy.profileKey == 'ourokhor' ||
       enemy.profileKey == 'kaelen-voss' ||
       enemy.alterations.any((a) {
         final norm = _normalizeTokenKey(a);
@@ -1069,8 +1071,8 @@ EnemyProfile? _profileByKey(String? key) {
   if (jsonProfile != null) {
     return jsonProfile;
   }
-  if (key == 'kaelen-voss') {
-    return kaelenVossProfile;
+  if (key == 'ourokhor' || key == 'kaelen-voss') {
+    return ourokhorProfile;
   }
   for (final rank in EnemyRank.values) {
     final fallback = defaultProfileFor(rank);
@@ -1107,7 +1109,8 @@ enum SurvivalMode {
   hardFixed('Difficult fixed route', hardTarget, RunDifficulty.hard, false),
   hardRandom('Difficult random route', hardTarget, RunDifficulty.hard, true),
   free('Free mode', mediumTarget, RunDifficulty.free, true),
-  naraxus('Naxarus Battle', 100, RunDifficulty.naraxus, false);
+  naraxus('Naxarus Normal', 100, RunDifficulty.naraxus, false),
+  naraxusHard('Naxarus Difficult', 100, RunDifficulty.naraxus, false);
 
   const SurvivalMode(
     this.label,
@@ -1504,7 +1507,8 @@ class SurvivalConfig {
   final Map<EnemyRank, int> freeCounts;
   final bool handOfTheKingDifficult;
 
-  bool get isNaraxusMode => mode == SurvivalMode.naraxus;
+  bool get isNaraxusMode =>
+      mode == SurvivalMode.naraxus || mode == SurvivalMode.naraxusHard;
 
   bool get isHandOfTheKingDifficult =>
       (mode == SurvivalMode.hardFixed || mode == SurvivalMode.hardRandom) ||
@@ -1537,7 +1541,8 @@ class SurvivalConfig {
     SurvivalMode.mediumFixed || SurvivalMode.mediumRandom => 'Medium mode',
     SurvivalMode.hardFixed || SurvivalMode.hardRandom => 'Difficult mode',
     SurvivalMode.free => 'Free mode',
-    SurvivalMode.naraxus => 'Naxarus Battle',
+    SurvivalMode.naraxus => 'Naxarus Normal',
+    SurvivalMode.naraxusHard => 'Naxarus Difficult',
   };
 }
 
@@ -1553,6 +1558,7 @@ class EnemyNode {
     required this.defenseDice,
     required this.attackPlan,
     required this.cardAsset,
+    this.attackDice = 5,
     this.profileKey,
     List<String> initialTokens = const [],
     this.rewardChests = 1,
@@ -1592,6 +1598,7 @@ class EnemyNode {
   List<String> attacks;
   String defense;
   int defenseDice;
+  final int attackDice;
   MinionAttackPlan attackPlan;
   String cardAsset;
   String? profileKey;
@@ -1616,8 +1623,8 @@ class EnemyNode {
     if (profileKey == 'naraxus') {
       return 'assets/enemy_previews/naraxus.webp';
     }
-    if (profileKey == 'kaelen-voss') {
-      return 'assets/enemy_previews/kaelen-voss.webp';
+    if (profileKey == 'ourokhor' || profileKey == 'kaelen-voss') {
+      return 'assets/enemy_previews/ourokhor.jpg';
     }
     if (profileKey == 'viseer') {
       return 'assets/enemy_previews/orange-viseer.webp';
@@ -1749,9 +1756,9 @@ class AdventureState {
   }) : targetScore = config.targetScore,
        startedAt = DateTime.now(),
        initialHealth =
-           startingHealth ?? (config.mode == SurvivalMode.naraxus ? 50 : 30),
+           startingHealth ?? (config.isNaraxusMode ? 50 : 30),
        health =
-           startingHealth ?? (config.mode == SurvivalMode.naraxus ? 50 : 30),
+           startingHealth ?? (config.isNaraxusMode ? 50 : 30),
        enemies = _generateEnemies(config) {
     _refreshAvailability();
     log('Run created: ${config.label}, target $targetScore points.');
@@ -1764,11 +1771,11 @@ class AdventureState {
     int? initialHealth,
   }) : targetScore = config.targetScore,
        initialHealth =
-           initialHealth ?? (config.mode == SurvivalMode.naraxus ? 50 : 30),
+           initialHealth ?? (config.isNaraxusMode ? 50 : 30),
        enemies = _generateEnemies(config);
 
   final HeroType hero;
-  final SurvivalConfig config;
+  SurvivalConfig config;
   final int targetScore;
   final List<EnemyNode> enemies;
   final List<String> logs = [];
@@ -1821,7 +1828,7 @@ class AdventureState {
     final configMode = configJson?['mode']?.toString();
     final initialHealth =
         (json['initialHealth'] as num?)?.toInt() ??
-        (configMode == 'naraxus' ? 50 : 30);
+        (configMode == 'naraxus' || configMode == 'naraxusHard' ? 50 : 30);
     final state = AdventureState._restored(
       hero: hero ?? HeroType.barbare,
       config: configJson == null

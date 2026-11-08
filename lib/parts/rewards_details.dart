@@ -73,10 +73,8 @@ class _RewardPanelState extends State<RewardPanel> {
                 else
                   _RewardOutcomeDisplay(outcome: outcome),
                 const SizedBox(height: 12),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ImageActionButton(
                       label: d20 == null ? 'Roll' : 'Reroll',
@@ -84,7 +82,15 @@ class _RewardPanelState extends State<RewardPanel> {
                       onPressed: () =>
                           setState(() => _d20 = _random.nextInt(20) + 1),
                     ),
+                    const SizedBox(width: 12),
                     OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        minimumSize: const Size(90, 48),
+                      ),
                       onPressed: d20 == null ? null : _modifyD20,
                       icon: const Icon(Icons.tune),
                       label: const Text('Edit'),
@@ -175,35 +181,85 @@ class _RewardOutcomeDisplay extends StatelessWidget {
           value: '+${outcome.healthDelta}',
           asset: 'assets/illustration/soin.webp',
           textColor: Colors.white,
-          size: 42,
-          fontSize: 15,
+          size: 50,
+          fontSize: 18,
         ),
       if (outcome.cpDelta > 0)
         SizedBox(
-          width: 46,
-          height: 46,
+          width: 52,
+          height: 52,
           child: FittedBox(
             fit: BoxFit.contain,
             child: _PcTriangleBadge(value: outcome.cpDelta),
           ),
         ),
     ];
-    if (badges.isEmpty) {
-      return Text(
-        outcome.label,
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontWeight: FontWeight.w900),
-      );
-    }
+
     return Semantics(
       label: outcome.label,
-      child: ExcludeSemantics(
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 8,
-          runSpacing: 8,
-          children: badges,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xff1f1b2e),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xff8a63d2).withValues(alpha: 0.6),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xff8a63d2).withValues(alpha: 0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(
+                  Icons.military_tech_rounded,
+                  size: 16,
+                  color: Color(0xffffd54f),
+                ),
+                SizedBox(width: 6),
+                Text(
+                  'REWARD',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                    color: Color(0xffffd54f),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (badges.isNotEmpty) ...[
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
+                children: badges,
+              ),
+              const SizedBox(height: 6),
+            ],
+            Text(
+              outcome.label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
         ),
       ),
     );
