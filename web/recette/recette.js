@@ -482,3 +482,1126 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+
+// ============================================================
+// BUG TAB & SUPABASE RUN LOGS INSPECTOR
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const SUPABASE_URL = 'https://rqxfjffwzdfefinfcxjo.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_3EuoFYUzqUvNX7IPrhZKpQ_mkW-Gl97';
+  const ADMIN_EMAIL = 'bdewev18@gmail.com';
+
+  let sbClient = null;
+  let allBugRecords = [];
+  let selectedBugId = null;
+  let detailViewMode = 'chat'; // 'chat' | 'json'
+  let enemyProfiles = [];
+  let tokenCatalog = [];
+
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabPanes = document.querySelectorAll('.tab-pane');
+  const bugTabBadge = document.getElementById('bug-tab-badge');
+  const authStatusEl = document.getElementById('bug-auth-status');
+  const loginBtn = document.getElementById('bug-google-login-btn');
+  const refreshBtn = document.getElementById('bug-refresh-btn');
+  const logoutBtn = document.getElementById('bug-logout-btn');
+  const bugSearchInput = document.getElementById('bug-search-input');
+  const bugOnlyCheckbox = document.getElementById('bug-only-checkbox');
+  const showArchivedCheckbox = document.getElementById('bug-show-archived-checkbox');
+  const ARCHIVED_STORAGE_KEY = 'dts_archived_bug_ids';
+
+  function getLocalArchivedIds() {
+    try {
+      const raw = localStorage.getItem(ARCHIVED_STORAGE_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr.map(String) : []);
+    } catch (_) {
+      return new Set();
+    }
+  }
+
+  function setLocalArchived(id, archived) {
+    const set = getLocalArchivedIds();
+    if (archived) set.add(String(id));
+    else set.delete(String(id));
+    try {
+      localStorage.setItem(ARCHIVED_STORAGE_KEY, JSON.stringify([...set]));
+    } catch (_) {}
+  }
+
+  function isRecordArchived(rec) {
+    if (!rec) return false;
+    return Boolean(rec.is_archived) || getLocalArchivedIds().has(String(rec.id));
+  }
+
+  async function toggleArchiveRecord(rec) {
+    const nextArchived = !isRecordArchived(rec);
+    rec.is_archived = nextArchived;
+    setLocalArchived(rec.id, nextArchived);
+
+    if (sbClient && !String(rec.id).startsWith('manual-')) {
+      try {
+        await sbClient
+          .from('combat_run_logs')
+          .update({ is_archived: nextArchived })
+          .eq('id', rec.id);
+      } catch (_) {
+        // Fallback persisted in localStorage
+      }
+    }
+
+    if (nextArchived && rec.id === selectedBugId && !showArchivedCheckbox?.checked) {
+      const nextVisible = allBugRecords.find((r) => !isRecordArchived(r) && (!bugOnlyCheckbox?.checked || r.has_ai_bug));
+      selectedBugId = nextVisible ? nextVisible.id : null;
+    }
+
+    renderBugList();
+    renderBugEnemyPreview();
+    renderBugDetail();
+  }
+  const pasteJsonBtn = document.getElementById('bug-paste-json-btn');
+  const pastePanel = document.getElementById('bug-paste-panel');
+  const pasteTextarea = document.getElementById('bug-paste-textarea');
+  const pasteCancelBtn = document.getElementById('bug-paste-cancel-btn');
+  const pasteLoadBtn = document.getElementById('bug-paste-load-btn');
+  const bugListPane = document.getElementById('bug-list-pane');
+  const bugEnemyPreviewPane = document.getElementById('bug-enemy-preview-pane');
+  const bugDetailPane = document.getElementById('bug-detail-pane');
+
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function formatAiMessageHtml(msg) {
+    if (!msg) return '';
+    let html = escapeHtml(msg);
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+    html = html.replace(/\{[^}]+\}/g, '');
+    return html.trim();
+  }
+
+  function phaseLabel(phase) {
+    const map = {
+      intro: 'Intro',
+      heroUpkeep: 'Hero Upkeep',
+      hero: 'Hero Roll / Defense',
+      minionUpkeep: 'Minion Upkeep',
+      minionAttack: 'Minion Roll / Attack',
+    };
+    return map[phase] || phase || 'Phase';
+  }
+
+  // Tab switching
+  tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-tab');
+      tabButtons.forEach((b) => b.classList.toggle('active', b === btn));
+      tabPanes.forEach((p) => {
+        p.classList.toggle('active', p.id === `tab-${target}`);
+      });
+    });
+  });
+
+  if (window.location.hash === '#bug' || window.location.hash === '#bugs') {
+    const bugBtn = document.getElementById('tab-btn-bugs');
+    if (bugBtn) bugBtn.click();
+  } else if (window.location.hash === '#community') {
+    const commBtn = document.getElementById('tab-btn-community');
+    if (commBtn) commBtn.click();
+  }
+
+  // Paste manual JSON
+  if (pasteJsonBtn) {
+    pasteJsonBtn.addEventListener('click', () => {
+      pastePanel.style.display = pastePanel.style.display === 'none' ? 'block' : 'none';
+    });
+  }
+  if (pasteCancelBtn) {
+    pasteCancelBtn.addEventListener('click', () => {
+      pastePanel.style.display = 'none';
+    });
+  }
+  if (pasteLoadBtn) {
+    pasteLoadBtn.addEventListener('click', () => {
+      try {
+        const parsed = JSON.parse(pasteTextarea.value);
+        const manualRecord = {
+          id: `manual-${Date.now()}`,
+          user_email: 'Import manuel JSON',
+          hero: parsed.run?.hero || 'Héros inconnu',
+          enemy_name: parsed.combat?.enemy?.name || 'Ennemi inconnu',
+          enemy_rank: parsed.combat?.enemy?.rank || '',
+          mode: parsed.run?.mode || '',
+          outcome: parsed.outcome || 'in_progress',
+          has_ai_bug: Boolean(parsed.hasAiDeselectBug || (parsed.deselectBugCount || 0) > 0),
+          deselect_count: parsed.deselectBugCount || 0,
+          created_at: parsed.createdAt || new Date().toISOString(),
+          run_log_json: parsed,
+        };
+        allBugRecords = [manualRecord, ...allBugRecords.filter((r) => r.id !== manualRecord.id)];
+        selectedBugId = manualRecord.id;
+        pastePanel.style.display = 'none';
+        renderBugList();
+        renderBugEnemyPreview();
+        renderBugDetail();
+      } catch (err) {
+        alert('JSON invalide : ' + err.message);
+      }
+    });
+  }
+
+  if (bugSearchInput) {
+    bugSearchInput.addEventListener('input', renderBugList);
+  }
+  if (bugOnlyCheckbox) {
+    bugOnlyCheckbox.addEventListener('change', renderBugList);
+  }
+  if (showArchivedCheckbox) {
+    showArchivedCheckbox.addEventListener('change', () => {
+      renderBugList();
+      renderBugEnemyPreview();
+      renderBugDetail();
+    });
+  }
+
+  async function loadEnemyAndTokenCatalogs() {
+    try {
+      const [profilesRes, tokensRes] = await Promise.all([
+        fetch('../docs/enemy_profiles.json').catch(() => null),
+        fetch('../assets/data/token_catalog.json').catch(() => null),
+      ]);
+      if (profilesRes && profilesRes.ok) {
+        const pJson = await profilesRes.json();
+        enemyProfiles = Array.isArray(pJson?.profiles) ? pJson.profiles : [];
+      }
+      if (tokensRes && tokensRes.ok) {
+        const tJson = await tokensRes.json();
+        tokenCatalog = Array.isArray(tJson?.tokens) ? tJson.tokens : [];
+      }
+      renderBugEnemyPreview();
+    } catch (_) {
+      // ignore catalog load failure
+    }
+  }
+
+  async function initSupabaseBugs() {
+    loadEnemyAndTokenCatalogs();
+    if (!window.supabase) {
+      if (authStatusEl) authStatusEl.textContent = 'SDK Supabase non chargé (mode inspection JSON manuel disponible).';
+      return;
+    }
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    if (loginBtn) {
+      loginBtn.onclick = async () => {
+        try {
+          authStatusEl.textContent = 'Connexion Google en cours...';
+          const { error } = await sbClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: window.location.origin + window.location.pathname + '#bugs',
+            },
+          });
+          if (error) authStatusEl.textContent = 'Erreur : ' + error.message;
+        } catch (err) {
+          authStatusEl.textContent = 'Erreur : ' + err.message;
+        }
+      };
+    }
+
+    if (refreshBtn) {
+      refreshBtn.onclick = () => fetchCombatLogs();
+    }
+
+    if (logoutBtn) {
+      logoutBtn.onclick = async () => {
+        await sbClient.auth.signOut();
+      };
+    }
+
+    sbClient.auth.onAuthStateChange((_event, session) => {
+      updateAuthUi(session);
+    });
+
+    try {
+      const { data: { session } } = await sbClient.auth.getSession();
+      updateAuthUi(session);
+    } catch (err) {
+      if (authStatusEl) authStatusEl.textContent = 'Session indisponible : ' + err.message;
+    }
+  }
+
+  function updateAuthUi(session) {
+    updateCommunityAuthUi(session);
+    if (!session) {
+      if (authStatusEl) authStatusEl.textContent = 'Non connecté. Connectez-vous en Admin pour lire les bugs Supabase.';
+      if (loginBtn) loginBtn.style.display = 'inline-flex';
+      if (refreshBtn) refreshBtn.style.display = 'none';
+      if (logoutBtn) logoutBtn.style.display = 'none';
+      return;
+    }
+    const email = session.user?.email || '';
+    if (email !== ADMIN_EMAIL) {
+      if (authStatusEl) authStatusEl.textContent = `Connecté (${email}) — Accès restreint à ${ADMIN_EMAIL} pour tous les bugs.`;
+    } else {
+      if (authStatusEl) authStatusEl.textContent = `Connecté en Admin (${email})`;
+    }
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (refreshBtn) refreshBtn.style.display = 'inline-flex';
+    if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+    fetchCombatLogs();
+  }
+
+  async function fetchCombatLogs() {
+    if (!sbClient || !bugListPane) return;
+    bugListPane.innerHTML = '<div class="bug-empty-state">Chargement des rapports depuis Supabase...</div>';
+    try {
+      const { data, error } = await sbClient
+        .from('combat_run_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (error) {
+        bugListPane.innerHTML = `
+          <div class="bug-empty-state" style="color:#fca5a5;">
+            Erreur Supabase : ${escapeHtml(error.message)}<br>
+            <small style="color:var(--text-secondary);">Assurez-vous que la table <code>combat_run_logs</code> est créée (voir <code>supabase/schema.sql</code>).</small>
+          </div>
+        `;
+        return;
+      }
+
+      const manualEntries = allBugRecords.filter((r) => String(r.id).startsWith('manual-'));
+      allBugRecords = [...manualEntries, ...(data || [])];
+      updateBugBadge();
+      if (!selectedBugId && allBugRecords.length > 0) {
+        const firstActiveBug = allBugRecords.find((r) => !isRecordArchived(r) && r.has_ai_bug)
+          || allBugRecords.find((r) => !isRecordArchived(r));
+        selectedBugId = firstActiveBug ? firstActiveBug.id : null;
+      }
+      renderBugList();
+      renderBugEnemyPreview();
+      renderBugDetail();
+    } catch (err) {
+      bugListPane.innerHTML = `<div class="bug-empty-state" style="color:#fca5a5;">Erreur réseau : ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  function updateBugBadge() {
+    if (!bugTabBadge) return;
+    const bugCount = allBugRecords.filter((r) => r.has_ai_bug && !isRecordArchived(r)).length;
+    bugTabBadge.textContent = String(bugCount);
+  }
+
+  function rankColorHex(rank) {
+    const map = {
+      green: '#34d36d',
+      blue: '#3bb9ff',
+      violet: '#9b58ff',
+      orange: '#ff8a2b',
+      viseer: '#ff8a2b',
+      naraxus: '#d51f2a',
+    };
+    return map[String(rank || '').toLowerCase()] || '#9ca3af';
+  }
+
+  function epTokenIcon(name) {
+    const needle = String(name || '').toLowerCase().trim();
+    const tok = tokenCatalog.find((t) =>
+      [t.label, t.frLabel, ...(t.aliases || [])]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase() === needle)
+    );
+    if (!tok?.imageAsset) return '';
+    return `<img class="ep-token-img" src="../${escapeHtml(tok.imageAsset)}" alt="${escapeHtml(name)}" onerror="this.style.display='none';">`;
+  }
+
+  function epSymIcons(face, count = 0) {
+    const n = Number(count) || 0;
+    if (n <= 0) return '';
+    const srcMap = {
+      white: '../assets/dice_faces/symbol_white.webp',
+      orange: '../assets/dice_faces/symbol_orange.webp',
+      red: '../assets/dice_faces/symbol_red.webp',
+    };
+    const src = srcMap[face] || srcMap.white;
+    return Array.from({ length: n })
+      .map(() => `<img class="ep-die-sym" src="${src}" alt="${escapeHtml(face)}">`)
+      .join('');
+  }
+
+  function epConditionHtml(condition = {}) {
+    if (!condition) return '';
+    const prefix = condition.repeat ? '<span style="font-weight:900;">x</span>' : '';
+    if (condition.type === 'suite') {
+      return `${prefix}<span class="ep-chip">${escapeHtml(condition.suite || 'suite')} ${escapeHtml(condition.length || '')}</span>`;
+    }
+    if (condition.type === 'number') {
+      return `${prefix}<span class="ep-die-num">${escapeHtml(condition.value ?? '?')}</span>`;
+    }
+    if (condition.type === 'any') {
+      return `${prefix}<span class="ep-chip">Any</span>`;
+    }
+    if (condition.type === 'text') {
+      return `${prefix}<span class="ep-chip">Text</span>`;
+    }
+    const syms = condition.symbols || {};
+    const orWO = condition.orWhiteOrange || syms.orWhiteOrange;
+    const orOR = condition.orOrangeRed || syms.orOrangeRed;
+    const parts = [];
+    const w = epSymIcons('white', syms.white);
+    const o = epSymIcons('orange', syms.orange ?? syms.yellow);
+    const r = epSymIcons('red', syms.red);
+    if (w) parts.push(w);
+    if (orWO && w && o) parts.push('<span style="font-size:0.65rem;color:var(--text-muted);font-weight:800;">or</span>');
+    if (o) parts.push(o);
+    if (orOR && o && r) parts.push('<span style="font-size:0.65rem;color:var(--text-muted);font-weight:800;">or</span>');
+    if (r) parts.push(r);
+    return `${prefix}${parts.join('')}`;
+  }
+
+  function epEffectHtml(eff = {}) {
+    const bits = [];
+    if (Array.isArray(eff.tokens) && eff.tokens.length) {
+      const counts = {};
+      eff.tokens.forEach((t) => { counts[t] = (counts[t] || 0) + 1; });
+      Object.entries(counts).forEach(([tok, cnt]) => {
+        const pfx = cnt > 1 ? `${cnt}x ` : '';
+        bits.push(`<span class="ep-chip">${pfx}${epTokenIcon(tok)}${escapeHtml(tok)}</span>`);
+      });
+    }
+    if (eff.damage) bits.push(`<span class="ep-badge ${eff.undefendable ? 'undef' : 'damage'}">${escapeHtml(eff.damage)} DMG</span>`);
+    if (eff.prevent) bits.push(`<span class="ep-badge prevent">🛡️ ${escapeHtml(eff.prevent)}</span>`);
+    if (eff.returnDamage) bits.push(`<span class="ep-badge ${eff.undefendable ? 'undef' : 'damage'}">↩ ${escapeHtml(eff.returnDamage)}</span>`);
+    if (eff.stealHp) bits.push(`<span class="ep-badge heal">Steal ${escapeHtml(eff.stealHp)} HP</span>`);
+    if (eff.loseHp) bits.push(`<span class="ep-badge losehp">-${escapeHtml(eff.loseHp)} HP</span>`);
+    if (eff.heal) bits.push(`<span class="ep-badge heal">+${escapeHtml(eff.heal)} HP</span>`);
+    if (eff.drawCards) bits.push(`<span class="ep-chip">Draw ${escapeHtml(eff.drawCards)}</span>`);
+    if (eff.discardCards) bits.push(`<span class="ep-chip">Discard ${escapeHtml(eff.discardCards)}</span>`);
+    if (Array.isArray(eff.formulas) && eff.formulas.length) {
+      eff.formulas.forEach((f) => bits.push(`<span class="ep-chip">${escapeHtml(f)}</span>`));
+    }
+    if (eff.extraRoll?.dice) {
+      bits.push(`<span class="ep-chip">🎲 Extra ${escapeHtml(eff.extraRoll.dice)}d</span>`);
+    }
+    if (Array.isArray(eff.notes) && eff.notes.length) {
+      eff.notes.forEach((n) => bits.push(`<span class="ep-chip">${escapeHtml(n)}</span>`));
+    }
+    return bits.join('') || '<span class="ep-chip">-</span>';
+  }
+
+  function epGoalHtml(goal = {}, idx = 0) {
+    const syms = goal.symbols || goal;
+    const icons = [
+      epSymIcons('white', syms.white),
+      epSymIcons('orange', syms.orange ?? syms.yellow),
+      epSymIcons('red', syms.red),
+    ].filter(Boolean).join('');
+    const dmg = goal.damage ? `<span class="ep-badge ${goal.undefendable ? 'undef' : 'damage'}">${escapeHtml(goal.damage)}</span>` : '';
+    const name = goal.name || goal.label || `Objectif #${idx + 1}`;
+    return `
+      <div class="ep-row">
+        <div class="ep-row-left">
+          <span style="color:var(--text-muted);font-weight:800;">#${idx + 1}</span>
+          ${icons || `<span class="ep-chip">${escapeHtml(name)}</span>`}
+          <span style="color:var(--text-secondary);">${escapeHtml(name)}</span>
+        </div>
+        <div class="ep-row-right">${dmg}</div>
+      </div>
+    `;
+  }
+
+  function renderBugEnemyPreview() {
+    if (!bugEnemyPreviewPane) return;
+    const rec = allBugRecords.find((r) => r.id === selectedBugId);
+    if (!rec) {
+      bugEnemyPreviewPane.innerHTML = '<div class="bug-empty-state" style="padding:1rem;">Sélectionnez un bug ci-dessus pour voir la fiche de l\'ennemi.</div>';
+      return;
+    }
+
+    const jsonEnemy = rec.run_log_json?.combat?.enemy || {};
+    const enemyKey = rec.enemy_key || jsonEnemy.profileKey || '';
+    const enemyName = rec.enemy_name || jsonEnemy.name || '';
+    const profile = enemyProfiles.find((p) => p.key === enemyKey)
+      || enemyProfiles.find((p) => String(p.name || '').toLowerCase() === String(enemyName).toLowerCase());
+
+    if (!profile) {
+      bugEnemyPreviewPane.innerHTML = `
+        <div class="ep-header">
+          <div>
+            <div class="ep-title">${escapeHtml(enemyName || 'Ennemi inconnu')}</div>
+            <div class="ep-stats">Profil détaillé non trouvé dans <code>docs/enemy_profiles.json</code> (clé: ${escapeHtml(enemyKey || '-')})</div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    const rankCol = rankColorHex(profile.rank);
+    const initTokens = Array.isArray(profile.initialTokens) && profile.initialTokens.length
+      ? profile.initialTokens.map((t) => `<span class="ep-chip">${epTokenIcon(t)}${escapeHtml(t)}</span>`).join('')
+      : '';
+
+    const styleLabel = profile.attackPlan?.style || 'none';
+    const goals = Array.isArray(profile.attackPlan?.goals) ? profile.attackPlan.goals : [];
+    const goalsHtml = styleLabel === 'suite'
+      ? `<div class="ep-row"><div class="ep-row-left"><span class="ep-chip">Style : Suite (Petite / Grande)</span></div></div>`
+      : (goals.length
+          ? goals.map((g, idx) => epGoalHtml(g, idx)).join('')
+          : `<div class="ep-row"><div class="ep-row-left"><span style="color:var(--text-muted);">Style : ${escapeHtml(styleLabel)}</span></div></div>`);
+
+    const actions = Array.isArray(profile.attackPlan?.actions) ? profile.attackPlan.actions : [];
+    const condRules = Array.isArray(profile.attackPlan?.conditionalRules) ? profile.attackPlan.conditionalRules : [];
+    const attackRows = [
+      ...actions.map((a) => `
+        <div class="ep-row">
+          <div class="ep-row-left">${epConditionHtml(a.condition)} <strong>${escapeHtml(a.label || '')}</strong></div>
+          <div class="ep-row-right">${epEffectHtml(a)}</div>
+        </div>
+      `),
+      ...condRules.map((r) => `
+        <div class="ep-row">
+          <div class="ep-row-left"><span class="ep-chip">⚙ ${escapeHtml(r.label || 'Condition')}</span></div>
+          <div class="ep-row-right">${epEffectHtml(r)}</div>
+        </div>
+      `),
+    ].join('') || (Array.isArray(profile.attacks) ? profile.attacks.map((t) => `<div class="ep-row"><span>${escapeHtml(t)}</span></div>`).join('') : '<div class="ep-row"><span style="color:var(--text-muted);">Aucune attaque</span></div>');
+
+    const defEffects = Array.isArray(profile.defensePlan?.effects) ? profile.defensePlan.effects : [];
+    const defenseRows = defEffects.length
+      ? defEffects.map((e) => `
+          <div class="ep-row">
+            <div class="ep-row-left">${epConditionHtml(e.condition)}</div>
+            <div class="ep-row-right">${epEffectHtml(e)}</div>
+          </div>
+        `).join('')
+      : `<div class="ep-row"><span>${escapeHtml(profile.defense || 'Aucune défense')}</span></div>`;
+
+    const passives = [
+      ...(Array.isArray(profile.passives) ? profile.passives : []),
+      ...(Array.isArray(profile.attackPlan?.passives) ? profile.attackPlan.passives : []),
+    ];
+    const passivesHtml = passives.length
+      ? `<div class="ep-section"><div class="ep-section-title">✨ Passifs</div>${passives.map((p) => `<div style="font-size:0.74rem;color:var(--text-secondary);">${escapeHtml(p.text || p)}</div>`).join('')}</div>`
+      : '';
+
+    bugEnemyPreviewPane.innerHTML = `
+      <div class="ep-header">
+        <img class="ep-thumb" src="../${escapeHtml(profile.cardAsset)}" alt="${escapeHtml(profile.name)}" onerror="this.style.display='none';">
+        <div style="flex:1; min-width:0;">
+          <div class="ep-title">
+            <span>${escapeHtml(profile.name)}</span>
+            <span class="ep-rank-pill" style="color:${rankCol};">${escapeHtml(profile.rank)}</span>
+          </div>
+          <div class="ep-stats">
+            <span>❤️ ${escapeHtml(profile.maxHealth)} HP</span>
+            <span>⚡ ${escapeHtml(profile.cp)} CP</span>
+            <span>🎲 Atk ${escapeHtml(profile.attackDice || 5)} / Def ${escapeHtml(profile.defenseDice || 0)}</span>
+          </div>
+          ${initTokens ? `<div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-top:0.3rem;">${initTokens}</div>` : ''}
+        </div>
+      </div>
+
+      <div class="ep-section">
+        <div class="ep-section-title">🎯 Objectif de Roll (${escapeHtml(styleLabel)})</div>
+        ${goalsHtml}
+      </div>
+
+      <div class="ep-section">
+        <div class="ep-section-title">⚔️ Attaque</div>
+        ${attackRows}
+      </div>
+
+      <div class="ep-section">
+        <div class="ep-section-title">🛡️ Défense (${escapeHtml(profile.defenseDice || 0)} dés)</div>
+        ${defenseRows}
+      </div>
+
+      ${passivesHtml}
+    `;
+  }
+
+  function renderBugList() {
+    if (!bugListPane) return;
+    updateBugBadge();
+
+    const q = (bugSearchInput?.value || '').toLowerCase().trim();
+    const bugsOnly = Boolean(bugOnlyCheckbox?.checked);
+    const showArchived = Boolean(showArchivedCheckbox?.checked);
+
+    const filtered = allBugRecords.filter((rec) => {
+      const archived = isRecordArchived(rec);
+      if (!showArchived && archived) return false;
+      if (bugsOnly && !rec.has_ai_bug) return false;
+      if (!q) return true;
+      const hay = `${rec.user_email || ''} ${rec.hero || ''} ${rec.enemy_name || ''} ${rec.mode || ''} ${rec.outcome || ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+
+    if (filtered.length === 0) {
+      bugListPane.innerHTML = `<div class="bug-empty-state">${bugsOnly ? 'Aucun bug actif de désélection IA.' : 'Aucun combat trouvé.'}</div>`;
+      return;
+    }
+
+    bugListPane.innerHTML = '';
+    filtered.forEach((rec) => {
+      const archived = isRecordArchived(rec);
+      const item = document.createElement('div');
+      item.className = `bug-list-item ${rec.id === selectedBugId ? 'selected' : ''} ${archived ? 'archived' : ''}`;
+      const dateStr = rec.created_at ? new Date(rec.created_at).toLocaleString('fr-FR') : '-';
+      const bugBadge = rec.has_ai_bug
+        ? `<span class="bug-pill bug-pill-danger">🐛 ${rec.deselect_count || 1} désélection(s)</span>`
+        : `<span class="bug-pill bug-pill-ok">✓ Aucun bug</span>`;
+      const archivedBadge = archived
+        ? `<span class="bug-pill bug-pill-archived">📦 Historisé</span>`
+        : '';
+
+      item.innerHTML = `
+        <div class="bug-item-top">
+          <span class="bug-matchup">${escapeHtml(rec.hero)} vs ${escapeHtml(rec.enemy_name)}</span>
+          <div style="display:flex;gap:0.3rem;align-items:center;flex-wrap:wrap;">
+            ${archivedBadge}
+            ${bugBadge}
+          </div>
+        </div>
+        <div class="bug-item-meta">
+          <span>👤 ${escapeHtml(rec.user_email || 'Guest')}</span>
+          <span>🏁 ${escapeHtml(rec.outcome || '-')}</span>
+        </div>
+        <div class="bug-item-meta">
+          <span>🕒 ${escapeHtml(dateStr)}</span>
+          ${rec.mode ? `<span>🎮 ${escapeHtml(rec.mode)}</span>` : ''}
+        </div>
+        <div class="bug-item-actions">
+          <button type="button" class="bug-archive-btn" title="${archived ? 'Restaurer ce bug' : 'Historiser (archiver) ce bug'}">
+            ${archived ? '↩️ Restaurer' : '📦 Historiser'}
+          </button>
+        </div>
+      `;
+
+      const archiveBtn = item.querySelector('.bug-archive-btn');
+      if (archiveBtn) {
+        archiveBtn.onclick = (e) => {
+          e.stopPropagation();
+          toggleArchiveRecord(rec);
+        };
+      }
+
+      item.onclick = () => {
+        selectedBugId = rec.id;
+        renderBugList();
+        renderBugEnemyPreview();
+        renderBugDetail();
+      };
+      bugListPane.appendChild(item);
+    });
+  }
+
+  function faceImgHtml(val, inline = false) {
+    const num = Number(val);
+    if (!Number.isInteger(num) || num < 1 || num > 6) {
+      return `<span>🎲 ${escapeHtml(val ?? '-')}</span>`;
+    }
+    const cls = inline ? 'ai-die-img-inline' : 'ai-die-img';
+    return `<img class="${cls}" src="../assets/dice_faces/face_${num}.webp" alt="Dé ${num}" onerror="this.outerHTML='<span>🎲 ${num}</span>';">`;
+  }
+
+  function renderDiceStrip(dice, highlightDeselectedIds = []) {
+    if (!Array.isArray(dice) || dice.length === 0) return '';
+    const chips = dice.map((d) => {
+      const val = d.value == null ? '-' : d.value;
+      const isDeselected = highlightDeselectedIds.includes(d.id);
+      const cls = isDeselected ? 'deselected' : (d.reserved ? 'reserved' : '');
+      const tag = isDeselected
+        ? '🐛 Désél.'
+        : (d.reserved ? '🔒 Gardé' : (d.locked ? '🔐 Cube' : `#${d.id}`));
+      return `
+        <div class="ai-die-chip ${cls}" title="Dé #${d.id} : valeur ${val}">
+          ${faceImgHtml(val, false)}
+          <span class="ai-die-tag">${tag}</span>
+        </div>
+      `;
+    }).join('');
+    return `<div class="ai-dice-strip">${chips}</div>`;
+  }
+
+  function renderChatTimeline(json) {
+    const timeline = Array.isArray(json.timeline) ? json.timeline : [];
+    if (timeline.length === 0) {
+      const logs = Array.isArray(json.run?.logs) ? json.run.logs : [];
+      if (logs.length === 0) {
+        return '<div class="bug-empty-state">Aucune étape de timeline ou log disponible dans ce JSON.</div>';
+      }
+      return `
+        <div class="ai-chat-timeline">
+          ${logs.map((line, i) => {
+            const isBug = String(line).includes('[AI_DESELECT_BUG]');
+            return `
+              <div class="ai-step-card ${isBug ? 'is-bug' : ''}">
+                <div class="ai-step-header">
+                  <span class="ai-badge">#${i + 1}</span>
+                  ${isBug ? '<span class="ai-badge ai-badge-bug">🐛 BUG DÉSÉLECTION IA</span>' : ''}
+                </div>
+                <div class="ai-chat-bubble">${escapeHtml(line)}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    const cardsHtml = timeline.map((step) => {
+      const type = step.type || 'step';
+      const isBug = type === 'ai_deselect_bug';
+      const isEdit = type === 'dice_edit';
+      const isReroll = type === 'dice_reroll_one';
+      const cardClass = isBug ? 'is-bug' : (isEdit ? 'is-edit' : (isReroll ? 'is-reroll' : ''));
+
+      let typeBadge = '';
+      let calloutHtml = '';
+      let deselectedIds = [];
+
+      if (type === 'combat_start') {
+        typeBadge = '<span class="ai-badge">⚔️ Début du combat</span>';
+      } else if (type === 'phase_change') {
+        typeBadge = '<span class="ai-badge">➡️ Changement de phase</span>';
+      } else if (type === 'dice_roll') {
+        typeBadge = `<span class="ai-badge">🎲 Lancer ${step.rollCount || 0}/${step.maxRolls || 0}</span>`;
+      } else if (isEdit) {
+        typeBadge = '<span class="ai-badge ai-badge-edit">✏️ Édition dé</span>';
+        calloutHtml = `<div class="ai-event-callout edit">✏️ Édition manuelle : Dé #${escapeHtml(step.dieId)} ${faceImgHtml(step.oldValue, true)} ➔ ${faceImgHtml(step.newValue, true)}</div>`;
+      } else if (isReroll) {
+        typeBadge = '<span class="ai-badge ai-badge-reroll">🔄 Relance 1 dé</span>';
+        calloutHtml = `<div class="ai-event-callout reroll">🔄 Relance spéciale : Dé #${escapeHtml(step.dieId)} ${faceImgHtml(step.oldValue, true)} ➔ ${faceImgHtml(step.newValue, true)}</div>`;
+      } else if (isBug) {
+        typeBadge = '<span class="ai-badge ai-badge-bug">🐛 BUG DÉSÉLECTION IA</span>';
+        const desList = Array.isArray(step.deselectedDice) ? step.deselectedDice : [];
+        deselectedIds = desList.map((d) => d.id);
+        const desc = desList.map((d) => `Dé #${escapeHtml(d.id)} ${faceImgHtml(d.value, true)}`).join(' , ');
+        calloutHtml = `<div class="ai-event-callout bug">🐛 BUG SIGNALÉ : L'utilisateur a désélectionné ${desc || 'un dé'} réservé par l'IA !</div>`;
+      } else if (type === 'combat_end') {
+        typeBadge = `<span class="ai-badge">🏁 Fin : ${escapeHtml(step.outcome || '')}</span>`;
+      }
+
+      const aiMsgHtml = formatAiMessageHtml(step.aiMessage);
+      const diceHtml = renderDiceStrip(step.dice, deselectedIds);
+      const timeStr = step.timestamp ? new Date(step.timestamp).toLocaleTimeString('fr-FR') : '';
+
+      return `
+        <div class="ai-step-card ${cardClass}">
+          <div class="ai-step-header">
+            <div class="ai-step-badges">
+              <span class="ai-badge">#${escapeHtml(step.seq)}</span>
+              <span class="ai-badge ai-badge-phase">${escapeHtml(phaseLabel(step.phase))}</span>
+              ${typeBadge}
+              ${timeStr ? `<span style="color:var(--text-muted);">${escapeHtml(timeStr)}</span>` : ''}
+            </div>
+            <div class="ai-vitals-strip">
+              🦸 ${escapeHtml(step.heroHp)} HP / ${escapeHtml(step.heroCp)} CP &nbsp;|&nbsp; 👹 ${escapeHtml(step.enemyHp)} HP / ${escapeHtml(step.enemyCp)} CP
+            </div>
+          </div>
+          ${calloutHtml}
+          ${aiMsgHtml ? `<div class="ai-chat-bubble">${aiMsgHtml}</div>` : ''}
+          ${diceHtml}
+        </div>
+      `;
+    }).join('');
+
+    return `<div class="ai-chat-timeline">${cardsHtml}</div>`;
+  }
+
+  function renderBugDetail() {
+    if (!bugDetailPane) return;
+    const rec = allBugRecords.find((r) => r.id === selectedBugId);
+    if (!rec) {
+      bugDetailPane.innerHTML = '<div class="bug-empty-state">Sélectionnez un rapport dans la liste pour afficher le détail du combat.</div>';
+      return;
+    }
+
+    const json = rec.run_log_json || {};
+    const prettyJson = JSON.stringify(json, null, 2);
+    const dateStr = rec.created_at ? new Date(rec.created_at).toLocaleString('fr-FR') : '-';
+
+    bugDetailPane.innerHTML = `
+      <div class="bug-detail-header">
+        <div>
+          <h3 style="font-size:1.15rem; color:var(--text-primary);">
+            ${escapeHtml(rec.hero)} <span style="color:var(--text-muted);">vs</span> ${escapeHtml(rec.enemy_name)}
+            ${rec.has_ai_bug ? `<span class="bug-pill bug-pill-danger" style="margin-left:0.5rem;">🐛 ${rec.deselect_count || 1} désélection(s)</span>` : ''}
+          </h3>
+          <div class="bug-detail-meta-grid">
+            <span>👤 Qui : <strong>${escapeHtml(rec.user_email || 'Guest')}</strong></span>
+            <span>🎭 Perso : <strong>${escapeHtml(rec.hero)}</strong></span>
+            <span>👹 Ennemi : <strong>${escapeHtml(rec.enemy_name)} (${escapeHtml(rec.enemy_rank || '-')})</strong></span>
+            <span>🎮 Mode : <strong>${escapeHtml(rec.mode || '-')}</strong></span>
+            <span>🏁 Issue : <strong>${escapeHtml(rec.outcome || '-')}</strong></span>
+            <span>🕒 Date : <strong>${escapeHtml(dateStr)}</strong></span>
+          </div>
+        </div>
+        <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+          <div class="bug-view-switch">
+            <button class="bug-view-btn ${detailViewMode === 'chat' ? 'active' : ''}" id="btn-view-chat">💬 AI Chat (Étapes)</button>
+            <button class="bug-view-btn ${detailViewMode === 'json' ? 'active' : ''}" id="btn-view-json">📄 JSON</button>
+          </div>
+          <button class="btn btn-sm" id="btn-copy-bug-json">📋 Copier JSON</button>
+        </div>
+      </div>
+      <div id="bug-detail-body">
+        ${detailViewMode === 'chat'
+          ? renderChatTimeline(json)
+          : `<pre class="bug-json-pre">${escapeHtml(prettyJson)}</pre>`}
+      </div>
+    `;
+
+    const btnChat = document.getElementById('btn-view-chat');
+    const btnJson = document.getElementById('btn-view-json');
+    const btnCopy = document.getElementById('btn-copy-bug-json');
+
+    if (btnChat) {
+      btnChat.onclick = () => {
+        detailViewMode = 'chat';
+        renderBugDetail();
+      };
+    }
+    if (btnJson) {
+      btnJson.onclick = () => {
+        detailViewMode = 'json';
+        renderBugDetail();
+      };
+    }
+    if (btnCopy) {
+      btnCopy.onclick = () => {
+        navigator.clipboard.writeText(prettyJson).then(() => {
+          btnCopy.textContent = '✅ Copié !';
+          setTimeout(() => { btnCopy.textContent = '📋 Copier JSON'; }, 1500);
+        });
+      };
+    }
+  }
+
+  // ============================================================
+  // COMMUNITY ENEMY PROPOSALS TAB
+  // ============================================================
+  const commTabBadge = document.getElementById('community-tab-badge');
+  const commAuthStatus = document.getElementById('comm-auth-status');
+  const commLoginBtn = document.getElementById('comm-google-login-btn');
+  const commRefreshBtn = document.getElementById('comm-refresh-btn');
+  const commShowRejectedCheckbox = document.getElementById('comm-show-rejected-checkbox');
+  const commSearchInput = document.getElementById('comm-search-input');
+  const commMinionCountEl = document.getElementById('comm-minion-count');
+  const commBossCountEl = document.getElementById('comm-boss-count');
+  const commMinionListEl = document.getElementById('comm-minion-list');
+  const commBossListEl = document.getElementById('comm-boss-list');
+  const commDetailPane = document.getElementById('comm-detail-pane');
+
+  let allCommunityProposals = [];
+  let selectedProposalId = null;
+
+  if (commLoginBtn) {
+    commLoginBtn.onclick = async () => {
+      if (!sbClient) return;
+      await sbClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + window.location.pathname + '#community',
+        },
+      });
+    };
+  }
+  if (commRefreshBtn) {
+    commRefreshBtn.onclick = () => fetchCommunityProposals();
+  }
+  if (commShowRejectedCheckbox) {
+    commShowRejectedCheckbox.addEventListener('change', () => {
+      renderCommunityLists();
+      renderCommunityDetail();
+    });
+  }
+  if (commSearchInput) {
+    commSearchInput.addEventListener('input', renderCommunityLists);
+  }
+
+  function updateCommunityAuthUi(session) {
+    if (!session) {
+      if (commAuthStatus) commAuthStatus.textContent = 'Non connecté. Connectez-vous en Admin pour gérer les propositions.';
+      if (commLoginBtn) commLoginBtn.style.display = 'inline-flex';
+      if (commRefreshBtn) commRefreshBtn.style.display = 'none';
+      return;
+    }
+    const email = session.user?.email || '';
+    if (commAuthStatus) {
+      commAuthStatus.textContent = email === ADMIN_EMAIL
+        ? `Connecté en Admin (${email})`
+        : `Connecté (${email})`;
+    }
+    if (commLoginBtn) commLoginBtn.style.display = 'none';
+    if (commRefreshBtn) commRefreshBtn.style.display = 'inline-flex';
+    fetchCommunityProposals();
+  }
+
+  async function fetchCommunityProposals() {
+    if (!sbClient || !commMinionListEl || !commBossListEl) return;
+    commMinionListEl.innerHTML = '<div class="bug-empty-state" style="padding:1rem;">Chargement...</div>';
+    commBossListEl.innerHTML = '<div class="bug-empty-state" style="padding:1rem;">Chargement...</div>';
+    try {
+      const { data, error } = await sbClient
+        .from('community_enemy_proposals')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) {
+        const msg = `<div class="bug-empty-state" style="color:#fca5a5;padding:1rem;">Erreur : ${escapeHtml(error.message)}</div>`;
+        commMinionListEl.innerHTML = msg;
+        commBossListEl.innerHTML = msg;
+        return;
+      }
+      allCommunityProposals = data || [];
+      if (!selectedProposalId && allCommunityProposals.length > 0) {
+        selectedProposalId = allCommunityProposals[0].id;
+      }
+      renderCommunityLists();
+      renderCommunityDetail();
+    } catch (err) {
+      const msg = `<div class="bug-empty-state" style="color:#fca5a5;padding:1rem;">Erreur réseau : ${escapeHtml(err.message)}</div>`;
+      commMinionListEl.innerHTML = msg;
+      commBossListEl.innerHTML = msg;
+    }
+  }
+
+  function rankAssetFor(rank) {
+    const map = {
+      green: '../assets/map_green.jpg',
+      blue: '../assets/map_blue.png',
+      violet: '../assets/map_violet.png',
+      orange: '../assets/map_orange.png',
+    };
+    return map[String(rank || '').toLowerCase()] || '../assets/map_green.jpg';
+  }
+
+  function rankLabelFor(rank) {
+    const map = {
+      green: 'Level 1 (Green)',
+      blue: 'Level 2 (Blue)',
+      violet: 'Level 3 (Violet)',
+      orange: 'Level 4 (Orange)',
+    };
+    return map[String(rank || '').toLowerCase()] || rank || '-';
+  }
+
+  function statusBadgeHtml(status) {
+    if (status === 'rejected') return '<span class="comm-status-pill comm-status-rejected">❌ Rejeté</span>';
+    if (status === 'accepted') return '<span class="comm-status-pill comm-status-accepted">✅ Accepté</span>';
+    return '<span class="comm-status-pill comm-status-pending">⏳ En attente</span>';
+  }
+
+  async function updateProposalStatus(proposal, newStatus) {
+    const prev = proposal.status;
+    proposal.status = newStatus;
+    renderCommunityLists();
+    renderCommunityDetail();
+    if (!sbClient) return;
+    try {
+      const { error } = await sbClient
+        .from('community_enemy_proposals')
+        .update({ status: newStatus })
+        .eq('id', proposal.id);
+      if (error) {
+        proposal.status = prev;
+        renderCommunityLists();
+        renderCommunityDetail();
+        alert('Erreur mise à jour statut : ' + error.message);
+      }
+    } catch (err) {
+      proposal.status = prev;
+      renderCommunityLists();
+      renderCommunityDetail();
+      alert('Erreur : ' + err.message);
+    }
+  }
+
+  function renderCommunityListInto(listEl, countEl, items, isBoss) {
+    if (!listEl) return;
+    if (countEl) countEl.textContent = String(items.length);
+    if (items.length === 0) {
+      listEl.innerHTML = `<div class="bug-empty-state" style="padding:1rem;">Aucun ${isBoss ? 'boss' : 'minion'} proposé.</div>`;
+      return;
+    }
+    listEl.innerHTML = '';
+    items.forEach((p) => {
+      const card = document.createElement('div');
+      card.className = `bug-list-item ${p.id === selectedProposalId ? 'selected' : ''} ${p.status === 'rejected' ? 'archived' : ''}`;
+      const dateStr = p.created_at ? new Date(p.created_at).toLocaleDateString('fr-FR') : '-';
+      const iconHtml = isBoss
+        ? '<span>🐉</span>'
+        : `<img class="comm-rank-icon" src="${rankAssetFor(p.minion_rank)}" alt="${escapeHtml(p.minion_rank || '')}">`;
+
+      card.innerHTML = `
+        <div class="bug-item-top">
+          <span class="bug-matchup" style="display:flex;align-items:center;gap:0.4rem;">
+            ${iconHtml}
+            <span>${escapeHtml(p.name)}</span>
+          </span>
+          ${statusBadgeHtml(p.status)}
+        </div>
+        <div class="bug-item-meta">
+          <span>📧 ${escapeHtml(p.user_email || '-')}</span>
+          <span>🕒 ${escapeHtml(dateStr)}</span>
+        </div>
+        <div class="bug-item-meta">
+          <span>❤️ ${escapeHtml(p.hp ?? '-')} HP</span>
+          <span>⚡ ${p.cp_infinite ? '∞ Infini' : escapeHtml(p.cp ?? '-')} CP</span>
+        </div>
+        <div class="bug-item-actions">
+          ${p.status !== 'rejected'
+            ? '<button type="button" class="bug-archive-btn comm-reject-btn">❌ Rejeter</button>'
+            : '<button type="button" class="bug-archive-btn comm-restore-btn">↩️ Remettre en attente</button>'}
+        </div>
+      `;
+
+      const rejectBtn = card.querySelector('.comm-reject-btn');
+      if (rejectBtn) {
+        rejectBtn.onclick = (e) => {
+          e.stopPropagation();
+          updateProposalStatus(p, 'rejected');
+        };
+      }
+      const restoreBtn = card.querySelector('.comm-restore-btn');
+      if (restoreBtn) {
+        restoreBtn.onclick = (e) => {
+          e.stopPropagation();
+          updateProposalStatus(p, 'pending');
+        };
+      }
+
+      card.onclick = () => {
+        selectedProposalId = p.id;
+        renderCommunityLists();
+        renderCommunityDetail();
+      };
+      listEl.appendChild(card);
+    });
+  }
+
+  function renderCommunityLists() {
+    const q = (commSearchInput?.value || '').toLowerCase().trim();
+    const showRejected = Boolean(commShowRejectedCheckbox?.checked);
+
+    const activeCount = allCommunityProposals.filter((p) => p.status !== 'rejected').length;
+    if (commTabBadge) commTabBadge.textContent = String(activeCount);
+
+    const filtered = allCommunityProposals.filter((p) => {
+      if (!showRejected && p.status === 'rejected') return false;
+      if (!q) return true;
+      const hay = `${p.name || ''} ${p.user_email || ''} ${p.minion_rank || ''} ${p.description || ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+
+    const minions = filtered.filter((p) => p.enemy_type === 'minion');
+    const bosses = filtered.filter((p) => p.enemy_type === 'boss');
+
+    renderCommunityListInto(commMinionListEl, commMinionCountEl, minions, false);
+    renderCommunityListInto(commBossListEl, commBossCountEl, bosses, true);
+  }
+
+  function renderCommunityDetail() {
+    if (!commDetailPane) return;
+    const p = allCommunityProposals.find((x) => x.id === selectedProposalId);
+    if (!p) {
+      commDetailPane.innerHTML = '<div class="bug-empty-state">Sélectionnez un minion ou un boss proposé à gauche pour consulter tous ses détails.</div>';
+      return;
+    }
+
+    const isBoss = p.enemy_type === 'boss';
+    const dateStr = p.created_at ? new Date(p.created_at).toLocaleString('fr-FR') : '-';
+    const typeDisplay = isBoss
+      ? '🐉 Boss'
+      : `<img class="comm-rank-icon" src="${rankAssetFor(p.minion_rank)}" alt=""> Minion — ${escapeHtml(rankLabelFor(p.minion_rank))}`;
+
+    let imageSectionHtml = '<span style="color:var(--text-muted);">Non renseigné</span>';
+    if (p.image_value) {
+      if (p.image_mode === 'link') {
+        const safeHref = escapeHtml(p.image_value);
+        imageSectionHtml = `<a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-cyan);word-break:break-all;">🔗 ${safeHref}</a>`;
+      } else {
+        imageSectionHtml = `
+          <div class="comm-detail-text">${escapeHtml(p.image_value)}</div>
+          <button type="button" class="btn btn-sm" id="comm-copy-prompt-btn" style="margin-top:0.5rem;">📋 Copier le prompt image</button>
+        `;
+      }
+    }
+
+    commDetailPane.innerHTML = `
+      <div class="bug-detail-header">
+        <div>
+          <h3 style="font-size:1.25rem; color:var(--text-primary); display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+            <span>${escapeHtml(p.name)}</span>
+            ${statusBadgeHtml(p.status)}
+          </h3>
+          <div class="bug-detail-meta-grid">
+            <span>📌 Type : <strong>${typeDisplay}</strong></span>
+            <span>📧 Email : <strong>${escapeHtml(p.user_email || '-')}</strong></span>
+            <span>❤️ HP : <strong>${escapeHtml(p.hp ?? '-')}</strong></span>
+            <span>⚡ CP : <strong>${p.cp_infinite ? '∞ Infini' : escapeHtml(p.cp ?? '-')}</strong></span>
+            <span>🕒 Date : <strong>${escapeHtml(dateStr)}</strong></span>
+          </div>
+        </div>
+        <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+          <button type="button" class="btn btn-sm" id="comm-btn-pending">⏳ En attente</button>
+          <button type="button" class="btn btn-sm" id="comm-btn-accept" style="border-color:var(--accent-green);color:#6ee7b7;">✅ Accepter</button>
+          <button type="button" class="btn btn-sm" id="comm-btn-reject" style="border-color:var(--accent-red);color:#fca5a5;">❌ Rejeter</button>
+        </div>
+      </div>
+
+      <div class="comm-detail-block">
+        <div class="comm-detail-block-title">📝 Description</div>
+        <div class="comm-detail-text">${escapeHtml(p.description || 'Aucune description.')}</div>
+      </div>
+
+      <div class="comm-detail-block">
+        <div class="comm-detail-block-title">${p.image_mode === 'link' ? '🖼️ Lien Image (Drive / URL)' : '🎨 Prompt de génération image'}</div>
+        ${imageSectionHtml}
+      </div>
+
+      <div class="comm-detail-block">
+        <div class="comm-detail-block-title">⚔️ Attaques</div>
+        <div class="comm-detail-text">${escapeHtml(p.attacks_text || 'Non renseigné.')}</div>
+      </div>
+
+      <div class="comm-detail-block">
+        <div class="comm-detail-block-title">✨ Passif (optionnel)</div>
+        <div class="comm-detail-text">${escapeHtml(p.passives_text || 'Aucun passif.')}</div>
+      </div>
+
+      <div class="comm-detail-block">
+        <div class="comm-detail-block-title">🛡️ Défense</div>
+        <div class="comm-detail-text">${escapeHtml(p.defense_text || 'Non renseigné.')}</div>
+      </div>
+    `;
+
+    const btnPending = document.getElementById('comm-btn-pending');
+    const btnAccept = document.getElementById('comm-btn-accept');
+    const btnReject = document.getElementById('comm-btn-reject');
+    const btnCopyPrompt = document.getElementById('comm-copy-prompt-btn');
+
+    if (btnPending) btnPending.onclick = () => updateProposalStatus(p, 'pending');
+    if (btnAccept) btnAccept.onclick = () => updateProposalStatus(p, 'accepted');
+    if (btnReject) btnReject.onclick = () => updateProposalStatus(p, 'rejected');
+    if (btnCopyPrompt) {
+      btnCopyPrompt.onclick = () => {
+        navigator.clipboard.writeText(p.image_value || '').then(() => {
+          btnCopyPrompt.textContent = '✅ Prompt copié !';
+          setTimeout(() => { btnCopyPrompt.textContent = '📋 Copier le prompt image'; }, 1500);
+        });
+      };
+    }
+  }
+
+  initSupabaseBugs();
+});

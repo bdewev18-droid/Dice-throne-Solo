@@ -4,12 +4,16 @@ class RewardOutcome {
     required this.healthDelta,
     required this.cpDelta,
     this.token,
+    this.cardRarity,
+    this.cardColorName,
   });
 
   final String label;
   final int healthDelta;
   final int cpDelta;
   final String? token;
+  final String? cardRarity;
+  final String? cardColorName;
 }
 
 class UpkeepOutcome {
@@ -461,18 +465,42 @@ class GameEngine {
       '1cp' => const RewardOutcome(label: '+1 CP', healthDelta: 0, cpDelta: 1),
       '2cp' => const RewardOutcome(label: '+2 CP', healthDelta: 0, cpDelta: 2),
       '3cp' => const RewardOutcome(label: '+3 CP', healthDelta: 0, cpDelta: 3),
-      '1vol' => const RewardOutcome(label: 'Vol', healthDelta: 0, cpDelta: 0, token: 'Vol'),
-      '1p' => const RewardOutcome(label: 'Pioche 1 carte', healthDelta: 0, cpDelta: 0),
-      '2p' => const RewardOutcome(label: 'Pioche 2 cartes', healthDelta: 0, cpDelta: 0),
-      '3p' => const RewardOutcome(label: 'Pioche 3 cartes', healthDelta: 0, cpDelta: 0),
+      '1vol' => const RewardOutcome(label: 'Flight', healthDelta: 0, cpDelta: 0, token: 'Flight'),
+      '1p' => const RewardOutcome(label: 'Draw 1 card', healthDelta: 0, cpDelta: 0),
+      '2p' => const RewardOutcome(label: 'Draw 2 cards', healthDelta: 0, cpDelta: 0),
+      '3p' => const RewardOutcome(label: 'Draw 3 cards', healthDelta: 0, cpDelta: 0),
       '2hp' => const RewardOutcome(label: '+2 HP', healthDelta: 2, cpDelta: 0),
       '3hp' => const RewardOutcome(label: '+3 HP', healthDelta: 3, cpDelta: 0),
       '4hp' => const RewardOutcome(label: '+4 HP', healthDelta: 4, cpDelta: 0),
       '5hp' => const RewardOutcome(label: '+5 HP', healthDelta: 5, cpDelta: 0),
-      '1v' => const RewardOutcome(label: 'Carte verte', healthDelta: 0, cpDelta: 0),
-      '1b' => const RewardOutcome(label: 'Carte bleue', healthDelta: 0, cpDelta: 0),
-      '1vi' => const RewardOutcome(label: 'Carte violette', healthDelta: 0, cpDelta: 0),
-      '1o' => const RewardOutcome(label: 'Carte orange', healthDelta: 0, cpDelta: 0),
+      '1v' => const RewardOutcome(
+        label: 'Common Card (Green)',
+        healthDelta: 0,
+        cpDelta: 0,
+        cardRarity: 'Common',
+        cardColorName: 'Green',
+      ),
+      '1b' => const RewardOutcome(
+        label: 'Rare Card (Blue)',
+        healthDelta: 0,
+        cpDelta: 0,
+        cardRarity: 'Rare',
+        cardColorName: 'Blue',
+      ),
+      '1vi' => const RewardOutcome(
+        label: 'Epic Card (Purple)',
+        healthDelta: 0,
+        cpDelta: 0,
+        cardRarity: 'Epic',
+        cardColorName: 'Purple',
+      ),
+      '1o' => const RewardOutcome(
+        label: 'Legendary Card (Orange)',
+        healthDelta: 0,
+        cpDelta: 0,
+        cardRarity: 'Legendary',
+        cardColorName: 'Orange',
+      ),
       _ => RewardOutcome(label: code, healthDelta: 0, cpDelta: 0),
     };
   }

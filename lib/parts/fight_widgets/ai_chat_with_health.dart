@@ -711,7 +711,7 @@ class _AiChatVitalEditor extends StatelessWidget {
             color: color,
             onPressed: () => onChanged(1),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 8),
           SizedBox(
             width: 40,
             height: 34,

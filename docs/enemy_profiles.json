@@ -1,5 +1,5 @@
 {
-  "version": "1.1.146",
+  "version": "1.1.147",
   "schemaVersion": 2,
   "note": "Enemy profiles source of truth. Defense display and automation should use defensePlan, not duplicated defense text.",
   "diceSymbols": {
@@ -7003,7 +7003,7 @@
                 "red": 0
               }
             },
-            "label": "Velocite Magique",
+            "label": "",
             "damage": 6,
             "undefendable": false,
             "prevent": 0,

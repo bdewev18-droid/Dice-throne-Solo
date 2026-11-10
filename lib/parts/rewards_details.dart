@@ -56,47 +56,134 @@ class _RewardPanelState extends State<RewardPanel> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 10),
-                Text(
-                  d20?.toString() ?? '-',
-                  style: const TextStyle(
-                    fontSize: 56,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                if (outcome == null)
-                  const Text(
-                    'Roll the die',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontWeight: FontWeight.w900),
+                const SizedBox(height: 12),
+                if (d20 == null)
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: currentRewardRank.color.withValues(alpha: 0.14),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: currentRewardRank.color.withValues(alpha: 0.55),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: currentRewardRank.color.withValues(alpha: 0.25),
+                          blurRadius: 16,
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.casino_rounded,
+                      size: 36,
+                      color: currentRewardRank.color,
+                    ),
                   )
                 else
-                  _RewardOutcomeDisplay(outcome: outcome),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ImageActionButton(
-                      label: d20 == null ? 'Roll' : 'Reroll',
-                      icon: Icons.casino,
-                      onPressed: () =>
-                          setState(() => _d20 = _random.nextInt(20) + 1),
-                    ),
-                    const SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        minimumSize: const Size(90, 48),
+                  Container(
+                    width: 78,
+                    height: 78,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: currentRewardRank.color.withValues(alpha: 0.14),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: currentRewardRank.color.withValues(alpha: 0.65),
+                        width: 2,
                       ),
-                      onPressed: d20 == null ? null : _modifyD20,
-                      icon: const Icon(Icons.tune),
-                      label: const Text('Edit'),
                     ),
-                  ],
-                ),
+                    child: Text(
+                      d20.toString(),
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                if (outcome == null)
+                  _RewardMysteryDisplay(rank: currentRewardRank)
+                else
+                  _RewardOutcomeDisplay(outcome: outcome),
+                const SizedBox(height: 14),
+                if (d20 == null)
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xff8f43ff),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 28,
+                        vertical: 14,
+                      ),
+                      minimumSize: const Size(170, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 4,
+                    ),
+                    onPressed: () =>
+                        setState(() => _d20 = _random.nextInt(20) + 1),
+                    icon: const Icon(Icons.casino_rounded, size: 22),
+                    label: const Text(
+                      'Roll D20',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  )
+                else
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white30),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
+                          minimumSize: const Size(110, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () =>
+                            setState(() => _d20 = _random.nextInt(20) + 1),
+                        icon: const Icon(Icons.casino_rounded, size: 20),
+                        label: const Text(
+                          'Reroll',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white30),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
+                          minimumSize: const Size(100, 48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: _modifyD20,
+                        icon: const Icon(Icons.tune, size: 20),
+                        label: const Text(
+                          'Edit',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -168,13 +255,122 @@ class _RewardPanelState extends State<RewardPanel> {
   }
 }
 
+class _RewardMysteryDisplay extends StatelessWidget {
+  const _RewardMysteryDisplay({required this.rank});
+
+  final EnemyRank rank;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xff1f1b2e),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: rank.color.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: rank.color.withValues(alpha: 0.16),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.card_giftcard_rounded,
+                size: 16,
+                color: rank.color,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'MYSTERY CHEST',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                  color: rank.color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Roll the D20 to claim your reward',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              color: rank.color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: rank.color.withValues(alpha: 0.4)),
+            ),
+            child: Text(
+              '${rank.label} Table',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: Colors.white.withValues(alpha: 0.85),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _RewardOutcomeDisplay extends StatelessWidget {
   const _RewardOutcomeDisplay({required this.outcome});
 
   final RewardOutcome outcome;
 
+  Color _cardColor(String? colorName) {
+    return switch (colorName?.toLowerCase()) {
+      'green' => const Color(0xff43a047),
+      'blue' => const Color(0xff1e88e5),
+      'purple' => const Color(0xffab47bc),
+      'orange' => const Color(0xffff9800),
+      _ => const Color(0xff8a63d2),
+    };
+  }
+
+  IconData _cardIcon(String? rarity) {
+    return switch (rarity?.toLowerCase()) {
+      'legendary' => Icons.auto_awesome,
+      'epic' => Icons.auto_awesome_motion_rounded,
+      _ => Icons.style_rounded,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isCard = outcome.cardRarity != null;
+    final accentColor = isCard
+        ? _cardColor(outcome.cardColorName)
+        : const Color(0xff8a63d2);
+
+    final tokenRule = outcome.token != null
+        ? TokenCatalogRepository.byLabel(outcome.token!)
+        : null;
+    final tokenAsset = tokenRule?.imageAsset;
+
     final badges = <Widget>[
       if (outcome.healthDelta > 0)
         _EffectImageBadge(
@@ -193,6 +389,29 @@ class _RewardOutcomeDisplay extends StatelessWidget {
             child: _PcTriangleBadge(value: outcome.cpDelta),
           ),
         ),
+      if (tokenAsset != null && tokenAsset.isNotEmpty)
+        Container(
+          width: 54,
+          height: 54,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xffffd54f).withValues(alpha: 0.45),
+              width: 1.5,
+            ),
+          ),
+          child: Image.asset(
+            tokenAsset,
+            fit: BoxFit.contain,
+            errorBuilder: (c, e, s) => const Icon(
+              Icons.stars_rounded,
+              size: 32,
+              color: Color(0xffffd54f),
+            ),
+          ),
+        ),
     ];
 
     return Semantics(
@@ -204,13 +423,13 @@ class _RewardOutcomeDisplay extends StatelessWidget {
           color: const Color(0xff1f1b2e),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: const Color(0xff8a63d2).withValues(alpha: 0.6),
-            width: 1.5,
+            color: accentColor.withValues(alpha: 0.65),
+            width: isCard ? 2.0 : 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xff8a63d2).withValues(alpha: 0.2),
-              blurRadius: 12,
+              color: accentColor.withValues(alpha: isCard ? 0.28 : 0.2),
+              blurRadius: isCard ? 16 : 12,
               offset: const Offset(0, 4),
             ),
           ],
@@ -220,16 +439,16 @@ class _RewardOutcomeDisplay extends StatelessWidget {
           children: [
             Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Icon(
-                  Icons.military_tech_rounded,
+                  isCard ? _cardIcon(outcome.cardRarity) : Icons.military_tech_rounded,
                   size: 16,
-                  color: Color(0xffffd54f),
+                  color: const Color(0xffffd54f),
                 ),
-                SizedBox(width: 6),
+                const SizedBox(width: 6),
                 Text(
-                  'REWARD',
-                  style: TextStyle(
+                  isCard ? 'CARD REWARD' : 'REWARD',
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.2,
@@ -249,16 +468,79 @@ class _RewardOutcomeDisplay extends StatelessWidget {
               ),
               const SizedBox(height: 6),
             ],
-            Text(
-              outcome.label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 0.3,
+            if (isCard) ...[
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
+                ),
+                child: Icon(
+                  _cardIcon(outcome.cardRarity),
+                  color: accentColor,
+                  size: 26,
+                ),
               ),
-            ),
+              const SizedBox(height: 8),
+              Text(
+                '${outcome.cardRarity} Card',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: accentColor,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: accentColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${outcome.cardColorName} card',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else ...[
+              Text(
+                outcome.label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
           ],
         ),
       ),

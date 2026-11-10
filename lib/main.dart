@@ -44,6 +44,7 @@ part 'parts/fight_widgets/discard_positive_token_dialog.dart';
 part 'parts/fight_widgets/druid_form_dialog.dart';
 part 'parts/fight_widgets/chimera_failure_dialog.dart';
 part 'parts/fight_widgets/poison_gauge_card.dart';
+part 'parts/fight_widgets/deselect_die_dialog.dart';
 part 'parts/fight_logic/token_combat_helpers.dart';
 part 'parts/fight_logic/defense_formula_evaluator.dart';
 part 'parts/fight_logic/hydra_logic.dart';
@@ -53,8 +54,8 @@ part 'parts/fight_logic/ourokhor_logic.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.5.19';
-const int appBuildNumber = 484;
+const String appVersionLabel = 'Version 1.5.24';
+const int appBuildNumber = 489;
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);

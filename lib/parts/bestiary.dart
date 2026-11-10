@@ -189,6 +189,7 @@ class BestiaryPage extends StatefulWidget {
     this.historyRecords = const [],
     this.initialPackKey,
     this.isModal = false,
+    this.excludeBosses = false,
     super.key,
   });
 
@@ -196,6 +197,7 @@ class BestiaryPage extends StatefulWidget {
   final List<GameRecord> historyRecords;
   final String? initialPackKey;
   final bool isModal;
+  final bool excludeBosses;
 
   @override
   State<BestiaryPage> createState() => _BestiaryPageState();
@@ -262,7 +264,14 @@ class _BestiaryPageState extends State<BestiaryPage> {
       EnemyRank.naraxus => 5,
     };
 
-    final list = byKey.values.toList()
+    final list = byKey.values
+        .where((p) {
+          if (!widget.excludeBosses) return true;
+          return p.rank != EnemyRank.naraxus &&
+              p.rank != EnemyRank.viseer &&
+              !_BestiaryRankFilter.boss.matches(p);
+        })
+        .toList()
       ..sort((a, b) {
         final rCmp = rankOrder(a.rank).compareTo(rankOrder(b.rank));
         if (rCmp != 0) return rCmp;
@@ -603,7 +612,8 @@ class _BestiaryPageState extends State<BestiaryPage> {
                           runSpacing: 8,
                           children: [
                             for (final rFilter in _BestiaryRankFilter.values)
-                              _buildHubOptionChip(
+                              if (!widget.excludeBosses || rFilter != _BestiaryRankFilter.boss)
+                                _buildHubOptionChip(
                                 isSelected: rFilter == _BestiaryRankFilter.all
                                     ? tempRanks.isEmpty
                                     : tempRanks.contains(rFilter),
@@ -956,6 +966,87 @@ class _BestiaryPageState extends State<BestiaryPage> {
     );
   }
 
+  Future<void> _handleProposeEnemyTap() async {
+    final session = SupabaseService.instance.currentSession();
+    final email = session.email?.trim() ?? '';
+    if (!session.isSignedIn || session.isAnonymous || email.isEmpty) {
+      await _showGuestProposalBlockedDialog();
+      return;
+    }
+    if (!mounted) return;
+    final submitted = await _ProposeEnemyDialog.show(context, userEmail: email);
+    if (submitted == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Thank you! Your enemy proposal has been submitted for review.',
+          ),
+          backgroundColor: Color(0xff10b981),
+        ),
+      );
+    }
+  }
+
+  Future<void> _showGuestProposalBlockedDialog() {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: const Color(0xff121929),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xff4fa8ff), width: 1.5),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.account_circle_outlined, color: Color(0xffffb300)),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Sign In Required',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Guest and anonymous accounts cannot propose a custom monster or boss. '
+          'Please sign in with your Google account so your email address is attached to your proposal.',
+          style: TextStyle(color: Colors.white70, fontSize: 13.5, height: 1.45),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('Close'),
+          ),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xff4fa8ff),
+              foregroundColor: Colors.black,
+              minimumSize: const Size(0, 44),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+            onPressed: () async {
+              Navigator.of(dialogCtx).pop();
+              try {
+                await SupabaseService.instance.signInWithGoogle();
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Sign in unavailable: $e')),
+                );
+              }
+            },
+            icon: const Icon(Icons.login_rounded, size: 18),
+            label: const Text(
+              'Sign in with Google',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final allProfiles = _allCatalogProfiles();
@@ -1017,6 +1108,40 @@ class _BestiaryPageState extends State<BestiaryPage> {
           style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.4),
         ),
         actions: [
+          Center(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: _handleProposeEnemyTap,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xff1e3a8a),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xff4fa8ff), width: 1),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.add_circle_outline_rounded,
+                      size: 15,
+                      color: Colors.white,
+                    ),
+                    SizedBox(width: 5),
+                    Text(
+                      'Propose Enemy',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
           IconButton(
             tooltip: switch (_viewMode) {
               _BestiaryViewMode.grid3 => '3 cards per row (tap for 4)',
@@ -2899,4 +3024,465 @@ Alignment _bestiaryPreviewAlignment(String profileKey) {
     'kaelen-voss' => const Alignment(0, -0.75),
     _ => Alignment.topCenter,
   };
+}
+
+
+class _ProposeEnemyDialog extends StatefulWidget {
+  const _ProposeEnemyDialog({required this.userEmail});
+
+  final String userEmail;
+
+  static Future<bool?> show(
+    BuildContext context, {
+    required String userEmail,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _ProposeEnemyDialog(userEmail: userEmail),
+    );
+  }
+
+  @override
+  State<_ProposeEnemyDialog> createState() => _ProposeEnemyDialogState();
+}
+
+class _ProposeEnemyDialogState extends State<_ProposeEnemyDialog> {
+  String _enemyType = 'minion';
+  EnemyRank _minionRank = EnemyRank.green;
+  String _imageMode = 'link';
+  bool _cpInfinite = false;
+  bool _submitting = false;
+  String? _errorText;
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descController = TextEditingController();
+  final TextEditingController _imageController = TextEditingController();
+  final TextEditingController _hpController = TextEditingController(text: '12');
+  final TextEditingController _cpController = TextEditingController(text: '2');
+  final TextEditingController _attacksController = TextEditingController();
+  final TextEditingController _passivesController = TextEditingController();
+  final TextEditingController _defenseController = TextEditingController();
+
+  static const List<EnemyRank> _minionRanks = [
+    EnemyRank.green,
+    EnemyRank.blue,
+    EnemyRank.violet,
+    EnemyRank.orange,
+  ];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    _imageController.dispose();
+    _hpController.dispose();
+    _cpController.dispose();
+    _attacksController.dispose();
+    _passivesController.dispose();
+    _defenseController.dispose();
+    super.dispose();
+  }
+
+  InputDecoration _fieldDecoration({
+    required String label,
+    String? hint,
+    Widget? prefixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+      labelStyle: const TextStyle(color: Color(0xff8ab4f8), fontSize: 13),
+      prefixIcon: prefixIcon,
+      filled: true,
+      fillColor: const Color(0xff0b1220),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Colors.white24),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xff4fa8ff), width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    );
+  }
+
+  Future<void> _submit() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      setState(() => _errorText = 'Please enter an enemy name.');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _errorText = null;
+    });
+    try {
+      await SupabaseService.instance.submitCommunityEnemyProposal(
+        enemyType: _enemyType,
+        minionRank: _enemyType == 'minion' ? _minionRank.name : null,
+        name: name,
+        description: _descController.text,
+        imageMode: _imageMode,
+        imageValue: _imageController.text,
+        hp: int.tryParse(_hpController.text.trim()),
+        cp: _cpInfinite ? null : int.tryParse(_cpController.text.trim()),
+        cpInfinite: _cpInfinite,
+        attacksText: _attacksController.text,
+        passivesText: _passivesController.text,
+        defenseText: _defenseController.text,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _errorText = 'Submission failed: $e';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color(0xff121929),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xff4fa8ff), width: 1.5),
+      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 540,
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 14, 10, 12),
+              decoration: const BoxDecoration(
+                color: Color(0xff09152b),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(17)),
+                border: Border(bottom: BorderSide(color: Colors.white12)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Color(0xffffe22d),
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Propose an Enemy',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Text(
+                          'Submitted as ${widget.userEmail}',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 11,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                    tooltip: 'Close',
+                    onPressed: _submitting ? null : () => Navigator.of(context).pop(false),
+                  ),
+                ],
+              ),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Type: Minion or Boss
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment<String>(
+                          value: 'minion',
+                          icon: Icon(Icons.pest_control_rounded, size: 16),
+                          label: Text('Minion'),
+                        ),
+                        ButtonSegment<String>(
+                          value: 'boss',
+                          icon: Icon(Icons.whatshot_rounded, size: 16),
+                          label: Text('Boss'),
+                        ),
+                      ],
+                      selected: {_enemyType},
+                      onSelectionChanged: (set) {
+                        setState(() {
+                          _enemyType = set.first;
+                          if (_enemyType == 'boss') {
+                            _cpInfinite = true;
+                            _hpController.text = '50';
+                          } else {
+                            _cpInfinite = false;
+                            _hpController.text = '12';
+                          }
+                        });
+                      },
+                    ),
+                    if (_enemyType == 'minion') ...[
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Minion Level',
+                        style: TextStyle(
+                          color: Color(0xff8ab4f8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final rank in _minionRanks)
+                            ChoiceChip(
+                              selected: _minionRank == rank,
+                              selectedColor: rank.color.withValues(alpha: 0.25),
+                              backgroundColor: const Color(0xff0b1220),
+                              side: BorderSide(
+                                color: _minionRank == rank ? rank.color : Colors.white24,
+                                width: _minionRank == rank ? 1.5 : 1,
+                              ),
+                              avatar: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: Image.asset(
+                                  rank.asset,
+                                  width: 22,
+                                  height: 22,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              label: Text(
+                                rank.label,
+                                style: TextStyle(
+                                  color: _minionRank == rank ? rank.color : Colors.white70,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              onSelected: (_) => setState(() => _minionRank = rank),
+                            ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _nameController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: _fieldDecoration(
+                        label: 'Enemy Name *',
+                        hint: 'e.g. Frost Wraith',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _descController,
+                      style: const TextStyle(color: Colors.white),
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: _fieldDecoration(
+                        label: 'Description',
+                        hint: 'Theme, lore, or playstyle overview...',
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    // Image link (Drive) OR Prompt
+                    SegmentedButton<String>(
+                      style: const ButtonStyle(
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      segments: const [
+                        ButtonSegment<String>(
+                          value: 'link',
+                          icon: Icon(Icons.link_rounded, size: 15),
+                          label: Text('Image Link (Drive)', style: TextStyle(fontSize: 12)),
+                        ),
+                        ButtonSegment<String>(
+                          value: 'prompt',
+                          icon: Icon(Icons.brush_rounded, size: 15),
+                          label: Text('Art Prompt', style: TextStyle(fontSize: 12)),
+                        ),
+                      ],
+                      selected: {_imageMode},
+                      onSelectionChanged: (set) => setState(() => _imageMode = set.first),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _imageController,
+                      style: const TextStyle(color: Colors.white),
+                      minLines: _imageMode == 'prompt' ? 2 : 1,
+                      maxLines: _imageMode == 'prompt' ? 4 : 1,
+                      decoration: _fieldDecoration(
+                        label: _imageMode == 'link'
+                            ? 'Google Drive / Image URL'
+                            : 'Image Generation Prompt',
+                        hint: _imageMode == 'link'
+                            ? 'https://drive.google.com/...'
+                            : 'Describe the artwork so we can generate it...',
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    // HP + CP + Infinite CP
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _hpController,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: _fieldDecoration(
+                              label: 'HP',
+                              prefixIcon: const Icon(
+                                Icons.favorite,
+                                color: Colors.redAccent,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            controller: _cpController,
+                            enabled: !_cpInfinite,
+                            keyboardType: TextInputType.number,
+                            style: TextStyle(
+                              color: _cpInfinite ? Colors.white38 : Colors.white,
+                            ),
+                            decoration: _fieldDecoration(
+                              label: _cpInfinite ? 'CP (Infinite)' : 'CP',
+                              prefixIcon: const Icon(
+                                Icons.bolt_rounded,
+                                color: Colors.amber,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      value: _cpInfinite,
+                      title: const Text(
+                        'Infinite CP',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                      onChanged: (v) => setState(() => _cpInfinite = v ?? false),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _attacksController,
+                      style: const TextStyle(color: Colors.white),
+                      minLines: 3,
+                      maxLines: 6,
+                      decoration: _fieldDecoration(
+                        label: 'Attacks',
+                        hint: 'Specify number of attacks, dice symbols/phases, damage, tokens...',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _passivesController,
+                      style: const TextStyle(color: Colors.white),
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: _fieldDecoration(
+                        label: 'Passive (Optional)',
+                        hint: 'Upkeep, offensive failure, or special passive rules...',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _defenseController,
+                      style: const TextStyle(color: Colors.white),
+                      minLines: 2,
+                      maxLines: 5,
+                      decoration: _fieldDecoration(
+                        label: 'Defense',
+                        hint: 'Always indicate the number of defense dice, symbols, and effects...',
+                      ),
+                    ),
+                    if (_errorText != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _errorText!,
+                        style: const TextStyle(color: Colors.redAccent, fontSize: 12.5),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Colors.white12)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: _submitting ? null : () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 10),
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xff10b981),
+                      foregroundColor: Colors.black,
+                      minimumSize: const Size(0, 44),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                    ),
+                    onPressed: _submitting ? null : _submit,
+                    icon: _submitting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send_rounded, size: 18),
+                    label: Text(
+                      _submitting ? 'Submitting...' : 'Submit Proposal',
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

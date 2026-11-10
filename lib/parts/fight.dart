@@ -166,6 +166,10 @@ class _FightPageState extends State<FightPage> {
   bool _showManualExtraDicePhase = false;
   bool _developerMode = AppSettings.instance.developerMode;
   bool _reviewingLog = false;
+  final List<Map<String, dynamic>> _combatTimeline = [];
+  int _timelineSeq = 0;
+  int _aiDeselectBugCount = 0;
+  bool _runLogSavedToSupabase = false;
   int _battleAttackValue = 0;
   int _battleDefenseValue = 0;
   bool _battleAttackUndefendable = false;
@@ -433,6 +437,68 @@ class _FightPageState extends State<FightPage> {
     _configureDiceForPhase(
       autoRollAttack: _aiMode && _phase == CombatPhase.minionAttack,
     );
+    _recordTimelineEvent('combat_start');
+  }
+
+  String _currentAiMessage() {
+    if (!_aiMode) return '';
+    return _aiMessageFor(
+      enemy,
+      _phase,
+      _dice,
+      _rollCount,
+      widget.adventure,
+      widget.historyRecords,
+      _lastBattleOutcomeMessage,
+      _extraDiceOutcomeMessage,
+      _heroAttackCount,
+      _lastHeroAttack,
+      _heroAttackTotal,
+      blindingLightRoll: _blindingLightRoll,
+      blindingLightZeroDamage: _blindingLightZeroDamage,
+      blindingLightReducedDamage: _blindingLightReducedDamage,
+      blindingLightBaseAttack: _blindingLightBaseAttack,
+      heroCoalTriggered: _heroCoalTriggered,
+      minionCoalTriggered: _minionCoalTriggered,
+      heroSilenceActive: _isHeroSilenced,
+      minionSilenceActive: _isMinionSilenced,
+    );
+  }
+
+  List<Map<String, dynamic>> _diceSnapshot() {
+    final visible = _dice.take(_visibleDiceCount.clamp(0, 6)).toList();
+    return [
+      for (final d in visible)
+        {
+          'id': d.id + 1,
+          'value': d.value,
+          'reserved': d.reserved,
+          'locked': d.isLocked,
+          'hexed': d.isHexed,
+        },
+    ];
+  }
+
+  void _recordTimelineEvent(
+    String type, {
+    Map<String, dynamic>? extra,
+  }) {
+    _timelineSeq++;
+    _combatTimeline.add({
+      'seq': _timelineSeq,
+      'timestamp': DateTime.now().toIso8601String(),
+      'type': type,
+      'phase': _phase.name,
+      'rollCount': _rollCount,
+      'maxRolls': _maxRolls,
+      'heroHp': widget.adventure.health,
+      'heroCp': widget.adventure.combatPoints,
+      'enemyHp': enemy.health,
+      'enemyCp': enemy.combatPoints,
+      'aiMessage': _currentAiMessage(),
+      'dice': _diceSnapshot(),
+      if (extra != null) ...extra,
+    });
   }
 
   @override
@@ -451,29 +517,13 @@ class _FightPageState extends State<FightPage> {
 
   @override
   Widget build(BuildContext context) {
-    final aiMessage = _aiMode
-        ? _aiMessageFor(
-            enemy,
-            _phase,
-            _dice,
-            _rollCount,
-            widget.adventure,
-            widget.historyRecords,
-            _lastBattleOutcomeMessage,
-            _extraDiceOutcomeMessage,
-            _heroAttackCount,
-            _lastHeroAttack,
-            _heroAttackTotal,
-            blindingLightRoll: _blindingLightRoll,
-            blindingLightZeroDamage: _blindingLightZeroDamage,
-            blindingLightReducedDamage: _blindingLightReducedDamage,
-            blindingLightBaseAttack: _blindingLightBaseAttack,
-            heroCoalTriggered: _heroCoalTriggered,
-            minionCoalTriggered: _minionCoalTriggered,
-            heroSilenceActive: _isHeroSilenced,
-            minionSilenceActive: _isMinionSilenced,
-          )
-        : '';
+    final aiMessage = _currentAiMessage();
+    if (_isResolutionMode && !_runLogSavedToSupabase) {
+      _runLogSavedToSupabase = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _saveCombatRunLogToSupabase();
+      });
+    }
     final canAdvancePhase =
         _phase != CombatPhase.minionAttack &&
         (_phase != CombatPhase.hero || _battleAttackValue == 0) &&
@@ -709,6 +759,7 @@ class _FightPageState extends State<FightPage> {
                               hasBlindOnAttacker: _hasActiveBlindOnAttacker,
                               hasActiveAttack: _battleAttackValue > 0,
                               onBlindPressed: _checkAndTriggerBlindPopin,
+                              onDeselectDie: _openDeselectDieDialog,
                             ),
                             if (_showDruidFormRollPanel) ...[
                               const SizedBox(height: 12),
@@ -1750,6 +1801,7 @@ class _FightPageState extends State<FightPage> {
         }
       });
     }
+    _recordTimelineEvent('dice_roll');
   }
 
   void _openAdventureDetails() {
@@ -1767,10 +1819,16 @@ class _FightPageState extends State<FightPage> {
     );
   }
 
-  void _openCombatExport() {
-    final jsonText = const JsonEncoder.withIndent('  ').convert({
-      'exportVersion': 2,
+  Map<String, dynamic> _buildCombatExportMap() {
+    final outcome = widget.adventure.health <= 0
+        ? 'defeat'
+        : (_battleEnemyFled ? 'fled' : (_allFightEnemiesDefeated || enemy.health <= 0 ? 'victory' : 'in_progress'));
+    return {
+      'exportVersion': 3,
       'createdAt': DateTime.now().toIso8601String(),
+      'hasAiDeselectBug': _aiDeselectBugCount > 0,
+      'deselectBugCount': _aiDeselectBugCount,
+      'outcome': outcome,
       'run': {
         'hero': widget.adventure.hero.label,
         'mode': widget.adventure.config.mode.label,
@@ -1803,7 +1861,66 @@ class _FightPageState extends State<FightPage> {
             {'id': die.id, 'value': die.value, 'reserved': die.reserved},
         ],
       },
+      'timeline': List<Map<String, dynamic>>.from(_combatTimeline),
+    };
+  }
+
+  Future<void> _saveCombatRunLogToSupabase() async {
+    final outcome = widget.adventure.health <= 0
+        ? 'defeat'
+        : (_battleEnemyFled ? 'fled' : 'victory');
+    _recordTimelineEvent('combat_end', extra: {'outcome': outcome});
+    final payload = _buildCombatExportMap();
+    await SupabaseService.instance.saveCombatRunLog(
+      hero: widget.adventure.hero.label,
+      enemyKey: enemy.profileKey,
+      enemyName: enemy.label,
+      enemyRank: enemy.rank.name,
+      mode: widget.adventure.config.mode.label,
+      outcome: outcome,
+      hasAiBug: _aiDeselectBugCount > 0,
+      deselectCount: _aiDeselectBugCount,
+      runLogJson: payload,
+    );
+  }
+
+  Future<void> _openDeselectDieDialog() async {
+    final visibleDice = _dice.take(_visibleDiceCount.clamp(0, 6)).toList();
+    final ids = await DeselectDieDialog.show(
+      context,
+      dice: visibleDice,
+      enemyColor: enemy.rank.color,
+    );
+    if (!mounted || ids == null || ids.isEmpty) {
+      return;
+    }
+    final deselectedDetails = <Map<String, dynamic>>[];
+    setState(() {
+      for (final die in visibleDice) {
+        if (ids.contains(die.id) && die.reserved) {
+          die.reserved = false;
+          deselectedDetails.add({'id': die.id + 1, 'value': die.value});
+          widget.adventure.log(
+            '[AI_DESELECT_BUG] User deselected AI-reserved die #${die.id + 1} (value: ${die.value}) during ${_phase.name} (roll $_rollCount/$_maxRolls) against ${enemy.label}.',
+          );
+        }
+      }
+      if (deselectedDetails.isNotEmpty) {
+        _aiDeselectBugCount += deselectedDetails.length;
+        _refreshBattleResolutionFromDice();
+        _recordTimelineEvent(
+          'ai_deselect_bug',
+          extra: {'deselectedDice': deselectedDetails},
+        );
+        widget.onChanged();
+      }
     });
+  }
+
+  void _openCombatExport() {
+    final jsonText = const JsonEncoder.withIndent('  ').convert(
+      _buildCombatExportMap(),
+    );
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -1854,6 +1971,7 @@ class _FightPageState extends State<FightPage> {
           );
           return;
         }
+        final oldValue = die.value;
         die.value = _random.nextInt(6) + 1;
         die.settled = true;
         die.rollTick++;
@@ -1863,6 +1981,14 @@ class _FightPageState extends State<FightPage> {
         _refreshBattleResolutionFromDice();
         widget.adventure.log(
           'Special reroll for die ${die.id + 1}: ${die.value}.',
+        );
+        _recordTimelineEvent(
+          'dice_reroll_one',
+          extra: {
+            'dieId': die.id + 1,
+            'oldValue': oldValue,
+            'newValue': die.value,
+          },
         );
         widget.onChanged();
         return;
@@ -1881,6 +2007,7 @@ class _FightPageState extends State<FightPage> {
         );
         return;
       }
+      final oldValue = die.value;
       die.value = face;
       die.settled = true;
       die.isHexed =
@@ -1892,6 +2019,14 @@ class _FightPageState extends State<FightPage> {
 
       _refreshBattleResolutionFromDice();
       widget.adventure.log('Die ${die.id + 1} changed to $face.');
+      _recordTimelineEvent(
+        'dice_edit',
+        extra: {
+          'dieId': die.id + 1,
+          'oldValue': oldValue,
+          'newValue': face,
+        },
+      );
       widget.onChanged();
     });
   }
@@ -2028,6 +2163,7 @@ class _FightPageState extends State<FightPage> {
     } else if (phase == CombatPhase.minionAttack) {
       _applyMinionRollStart();
     }
+    _recordTimelineEvent('phase_change');
     if (phase == CombatPhase.heroUpkeep || phase == CombatPhase.minionUpkeep) {
       _scrollToTop();
     } else if (phase == CombatPhase.hero) {
@@ -11500,6 +11636,7 @@ class MinionAiPanel extends StatelessWidget {
     this.hasBlindOnAttacker = false,
     this.hasActiveAttack = false,
     this.onBlindPressed,
+    this.onDeselectDie,
     super.key,
   });
 
@@ -11523,6 +11660,7 @@ class MinionAiPanel extends StatelessWidget {
   final bool hasBlindOnAttacker;
   final bool hasActiveAttack;
   final VoidCallback? onBlindPressed;
+  final VoidCallback? onDeselectDie;
 
   @override
   Widget build(BuildContext context) {
@@ -11531,6 +11669,8 @@ class MinionAiPanel extends StatelessWidget {
     if (!hasRollingDice) {
       visibleDice.sort(_compareDice);
     }
+    final hasReservedSettled =
+        !hasRollingDice && visibleDice.any((d) => d.settled && d.reserved);
     final editingDie = editingDieId == null
         ? null
         : dice.firstWhere((die) => die.id == editingDieId);
@@ -11540,27 +11680,91 @@ class MinionAiPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (visibleDice.isNotEmpty || isDefensePhase) ...[
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              alignment: visibleDice.length == 5 ? WrapAlignment.center : WrapAlignment.start,
-              children: [
-                for (final die in visibleDice)
-                  DieTile(
-                    die: die,
-                    onTap: !die.settled
-                        ? null
-                        : editMode || rerollOneMode
-                        ? () => onTapDie(die)
-                        : null,
-                    highlight:
-                        die.settled && (die.reserved || editingDieId == die.id),
-                    highlightColor: editingDieId == die.id
-                        ? heroAccent
-                        : enemy.rank.color,
+            if (visibleDice.isNotEmpty)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: visibleDice.length == 5
+                          ? Alignment.center
+                          : Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (var i = 0; i < visibleDice.length; i++) ...[
+                            if (i > 0) const SizedBox(width: 10),
+                            DieTile(
+                              die: visibleDice[i],
+                              onTap: !visibleDice[i].settled
+                                  ? null
+                                  : editMode || rerollOneMode
+                                  ? () => onTapDie(visibleDice[i])
+                                  : null,
+                              highlight:
+                                  visibleDice[i].settled &&
+                                  (visibleDice[i].reserved ||
+                                      editingDieId == visibleDice[i].id),
+                              highlightColor: editingDieId == visibleDice[i].id
+                                  ? heroAccent
+                                  : enemy.rank.color,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
-              ],
-            ),
+                  if (onDeselectDie != null) ...[
+                    const SizedBox(width: 8),
+                    Tooltip(
+                      message: 'Deselect AI die',
+                      child: InkWell(
+                        onTap: hasReservedSettled ? onDeselectDie : null,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Opacity(
+                          opacity: hasReservedSettled ? 1.0 : 0.35,
+                          child: Container(
+                            height: 50,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xffffb300,
+                              ).withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: const Color(
+                                  0xffffb300,
+                                ).withValues(alpha: 0.55),
+                                width: 1.4,
+                              ),
+                            ),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.layers_clear_rounded,
+                                  size: 18,
+                                  color: Color(0xffffb300),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Deselect',
+                                  style: TextStyle(
+                                    color: Color(0xffffd54f),
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             const SizedBox(height: 10),
           ],
           if (visibleDice.isNotEmpty || isDefensePhase) ...[
@@ -11810,16 +12014,11 @@ String _introAiMessage(
   final starterLabel = whoStarts == CombatPhase.heroUpkeep
       ? adventure.hero.label
       : enemy.label;
-  final encounter = adventure.defeatedEnemies.length + 1;
-  final isFirstMinion = encounter == 1 &&
-      adventure.config.mode != SurvivalMode.naraxus &&
-      adventure.config.mode != SurvivalMode.naraxusHard;
-  final isBossMode = adventure.config.mode == SurvivalMode.naraxus ||
-      adventure.config.mode == SurvivalMode.naraxusHard ||
-      enemy.rank == EnemyRank.naraxus;
+  final isFirstEverCombat =
+      historyRecords.isEmpty && adventure.defeatedEnemies.isEmpty;
   return [
     _openingAiLines(adventure, enemy, historyRecords),
-    if (isFirstMinion || isBossMode) '{video:how_to_play}',
+    if (isFirstEverCombat) '{video:how_to_play}',
     '_Press the flashing arrow to start $starterLabel\'s upkeep phase._',
   ].join('\n');
 }
@@ -15273,7 +15472,7 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
 
     return Container(
       height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(8),
@@ -15309,6 +15508,7 @@ class _FightStatusPanelState extends State<FightStatusPanel> {
                           ),
                   ),
           ),
+          const SizedBox(width: 8),
           _CompactRoundIconButton(
             icon: Icons.remove,
             tooltip: 'Remove',

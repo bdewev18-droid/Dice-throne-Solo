@@ -795,6 +795,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
   SurvivalMode _mode = SurvivalMode.mediumFixed;
   bool _randomRoute = false;
   bool _expertFreeMode = false;
+  bool _handOfTheKingExpanded = false;
   bool _expansionsExpanded = false;
   bool _freeHandOfTheKingDifficult = false;
   final Map<EnemyRank, int> _freeCounts = {
@@ -980,60 +981,100 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Image.asset(
-                'assets/token/main_du_roi.webp',
-                width: 20,
-                height: 20,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.pan_tool_alt_rounded,
-                  color: Color(0xffffb300),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'HAND OF THE KING',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
+          InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => setState(
+              () => _handOfTheKingExpanded = !_handOfTheKingExpanded,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Image.asset(
+                    'assets/token/main_du_roi.webp',
+                    width: 20,
+                    height: 20,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.pan_tool_alt_rounded,
+                      color: Color(0xffffb300),
+                      size: 20,
+                    ),
                   ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: currentDifficult
-                      ? const Color(0xffef5350).withValues(alpha: 0.18)
-                      : const Color(0xffffb300).withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: currentDifficult
-                        ? const Color(0xffef5350).withValues(alpha: 0.5)
-                        : const Color(0xffffb300).withValues(alpha: 0.5),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'HAND OF THE KING',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                   ),
-                ),
-                child: Text(
-                  currentDifficult ? 'DIFFICULT' : 'MEDIUM',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
-                    color: currentDifficult
-                        ? const Color(0xffef9a9a)
-                        : const Color(0xffffd54f),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: currentDifficult
+                          ? const Color(0xffef5350).withValues(alpha: 0.18)
+                          : const Color(0xffffb300).withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: currentDifficult
+                            ? const Color(0xffef5350).withValues(alpha: 0.5)
+                            : const Color(0xffffb300).withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Text(
+                      currentDifficult ? 'DIFFICULT' : 'MEDIUM',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                        color: currentDifficult
+                            ? const Color(0xffef9a9a)
+                            : const Color(0xffffd54f),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: AnimatedRotation(
+                      turns: _handOfTheKingExpanded ? 0.5 : 0.0,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                      child: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Colors.white70,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -1158,6 +1199,15 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                   setState(() => _freeHandOfTheKingDifficult = set.first),
             ),
           ],
+                ],
+              ),
+            ),
+            crossFadeState: _handOfTheKingExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 250),
+            sizeCurve: Curves.easeInOutCubic,
+          ),
         ],
       ),
     );
@@ -1290,6 +1340,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
         child: BestiaryPage(
           initialPackKey: packKey,
           isModal: true,
+          excludeBosses: true,
         ),
       ),
     );
@@ -1381,14 +1432,31 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
     );
   }
 
+  bool _isRushEligibleMinion(EnemyProfile p) {
+    final isBoss = p.rank == EnemyRank.naraxus ||
+        p.rank == EnemyRank.viseer ||
+        p.key == 'naraxus' ||
+        p.key == 'ourokhor' ||
+        p.key == 'kaelen-voss';
+    final isGenericFallback = p.key == 'green-fallback' ||
+        p.key == 'blue-generic' ||
+        p.key == 'violet-generic' ||
+        p.key == 'orange-generic';
+    return !isBoss && !isGenericFallback && p.isFullyValidated;
+  }
+
   int _packMinionCount(String packKey) {
     if (packKey == 'dta') {
       return EnemyProfileRepository.all
-          .where((p) => p.sourcePack == 'dta' || p.sourcePack.isEmpty)
+          .where(
+            (p) =>
+                (p.sourcePack == 'dta' || p.sourcePack.isEmpty) &&
+                _isRushEligibleMinion(p),
+          )
           .length;
     }
     return EnemyProfileRepository.all
-        .where((p) => p.sourcePack == packKey)
+        .where((p) => p.sourcePack == packKey && _isRushEligibleMinion(p))
         .length;
   }
 
@@ -1494,7 +1562,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '$count minion${count > 1 ? 's' : ''}',
+                      '$count minion${count == 1 ? '' : 's'}',
                       style: TextStyle(
                         color: isActive ? Colors.white70 : Colors.white38,
                         fontSize: 11.5,

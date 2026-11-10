@@ -174,8 +174,8 @@ class _NaraxusBattlePageState extends State<NaraxusBattlePage> {
 }
 
 class _MapPageState extends State<MapPage> {
-  static const double _mapVisualOffsetX = -1400;
-  static const double _mapVisualOffsetY = -2000;
+  static const double _mapVisualOffsetX = 0;
+  static const double _mapVisualOffsetY = 0;
   static const double _latePathFocusOffsetX = 0;
   static const double _latePathFocusOffsetY = 0;
   static const double _mapVisualBleedX = 760;
@@ -2556,24 +2556,6 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                     tooltip: 'Back',
                     onPressed: () => Navigator.of(context).maybePop(),
                     icon: const Icon(Icons.arrow_back),
-                  ),
-                ),
-              ),
-            ),
-          if (widget.showNext)
-            SafeArea(
-              child: Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: IconButton.filled(
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xffc4302b),
-                      foregroundColor: Colors.white,
-                    ),
-                    tooltip: 'How to play video',
-                    onPressed: () => showHowToPlayVideoDialog(context),
-                    icon: const Icon(Icons.play_circle_fill_rounded),
                   ),
                 ),
               ),

@@ -435,6 +435,85 @@ class SupabaseService {
     return _client.auth.currentUser?.userMetadata;
   }
 
+  /// Sauvegarde le JSON Run Log de fin de combat dans Supabase (`combat_run_logs`).
+  Future<void> saveCombatRunLog({
+    required String hero,
+    required String? enemyKey,
+    required String enemyName,
+    required String enemyRank,
+    required String mode,
+    required String outcome,
+    required bool hasAiBug,
+    required int deselectCount,
+    required Map<String, dynamic> runLogJson,
+  }) async {
+    if (!_initialized) return;
+    try {
+      final user = _client.auth.currentUser;
+      final email = user?.email;
+      final userDisplay = (email != null && email.isNotEmpty)
+          ? email
+          : (user?.isAnonymous == true ? 'Anonymous' : 'Guest');
+      await _client.from('combat_run_logs').insert({
+        'user_id': user?.id,
+        'user_email': userDisplay,
+        'hero': hero,
+        'enemy_key': enemyKey,
+        'enemy_name': enemyName,
+        'enemy_rank': enemyRank,
+        'mode': mode,
+        'outcome': outcome,
+        'has_ai_bug': hasAiBug,
+        'deselect_count': deselectCount,
+        'run_log_json': runLogJson,
+      });
+    } catch (_) {
+      // Non-blocking: ignore offline / missing table errors during gameplay.
+    }
+  }
+
+  /// Envoie une proposition d'ennemi (minion ou boss) dans Supabase (`community_enemy_proposals`).
+  Future<void> submitCommunityEnemyProposal({
+    required String enemyType,
+    String? minionRank,
+    required String name,
+    String? description,
+    required String imageMode,
+    String? imageValue,
+    int? hp,
+    int? cp,
+    required bool cpInfinite,
+    String? attacksText,
+    String? passivesText,
+    String? defenseText,
+  }) async {
+    if (!_initialized) {
+      throw StateError('Supabase is not initialized.');
+    }
+    final user = _client.auth.currentUser;
+    final email = user?.email?.trim() ?? '';
+    if (user == null || user.isAnonymous || email.isEmpty) {
+      throw StateError('You must be signed in with an email account.');
+    }
+    await _client.from('community_enemy_proposals').insert({
+      'user_id': user.id,
+      'user_email': email,
+      'enemy_type': enemyType,
+      'minion_rank': enemyType == 'minion' ? minionRank : null,
+      'name': name.trim(),
+      'description': description?.trim(),
+      'image_mode': imageMode,
+      'image_value': imageValue?.trim(),
+      'hp': hp,
+      'cp': cpInfinite ? null : cp,
+      'cp_infinite': cpInfinite,
+      'attacks_text': attacksText?.trim(),
+      'passives_text': passivesText?.trim(),
+      'defense_text': defenseText?.trim(),
+      'status': 'pending',
+    });
+  }
+
   String? _currentUserId() {
     if (!_initialized) {
       return null;
