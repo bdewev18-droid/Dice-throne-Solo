@@ -9,15 +9,16 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
 $flutterCandidates = @(
+  $env:FLUTTER_BIN,
   'C:\dev\flutter\bin\flutter.bat',
   'E:\flutter\flutter\bin\flutter.bat'
-)
+) | Where-Object { $_ }
 $flutter = $flutterCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $flutter) {
   $flutter = (Get-Command flutter.bat -ErrorAction SilentlyContinue).Source
 }
 if (-not $flutter) {
-  throw 'Flutter introuvable. Verifier C:\dev\flutter ou E:\flutter\flutter.'
+  throw 'Flutter introuvable. Definir $env:FLUTTER_BIN ou verifier C:\dev\flutter ou E:\flutter\flutter.'
 }
 
 function Invoke-BoundedFlutter {
