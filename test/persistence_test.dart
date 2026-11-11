@@ -163,28 +163,106 @@ void main() {
       expect(enemy.passives.isEmpty, isTrue, reason: 'Passives should be cleared when restoring to Fee');
     });
 
+    test('AppSettings.load restores remote defeated_enemies when local storage is empty', () async {
+      fakeStorage.clear();
+      AppSettings.instance.resetForTesting();
+      fakeSupabase.setSignedIn();
+      fakeSupabase.userMetadata = {
+        'defeated_enemies': ['goblin', 'orc'],
+      };
+
+      await AppSettings.instance.load();
+
+      expect(
+        AppSettings.instance.defeatedEnemyKeys,
+        containsAll(['goblin', 'orc']),
+      );
+    });
+
+    test('AppSettings.syncFromSupabase merges metadata, combat logs and boss history', () async {
+      fakeStorage.clear();
+      AppSettings.instance.resetForTesting();
+      await EnemyProfileRepository.load();
+      fakeSupabase.setSignedIn();
+      fakeSupabase.userMetadata = {
+        'defeated_enemies': ['goblin'],
+      };
+      fakeSupabase.victoryCombatLogs = [
+        {'enemy_key': 'rat', 'enemy_name': 'Rat'},
+        {'enemy_key': null, 'enemy_name': 'Ourokhor'},
+      ];
+
+      await AppSettings.instance.syncFromSupabase(
+        historyRecords: [
+          GameRecord(
+            hero: HeroType.barbare,
+            date: DateTime(2026, 11, 10),
+            score: 100,
+            mode: SurvivalMode.naraxus,
+            isVictory: true,
+            bossKey: 'naraxus',
+          ),
+        ],
+      );
+
+      expect(
+        AppSettings.instance.defeatedEnemyKeys,
+        containsAll(['goblin', 'rat', 'ourokhor', 'naraxus']),
+      );
+      expect(
+        fakeSupabase.lastUpdatedDefeatedEnemies,
+        containsAll(['goblin', 'rat', 'ourokhor', 'naraxus']),
+      );
+    });
+
+    test('AppSettings.markEnemyDefeated preserves remote defeated_enemies before syncing', () async {
+      fakeStorage.clear();
+      AppSettings.instance.resetForTesting();
+      await AppSettings.instance.load(); // loaded while signed out (empty)
+
+      // User signs in asynchronously later with existing remote bestiary
+      fakeSupabase.setSignedIn();
+      fakeSupabase.userMetadata = {
+        'defeated_enemies': ['goblin', 'orc'],
+      };
+
+      await AppSettings.instance.markEnemyDefeated('slime');
+
+      expect(
+        AppSettings.instance.defeatedEnemyKeys,
+        containsAll(['goblin', 'orc', 'slime']),
+      );
+      expect(
+        fakeSupabase.lastUpdatedDefeatedEnemies,
+        containsAll(['goblin', 'orc', 'slime']),
+      );
+    });
+
   });
 }
 
 
 class FakeSupabaseService implements SupabaseService {
   AuthSession _session = const AuthSession(status: AuthStatus.signedOut);
-  
+  Map<String, dynamic>? userMetadata;
+  List<Map<String, dynamic>> victoryCombatLogs = [];
+  Set<String>? lastUpdatedDefeatedEnemies;
+
   void setSignedIn() {
     _session = const AuthSession(status: AuthStatus.signedIn, userId: 'test-user-id');
   }
-  
+
   @override
   Stream<AuthSessionEvent> get sessionStream => const Stream.empty();
-  
+
   @override
   AuthSession currentSession() => _session;
-  
+
   List<Map<String, dynamic>> simulatedDb = [];
-  
+
   @override
   Future<List<Map<String, dynamic>>> fetchHistory() async => simulatedDb;
-  
+
   @override
   Future<String?> insertRecord(Map<String, dynamic> record) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
@@ -192,13 +270,13 @@ class FakeSupabaseService implements SupabaseService {
     simulatedDb.insert(0, record);
     return id;
   }
-  
+
   @override
   Future<bool> deleteRecord(String id) async {
     simulatedDb.removeWhere((r) => r['id'] == id);
     return true;
   }
-  
+
   @override
   Future<void> initialize() async {}
   @override
@@ -209,4 +287,44 @@ class FakeSupabaseService implements SupabaseService {
   Future<void> signOut() async {}
   @override
   Future<void> updateHeroCollection(Set<String> heroNames) async {}
+  @override
+  Future<void> updateDefeatedEnemies(Set<String> enemyKeys) async {
+    lastUpdatedDefeatedEnemies = Set<String>.from(enemyKeys);
+    userMetadata = {
+      ...?userMetadata,
+      'defeated_enemies': enemyKeys.toList()..sort(),
+    };
+  }
+  @override
+  Map<String, dynamic>? get currentUserMetadata => userMetadata;
+  @override
+  Future<List<Map<String, dynamic>>> fetchVictoryCombatLogs() async =>
+      victoryCombatLogs;
+  @override
+  Future<void> saveCombatRunLog({
+    required String hero,
+    required String? enemyKey,
+    required String enemyName,
+    required String enemyRank,
+    required String mode,
+    required String outcome,
+    required bool hasAiBug,
+    required int deselectCount,
+    required Map<String, dynamic> runLogJson,
+  }) async {}
+  @override
+  Future<void> submitCommunityEnemyProposal({
+    required String enemyType,
+    String? minionRank,
+    required String name,
+    String? description,
+    required String imageMode,
+    String? imageValue,
+    int? hp,
+    int? cp,
+    required bool cpInfinite,
+    String? attacksText,
+    String? passivesText,
+    String? defenseText,
+  }) async {}
 }

@@ -54,8 +54,8 @@ part 'parts/fight_logic/ourokhor_logic.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.5.24';
-const int appBuildNumber = 489;
+const String appVersionLabel = 'Version 1.5.26';
+const int appBuildNumber = 491;
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -1187,6 +1187,20 @@ class AppSettings extends ChangeNotifier {
   Set<String> _activeMinionPacks = {'dta'};
   Set<String> _disabledCommunityEnemyKeys = {};
   bool _loaded = false;
+  bool _hasLocalSettings = false;
+
+  @visibleForTesting
+  void resetForTesting() {
+    _developerMode = false;
+    _ownedHeroNames = {};
+    _favoriteHeroNames = {};
+    _encounteredEnemyKeys = {};
+    _defeatedEnemyKeys = {};
+    _activeMinionPacks = {'dta'};
+    _disabledCommunityEnemyKeys = {};
+    _loaded = false;
+    _hasLocalSettings = false;
+  }
 
   bool get developerMode => _developerMode;
 
@@ -1239,6 +1253,68 @@ class AppSettings extends ChangeNotifier {
 
   bool isFavoriteHero(HeroType hero) => _favoriteHeroNames.contains(hero.name);
 
+  Set<String> _readRemoteDefeatedEnemyKeys() {
+    final remoteDefeated =
+        SupabaseService.instance.currentUserMetadata?['defeated_enemies']
+            as List<dynamic>?;
+    if (remoteDefeated == null || remoteDefeated.isEmpty) {
+      return {};
+    }
+    return remoteDefeated
+        .map((e) => e.toString().trim())
+        .where((s) => s.isNotEmpty)
+        .toSet();
+  }
+
+  bool _mergeRemoteDefeatedFromMetadata() {
+    final remoteKeys = _readRemoteDefeatedEnemyKeys();
+    var changed = false;
+    for (final key in remoteKeys) {
+      if (_defeatedEnemyKeys.add(key)) {
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+  void _restoreRemoteOwnedHeroesIfEmpty() {
+    final remoteOwned =
+        SupabaseService.instance.currentUserMetadata?['owned_heroes']
+            as List<dynamic>?;
+    if (remoteOwned != null && remoteOwned.isNotEmpty) {
+      _ownedHeroNames = remoteOwned
+          .map((e) => e.toString())
+          .where((s) => s.isNotEmpty)
+          .toSet();
+    }
+    if (_ownedHeroNames.isEmpty) {
+      _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
+    }
+  }
+
+  String? _resolveEnemyKeyFromLog(String? enemyKey, String? enemyName) {
+    final trimmedKey = enemyKey?.trim() ?? '';
+    if (trimmedKey.isNotEmpty) {
+      return trimmedKey;
+    }
+    final normalizedName = enemyName?.trim().toLowerCase() ?? '';
+    if (normalizedName.isEmpty) {
+      return null;
+    }
+    for (final profile in EnemyProfileRepository.all) {
+      if (profile.name.trim().toLowerCase() == normalizedName) {
+        return profile.key;
+      }
+    }
+    if (naraxusProfile.name.trim().toLowerCase() == normalizedName) {
+      return naraxusProfile.key;
+    }
+    if (ourokhorProfile.name.trim().toLowerCase() == normalizedName) {
+      return ourokhorProfile.key;
+    }
+    return null;
+  }
+
   Future<void> load() async {
     if (_loaded) {
       return;
@@ -1247,54 +1323,123 @@ class AppSettings extends ChangeNotifier {
     try {
       final raw = await _storage.read(_key);
       if (raw == null || raw.isEmpty) {
-        _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
+        _hasLocalSettings = false;
+        _restoreRemoteOwnedHeroesIfEmpty();
         _favoriteHeroNames = {};
         _encounteredEnemyKeys = {};
-        return;
+        _defeatedEnemyKeys = {};
+      } else {
+        _hasLocalSettings = true;
+        final json = jsonDecode(raw) as Map<String, dynamic>;
+        _developerMode = json['developerMode'] as bool? ?? false;
+        final owned = json['ownedHeroes'] as List<dynamic>?;
+        _ownedHeroNames = owned == null
+            ? HeroType.values.map((hero) => hero.name).toSet()
+            : owned.map((value) => value.toString()).toSet();
+        if (_ownedHeroNames.isEmpty) {
+          _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
+        }
+        final favorites = json['favoriteHeroes'] as List<dynamic>?;
+        _favoriteHeroNames = favorites == null
+            ? {}
+            : favorites.map((value) => value.toString()).toSet();
+        final encountered = json['encounteredEnemies'] as List<dynamic>?;
+        _encounteredEnemyKeys = encountered == null
+            ? {}
+            : encountered.map((value) => value.toString()).toSet();
+        final defeated = json['defeatedEnemies'] as List<dynamic>?;
+        _defeatedEnemyKeys = defeated == null
+            ? {}
+            : defeated.map((value) => value.toString()).toSet();
+        final packs = json['activeMinionPacks'] as List<dynamic>?;
+        _activeMinionPacks = packs == null
+            ? {'dta'}
+            : packs.map((value) => value.toString()).toSet();
+        _activeMinionPacks.add('dta');
+        final disabledCommunity =
+            json['disabledCommunityEnemies'] as List<dynamic>?;
+        _disabledCommunityEnemyKeys = disabledCommunity == null
+            ? {}
+            : disabledCommunity.map((value) => value.toString()).toSet();
       }
-      final json = jsonDecode(raw) as Map<String, dynamic>;
-      _developerMode = json['developerMode'] as bool? ?? false;
-      final owned = json['ownedHeroes'] as List<dynamic>?;
-      _ownedHeroNames = owned == null
-          ? HeroType.values.map((hero) => hero.name).toSet()
-          : owned.map((value) => value.toString()).toSet();
-      if (_ownedHeroNames.isEmpty) {
-        _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
-      }
-      final favorites = json['favoriteHeroes'] as List<dynamic>?;
-      _favoriteHeroNames = favorites == null
-          ? {}
-          : favorites.map((value) => value.toString()).toSet();
-      final encountered = json['encounteredEnemies'] as List<dynamic>?;
-      _encounteredEnemyKeys = encountered == null
-          ? {}
-          : encountered.map((value) => value.toString()).toSet();
-      final defeated = json['defeatedEnemies'] as List<dynamic>?;
-      _defeatedEnemyKeys = defeated == null
-          ? {}
-          : defeated.map((value) => value.toString()).toSet();
-      final remoteDefeated = SupabaseService.instance.currentUserMetadata?['defeated_enemies'] as List<dynamic>?;
-      if (remoteDefeated != null && remoteDefeated.isNotEmpty) {
-        _defeatedEnemyKeys.addAll(remoteDefeated.map((e) => e.toString()));
-      }
-      final packs = json['activeMinionPacks'] as List<dynamic>?;
-      _activeMinionPacks = packs == null
-          ? {'dta'}
-          : packs.map((value) => value.toString()).toSet();
-      _activeMinionPacks.add('dta');
-      final disabledCommunity =
-          json['disabledCommunityEnemies'] as List<dynamic>?;
-      _disabledCommunityEnemyKeys = disabledCommunity == null
-          ? {}
-          : disabledCommunity.map((value) => value.toString()).toSet();
     } catch (error) {
       debugPrint('App settings load skipped: $error');
-      _ownedHeroNames = HeroType.values.map((hero) => hero.name).toSet();
+      _hasLocalSettings = false;
+      _restoreRemoteOwnedHeroesIfEmpty();
       _favoriteHeroNames = {};
       _encounteredEnemyKeys = {};
       _defeatedEnemyKeys = {};
       _activeMinionPacks = {'dta'};
       _disabledCommunityEnemyKeys = {};
+    }
+    _mergeRemoteDefeatedFromMetadata();
+  }
+
+  /// Synchronise et reconstruit le bestiaire depuis Supabase (`user_metadata`,
+  /// `combat_run_logs` et `game_records`).
+  Future<void> syncFromSupabase({
+    List<GameRecord> historyRecords = const [],
+  }) async {
+    await load();
+    var changed = false;
+
+    if (!_hasLocalSettings) {
+      final beforeOwned = Set<String>.from(_ownedHeroNames);
+      _restoreRemoteOwnedHeroesIfEmpty();
+      if (!setEquals(beforeOwned, _ownedHeroNames)) {
+        changed = true;
+      }
+    }
+
+    if (_mergeRemoteDefeatedFromMetadata()) {
+      changed = true;
+    }
+
+    final recoveredKeys = <String>{};
+    for (final record in historyRecords) {
+      if (!record.isVictory) continue;
+      if (record.bossKey != null && record.bossKey!.trim().isNotEmpty) {
+        recoveredKeys.add(record.bossKey!.trim());
+      }
+      if (record.mode.difficulty == RunDifficulty.naraxus) {
+        recoveredKeys.add('naraxus');
+      }
+    }
+
+    final session = SupabaseService.instance.currentSession();
+    if (session.isSignedIn) {
+      try {
+        final rows = await SupabaseService.instance.fetchVictoryCombatLogs();
+        for (final row in rows) {
+          final key = _resolveEnemyKeyFromLog(
+            row['enemy_key']?.toString(),
+            row['enemy_name']?.toString(),
+          );
+          if (key != null && key.isNotEmpty) {
+            recoveredKeys.add(key);
+          }
+        }
+      } catch (error) {
+        debugPrint('Combat logs bestiary sync skipped: $error');
+      }
+    }
+
+    for (final key in recoveredKeys) {
+      if (_defeatedEnemyKeys.add(key)) {
+        changed = true;
+      }
+    }
+
+    final remoteSet = _readRemoteDefeatedEnemyKeys();
+    final remoteMissingKeys =
+        session.isSignedIn &&
+        _defeatedEnemyKeys.any((key) => !remoteSet.contains(key));
+
+    if (changed) {
+      notifyListeners();
+      await _save(syncDefeated: remoteMissingKeys);
+    } else if (remoteMissingKeys) {
+      await _save(syncDefeated: true);
     }
   }
 
@@ -1308,12 +1453,13 @@ class AppSettings extends ChangeNotifier {
   }
 
   Future<void> markEnemyDefeated(String? key) async {
+    _mergeRemoteDefeatedFromMetadata();
     if (key == null || key.isEmpty || _defeatedEnemyKeys.contains(key)) {
       return;
     }
     _defeatedEnemyKeys.add(key);
     notifyListeners();
-    await _save(syncProfile: true);
+    await _save(syncDefeated: true);
   }
 
   Future<void> toggleEnemyEncountered(String key) async {
@@ -1339,7 +1485,7 @@ class AppSettings extends ChangeNotifier {
       _defeatedEnemyKeys.add(key);
     }
     notifyListeners();
-    await _save(syncProfile: true);
+    await _save(syncDefeated: true);
   }
 
   Future<void> setDeveloperMode(bool value) async {
@@ -1361,7 +1507,7 @@ class AppSettings extends ChangeNotifier {
       _ownedHeroNames.add(hero.name);
     }
     notifyListeners();
-    await _save(syncProfile: true);
+    await _save(syncHeroes: true);
   }
 
   Future<void> toggleFavoriteHero(HeroType hero) async {
@@ -1374,7 +1520,11 @@ class AppSettings extends ChangeNotifier {
     await _save();
   }
 
-  Future<void> _save({bool syncProfile = false}) async {
+  Future<void> _save({
+    bool syncHeroes = false,
+    bool syncDefeated = false,
+  }) async {
+    _hasLocalSettings = true;
     final payload = {
       'developerMode': _developerMode,
       'ownedHeroes': _ownedHeroNames.toList()..sort(),
@@ -1386,7 +1536,7 @@ class AppSettings extends ChangeNotifier {
           _disabledCommunityEnemyKeys.toList()..sort(),
     };
     await _storage.write(_key, jsonEncode(payload));
-    if (syncProfile) {
+    if (syncHeroes) {
       unawaited(
         SupabaseService.instance
             .updateHeroCollection(_ownedHeroNames)
@@ -1394,6 +1544,8 @@ class AppSettings extends ChangeNotifier {
               debugPrint('Hero collection Supabase sync skipped: $error');
             }),
       );
+    }
+    if (syncDefeated) {
       unawaited(
         SupabaseService.instance
             .updateDefeatedEnemies(_defeatedEnemyKeys)

@@ -435,6 +435,24 @@ class SupabaseService {
     return _client.auth.currentUser?.userMetadata;
   }
 
+  /// Charge les logs de combats gagnés (`outcome == 'victory'`) du user courant
+  /// pour reconstruire/synchroniser les ennemis vaincus dans le bestiaire.
+  Future<List<Map<String, dynamic>>> fetchVictoryCombatLogs() async {
+    final uid = _currentUserId();
+    if (uid == null) {
+      return <Map<String, dynamic>>[];
+    }
+    final response = await _client
+        .from('combat_run_logs')
+        .select('enemy_key, enemy_name')
+        .eq('user_id', uid)
+        .eq('outcome', 'victory')
+        .order('created_at', ascending: false)
+        .limit(2000);
+    final list = response as List<dynamic>;
+    return list.cast<Map<String, dynamic>>();
+  }
+
   /// Sauvegarde le JSON Run Log de fin de combat dans Supabase (`combat_run_logs`).
   Future<void> saveCombatRunLog({
     required String hero,

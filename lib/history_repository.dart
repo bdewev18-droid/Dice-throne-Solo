@@ -98,6 +98,7 @@ class HistoryRepository {
                 enemiesDefeated: record.enemiesDefeated,
                 duration: record.duration,
                 isVictory: record.isVictory,
+                bossKey: record.bossKey,
               );
         await _refreshCache();
         return saved;

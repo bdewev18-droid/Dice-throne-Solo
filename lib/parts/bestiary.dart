@@ -213,6 +213,7 @@ class _BestiaryPageState extends State<BestiaryPage> {
   @override
   void initState() {
     super.initState();
+    AppSettings.instance.addListener(_handleSettingsChanged);
     if (widget.initialPackKey != null) {
       final pack = _BestiaryPackFilter.values.firstWhere(
         (p) => p.packKey == widget.initialPackKey,
@@ -221,6 +222,18 @@ class _BestiaryPageState extends State<BestiaryPage> {
       if (pack.packKey != null) {
         _selectedPacks.add(pack);
       }
+    }
+  }
+
+  @override
+  void dispose() {
+    AppSettings.instance.removeListener(_handleSettingsChanged);
+    super.dispose();
+  }
+
+  void _handleSettingsChanged() {
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -290,10 +303,14 @@ class _BestiaryPageState extends State<BestiaryPage> {
         }
       }
     }
-    if (widget.historyRecords.any(
-      (r) => r.mode.difficulty == RunDifficulty.naraxus && r.isVictory,
-    )) {
-      keys.add('naraxus');
+    for (final r in widget.historyRecords) {
+      if (!r.isVictory) continue;
+      if (r.bossKey != null && r.bossKey!.trim().isNotEmpty) {
+        keys.add(r.bossKey!.trim());
+      }
+      if (r.mode.difficulty == RunDifficulty.naraxus) {
+        keys.add('naraxus');
+      }
     }
     return keys;
   }

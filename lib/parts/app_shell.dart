@@ -70,6 +70,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
         ..clear()
         ..addAll(records);
     });
+    await AppSettings.instance.syncFromSupabase(historyRecords: records);
   }
 
   Future<void> _handleAddRecord(GameRecord record) async {
