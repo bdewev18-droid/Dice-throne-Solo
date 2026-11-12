@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150" role="img" aria-label="Health symbol">
+  <defs>
+    <linearGradient id="heartFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#252729"/>
+      <stop offset="1" stop-color="#080909"/>
+    </linearGradient>
+    <filter id="heartShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity=".75"/>
+    </filter>
+  </defs>
+  <path d="M75 132C70 127 22 95 22 51C22 26 38 14 55 14C66 14 73 20 75 29C77 20 84 14 95 14C112 14 128 26 128 51C128 95 80 127 75 132Z" fill="url(#heartFill)" stroke="#F4F4EC" stroke-width="5" stroke-linejoin="round" filter="url(#heartShadow)"/>
+  <!-- Empty central area reserved for the dynamic HP value (00-99). -->
+</svg>

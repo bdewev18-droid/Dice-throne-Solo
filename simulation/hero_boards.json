@@ -1,0 +1,1625 @@
+{
+  "barbarian": {
+    "id": "barbarian",
+    "name": "Barbare",
+    "subtitle": "La Force Brute et l'Étourdissement",
+    "difficulty": 1,
+    "color": "#e67e22",
+    "portrait": "https://static.wikia.nocookie.net/dice-throne/images/c/c4/Barbare.png/revision/latest/scale-to-width-down/268?cb=20240212142224&path-prefix=fr",
+    "boardBase": "https://static.wikia.nocookie.net/dice-throne/images/4/46/Plateau_Ouvert_Barbare.png/revision/latest/scale-to-width-down/700?cb=20240212120109&path-prefix=fr",
+    "boardUpgraded": "https://static.wikia.nocookie.net/dice-throne/images/c/c1/Plateau_Optimis%C3%A9_Barbare.png/revision/latest/scale-to-width-down/700?cb=20240212120648&path-prefix=fr",
+    "diceImg": "https://static.wikia.nocookie.net/dice-throne/images/6/69/D%C3%A9s_Barbare.png/revision/latest/scale-to-width-down/200?cb=20240212142937&path-prefix=fr",
+    "diceFaces": [
+      {
+        "val": 1,
+        "symbol": "Épée",
+        "icon": "⚔️",
+        "type": "attack"
+      },
+      {
+        "val": 2,
+        "symbol": "Épée",
+        "icon": "⚔️",
+        "type": "attack"
+      },
+      {
+        "val": 3,
+        "symbol": "Épée",
+        "icon": "⚔️",
+        "type": "attack"
+      },
+      {
+        "val": 4,
+        "symbol": "Cœur",
+        "icon": "❤️",
+        "type": "heal"
+      },
+      {
+        "val": 5,
+        "symbol": "Cœur",
+        "icon": "❤️",
+        "type": "heal"
+      },
+      {
+        "val": 6,
+        "symbol": "Boum",
+        "icon": "💥",
+        "type": "special"
+      }
+    ],
+    "ratings": {
+      "attack": 4.5,
+      "defense": 3,
+      "control": 3.5,
+      "economy": 1,
+      "complexity": 1
+    },
+    "abilities": [
+      {
+        "id": "frappe",
+        "name": "Frappe",
+        "req": "3, 4 ou 5 Épées",
+        "type": "Attaque Parable",
+        "lvl1": {
+          "dmg": 6,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 6, 9 ou 12 dégâts (selon 3, 4 ou 5 Épées)."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 8,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 8, 11 ou 14 dégâts."
+        },
+        "lvl3": {
+          "cost": 3,
+          "dmg": 9,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 9, 12 ou 15 dégâts."
+        }
+      },
+      {
+        "id": "coup_robuste",
+        "name": "Coup Robuste",
+        "req": "1 Boum + 1 Épée",
+        "type": "Attaque Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 4,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 4 dégâts imparables."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 6,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 6 dégâts imparables."
+        },
+        "lvl3": {
+          "cost": 3,
+          "dmg": 0,
+          "undef": 8,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 8 dégâts imparables."
+        }
+      },
+      {
+        "id": "coup_puissant",
+        "name": "Coup Puissant",
+        "req": "Petite Suite (4)",
+        "type": "Attaque + Altération",
+        "lvl1": {
+          "dmg": 7,
+          "undef": 0,
+          "heal": 0,
+          "token": "Commotion",
+          "desc": "Inflige 7 dégâts + Commotion (l'adversaire saute sa prochaine phase principale 1)."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 9,
+          "undef": 0,
+          "heal": 0,
+          "token": "Commotion",
+          "desc": "Inflige 9 dégâts + Commotion."
+        }
+      },
+      {
+        "id": "choc_critique",
+        "name": "Choc Critique",
+        "req": "2 Boum",
+        "type": "Attaque + Altération",
+        "lvl1": {
+          "dmg": 7,
+          "undef": 0,
+          "heal": 0,
+          "token": "Commotion",
+          "desc": "Inflige 7 dégâts + Commotion."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 9,
+          "undef": 0,
+          "heal": 0,
+          "token": "Commotion",
+          "desc": "Inflige 9 dégâts + Commotion + Cri de Guerre (+1 dé)."
+        }
+      },
+      {
+        "id": "force_ame",
+        "name": "Force d'Âme",
+        "req": "2 ou 3 Cœurs",
+        "type": "Soin & Cleanse",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 3,
+          "token": "Cleanse",
+          "desc": "Soigne 2 ou 4 PV et retire 1 altération néfaste."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 0,
+          "heal": 6,
+          "token": "Cleanse",
+          "desc": "Soigne 4 ou 7 PV et retire 1 ou 2 altérations néfastes."
+        }
+      },
+      {
+        "id": "domination",
+        "name": "Domination",
+        "req": "3 Boum",
+        "type": "Attaque Explosive",
+        "lvl1": {
+          "dmg": 10,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 5 dégâts + lance 3 dés : chaque Épée/Boum ajoute +2 dégâts (Moy: ~10 dégâts)."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 13,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 6 dégâts + lance 4 dés additionnels (Moy: ~13 dégâts)."
+        }
+      },
+      {
+        "id": "temeraire",
+        "name": "Téméraire",
+        "req": "Grande Suite (5)",
+        "type": "Attaque Imparable Ultime",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 10,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 10 dégâts imparables. Subit 2 dégâts de recul."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 13,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 13 dégâts imparables sans AUCUN dégât de recul !"
+        }
+      },
+      {
+        "id": "etourdissement",
+        "name": "Étourdissement",
+        "req": "4 Boum",
+        "type": "Attaque + Stun",
+        "lvl1": {
+          "dmg": 10,
+          "undef": 0,
+          "heal": 0,
+          "token": "Étourdi",
+          "desc": "Inflige 10 dégâts + Étourdissement (l'adversaire ne peut pas réagir et vous rejouez un tour complet gratuit)."
+        },
+        "lvl2": null
+      },
+      {
+        "id": "rage",
+        "name": "Rage (Ultime)",
+        "req": "5 Boum",
+        "type": "Ultime Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 15,
+          "heal": 0,
+          "token": "",
+          "desc": "15 dégâts imparables + Nouvelle Phase de Lancer Offensif immédiate !"
+        },
+        "lvl2": null
+      },
+      {
+        "id": "peau_dure",
+        "name": "Peau Dure (Défense)",
+        "req": "Jet Défensif",
+        "type": "Défense & Soin",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 1.5,
+          "token": "",
+          "desc": "Lance 3 dés : chaque Cœur prévient 1 dégât ou soigne 1 PV (Moy: 1.5 à 2.0 prévention)."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 0,
+          "heal": 2.5,
+          "token": "",
+          "desc": "Lance 4 dés : prévention et soins accrus (Moy: 2.5 à 3.2)."
+        }
+      }
+    ]
+  },
+  "shadowThief": {
+    "id": "shadowThief",
+    "name": "Voleur de l'Ombre",
+    "subtitle": "L'Intangibilité, le Poison et le Vol de CP",
+    "difficulty": 5,
+    "color": "#8b5cf6",
+    "portrait": "https://static.wikia.nocookie.net/dice-throne/images/4/48/Voleur_de_l%27Ombre.png/revision/latest/scale-to-width-down/268?cb=20240215235912&path-prefix=fr",
+    "boardBase": "https://static.wikia.nocookie.net/dice-throne/images/3/32/Plateau_Ouvert_Voleur_de_l%27Ombre.png/revision/latest/scale-to-width-down/700?cb=20240215233823&path-prefix=fr",
+    "boardUpgraded": "https://static.wikia.nocookie.net/dice-throne/images/3/32/Plateau_Ouvert_Voleur_de_l%27Ombre.png/revision/latest/scale-to-width-down/700?cb=20240215233823&path-prefix=fr",
+    "diceImg": "https://static.wikia.nocookie.net/dice-throne/images/0/0d/D%C3%A9s_Voleur_de_l%27Ombre.png/revision/latest/scale-to-width-down/200?cb=20240215004111&path-prefix=fr",
+    "diceFaces": [
+      {
+        "val": 1,
+        "symbol": "Ombre",
+        "icon": "🌑",
+        "type": "special"
+      },
+      {
+        "val": 2,
+        "symbol": "Poison",
+        "icon": "🧪",
+        "type": "debuff"
+      },
+      {
+        "val": 3,
+        "symbol": "Poison",
+        "icon": "🧪",
+        "type": "debuff"
+      },
+      {
+        "val": 4,
+        "symbol": "Dague",
+        "icon": "🗡️",
+        "type": "attack"
+      },
+      {
+        "val": 5,
+        "symbol": "Dague",
+        "icon": "🗡️",
+        "type": "attack"
+      },
+      {
+        "val": 6,
+        "symbol": "Sac de CP",
+        "icon": "💰",
+        "type": "economy"
+      }
+    ],
+    "ratings": {
+      "attack": 3.5,
+      "defense": 4.8,
+      "control": 4.5,
+      "economy": 4.5,
+      "complexity": 5
+    },
+    "abilities": [
+      {
+        "id": "attaque_sournoise",
+        "name": "Attaque Sournoise",
+        "req": "3, 4 ou 5 Dagues",
+        "type": "Attaque Parable",
+        "lvl1": {
+          "dmg": 5,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 5, 8 ou 11 dégâts."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 7,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 7, 10 ou 13 dégâts."
+        },
+        "lvl3": {
+          "cost": 3,
+          "dmg": 8,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 8, 12 ou 15 dégâts."
+        }
+      },
+      {
+        "id": "empoisonnement",
+        "name": "Dague Empoisonnée",
+        "req": "2 ou 3 Poisons",
+        "type": "Poison Passif",
+        "lvl1": {
+          "dmg": 3,
+          "undef": 0,
+          "heal": 0,
+          "token": "Poison",
+          "desc": "Inflige 3 dégâts + applique Poison (1 dégât par tour de jeu)."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 5,
+          "undef": 0,
+          "heal": 0,
+          "token": "Poison",
+          "desc": "Inflige 5 dégâts + applique Poison (ou cumul de poison)."
+        }
+      },
+      {
+        "id": "vol_cp",
+        "name": "Vol à la Tire",
+        "req": "2 Sacs de CP",
+        "type": "Économie / Drain",
+        "lvl1": {
+          "dmg": 2,
+          "undef": 0,
+          "heal": 0,
+          "token": "Vol CP",
+          "desc": "Vole 1 CP à l'adversaire."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 4,
+          "undef": 0,
+          "heal": 0,
+          "token": "Vol CP",
+          "desc": "Vole 2 CP à l'adversaire."
+        }
+      },
+      {
+        "id": "dans_ombre",
+        "name": "Passage dans l'Ombre",
+        "req": "3 Ombres",
+        "type": "Immunité Absolue",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 0,
+          "token": "Ombre",
+          "desc": "Gagne le token Ombre (Immunité totale à la prochaine attaque subie)."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 4,
+          "undef": 0,
+          "heal": 0,
+          "token": "Ombre",
+          "desc": "Gagne Ombre + inflige 4 dégâts sournois."
+        }
+      },
+      {
+        "id": "decoupage",
+        "name": "Découpage Furtif",
+        "req": "Petite Suite (4)",
+        "type": "Attaque + Poison",
+        "lvl1": {
+          "dmg": 6,
+          "undef": 0,
+          "heal": 0,
+          "token": "Poison",
+          "desc": "6 dégâts + applique Poison + vole 1 CP."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 8,
+          "undef": 0,
+          "heal": 0,
+          "token": "Poison",
+          "desc": "8 dégâts + applique Poison + vole 1 CP."
+        }
+      },
+      {
+        "id": "assassinat",
+        "name": "Assassinat",
+        "req": "Grande Suite (5)",
+        "type": "Attaque Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 10,
+          "heal": 0,
+          "token": "Ombre",
+          "desc": "10 dégâts imparables + entre dans l'Ombre."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 13,
+          "heal": 0,
+          "token": "Ombre",
+          "desc": "13 dégâts imparables + entre dans l'Ombre + Poison."
+        }
+      },
+      {
+        "id": "tenebres_ultime",
+        "name": "Ténèbres Éternelles (Ultime)",
+        "req": "5 Ombres",
+        "type": "Ultime Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 14,
+          "heal": 0,
+          "token": "Ombre & Poison",
+          "desc": "14 dégâts imparables + Ombre + Poison x2 + vole 2 CP."
+        },
+        "lvl2": null
+      },
+      {
+        "id": "esquive_ombre",
+        "name": "Réflexes de l'Ombre (Défense)",
+        "req": "Jet Défensif",
+        "type": "Défense / Esquive",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 0,
+          "token": "Vol/Esquive",
+          "desc": "Lance 3 dés : prévient des dégâts et possibilité de voler 1 CP."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 0,
+          "heal": 0,
+          "token": "Ombre Possible",
+          "desc": "Lance 4 dés : chance d'entrer directement dans l'Ombre sur défense."
+        }
+      }
+    ]
+  },
+  "pyromancer": {
+    "id": "pyromancer",
+    "name": "Pyromancienne",
+    "subtitle": "La Destruction Brûlante et les Dégâts Imparables",
+    "difficulty": 3,
+    "color": "#ef4444",
+    "portrait": "https://static.wikia.nocookie.net/dice-throne/images/8/89/Pyromancienne.png/revision/latest/scale-to-width-down/268?cb=20240214182948&path-prefix=fr",
+    "boardBase": "https://static.wikia.nocookie.net/dice-throne/images/a/a6/Plateau_Ouvert_Pyromancienne.png/revision/latest/scale-to-width-down/700?cb=20240214174730&path-prefix=fr",
+    "boardUpgraded": "https://static.wikia.nocookie.net/dice-throne/images/a/a6/Plateau_Ouvert_Pyromancienne.png/revision/latest/scale-to-width-down/700?cb=20240214174730&path-prefix=fr",
+    "diceImg": "https://static.wikia.nocookie.net/dice-throne/images/5/51/D%C3%A9s_Pyromancienne.png/revision/latest/scale-to-width-down/200?cb=20240215003815&path-prefix=fr",
+    "diceFaces": [
+      {
+        "val": 1,
+        "symbol": "Flamme",
+        "icon": "🔥",
+        "type": "attack"
+      },
+      {
+        "val": 2,
+        "symbol": "Flamme",
+        "icon": "🔥",
+        "type": "attack"
+      },
+      {
+        "val": 3,
+        "symbol": "Météore",
+        "icon": "☄️",
+        "type": "attack"
+      },
+      {
+        "val": 4,
+        "symbol": "Météore",
+        "icon": "☄️",
+        "type": "attack"
+      },
+      {
+        "val": 5,
+        "symbol": "Brasier",
+        "icon": "🌋",
+        "type": "special"
+      },
+      {
+        "val": 6,
+        "symbol": "Explosion",
+        "icon": "💥",
+        "type": "ultimate"
+      }
+    ],
+    "ratings": {
+      "attack": 5,
+      "defense": 2,
+      "control": 3,
+      "economy": 2,
+      "complexity": 3
+    },
+    "abilities": [
+      {
+        "id": "souffle_feu",
+        "name": "Souffle de Feu",
+        "req": "3, 4 ou 5 Flammes",
+        "type": "Attaque + Brûlure",
+        "lvl1": {
+          "dmg": 6,
+          "undef": 0,
+          "heal": 0,
+          "token": "Brûlure",
+          "desc": "6 à 10 dégâts + applique Brûlure."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 8,
+          "undef": 0,
+          "heal": 0,
+          "token": "Brûlure",
+          "desc": "8 à 12 dégâts + applique Brûlure."
+        },
+        "lvl3": {
+          "cost": 3,
+          "dmg": 10,
+          "undef": 0,
+          "heal": 0,
+          "token": "Brûlure",
+          "desc": "10 à 15 dégâts + Brûlure."
+        }
+      },
+      {
+        "id": "meteore",
+        "name": "Pluie de Météores",
+        "req": "3 Météores",
+        "type": "Attaque Lourde",
+        "lvl1": {
+          "dmg": 8,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 8 dégâts + gagne Maîtrise du Feu."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 11,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "Inflige 11 dégâts + gagne Maîtrise du Feu."
+        }
+      },
+      {
+        "id": "explosion_thermique",
+        "name": "Explosion Thermique",
+        "req": "Petite Suite (4)",
+        "type": "Attaque Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 7,
+          "heal": 0,
+          "token": "Brûlure",
+          "desc": "7 dégâts imparables + Brûlure."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 10,
+          "heal": 0,
+          "token": "Brûlure",
+          "desc": "10 dégâts imparables + Brûlure."
+        }
+      },
+      {
+        "id": "brasier_ardent",
+        "name": "Brasier Ardent",
+        "req": "Grande Suite (5)",
+        "type": "Attaque Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 11,
+          "heal": 0,
+          "token": "Brûlure & Maîtrise",
+          "desc": "11 dégâts imparables + Brûlure + 2 Maîtrises du Feu."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 14,
+          "heal": 0,
+          "token": "Brûlure & Maîtrise",
+          "desc": "14 dégâts imparables + Brûlure + 2 Maîtrises du Feu."
+        }
+      },
+      {
+        "id": "conflagration",
+        "name": "Conflagration",
+        "req": "4 Explosions",
+        "type": "Attaque Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 12,
+          "heal": 0,
+          "token": "Brûlure",
+          "desc": "12 dégâts imparables + Brûlure."
+        },
+        "lvl2": null
+      },
+      {
+        "id": "flamme_ultime",
+        "name": "Supernova (Ultime)",
+        "req": "5 Explosions",
+        "type": "Ultime Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 16,
+          "heal": 0,
+          "token": "Brûlure Max",
+          "desc": "16 dégâts imparables + Brûlure + Maîtrise du Feu max."
+        },
+        "lvl2": null
+      },
+      {
+        "id": "barriere_feu",
+        "name": "Barrière de Feu (Défense)",
+        "req": "Jet Défensif",
+        "type": "Défense Riposte",
+        "lvl1": {
+          "dmg": 2,
+          "undef": 0,
+          "heal": 0,
+          "token": "Riposte",
+          "desc": "Inflige 1 à 3 dégâts de riposte de feu à l'attaquant."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 4,
+          "undef": 0,
+          "heal": 0,
+          "token": "Riposte",
+          "desc": "Inflige 2 à 5 dégâts de riposte de feu + chance de brûlure."
+        }
+      }
+    ]
+  },
+  "blackWidow": {
+    "id": "blackWidow",
+    "name": "Black Widow",
+    "subtitle": "L'Agilité, la Précision et les Explosifs",
+    "difficulty": 4,
+    "color": "#06b6d4",
+    "portrait": "https://static.wikia.nocookie.net/dice-throne/images/2/28/Black_Widow.png/revision/latest/scale-to-width-down/268?cb=20240616152005&path-prefix=fr",
+    "boardBase": "https://static.wikia.nocookie.net/dice-throne/images/d/d4/Plateau_Ouvert_Black_Widow.png/revision/latest/scale-to-width-down/700?cb=20240615114704&path-prefix=fr",
+    "boardUpgraded": "https://static.wikia.nocookie.net/dice-throne/images/d/d4/Plateau_Ouvert_Black_Widow.png/revision/latest/scale-to-width-down/700?cb=20240615114704&path-prefix=fr",
+    "diceImg": "https://static.wikia.nocookie.net/dice-throne/images/2/28/Black_Widow.png/revision/latest/scale-to-width-down/268?cb=20240616152005&path-prefix=fr",
+    "diceFaces": [
+      {
+        "val": 1,
+        "symbol": "Poing",
+        "icon": "👊",
+        "type": "attack"
+      },
+      {
+        "val": 2,
+        "symbol": "Poing",
+        "icon": "👊",
+        "type": "attack"
+      },
+      {
+        "val": 3,
+        "symbol": "Tir",
+        "icon": "🎯",
+        "type": "attack"
+      },
+      {
+        "val": 4,
+        "symbol": "Tir",
+        "icon": "🎯",
+        "type": "attack"
+      },
+      {
+        "val": 5,
+        "symbol": "Agilité",
+        "icon": "⚡",
+        "type": "buff"
+      },
+      {
+        "val": 6,
+        "symbol": "Bombe",
+        "icon": "💣",
+        "type": "special"
+      }
+    ],
+    "ratings": {
+      "attack": 4.2,
+      "defense": 4.5,
+      "control": 4,
+      "economy": 2.5,
+      "complexity": 4
+    },
+    "abilities": [
+      {
+        "id": "frappe_espionne",
+        "name": "Infiltration Rapprochée",
+        "req": "3, 4 ou 5 Poings",
+        "type": "Attaque Parable",
+        "lvl1": {
+          "dmg": 6,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "6, 9 ou 12 dégâts physiques."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 8,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "8, 11 ou 14 dégâts."
+        }
+      },
+      {
+        "id": "bombe_retardement",
+        "name": "Bombe à Retardement",
+        "req": "2 Bombes",
+        "type": "Dégâts Différés",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 0,
+          "token": "Bombe",
+          "desc": "Pose une bombe à retardement (explose pour 5 dégâts au début du tour adverse)."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 0,
+          "heal": 0,
+          "token": "Bombe",
+          "desc": "Explose pour 7 dégâts imparables."
+        }
+      },
+      {
+        "id": "agilite_tactique",
+        "name": "Esquive Agile",
+        "req": "2 Agilités",
+        "type": "Mitigation",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 0,
+          "token": "Agilité",
+          "desc": "Gagne Agilité (réduit de 50% la prochaine attaque reçue)."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 4,
+          "undef": 0,
+          "heal": 0,
+          "token": "Agilité",
+          "desc": "Gagne Agilité + inflige 4 dégâts de riposte."
+        }
+      },
+      {
+        "id": "rafale_veuve",
+        "name": "Rafale Balistique",
+        "req": "Petite Suite (4)",
+        "type": "Attaque + Bombe",
+        "lvl1": {
+          "dmg": 7,
+          "undef": 0,
+          "heal": 0,
+          "token": "Bombe",
+          "desc": "7 dégâts + pose une Bombe."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 9,
+          "undef": 0,
+          "heal": 0,
+          "token": "Bombe",
+          "desc": "9 dégâts + pose une Bombe + Agilité."
+        }
+      },
+      {
+        "id": "execution_veuve",
+        "name": "Frappe Chirurgicale",
+        "req": "Grande Suite (5)",
+        "type": "Attaque Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 11,
+          "heal": 0,
+          "token": "Agilité",
+          "desc": "11 dégâts imparables + gagne Agilité."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 14,
+          "heal": 0,
+          "token": "Agilité",
+          "desc": "14 dégâts imparables + gagne Agilité."
+        }
+      },
+      {
+        "id": "morsure_ultime",
+        "name": "Morsure de la Veuve (Ultime)",
+        "req": "5 Bombes",
+        "type": "Ultime Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 15,
+          "heal": 0,
+          "token": "Bombe & Agilité",
+          "desc": "15 dégâts imparables + Bombe + Agilité + Pioche 2 cartes."
+        },
+        "lvl2": null
+      },
+      {
+        "id": "defense_veuve",
+        "name": "Garde Rapprochée (Défense)",
+        "req": "Jet Défensif",
+        "type": "Défense Agilité",
+        "lvl1": {
+          "dmg": 1.5,
+          "undef": 0,
+          "heal": 0,
+          "token": "Agilité",
+          "desc": "Lance des dés : prévient des dégâts et chance d'activer Agilité."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 2.5,
+          "undef": 0,
+          "heal": 0,
+          "token": "Agilité",
+          "desc": "Prévention augmentée + gain garanti d'Agilité."
+        }
+      }
+    ]
+  },
+  "loki": {
+    "id": "loki",
+    "name": "Loki",
+    "subtitle": "L'Illusion, les Maléfices et la Duperie",
+    "difficulty": 4,
+    "color": "#10b981",
+    "portrait": "https://static.wikia.nocookie.net/dice-throne/images/f/fe/Loki.png/revision/latest/scale-to-width-down/268?cb=20240616152217&path-prefix=fr",
+    "boardBase": "https://static.wikia.nocookie.net/dice-throne/images/7/79/Plateau_Ouvert_Loki.png/revision/latest/scale-to-width-down/700?cb=20240615184533&path-prefix=fr",
+    "boardUpgraded": "https://static.wikia.nocookie.net/dice-throne/images/7/79/Plateau_Ouvert_Loki.png/revision/latest/scale-to-width-down/700?cb=20240615184533&path-prefix=fr",
+    "diceImg": "https://static.wikia.nocookie.net/dice-throne/images/f/fe/Loki.png/revision/latest/scale-to-width-down/268?cb=20240616152217&path-prefix=fr",
+    "diceFaces": [
+      {
+        "val": 1,
+        "symbol": "Dague",
+        "icon": "🗡️",
+        "type": "attack"
+      },
+      {
+        "val": 2,
+        "symbol": "Dague",
+        "icon": "🗡️",
+        "type": "attack"
+      },
+      {
+        "val": 3,
+        "symbol": "Sceptre",
+        "icon": "🔮",
+        "type": "attack"
+      },
+      {
+        "val": 4,
+        "symbol": "Sceptre",
+        "icon": "🔮",
+        "type": "attack"
+      },
+      {
+        "val": 5,
+        "symbol": "Illusion",
+        "icon": "🎭",
+        "type": "buff"
+      },
+      {
+        "val": 6,
+        "symbol": "Malice",
+        "icon": "🃏",
+        "type": "special"
+      }
+    ],
+    "ratings": {
+      "attack": 3.8,
+      "defense": 4.7,
+      "control": 4.8,
+      "economy": 3.5,
+      "complexity": 4
+    },
+    "abilities": [
+      {
+        "id": "coup_fourbe",
+        "name": "Coup Fourbe",
+        "req": "3, 4 ou 5 Dagues",
+        "type": "Attaque Parable",
+        "lvl1": {
+          "dmg": 6,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "6, 9 ou 11 dégâts."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 8,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "8, 11 ou 13 dégâts."
+        }
+      },
+      {
+        "id": "illusion_sort",
+        "name": "Miroir aux Alouettes",
+        "req": "2 Illusions",
+        "type": "Annulation d'Attaque",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 0,
+          "token": "Illusion",
+          "desc": "Pose un token Illusion (50% de chance d'annuler totalement l'attaque adverse)."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 3,
+          "undef": 0,
+          "heal": 0,
+          "token": "Illusion",
+          "desc": "Pose Illusion + 3 dégâts psychiques."
+        }
+      },
+      {
+        "id": "sac_malice",
+        "name": "Sac à Malice",
+        "req": "2 Malices",
+        "type": "Pige / Cartes",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 0,
+          "token": "Sac à Malice",
+          "desc": "Pose un piège Sac à Malice qui déclenche un effet punitif sur l'adversaire."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 2,
+          "undef": 0,
+          "heal": 0,
+          "token": "Sac à Malice",
+          "desc": "Effet renforcé + vole 1 CP."
+        }
+      },
+      {
+        "id": "duperie",
+        "name": "Duperie Divine",
+        "req": "Petite Suite (4)",
+        "type": "Attaque + Illusion",
+        "lvl1": {
+          "dmg": 7,
+          "undef": 0,
+          "heal": 0,
+          "token": "Illusion",
+          "desc": "7 dégâts + gagne Illusion."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 9,
+          "undef": 0,
+          "heal": 0,
+          "token": "Illusion",
+          "desc": "9 dégâts + gagne Illusion + vole 1 CP."
+        }
+      },
+      {
+        "id": "manipulation",
+        "name": "Maître du Chaos",
+        "req": "Grande Suite (5)",
+        "type": "Attaque Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 10,
+          "heal": 0,
+          "token": "Illusion & Malice",
+          "desc": "10 dégâts imparables + Illusion + Sac à Malice."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 13,
+          "heal": 0,
+          "token": "Illusion & Malice",
+          "desc": "13 dégâts imparables + Illusion + Sac à Malice."
+        }
+      },
+      {
+        "id": "dieu_malice_ultime",
+        "name": "Dieu de la Malice (Ultime)",
+        "req": "5 Malices",
+        "type": "Ultime Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 14,
+          "heal": 0,
+          "token": "Double Illusion",
+          "desc": "14 dégâts imparables + 2 Illusions + vide les CP adverses."
+        },
+        "lvl2": null
+      },
+      {
+        "id": "defense_loki",
+        "name": "Leurre Trompeur (Défense)",
+        "req": "Jet Défensif",
+        "type": "Défense Leurre",
+        "lvl1": {
+          "dmg": 2,
+          "undef": 0,
+          "heal": 0,
+          "token": "Illusion",
+          "desc": "Lance des dés : prévient des dégâts et riposte avec des sortilèges."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 3,
+          "undef": 0,
+          "heal": 0,
+          "token": "Illusion",
+          "desc": "Chance accrue d'annuler les attaques."
+        }
+      }
+    ]
+  },
+  "cursedPirate": {
+    "id": "cursedPirate",
+    "name": "Pirate Maudite",
+    "subtitle": "Le Parlement, les Doublons et la Transformation Fantôme",
+    "difficulty": 4,
+    "color": "#eab308",
+    "portrait": "https://static.wikia.nocookie.net/dice-throne/images/f/fc/Pirate_Maudite.png/revision/latest/scale-to-width-down/268?cb=20240504084826&path-prefix=fr",
+    "boardBase": "https://static.wikia.nocookie.net/dice-throne/images/a/ae/Plateau_Ouvert_Pirate_Maudite.png/revision/latest/scale-to-width-down/700?cb=20240504084847&path-prefix=fr",
+    "boardUpgraded": "https://static.wikia.nocookie.net/dice-throne/images/a/ae/Plateau_Ouvert_Pirate_Maudite.png/revision/latest/scale-to-width-down/700?cb=20240504084847&path-prefix=fr",
+    "diceImg": "https://static.wikia.nocookie.net/dice-throne/images/f/fc/Pirate_Maudite.png/revision/latest/scale-to-width-down/268?cb=20240504084826&path-prefix=fr",
+    "diceFaces": [
+      {
+        "val": 1,
+        "symbol": "Sabre",
+        "icon": "⚔️",
+        "type": "attack"
+      },
+      {
+        "val": 2,
+        "symbol": "Sabre",
+        "icon": "⚔️",
+        "type": "attack"
+      },
+      {
+        "val": 3,
+        "symbol": "Pistolet",
+        "icon": "🔫",
+        "type": "attack"
+      },
+      {
+        "val": 4,
+        "symbol": "Pistolet",
+        "icon": "🔫",
+        "type": "attack"
+      },
+      {
+        "val": 5,
+        "symbol": "Doublon",
+        "icon": "🪙",
+        "type": "economy"
+      },
+      {
+        "val": 6,
+        "symbol": "Crâne",
+        "icon": "💀",
+        "type": "special"
+      }
+    ],
+    "ratings": {
+      "attack": 4.6,
+      "defense": 4.2,
+      "control": 4.2,
+      "economy": 3.8,
+      "complexity": 4
+    },
+    "abilities": [
+      {
+        "id": "tir_babord",
+        "name": "Tir de Bordée",
+        "req": "3, 4 ou 5 Sabres",
+        "type": "Attaque Parable",
+        "lvl1": {
+          "dmg": 6,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "6, 9 ou 12 dégâts."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 8,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "8, 11 ou 14 dégâts."
+        }
+      },
+      {
+        "id": "parlay",
+        "name": "Parlement (Parlay)",
+        "req": "2 Doublons",
+        "type": "Annulation d'Attaque",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 0,
+          "token": "Parlay",
+          "desc": "Pose le token Parlay (annule entièrement la prochaine attaque subie)."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 3,
+          "undef": 0,
+          "heal": 0,
+          "token": "Parlay",
+          "desc": "Gagne Parlay + vole 1 CP."
+        }
+      },
+      {
+        "id": "canonnade",
+        "name": "Canonnade Lourde",
+        "req": "Petite Suite (4)",
+        "type": "Attaque + Poudre",
+        "lvl1": {
+          "dmg": 7,
+          "undef": 0,
+          "heal": 0,
+          "token": "Poudre",
+          "desc": "7 dégâts + gagne Poudre à canon."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 9,
+          "undef": 0,
+          "heal": 0,
+          "token": "Poudre",
+          "desc": "9 dégâts + Poudre + Doublon."
+        }
+      },
+      {
+        "id": "mutinerie",
+        "name": "Mutinerie Sanglante",
+        "req": "Grande Suite (5)",
+        "type": "Attaque Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 10,
+          "heal": 0,
+          "token": "Parlay",
+          "desc": "10 dégâts imparables + gagne Parlay."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 13,
+          "heal": 0,
+          "token": "Parlay",
+          "desc": "13 dégâts imparables + Parlay."
+        }
+      },
+      {
+        "id": "malediction_ultime",
+        "name": "Malédiction du Hollandais (Ultime)",
+        "req": "5 Crânes",
+        "type": "Ultime Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 15,
+          "heal": 0,
+          "token": "Maudit",
+          "desc": "15 dégâts imparables + Transformation immédiate en Pirate Maudite."
+        },
+        "lvl2": null
+      },
+      {
+        "id": "parade_pirate",
+        "name": "Parade au Mousquet (Défense)",
+        "req": "Jet Défensif",
+        "type": "Défense & Riposte",
+        "lvl1": {
+          "dmg": 2,
+          "undef": 0,
+          "heal": 0,
+          "token": "Riposte",
+          "desc": "Lance des dés : prévient des dégâts et riposte avec le sabre."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 3,
+          "undef": 0,
+          "heal": 0,
+          "token": "Riposte",
+          "desc": "Prévention et riposte accrues."
+        }
+      }
+    ]
+  },
+  "deadpool": {
+    "id": "deadpool",
+    "name": "Deadpool",
+    "subtitle": "La Régénération, les Katanas et le 4ème Mur",
+    "difficulty": 3,
+    "color": "#be123c",
+    "portrait": "https://static.wikia.nocookie.net/dice-throne/images/e/ef/Deadpool_dice.png/revision/latest/scale-to-width-down/180?cb=20260121064047",
+    "boardBase": "https://static.wikia.nocookie.net/dice-throne/images/0/09/Deadpool_board.png/revision/latest/scale-to-width-down/720?cb=20260121064328",
+    "boardUpgraded": "https://static.wikia.nocookie.net/dice-throne/images/0/09/Deadpool_board.png/revision/latest/scale-to-width-down/720?cb=20260121064328",
+    "diceImg": "https://static.wikia.nocookie.net/dice-throne/images/e/ef/Deadpool_dice.png/revision/latest/scale-to-width-down/180?cb=20260121064047",
+    "diceFaces": [
+      {
+        "val": 1,
+        "symbol": "Katana",
+        "icon": "⚔️",
+        "type": "attack"
+      },
+      {
+        "val": 2,
+        "symbol": "Katana",
+        "icon": "⚔️",
+        "type": "attack"
+      },
+      {
+        "val": 3,
+        "symbol": "Pistolet",
+        "icon": "🔫",
+        "type": "attack"
+      },
+      {
+        "val": 4,
+        "symbol": "Pistolet",
+        "icon": "🔫",
+        "type": "attack"
+      },
+      {
+        "val": 5,
+        "symbol": "Tacos",
+        "icon": "🌮",
+        "type": "heal"
+      },
+      {
+        "val": 6,
+        "symbol": "Deadpool",
+        "icon": "🤪",
+        "type": "special"
+      }
+    ],
+    "ratings": {
+      "attack": 4.3,
+      "defense": 3.8,
+      "control": 3.5,
+      "economy": 3,
+      "complexity": 3
+    },
+    "abilities": [
+      {
+        "id": "decoupe_katana",
+        "name": "Tranchage de Katanas",
+        "req": "3, 4 ou 5 Katanas",
+        "type": "Attaque Parable",
+        "lvl1": {
+          "dmg": 6,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "6, 9 ou 12 dégâts physiques."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 8,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "8, 11 ou 14 dégâts."
+        }
+      },
+      {
+        "id": "chimichanga",
+        "name": "Pause Chimichanga",
+        "req": "2 Tacos",
+        "type": "Soin & Régénération",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 4,
+          "token": "Régénération",
+          "desc": "Soigne 4 PV."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 0,
+          "heal": 7,
+          "token": "Régénération",
+          "desc": "Soigne 7 PV."
+        }
+      },
+      {
+        "id": "fusillade_deadpool",
+        "name": "Fusillade Déjantée",
+        "req": "Petite Suite (4)",
+        "type": "Attaque Lourde",
+        "lvl1": {
+          "dmg": 7,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "7 dégâts + soigne 1 PV."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 9,
+          "undef": 0,
+          "heal": 0,
+          "token": "",
+          "desc": "9 dégâts + soigne 2 PV."
+        }
+      },
+      {
+        "id": "quatrieme_mur",
+        "name": "Bris du 4ème Mur",
+        "req": "Grande Suite (5)",
+        "type": "Attaque Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 10,
+          "heal": 0,
+          "token": "",
+          "desc": "10 dégâts imparables + pioche 1 carte."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 13,
+          "heal": 0,
+          "token": "",
+          "desc": "13 dégâts imparables + pioche 2 cartes."
+        }
+      },
+      {
+        "id": "effort_maximal",
+        "name": "Effort Maximal ! (Ultime)",
+        "req": "5 Deadpool",
+        "type": "Ultime Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 15,
+          "heal": 3,
+          "token": "Délire",
+          "desc": "15 dégâts imparables + soigne 3 PV."
+        },
+        "lvl2": null
+      },
+      {
+        "id": "facteur_guerisseur",
+        "name": "Facteur Guérisseur (Défense)",
+        "req": "Jet Défensif",
+        "type": "Défense Soin",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 2,
+          "token": "Heal",
+          "desc": "Lance des dés : chaque Tacos soigne des PV."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 0,
+          "heal": 3.5,
+          "token": "Heal",
+          "desc": "Soins augmentés sur jet défensif."
+        }
+      }
+    ]
+  },
+  "druid": {
+    "id": "druid",
+    "name": "Druide",
+    "subtitle": "La Métamorphose Féline et les Esprits de la Nature",
+    "difficulty": 4,
+    "color": "#84cc16",
+    "portrait": "https://static.wikia.nocookie.net/dice-throne/images/3/3d/Druid_dice.png/revision/latest/scale-to-width-down/180?cb=20260207004626",
+    "boardBase": "https://static.wikia.nocookie.net/dice-throne/images/0/02/Druid_board_2.png/revision/latest/scale-to-width-down/720?cb=20260206234552",
+    "boardUpgraded": "https://static.wikia.nocookie.net/dice-throne/images/0/02/Druid_board_2.png/revision/latest/scale-to-width-down/720?cb=20260206234552",
+    "diceImg": "https://static.wikia.nocookie.net/dice-throne/images/3/3d/Druid_dice.png/revision/latest/scale-to-width-down/180?cb=20260207004626",
+    "diceFaces": [
+      {
+        "val": 1,
+        "symbol": "Griffe",
+        "icon": "🐾",
+        "type": "attack"
+      },
+      {
+        "val": 2,
+        "symbol": "Griffe",
+        "icon": "🐾",
+        "type": "attack"
+      },
+      {
+        "val": 3,
+        "symbol": "Feuille",
+        "icon": "🍃",
+        "type": "special"
+      },
+      {
+        "val": 4,
+        "symbol": "Feuille",
+        "icon": "🍃",
+        "type": "special"
+      },
+      {
+        "val": 5,
+        "symbol": "Sève",
+        "icon": "💧",
+        "type": "heal"
+      },
+      {
+        "val": 6,
+        "symbol": "Esprit",
+        "icon": "✨",
+        "type": "buff"
+      }
+    ],
+    "ratings": {
+      "attack": 4.1,
+      "defense": 4.4,
+      "control": 4,
+      "economy": 3.2,
+      "complexity": 4
+    },
+    "abilities": [
+      {
+        "id": "griffure_sauvage",
+        "name": "Griffure Sauvage",
+        "req": "3, 4 ou 5 Griffes",
+        "type": "Attaque Féline",
+        "lvl1": {
+          "dmg": 6,
+          "undef": 0,
+          "heal": 0,
+          "token": "Wound",
+          "desc": "6, 9 ou 12 dégâts + Blessure."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 8,
+          "undef": 0,
+          "heal": 0,
+          "token": "Wound",
+          "desc": "8, 11 ou 14 dégâts."
+        }
+      },
+      {
+        "id": "esprit_foret",
+        "name": "Communion Sylvestre",
+        "req": "2 Feuilles",
+        "type": "Invocation d'Esprit",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 3,
+          "token": "Esprit",
+          "desc": "Invoque un Esprit de la Forêt + soigne 3 PV."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 0,
+          "heal": 5,
+          "token": "Esprit",
+          "desc": "Invoque un Esprit + soigne 5 PV."
+        }
+      },
+      {
+        "id": "etreinte_racines",
+        "name": "Étreinte des Racines",
+        "req": "Petite Suite (4)",
+        "type": "Attaque + Enchevêtrement",
+        "lvl1": {
+          "dmg": 7,
+          "undef": 0,
+          "heal": 0,
+          "token": "Enchevêtrement",
+          "desc": "7 dégâts + Enchevêtrement."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 9,
+          "undef": 0,
+          "heal": 0,
+          "token": "Enchevêtrement",
+          "desc": "9 dégâts + Enchevêtrement."
+        }
+      },
+      {
+        "id": "eveil_nature",
+        "name": "Éveil de la Nature",
+        "req": "Grande Suite (5)",
+        "type": "Attaque Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 10,
+          "heal": 3,
+          "token": "Esprit",
+          "desc": "10 dégâts imparables + soigne 3 PV + Esprit."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 13,
+          "heal": 4,
+          "token": "Esprit",
+          "desc": "13 dégâts imparables + soigne 4 PV + Esprit."
+        }
+      },
+      {
+        "id": "colere_gaia",
+        "name": "Colère de Gaïa (Ultime)",
+        "req": "5 Esprits",
+        "type": "Ultime Imparable",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 15,
+          "heal": 5,
+          "token": "Esprits Max",
+          "desc": "15 dégâts imparables + soigne 5 PV + Invoque tous les Esprits."
+        },
+        "lvl2": null
+      },
+      {
+        "id": "ecorce_protectrice",
+        "name": "Écorce Protectrice (Défense)",
+        "req": "Jet Défensif",
+        "type": "Défense Végétale",
+        "lvl1": {
+          "dmg": 0,
+          "undef": 0,
+          "heal": 2,
+          "token": "Prévention",
+          "desc": "Lance des dés : prévient des dégâts et soigne des PV."
+        },
+        "lvl2": {
+          "cost": 2,
+          "dmg": 0,
+          "undef": 0,
+          "heal": 3.5,
+          "token": "Prévention",
+          "desc": "Prévention renforcée + contre-attaque d'épines."
+        }
+      }
+    ]
+  }
+}

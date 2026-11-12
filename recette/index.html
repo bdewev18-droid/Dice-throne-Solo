@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galerie de Composants UI & Bugs - Dice Throne Solo</title>
+  <link rel="stylesheet" href="recette.css?v=1.5.25">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <span class="brand-logo">🛡️</span>
+      <div>
+        <h1 class="brand-title">Recette &amp; Diagnostics UI</h1>
+        <p class="brand-subtitle">Dice Throne Solo • Composants UI &amp; Suivi des Bugs IA</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="../admin/index.html" class="btn btn-primary" style="text-decoration:none;">
+        ⚙️ Back Office Admin
+      </a>
+      <a href="../" class="btn" style="text-decoration:none;">
+        🎮 Retour au Jeu
+      </a>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="nav-tabs" aria-label="Sections Recette">
+    <button class="tab-btn active" data-tab="components" id="tab-btn-components">
+      <span>🧩</span>
+      <span>Composants UI</span>
+    </button>
+    <button class="tab-btn" data-tab="bugs" id="tab-btn-bugs">
+      <span>🐛</span>
+      <span>BUG</span>
+      <span class="tab-badge" id="bug-tab-badge">0</span>
+    </button>
+    <button class="tab-btn" data-tab="community" id="tab-btn-community">
+      <span>🤝</span>
+      <span>Communauté</span>
+      <span class="tab-badge" id="community-tab-badge">0</span>
+    </button>
+  </nav>
+
+  <!-- Main Body -->
+  <main class="main-content">
+    <!-- UI Component Library -->
+    <section class="tab-pane active" id="tab-components">
+      <div class="search-bar-container">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-input" class="search-input" placeholder="Rechercher un composant UI, un token, une popin...">
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.5rem; background:var(--bg-card); padding:1rem 1.5rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+        <h2 style="font-size:1.1rem; color:var(--accent-gold); margin-bottom:0.25rem;">🧩 Bibliothèque &amp; Showcase UI</h2>
+        <p style="font-size:0.85rem; color:var(--text-secondary);">Prévisualisation et test des modules, barres d'effets et popins de jeu autonomes.</p>
+      </div>
+      <div class="components-grid" id="components-grid">
+        <!-- Components rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- BUG Tab -->
+    <section class="tab-pane" id="tab-bugs">
+      <div class="bug-toolbar">
+        <div class="bug-auth-bar" id="bug-auth-bar">
+          <span id="bug-auth-status" class="bug-auth-status">Chargement Supabase...</span>
+          <button id="bug-google-login-btn" class="btn btn-primary btn-sm" style="display:none;">
+            🔐 Connexion Google Admin
+          </button>
+          <button id="bug-refresh-btn" class="btn btn-sm" style="display:none;">
+            🔄 Actualiser
+          </button>
+          <label class="bug-toggle-label">
+            <input type="checkbox" id="bug-show-archived-checkbox">
+            <span>Afficher les bugs historisés</span>
+          </label>
+          <button id="bug-logout-btn" class="btn btn-sm" style="display:none;">
+            🚪 Déconnexion
+          </button>
+        </div>
+        <div class="bug-filters">
+          <div class="search-input-wrapper" style="min-width:220px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="bug-search-input" class="search-input" placeholder="Filtrer par joueur, héros, ennemi...">
+          </div>
+          <label class="bug-toggle-label">
+            <input type="checkbox" id="bug-only-checkbox" checked>
+            <span>Bugs désélection IA uniquement</span>
+          </label>
+          <button id="bug-paste-json-btn" class="btn btn-sm">
+            📋 Inspecter un JSON
+          </button>
+        </div>
+      </div>
+
+      <div id="bug-paste-panel" class="bug-paste-panel" style="display:none;">
+        <textarea id="bug-paste-textarea" placeholder="Collez ici un JSON Run Log exporté depuis l'app..."></textarea>
+        <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:0.5rem;">
+          <button id="bug-paste-cancel-btn" class="btn btn-sm">Annuler</button>
+          <button id="bug-paste-load-btn" class="btn btn-primary btn-sm">Analyser ce JSON</button>
+        </div>
+      </div>
+
+      <div class="bug-layout">
+        <div class="bug-left-col">
+          <aside class="bug-list-pane" id="bug-list-pane">
+            <div class="bug-empty-state">Connectez-vous pour charger les rapports de bugs depuis Supabase.</div>
+          </aside>
+
+          <aside class="bug-enemy-preview-pane" id="bug-enemy-preview-pane">
+            <div class="bug-empty-state" style="padding:1.25rem;">Sélectionnez un bug ci-dessus pour afficher la fiche de l'ennemi (attaque, défense, objectifs).</div>
+          </aside>
+        </div>
+
+        <section class="bug-detail-pane" id="bug-detail-pane">
+          <div class="bug-empty-state">Sélectionnez un rapport de bug dans la liste pour afficher le détail du combat.</div>
+        </section>
+      </div>
+    </section>
+
+    <!-- Community Proposals Tab -->
+    <section class="tab-pane" id="tab-community">
+      <div class="bug-toolbar">
+        <div class="bug-auth-bar">
+          <span id="comm-auth-status" class="bug-auth-status">Chargement Supabase...</span>
+          <button id="comm-google-login-btn" class="btn btn-primary btn-sm" style="display:none;">
+            🔐 Connexion Google Admin
+          </button>
+          <button id="comm-refresh-btn" class="btn btn-sm" style="display:none;">
+            🔄 Actualiser
+          </button>
+          <label class="bug-toggle-label">
+            <input type="checkbox" id="comm-show-rejected-checkbox">
+            <span>Afficher les rejetés</span>
+          </label>
+        </div>
+        <div class="bug-filters">
+          <div class="search-input-wrapper" style="min-width:220px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="comm-search-input" class="search-input" placeholder="Filtrer par nom, email, niveau...">
+          </div>
+        </div>
+      </div>
+
+      <div class="comm-layout">
+        <div class="comm-lists-col">
+          <div class="comm-list-card">
+            <div class="comm-list-header">
+              <span>👾 Minions proposés</span>
+              <span class="tab-badge" id="comm-minion-count">0</span>
+            </div>
+            <div class="comm-list-items" id="comm-minion-list">
+              <div class="bug-empty-state" style="padding:1rem;">Connectez-vous pour charger les propositions.</div>
+            </div>
+          </div>
+
+          <div class="comm-list-card">
+            <div class="comm-list-header">
+              <span>🐉 Boss proposés</span>
+              <span class="tab-badge" id="comm-boss-count">0</span>
+            </div>
+            <div class="comm-list-items" id="comm-boss-list">
+              <div class="bug-empty-state" style="padding:1rem;">Connectez-vous pour charger les propositions.</div>
+            </div>
+          </div>
+        </div>
+
+        <section class="bug-detail-pane" id="comm-detail-pane">
+          <div class="bug-empty-state">Sélectionnez un minion ou un boss proposé à gauche pour consulter tous ses détails.</div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    Dice Throne Solo • Design System &amp; Bugs IA • Serveur Preview Local
+  </footer>
+
+  <script src="recette.js?v=1.5.25"></script>
+</body>
+</html>

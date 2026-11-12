@@ -1,0 +1,40 @@
+,,,,,
+atk,7,7,7,2,9
+atk imparable ,,,,,
+token bombe dégât ,,6,,,6
+contre attaque défense ,2,1,4,3,4
+def ,2,4,6,,
+Parlay,,,oui,,
+vie ennemie,41,28,17,12,-7
+,,,,,
+atk,9,,7,,
+atk imparable ,,12,,7,7
+token bombe dégât ,,6,,,
+contre attaque défense ,1,2,2,2,2
+def ,2,8,,2,2
+Parlay,,oui,oui,oui,oui
+vie ennemie,40,20,11,2,-7
+,,,,,
+atk,7,,15,7,
+atk imparable ,,12,,,
+token bombe dégât ,,3,6,3,
+contre attaque défense ,2,1,,2,
+def ,8,,2,2,
+Parlay,,,,,
+vie ennemie,41,25,4,-8,
+,,,,,
+atk,7,7,9,,9
+atk imparable ,,,,12,
+token bombe dégât ,,,,,3
+contre attaque défense ,3,2,,4,2
+def ,,2,,,2
+Parlay,,,,oui,
+vie ennemie,43,34,25,9,-5
+,,,,,
+atk,7,11,7,9,
+atk imparable ,,2,,,7
+token bombe dégât ,,3,3,,
+contre attaque défense ,2,2,2,2,
+def ,,2,4,2,2
+Parlay,,,,,oui
+vie ennemie,43,25,13,2,-5
