@@ -88,7 +88,8 @@ fs.writeFileSync(mainPath, mainDart, 'utf8');
 
 if (fs.existsSync(versionJsonPath)) {
   try {
-    const vJson = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
+    const rawJson = fs.readFileSync(versionJsonPath, 'utf8').replace(/^\uFEFF/, '');
+    const vJson = JSON.parse(rawJson);
     vJson.version = version;
     vJson.buildNumber = buildNumber;
     fs.writeFileSync(versionJsonPath, JSON.stringify(vJson, null, 4) + '\n', 'utf8');

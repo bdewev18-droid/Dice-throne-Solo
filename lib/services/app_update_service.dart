@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart';
+import 'app_update_page.dart';
 
 class RemoteAppVersion {
   const RemoteAppVersion({
@@ -139,12 +140,13 @@ class AppUpdateService {
               backgroundColor: const Color(0xff8f43ff),
               foregroundColor: Colors.white,
             ),
-            onPressed: () async {
+            onPressed: () {
               Navigator.of(dialogCtx).pop();
-              final uri = Uri.parse(update.apkUrl);
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              }
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => AppUpdatePage(update: update),
+                ),
+              );
             },
             icon: const Icon(Icons.download, size: 18),
             label: const Text('Update Now'),
