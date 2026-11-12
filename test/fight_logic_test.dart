@@ -3131,134 +3131,75 @@ void main() {
     test('Ourokhor boss profile and venom gauge escalation logic', () {
       final profile = ourokhorProfile;
       expect(profile.maxHealth, equals(50));
-      expect(profile.attackDice, equals(3));
+      expect(profile.attackDice, equals(1));
       expect(profile.defenseDice, equals(1));
       expect(profile.attackPlan.style, equals(MinionAttackStyle.symbols));
       expect(profile.attackPlan.goals.length, equals(3));
 
-      // Test attack goals
+      // Test attack goals (1 die: White 5d, Orange 7d + Poison, Red 7d undefendable + Delayed Poison)
       final g1 = profile.attackPlan.goals[0];
-      expect(g1.white, equals(2));
-      expect(g1.effect?.damage, equals(3));
-      expect(g1.effect?.undefendable, isTrue);
-      expect(g1.effect?.heroTokens, contains('Poison'));
+      expect(g1.white, equals(1));
+      expect(g1.effect?.damage, equals(5));
+      expect(g1.effect?.undefendable, isFalse);
 
       final g2 = profile.attackPlan.goals[1];
-      expect(g2.yellow, equals(2));
-      expect(g2.effect?.damage, equals(6));
+      expect(g2.yellow, equals(1));
+      expect(g2.effect?.damage, equals(7));
       expect(g2.effect?.undefendable, isFalse);
       expect(g2.effect?.heroTokens, contains('Poison'));
-      expect(g2.effect?.heroTokens, contains('Delayed Poison'));
 
       final g3 = profile.attackPlan.goals[2];
-      expect(g3.red, equals(2));
+      expect(g3.red, equals(1));
       expect(g3.effect?.damage, equals(7));
       expect(g3.effect?.undefendable, isTrue);
-      expect(g3.effect?.heroTokens.where((t) => t == 'Delayed Poison').length, equals(2));
+      expect(g3.effect?.heroTokens, contains('Delayed Poison'));
 
-      // Test defense effects
+      // Test defense effects (1 die: White prev 3 + Poison, Orange prev 4 + 2 Poison, Red prev 5 + 2 Poison + Riposte)
       expect(profile.defenseEffects.length, equals(3));
       expect(profile.defenseEffects[0].white, equals(1));
       expect(profile.defenseEffects[0].prevent, equals(3));
+      expect(profile.defenseEffects[0].tokens, contains('Poison'));
       expect(profile.defenseEffects[1].orange, equals(1));
-      expect(profile.defenseEffects[1].prevent, equals(3));
-      expect(profile.defenseEffects[1].tokens, contains('Delayed Poison'));
+      expect(profile.defenseEffects[1].prevent, equals(4));
+      expect(profile.defenseEffects[1].tokens.where((t) => t == 'Poison').length, equals(2));
       expect(profile.defenseEffects[2].red, equals(1));
-      expect(profile.defenseEffects[2].formulas, contains('prevent = ceil(incomingDamage / 2)'));
-      expect(profile.defenseEffects[2].tokens, contains('Delayed Poison'));
-      expect(profile.defenseEffects[2].tokens, contains('Poison'));
+      expect(profile.defenseEffects[2].prevent, equals(5));
+      expect(profile.defenseEffects[2].tokens, containsAll(['Poison', 'Riposte']));
 
-      // Test OurokhorLogic milestones
-      expect(OurokhorLogic.minionTokensForGauge(0), isEmpty);
-      expect(OurokhorLogic.minionTokensForGauge(4), isEmpty);
-      expect(OurokhorLogic.minionTokensForGauge(5), contains('Damage bonus 2'));
-      expect(OurokhorLogic.minionTokensForGauge(10), containsAll(['Damage bonus 2', 'Riposte']));
-      expect(OurokhorLogic.minionTokensForGauge(15), containsAll(['Damage bonus 2', 'Riposte', 'Evasive']));
-      expect(OurokhorLogic.minionTokensForGauge(20), containsAll(['Damage bonus 2', 'Riposte', 'Evasive', 'Damage bonus 3']));
-      expect(OurokhorLogic.shouldInflictHex(20), isFalse);
-      expect(OurokhorLogic.shouldInflictHex(25), isTrue);
+      // Test 9 milestones
+      expect(OurokhorLogic.milestones.length, equals(9));
+      expect(OurokhorLogic.milestones[0].token, equals('Targeted'));
+      expect(OurokhorLogic.milestones[1].token, equals('Knockdown'));
+      expect(OurokhorLogic.milestones[2].token, equals('Wither'));
+      expect(OurokhorLogic.milestones[3].token, equals('Prey'));
+      expect(OurokhorLogic.milestones[4].token, equals('Blind'));
+      expect(OurokhorLogic.milestones[5].token, equals('Bleed'));
+      expect(OurokhorLogic.milestones[6].token, equals('Blinding Light'));
+      expect(OurokhorLogic.milestones[7].token, equals('Hex'));
+      expect(OurokhorLogic.milestones[8].token, equals('Stun'));
 
-      // Test gauge advancement
+      // Test milestone evaluation
+      final initialTrigger = OurokhorLogic.evaluateMilestonesToTrigger(
+        gauge: 0,
+        alreadyTriggered: {},
+      );
+      expect(initialTrigger.length, equals(1));
+      expect(initialTrigger.first.token, equals('Targeted'));
+
+      final midTrigger = OurokhorLogic.evaluateMilestonesToTrigger(
+        gauge: 7,
+        alreadyTriggered: {0},
+      );
+      expect(midTrigger.map((m) => m.token), containsAll(['Knockdown', 'Wither']));
+
+      // Test gauge advancement capped at 24
       final next1 = OurokhorLogic.advanceGauge(currentGauge: 12, poisonDamage: 4);
       expect(next1, equals(16));
+      final next2 = OurokhorLogic.advanceGauge(currentGauge: 22, poisonDamage: 5);
+      expect(next2, equals(24));
 
-      // Cap at 25
-      final next2 = OurokhorLogic.advanceGauge(currentGauge: 23, poisonDamage: 5);
-      expect(next2, equals(25));
-
-      // Test failure roll heal equals gauge
-      expect(OurokhorLogic.failureRollHeal(15), equals(15));
-      expect(OurokhorLogic.failureRollHeal(25), equals(25));
-
-      // Test offensive roll failure passive integration
-      final node = EnemyNode(
-        id: 99,
-        label: 'Ourokhor',
-        profileKey: 'ourokhor',
-        rank: EnemyRank.naraxus,
-        maxHealth: 50,
-        cp: 0,
-        cardAsset: profile.cardAsset,
-        attacks: profile.attacks,
-        defense: profile.defense,
-        defenseDice: profile.defenseDice,
-        defenseEffects: profile.defenseEffects,
-        attackPlan: profile.attackPlan,
-        passives: profile.passives,
-        attackDice: profile.attackDice,
-      );
-
-      final failOutcome = MinionPassiveResolver.resolveOffensiveFailure(
-        enemy: node,
-        hasValidAttack: false,
-        rollPhaseFinished: true,
-        poisonGauge: 18,
-      );
-      expect(failOutcome.triggered, isTrue);
-      expect(failOutcome.heal, equals(18));
-      expect(failOutcome.notes.any((n) => n.contains('Venom Leech')), isTrue);
-      // Test stack limits enforcement on Ourokhor tokens
-      // 1) Damage bonus: capped at 2 total
-      final tokensEmpty = OurokhorLogic.evaluateUpkeepTokens(gauge: 20, enemyAlterations: []);
-      expect(tokensEmpty, containsAll(['Damage bonus 3', 'Damage bonus 2', 'Riposte', 'Evasive']));
-      expect(tokensEmpty.where(OurokhorLogic.isDamageBonusToken).length, equals(2));
-
-      final tokensWithOneDb = OurokhorLogic.evaluateUpkeepTokens(
-        gauge: 20,
-        enemyAlterations: ['Damage bonus 2'],
-      );
-      expect(tokensWithOneDb, contains('Damage bonus 3'));
-      expect(tokensWithOneDb, isNot(contains('Damage bonus 2')));
-
-      final tokensWithTwoDb = OurokhorLogic.evaluateUpkeepTokens(
-        gauge: 20,
-        enemyAlterations: ['Damage bonus 2', 'Damage bonus 3'],
-      );
-      expect(tokensWithTwoDb.where(OurokhorLogic.isDamageBonusToken), isEmpty);
-
-      // 2) Riposte: capped at 1
-      final tokensWithRiposte = OurokhorLogic.evaluateUpkeepTokens(
-        gauge: 20,
-        enemyAlterations: ['Riposte'],
-      );
-      expect(tokensWithRiposte, isNot(contains('Riposte')));
-
-      // 3) Evasive: capped at 3
-      final tokensWithTwoEvasive = OurokhorLogic.evaluateUpkeepTokens(
-        gauge: 20,
-        enemyAlterations: ['Evasive', 'Evasive'],
-      );
-      expect(tokensWithTwoEvasive, contains('Evasive'));
-
-      final tokensWithThreeEvasive = OurokhorLogic.evaluateUpkeepTokens(
-        gauge: 20,
-        enemyAlterations: ['Evasive', 'Evasive', 'Evasive'],
-      );
-      expect(tokensWithThreeEvasive, isNot(contains('Evasive')));
-
-      // 4) Hex on Hero: capped at 1
-      expect(OurokhorLogic.shouldInflictHexToHero(gauge: 25, heroAlterations: []), isTrue);
-      expect(OurokhorLogic.shouldInflictHexToHero(gauge: 25, heroAlterations: ['Hex']), isFalse);
+      // Test failure roll heal suppressed
+      expect(OurokhorLogic.failureRollHeal(15), equals(0));
     });
 
     test('Boss records segregation by bossKey (Naraxus vs Ourokhor)', () {

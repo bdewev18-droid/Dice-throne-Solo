@@ -13888,11 +13888,11 @@
       "initialTokens": [],
       "rewardChests": 0,
       "rewardRank": null,
-      "attackDice": 3,
+      "attackDice": 1,
       "attacks": [
-        "Atk 1 (2 White): 3 undefendable damage and 1 Poison.",
-        "Atk 2 (2 Orange): 6 damage, 1 Poison and 1 Delayed Poison.",
-        "Atk 3 (2 Red): 7 undefendable damage and 2 Delayed Poison."
+        "Atk 1 (White): 5 damage.",
+        "Atk 2 (Orange): 7 damage and 1 Poison.",
+        "Atk 3 (Red): 7 undefendable damage and 1 Delayed Poison."
       ],
       "defenseDice": 1,
       "defensePlan": {
@@ -13918,7 +13918,9 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "tokens": [],
+            "tokens": [
+              "Poison"
+            ],
             "formulas": [],
             "notes": []
           },
@@ -13943,6 +13945,7 @@
             "drawCards": 0,
             "discardCards": 0,
             "tokens": [
+              "Poison",
               "Poison"
             ],
             "formulas": [],
@@ -13960,7 +13963,7 @@
             },
             "label": "",
             "undefendable": false,
-            "prevent": 0,
+            "prevent": 5,
             "returnDamage": 0,
             "stealHp": 0,
             "loseHp": 0,
@@ -13968,14 +13971,12 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "tokenCount": 2,
             "tokens": [
               "Poison",
-              "Poison"
+              "Poison",
+              "Riposte"
             ],
-            "formulas": [
-              "prevent = ceil(incomingDamage / 2)"
-            ],
+            "formulas": [],
             "notes": []
           }
         ],
@@ -13986,19 +13987,19 @@
         "style": "symbols",
         "goals": [
           {
-            "white": 2,
+            "white": 1,
             "orange": 0,
             "red": 0
           },
           {
             "white": 0,
-            "orange": 2,
+            "orange": 1,
             "red": 0
           },
           {
             "white": 0,
             "orange": 0,
-            "red": 2
+            "red": 1
           }
         ],
         "name": "Ourokhor",
@@ -14008,14 +14009,41 @@
             "condition": {
               "type": "symbols",
               "symbols": {
-                "white": 2,
+                "white": 1,
                 "orange": 0,
                 "red": 0
               }
             },
-            "label": "Toxic Fang",
-            "damage": 3,
-            "undefendable": true,
+            "label": "Toxic Strike",
+            "damage": 5,
+            "undefendable": false,
+            "prevent": 0,
+            "returnDamage": 0,
+            "stealHp": 0,
+            "loseHp": 0,
+            "stealCp": 0,
+            "heal": 0,
+            "drawCards": 0,
+            "discardCards": 0,
+            "tokens": [],
+            "formulas": [],
+            "notes": [],
+            "topDeckToDiscard": 0,
+            "extraRoll": null
+          },
+          {
+            "align": "left",
+            "condition": {
+              "type": "symbols",
+              "symbols": {
+                "white": 0,
+                "orange": 1,
+                "red": 0
+              }
+            },
+            "label": "Corrosive Spit",
+            "damage": 7,
+            "undefendable": false,
             "prevent": 0,
             "returnDamage": 0,
             "stealHp": 0,
@@ -14038,37 +14066,8 @@
               "type": "symbols",
               "symbols": {
                 "white": 0,
-                "orange": 2,
-                "red": 0
-              }
-            },
-            "label": "Corrosive Spit",
-            "damage": 6,
-            "undefendable": false,
-            "prevent": 0,
-            "returnDamage": 0,
-            "stealHp": 0,
-            "loseHp": 0,
-            "stealCp": 0,
-            "heal": 0,
-            "drawCards": 0,
-            "discardCards": 0,
-            "tokens": [
-              "Delayed Poison"
-            ],
-            "formulas": [],
-            "notes": [],
-            "topDeckToDiscard": 0,
-            "extraRoll": null
-          },
-          {
-            "align": "left",
-            "condition": {
-              "type": "symbols",
-              "symbols": {
-                "white": 0,
                 "orange": 0,
-                "red": 2
+                "red": 1
               }
             },
             "label": "Apocalyptic Surge",
@@ -14082,9 +14081,7 @@
             "heal": 0,
             "drawCards": 0,
             "discardCards": 0,
-            "tokenCount": 2,
             "tokens": [
-              "Delayed Poison",
               "Delayed Poison"
             ],
             "formulas": [],
@@ -14096,23 +14093,11 @@
         "conditionalRules": [],
         "passives": [
           {
-            "text": "Gains cumulative tokens based on Venom Gauge every turn.",
-            "timing": "minionUpkeep",
+            "text": "Venom Spreading: Whenever the hero suffers poison damage, advance the Venom Gauge (0-24). Reaching a milestone immediately afflicts the hero with a negative status token (0: Targeted, 3: Knockdown, 6: Wither, 9: Prey, 12: Blind, 15: Bleed, 18: Blinding Light, 21: Hex, 24: Stun).",
+            "timing": "custom",
             "type": "custom",
-            "target": "custom",
-            "impact": "Gains cumulative tokens based on Venom Gauge every turn.",
-            "customText": "",
-            "tokens": [],
-            "effects": {
-              "tokens": []
-            }
-          },
-          {
-            "text": "If the Offensive Roll Phase fails: If Offensive Roll fails, heals HP equal to the Venom Gauge.",
-            "timing": "offensive_roll_failed",
-            "type": "offensive_failure",
-            "target": "custom",
-            "impact": "If Offensive Roll fails, heals HP equal to the Venom Gauge",
+            "target": "hero",
+            "impact": "Afflicts the hero with negative status tokens as the Venom Gauge advances.",
             "customText": "",
             "tokens": [],
             "effects": {
@@ -14123,19 +14108,13 @@
         "notes": [],
         "displayRows": []
       },
-      "defense": "Defense roll 1 die: White (1-3): prevents 3 damage. Orange (4-5): prevents 3 damage and inflicts Delayed Poison. Red (6): prevents half incoming damage, inflicts Delayed Poison and Poison.",
+      "defense": "Defense roll 1 die: White: prevents 3 damage and inflicts 1 Poison. Orange: prevents 4 damage and inflicts 2 Poison. Red: prevents 5 damage, inflicts 2 Poison and gains Riposte.",
       "passives": [
         {
-          "text": "Gains cumulative tokens based on Venom Gauge every turn.",
-          "timing": "minionUpkeep",
+          "text": "Venom Spreading: Whenever the hero suffers poison damage, advance the Venom Gauge (0-24). Reaching a milestone immediately afflicts the hero with a negative status token (0: Targeted, 3: Knockdown, 6: Wither, 9: Prey, 12: Blind, 15: Bleed, 18: Blinding Light, 21: Hex, 24: Stun).",
+          "timing": "custom",
           "type": "custom",
-          "target": "custom"
-        },
-        {
-          "text": "Passive : If Offensive Roll fails, heals HP equal to the Venom Gauge.",
-          "timing": "offensive_roll_failed",
-          "type": "offensive_failure",
-          "target": "custom"
+          "target": "hero"
         }
       ],
       "passiveDisplayRows": [],

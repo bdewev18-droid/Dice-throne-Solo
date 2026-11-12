@@ -76,6 +76,7 @@ class _FightStepSnapshot {
     required this.heroSilenceThisAttack,
     required this.minionSilenceThisAttack,
     this.ourokhorPoisonGauge = 0,
+    this.ourokhorTriggeredMilestones = const {},
   });
 
   final CombatPhase phase;
@@ -120,6 +121,7 @@ class _FightStepSnapshot {
   final bool heroSilenceThisAttack;
   final bool minionSilenceThisAttack;
   final int ourokhorPoisonGauge;
+  final Set<int> ourokhorTriggeredMilestones;
 }
 
 class _DieSnapshot {
@@ -325,6 +327,7 @@ class _FightPageState extends State<FightPage> {
   bool _diceAnimationPending = false;
   bool _druidFormRolledThisUpkeep = false;
   int _ourokhorPoisonGauge = 0;
+  Set<int> _ourokhorTriggeredMilestones = <int>{};
   bool _viseerDefensePassivePending = false;
   bool _viseerRewardGranted = false;
   bool _minionEntangledThisAttack = false;
@@ -438,6 +441,9 @@ class _FightPageState extends State<FightPage> {
       autoRollAttack: _aiMode && _phase == CombatPhase.minionAttack,
     );
     _recordTimelineEvent('combat_start');
+    if (enemy.profileKey == 'ourokhor') {
+      _checkAndTriggerOurokhorMilestones();
+    }
   }
 
   String _currentAiMessage() {
@@ -671,21 +677,16 @@ class _FightPageState extends State<FightPage> {
                         if (enemy.profileKey == 'ourokhor') ...[
                           OurokhorPoisonGaugeCard(
                             value: _ourokhorPoisonGauge,
+                            triggeredMilestones: _ourokhorTriggeredMilestones,
                             onChanged: (delta) {
                               setState(() {
                                 _captureStepUndo();
                                 final oldVal = _ourokhorPoisonGauge;
-                                _ourokhorPoisonGauge = (_ourokhorPoisonGauge + delta).clamp(0, 25);
-                                if (delta > 0) {
-                                  enemy.health = (enemy.health + delta).clamp(0, enemy.maxHealth);
-                                  widget.adventure.log(
-                                    '[MANUAL] Venom Gauge adjusted to $_ourokhorPoisonGauge/25 (+${delta} HP to Ourokhor).',
-                                  );
-                                } else {
-                                  widget.adventure.log(
-                                    '[MANUAL] Venom Gauge adjusted to $_ourokhorPoisonGauge/25 (was $oldVal).',
-                                  );
-                                }
+                                _ourokhorPoisonGauge = (_ourokhorPoisonGauge + delta).clamp(0, 24);
+                                widget.adventure.log(
+                                  '[MANUAL] Venom Gauge adjusted to $_ourokhorPoisonGauge/24 (was $oldVal).',
+                                );
+                                _checkAndTriggerOurokhorMilestones();
                               });
                             },
                           ),
@@ -2789,6 +2790,7 @@ class _FightPageState extends State<FightPage> {
       heroSilenceThisAttack: _heroSilenceThisAttack,
       minionSilenceThisAttack: _minionSilenceThisAttack,
       ourokhorPoisonGauge: _ourokhorPoisonGauge,
+      ourokhorTriggeredMilestones: Set<int>.from(_ourokhorTriggeredMilestones),
     );
   }
 
@@ -2862,6 +2864,7 @@ class _FightPageState extends State<FightPage> {
       _heroSilenceThisAttack = snapshot.heroSilenceThisAttack;
       _minionSilenceThisAttack = snapshot.minionSilenceThisAttack;
       _ourokhorPoisonGauge = snapshot.ourokhorPoisonGauge;
+      _ourokhorTriggeredMilestones = Set<int>.from(snapshot.ourokhorTriggeredMilestones);
       _stepUndo = null;
     });
     widget.onChanged();
@@ -2891,6 +2894,7 @@ class _FightPageState extends State<FightPage> {
       _extraDiceOutcomeMessage = '';
       _druidFormRolledThisUpkeep = false;
       _ourokhorPoisonGauge = 0;
+      _ourokhorTriggeredMilestones = <int>{};
       _stepUndo = null;
       _resetBattleResolution();
       _configureDiceForPhase(autoRollAttack: false);
@@ -10299,9 +10303,6 @@ class _FightPageState extends State<FightPage> {
       if (_isViseerNode(enemy)) {
         passiveLog = _resolveViseerPassive(source: 'Viseer upkeep');
       }
-      if (enemy.profileKey == 'ourokhor') {
-        _applyOurokhorUpkeepPassives();
-      }
       final skip = <String>{};
       if (resolvedInPopin.contains('bleed')) {
         skip.addAll({'Bleed', 'bleed', 'Hémorragie', 'hémorragie', 'HÃ©morragie', 'Hemorragie', 'hemorragie', 'Saignement', 'saignement'});
@@ -10480,29 +10481,18 @@ class _FightPageState extends State<FightPage> {
         : '$_lastBattleOutcomeMessage\n$message';
   }
 
-  void _applyOurokhorUpkeepPassives() {
+  void _checkAndTriggerOurokhorMilestones() {
     if (enemy.profileKey != 'ourokhor' || enemy.health <= 0) return;
-    final tokensToGrant = OurokhorLogic.evaluateUpkeepTokens(
+    final toTrigger = OurokhorLogic.evaluateMilestonesToTrigger(
       gauge: _ourokhorPoisonGauge,
-      enemyAlterations: enemy.alterations,
+      alreadyTriggered: _ourokhorTriggeredMilestones,
     );
-    final granted = <String>[];
-    for (final tok in tokensToGrant) {
-      enemy.alterations.add(tok);
-      granted.add(tok);
-    }
-    if (OurokhorLogic.shouldInflictHexToHero(
-      gauge: _ourokhorPoisonGauge,
-      heroAlterations: widget.adventure.alterations,
-    )) {
-      widget.adventure.alterations.add('Hex');
+    if (toTrigger.isEmpty) return;
+    for (final m in toTrigger) {
+      _ourokhorTriggeredMilestones.add(m.threshold);
+      widget.adventure.addAlteration(m.token);
       widget.adventure.log(
-        '[PASSIVE] Ourokhor Venom Gauge ($_ourokhorPoisonGauge/25): Inflicted Hex on ${widget.adventure.hero.label} (max stack: 1).',
-      );
-    }
-    if (granted.isNotEmpty) {
-      widget.adventure.log(
-        '[PASSIVE] Ourokhor Venom Gauge ($_ourokhorPoisonGauge/25): Gained ${granted.join(', ')} every turn (stack limits enforced: max 2 Damage bonus, max 1 Riposte, max 3 Evasive).',
+        '[VENOM GAUGE] Milestone ${m.threshold} reached: Inflicted ${m.token} on ${widget.adventure.hero.label}.',
       );
     }
     _syncAfterTokensChanged();
@@ -10516,8 +10506,9 @@ class _FightPageState extends State<FightPage> {
       poisonDamage: amount,
     );
     widget.adventure.log(
-      '[VENOM GAUGE] +$amount from $reason -> Venom Gauge: $_ourokhorPoisonGauge/25 (was $oldGauge).',
+      '[VENOM GAUGE] +$amount from $reason -> Venom Gauge: $_ourokhorPoisonGauge/24 (was $oldGauge).',
     );
+    _checkAndTriggerOurokhorMilestones();
     widget.onChanged();
   }
 

@@ -163,16 +163,6 @@ class MinionPassiveResolver {
       notes.add(noteDesc.toString());
     }
 
-    if (isOurokhor) {
-      final ourokhorHeal = OurokhorLogic.failureRollHeal(poisonGauge);
-      if (ourokhorHeal > 0) {
-        heal += ourokhorHeal;
-      }
-      notes.add(
-        'Passive 2 (Venom Leech): Offensive roll failed, Ourokhor heals $ourokhorHeal HP (equal to Poison Gauge: $poisonGauge/25).',
-      );
-    }
-
     // Consolidate offensive failure notes if multiple failure passives triggered
     final consolidatedNotes = <String>[];
     if (failurePassives.length > 1) {
