@@ -1,6 +1,6 @@
 {
-    "version": "1.5.28",
-    "buildNumber": 493,
+    "version": "1.5.29",
+    "buildNumber": 494,
     "apkUrl": "https://github.com/bdewev18-droid/Dice-throne-Solo/releases/latest/download/app-release.apk",
-    "releaseNotes": "In-app APK update installation page with live percentage progress, automatic package installer, and serpent boss updates."
+    "releaseNotes": "Ourokhor serpent passive text refinement, in-app APK installer with percentage progress and auto-launch."
 }

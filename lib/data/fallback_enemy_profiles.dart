@@ -67,7 +67,7 @@ const EnemyProfile ourokhorProfile = EnemyProfile(
   ],
   passives: [
     MinionPassive(
-      text: 'Passive - Venom Spreading: Whenever the hero suffers poison damage, advance the Venom Gauge (0-24). Reaching a milestone immediately afflicts the hero with a negative status token (0: Targeted, 3: Knockdown, 6: Wither, 9: Prey, 12: Blind, 15: Bleed, 18: Blinding Light, 21: Hex, 24: Stun).',
+      text: 'Passive - Venom Spreading: Whenever the hero suffers poison damage, advance the Venom Gauge (0-24). Reaching a milestone immediately afflicts the hero with a negative status token.',
       timing: 'custom',
     ),
   ],
