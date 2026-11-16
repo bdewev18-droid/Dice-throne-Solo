@@ -21,6 +21,7 @@ import 'supabase_service.dart';
 part 'parts/app_shell.dart';
 part 'parts/bestiary.dart';
 part 'parts/history.dart';
+part 'parts/community_clans.dart';
 part 'parts/hero_setup.dart';
 part 'parts/map.dart';
 part 'parts/fight.dart';
@@ -54,8 +55,8 @@ part 'parts/fight_logic/ourokhor_logic.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.5.29';
-const int appBuildNumber = 494;
+const String appVersionLabel = 'Version 1.5.30';
+const int appBuildNumber = 495;
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -1186,6 +1187,12 @@ class AppSettings extends ChangeNotifier {
   Set<String> _defeatedEnemyKeys = {};
   Set<String> _activeMinionPacks = {'dta'};
   Set<String> _disabledCommunityEnemyKeys = {};
+  String _playerPseudo = '';
+  String _playerGenericId = '';
+  String _playerCountryCode = 'FR';
+  String _playerFavoriteHeroName = 'barbare';
+  bool _shareStats = true;
+  List<Map<String, dynamic>> _localClans = [];
   bool _loaded = false;
   bool _hasLocalSettings = false;
 
@@ -1198,8 +1205,63 @@ class AppSettings extends ChangeNotifier {
     _defeatedEnemyKeys = {};
     _activeMinionPacks = {'dta'};
     _disabledCommunityEnemyKeys = {};
+    _playerPseudo = '';
+    _playerGenericId = '';
+    _playerCountryCode = 'FR';
+    _playerFavoriteHeroName = 'barbare';
+    _shareStats = true;
+    _localClans = [];
     _loaded = false;
     _hasLocalSettings = false;
+  }
+
+  String get playerPseudo => _playerPseudo;
+
+  String get playerGenericId {
+    if (_playerGenericId.trim().isEmpty) {
+      _playerGenericId = _generateDefaultGenericId();
+    }
+    return _playerGenericId;
+  }
+
+  String get displayPseudo =>
+      _playerPseudo.trim().isNotEmpty ? _playerPseudo.trim() : playerGenericId;
+
+  String get playerCountryCode =>
+      _playerCountryCode.trim().isEmpty ? 'FR' : _playerCountryCode;
+
+  HeroType get playerFavoriteHero {
+    final found = _enumByName(HeroType.values, _playerFavoriteHeroName);
+    if (found != null && found != HeroType.benjamin) return found;
+    if (_favoriteHeroNames.isNotEmpty) {
+      final fav = _enumByName(HeroType.values, _favoriteHeroNames.first);
+      if (fav != null && fav != HeroType.benjamin) return fav;
+    }
+    return HeroType.barbare;
+  }
+
+  bool get shareStats => _shareStats;
+
+  List<Map<String, dynamic>> get localClans =>
+      List.unmodifiable(_localClans);
+
+  static String _generateDefaultGenericId([String? seedSource]) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final sessionUid =
+        seedSource ?? SupabaseService.instance.currentSession().userId ?? '';
+    if (sessionUid.length >= 4) {
+      final clean = sessionUid
+          .replaceAll('-', '')
+          .toUpperCase();
+      final suffix = clean.substring(clean.length - 4);
+      return 'Hero#$suffix';
+    }
+    final rnd = Random();
+    final code = List.generate(
+      4,
+      (_) => chars[rnd.nextInt(chars.length)],
+    ).join();
+    return 'Hero#$code';
   }
 
   bool get developerMode => _developerMode;
@@ -1361,6 +1423,24 @@ class AppSettings extends ChangeNotifier {
         _disabledCommunityEnemyKeys = disabledCommunity == null
             ? {}
             : disabledCommunity.map((value) => value.toString()).toSet();
+        _playerPseudo = json['playerPseudo']?.toString().trim() ?? '';
+        _playerGenericId = json['playerGenericId']?.toString().trim() ?? '';
+        if (_playerGenericId.isEmpty) {
+          _playerGenericId = _generateDefaultGenericId();
+        }
+        _playerCountryCode =
+            json['playerCountryCode']?.toString().trim().toUpperCase() ?? 'FR';
+        if (_playerCountryCode.isEmpty) _playerCountryCode = 'FR';
+        _playerFavoriteHeroName =
+            json['playerFavoriteHero']?.toString().trim() ?? 'barbare';
+        _shareStats = json['shareStats'] as bool? ?? true;
+        final rawClans = json['localClans'] as List<dynamic>?;
+        _localClans = rawClans == null
+            ? []
+            : rawClans
+                  .whereType<Map>()
+                  .map((m) => Map<String, dynamic>.from(m))
+                  .toList();
       }
     } catch (error) {
       debugPrint('App settings load skipped: $error');
@@ -1371,8 +1451,49 @@ class AppSettings extends ChangeNotifier {
       _defeatedEnemyKeys = {};
       _activeMinionPacks = {'dta'};
       _disabledCommunityEnemyKeys = {};
+      _playerPseudo = '';
+      _playerGenericId = _generateDefaultGenericId();
+      _playerCountryCode = 'FR';
+      _playerFavoriteHeroName = 'barbare';
+      _shareStats = true;
+      _localClans = [];
     }
     _mergeRemoteDefeatedFromMetadata();
+    _mergeRemoteProfileFromMetadata();
+  }
+
+  bool _mergeRemoteProfileFromMetadata() {
+    final meta =
+        SupabaseService.instance.currentUserMetadata?['player_profile'];
+    if (meta is! Map) return false;
+    var changed = false;
+    final rPseudo = meta['pseudo']?.toString().trim() ?? '';
+    final rGeneric = meta['generic_id']?.toString().trim() ?? '';
+    final rCountry = meta['country_code']?.toString().trim().toUpperCase() ?? '';
+    final rHero = meta['favorite_hero']?.toString().trim() ?? '';
+    final rShare = meta['share_stats'];
+
+    if (_playerPseudo.isEmpty && rPseudo.isNotEmpty) {
+      _playerPseudo = rPseudo;
+      changed = true;
+    }
+    if ((_playerGenericId.isEmpty || !_hasLocalSettings) && rGeneric.isNotEmpty) {
+      _playerGenericId = rGeneric;
+      changed = true;
+    }
+    if (!_hasLocalSettings && rCountry.isNotEmpty) {
+      _playerCountryCode = rCountry;
+      changed = true;
+    }
+    if (!_hasLocalSettings && rHero.isNotEmpty) {
+      _playerFavoriteHeroName = rHero;
+      changed = true;
+    }
+    if (!_hasLocalSettings && rShare is bool) {
+      _shareStats = rShare;
+      changed = true;
+    }
+    return changed;
   }
 
   /// Synchronise et reconstruit le bestiaire depuis Supabase (`user_metadata`,
@@ -1520,9 +1641,44 @@ class AppSettings extends ChangeNotifier {
     await _save();
   }
 
+  Future<void> updatePlayerProfile({
+    String? pseudo,
+    String? genericId,
+    String? countryCode,
+    HeroType? favoriteHero,
+    bool? shareStats,
+  }) async {
+    if (pseudo != null) {
+      _playerPseudo = pseudo.trim();
+    }
+    if (genericId != null && genericId.trim().isNotEmpty) {
+      _playerGenericId = genericId.trim();
+    } else if (_playerGenericId.trim().isEmpty) {
+      _playerGenericId = _generateDefaultGenericId();
+    }
+    if (countryCode != null && countryCode.trim().isNotEmpty) {
+      _playerCountryCode = countryCode.trim().toUpperCase();
+    }
+    if (favoriteHero != null && favoriteHero != HeroType.benjamin) {
+      _playerFavoriteHeroName = favoriteHero.name;
+    }
+    if (shareStats != null) {
+      _shareStats = shareStats;
+    }
+    notifyListeners();
+    await _save(syncProfile: true);
+  }
+
+  Future<void> saveLocalClans(List<Map<String, dynamic>> clans) async {
+    _localClans = List<Map<String, dynamic>>.from(clans);
+    notifyListeners();
+    await _save();
+  }
+
   Future<void> _save({
     bool syncHeroes = false,
     bool syncDefeated = false,
+    bool syncProfile = false,
   }) async {
     _hasLocalSettings = true;
     final payload = {
@@ -1534,6 +1690,12 @@ class AppSettings extends ChangeNotifier {
       'activeMinionPacks': _activeMinionPacks.toList()..sort(),
       'disabledCommunityEnemies':
           _disabledCommunityEnemyKeys.toList()..sort(),
+      'playerPseudo': _playerPseudo,
+      'playerGenericId': playerGenericId,
+      'playerCountryCode': _playerCountryCode,
+      'playerFavoriteHero': _playerFavoriteHeroName,
+      'shareStats': _shareStats,
+      'localClans': _localClans,
     };
     await _storage.write(_key, jsonEncode(payload));
     if (syncHeroes) {
@@ -1554,6 +1716,21 @@ class AppSettings extends ChangeNotifier {
             }),
       );
     }
+    if (syncProfile) {
+      unawaited(
+        SupabaseService.instance
+            .syncPlayerProfile(
+              pseudo: _playerPseudo,
+              genericId: playerGenericId,
+              countryCode: _playerCountryCode,
+              favoriteHero: _playerFavoriteHeroName,
+              shareStats: _shareStats,
+            )
+            .catchError((error) {
+              debugPrint('Player profile Supabase sync skipped: $error');
+            }),
+      );
+    }
   }
 }
 
@@ -1567,6 +1744,7 @@ class GameRecord {
     required this.date,
     required this.score,
     this.id,
+    this.userId,
     this.mode = SurvivalMode.mediumFixed,
     this.healthRemaining,
     this.bossHealthRemaining,
@@ -1579,6 +1757,7 @@ class GameRecord {
   /// Identifiant Supabase (UUID) quand le record est issu de la base.
   /// Null pour un record créé localement non encore synchronisé.
   final String? id;
+  final String? userId;
   final HeroType hero;
   final DateTime date;
   final int score;
@@ -1614,6 +1793,7 @@ class GameRecord {
     final bKey = row['boss_key'] as String? ?? (modeName == 'naraxus' ? 'naraxus' : null);
     return GameRecord(
       id: row['id'] as String?,
+      userId: row['user_id']?.toString(),
       hero: _enumByName(HeroType.values, heroName) ?? HeroType.alchemist,
       date: _parseDateTime(playedAt) ?? DateTime.now(),
       score: (row['score'] as num?)?.toInt() ?? 0,

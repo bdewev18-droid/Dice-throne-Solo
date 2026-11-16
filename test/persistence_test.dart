@@ -327,4 +327,44 @@ class FakeSupabaseService implements SupabaseService {
     String? passivesText,
     String? defenseText,
   }) async {}
+  @override
+  Future<void> syncPlayerProfile({
+    required String pseudo,
+    required String genericId,
+    required String countryCode,
+    required String favoriteHero,
+    required bool shareStats,
+  }) async {}
+  @override
+  Future<List<Map<String, dynamic>>> fetchPublicPlayerProfiles() async =>
+      const [];
+  @override
+  Future<List<Map<String, dynamic>>> fetchPublicGameRecords() async => const [];
+  @override
+  Future<bool> createClanOnServer({
+    required String clanId,
+    required String name,
+    required String ownerPseudo,
+    required String countryCode,
+    required String favoriteHero,
+  }) async =>
+      true;
+  @override
+  Future<Map<String, dynamic>?> joinClanOnServer({
+    required String clanId,
+    required String pseudo,
+    required String countryCode,
+    required String favoriteHero,
+  }) async =>
+      null;
+  @override
+  Future<List<Map<String, dynamic>>> fetchUserClansWithMembers() async =>
+      const [];
+  @override
+  Future<bool> updateClanMemberStatusOnServer({
+    required String clanId,
+    required String memberUserId,
+    required String status,
+  }) async =>
+      true;
 }

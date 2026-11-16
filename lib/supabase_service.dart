@@ -532,6 +532,207 @@ class SupabaseService {
     });
   }
 
+  /// Synchronise le profil joueur dans `user_metadata` ET dans la table `player_profiles`.
+  Future<void> syncPlayerProfile({
+    required String pseudo,
+    required String genericId,
+    required String countryCode,
+    required String favoriteHero,
+    required bool shareStats,
+  }) async {
+    if (!_initialized || _client.auth.currentUser == null) {
+      return;
+    }
+    final uid = _client.auth.currentUser!.id;
+    final profileMap = {
+      'pseudo': pseudo,
+      'generic_id': genericId,
+      'country_code': countryCode,
+      'favorite_hero': favoriteHero,
+      'share_stats': shareStats,
+    };
+    try {
+      final existing = Map<String, dynamic>.from(
+        _client.auth.currentUser?.userMetadata ?? const {},
+      );
+      existing['player_profile'] = profileMap;
+      await _client.auth.updateUser(UserAttributes(data: existing));
+    } catch (_) {
+      // Ignore metadata update errors offline
+    }
+    try {
+      await _client.from('player_profiles').upsert({
+        'user_id': uid,
+        ...profileMap,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+    } catch (_) {
+      // Table may not be migrated yet or offline
+    }
+  }
+
+  /// Récupère les profils publics (`share_stats = true`) depuis `player_profiles`.
+  Future<List<Map<String, dynamic>>> fetchPublicPlayerProfiles() async {
+    if (!_initialized) return const [];
+    try {
+      final response = await _client
+          .from('player_profiles')
+          .select()
+          .eq('share_stats', true)
+          .limit(2000);
+      return (response as List<dynamic>).cast<Map<String, dynamic>>();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Récupère l'ensemble des `game_records` accessibles publiquement pour construire
+  /// les classements Communauté et Clans.
+  Future<List<Map<String, dynamic>>> fetchPublicGameRecords() async {
+    if (!_initialized) return const [];
+    try {
+      final response = await _client
+          .from(_table)
+          .select()
+          .order('played_at', ascending: false)
+          .limit(5000);
+      return (response as List<dynamic>).cast<Map<String, dynamic>>();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Crée un Clan sur Supabase (`clans` + `clan_members` en tant qu'admin approuvé).
+  Future<bool> createClanOnServer({
+    required String clanId,
+    required String name,
+    required String ownerPseudo,
+    required String countryCode,
+    required String favoriteHero,
+  }) async {
+    final uid = _currentUserId();
+    if (!_initialized || uid == null) return false;
+    try {
+      await _client.from('clans').insert({
+        'id': clanId,
+        'name': name.trim(),
+        'owner_id': uid,
+        'owner_pseudo': ownerPseudo.trim(),
+      });
+      await _client.from('clan_members').upsert({
+        'clan_id': clanId,
+        'user_id': uid,
+        'pseudo': ownerPseudo.trim(),
+        'country_code': countryCode,
+        'favorite_hero': favoriteHero,
+        'status': 'approved',
+        'role': 'admin',
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Rejoint un Clan existant sur Supabase (statut `pending`).
+  Future<Map<String, dynamic>?> joinClanOnServer({
+    required String clanId,
+    required String pseudo,
+    required String countryCode,
+    required String favoriteHero,
+  }) async {
+    final uid = _currentUserId();
+    if (!_initialized || uid == null) return null;
+    try {
+      final normalizedId = clanId.trim().toUpperCase();
+      final clanRow = await _client
+          .from('clans')
+          .select()
+          .eq('id', normalizedId)
+          .maybeSingle();
+      if (clanRow == null) {
+        return null;
+      }
+      final ownerId = clanRow['owner_id']?.toString() ?? '';
+      final isOwner = ownerId == uid;
+      await _client.from('clan_members').upsert({
+        'clan_id': normalizedId,
+        'user_id': uid,
+        'pseudo': pseudo.trim(),
+        'country_code': countryCode,
+        'favorite_hero': favoriteHero,
+        'status': isOwner ? 'approved' : 'pending',
+        'role': isOwner ? 'admin' : 'member',
+      });
+      return clanRow;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Récupère les Clans auxquels le joueur appartient ainsi que tous leurs membres.
+  Future<List<Map<String, dynamic>>> fetchUserClansWithMembers() async {
+    final uid = _currentUserId();
+    if (!_initialized || uid == null) return const [];
+    try {
+      final myMemberships = await _client
+          .from('clan_members')
+          .select('clan_id')
+          .eq('user_id', uid);
+      final clanIds = (myMemberships as List<dynamic>)
+          .map((row) => (row as Map<String, dynamic>)['clan_id']?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
+      if (clanIds.isEmpty) return const [];
+
+      final clansRes = await _client
+          .from('clans')
+          .select()
+          .inFilter('id', clanIds);
+      final membersRes = await _client
+          .from('clan_members')
+          .select()
+          .inFilter('clan_id', clanIds)
+          .order('created_at', ascending: true);
+
+      final clansList = (clansRes as List<dynamic>).cast<Map<String, dynamic>>();
+      final membersList = (membersRes as List<dynamic>).cast<Map<String, dynamic>>();
+
+      return clansList.map((clan) {
+        final cId = clan['id']?.toString() ?? '';
+        final cMembers = membersList
+            .where((m) => m['clan_id']?.toString() == cId)
+            .toList();
+        return {
+          ...clan,
+          'members': cMembers,
+        };
+      }).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Met à jour le statut d'un membre d'un Clan (`approved` ou `rejected`).
+  Future<bool> updateClanMemberStatusOnServer({
+    required String clanId,
+    required String memberUserId,
+    required String status,
+  }) async {
+    if (!_initialized || _currentUserId() == null) return false;
+    try {
+      await _client
+          .from('clan_members')
+          .update({'status': status})
+          .eq('clan_id', clanId)
+          .eq('user_id', memberUserId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   String? _currentUserId() {
     if (!_initialized) {
       return null;

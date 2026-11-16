@@ -3249,6 +3249,162 @@ void main() {
       expect(ourokhorRuns.length, equals(1));
       expect(ourokhorRuns.first.hero, equals(HeroType.alchemist));
     });
+
+    test('Community & Clan Leaderboard calculation, streaks, Top 10 uniqueness, and 11th row', () {
+      final baseDate = DateTime(2026, 1, 1);
+      final profiles = <String, PlayerProfileInfo>{
+        'u1': const PlayerProfileInfo(
+          userId: 'u1',
+          pseudo: 'Alpha',
+          genericId: 'Hero#0001',
+          countryCode: 'FR',
+          favoriteHero: HeroType.barbare,
+          shareStats: true,
+        ),
+        'u2': const PlayerProfileInfo(
+          userId: 'u2',
+          pseudo: '',
+          genericId: 'Hero#0002',
+          countryCode: 'US',
+          favoriteHero: HeroType.monk,
+          shareStats: true,
+        ),
+        'u_hidden': const PlayerProfileInfo(
+          userId: 'u_hidden',
+          pseudo: 'Ghost',
+          genericId: 'Hero#9999',
+          countryCode: 'GB',
+          favoriteHero: HeroType.ninja,
+          shareStats: false, // opted out!
+        ),
+      };
+
+      // u2 has genericId fallback since pseudo is empty
+      expect(profiles['u2']!.displayPseudo, equals('Hero#0002'));
+
+      final records = <GameRecord>[
+        // u1 plays Barbarian in Normal mode: 100, 100, 80, 100 -> max consecutive 100-streak = 2
+        GameRecord(
+          userId: 'u1',
+          hero: HeroType.barbare,
+          date: baseDate.add(const Duration(hours: 1)),
+          score: 100,
+          mode: SurvivalMode.mediumFixed,
+          isVictory: true,
+        ),
+        GameRecord(
+          userId: 'u1',
+          hero: HeroType.barbare,
+          date: baseDate.add(const Duration(hours: 2)),
+          score: 100,
+          mode: SurvivalMode.mediumFixed,
+          isVictory: true,
+        ),
+        GameRecord(
+          userId: 'u1',
+          hero: HeroType.barbare,
+          date: baseDate.add(const Duration(hours: 3)),
+          score: 80,
+          mode: SurvivalMode.mediumFixed,
+          isVictory: true,
+        ),
+        GameRecord(
+          userId: 'u1',
+          hero: HeroType.barbare,
+          date: baseDate.add(const Duration(hours: 4)),
+          score: 100,
+          mode: SurvivalMode.mediumFixed,
+          isVictory: true,
+        ),
+        // u1 also plays Monk in Normal mode (95 pts) -> should only appear ONCE in Top 10 (with Barbarian)
+        GameRecord(
+          userId: 'u1',
+          hero: HeroType.monk,
+          date: baseDate.add(const Duration(hours: 5)),
+          score: 95,
+          mode: SurvivalMode.mediumFixed,
+          isVictory: true,
+        ),
+        // u2 plays Paladin in Normal mode: 3 consecutive 100-pt runs -> streak = 3 (beats u1 at 100 pts!)
+        GameRecord(
+          userId: 'u2',
+          hero: HeroType.paladin,
+          date: baseDate.add(const Duration(hours: 1)),
+          score: 100,
+          mode: SurvivalMode.mediumRandom,
+          isVictory: true,
+        ),
+        GameRecord(
+          userId: 'u2',
+          hero: HeroType.paladin,
+          date: baseDate.add(const Duration(hours: 2)),
+          score: 100,
+          mode: SurvivalMode.mediumRandom,
+          isVictory: true,
+        ),
+        GameRecord(
+          userId: 'u2',
+          hero: HeroType.paladin,
+          date: baseDate.add(const Duration(hours: 3)),
+          score: 100,
+          mode: SurvivalMode.mediumRandom,
+          isVictory: true,
+        ),
+        // u_hidden has 100 pts x 5, but shareStats is false -> excluded!
+        GameRecord(
+          userId: 'u_hidden',
+          hero: HeroType.ninja,
+          date: baseDate.add(const Duration(hours: 1)),
+          score: 100,
+          mode: SurvivalMode.mediumFixed,
+          isVictory: true,
+        ),
+      ];
+
+      final resNormal = LeaderboardCalculator.computeLeaderboard(
+        profilesByUserId: profiles,
+        allRecords: records,
+        mode: CommunityLeaderboardMode.normal,
+        currentUserId: 'u1',
+      );
+
+      // Only u2 and u1 are ranked (u_hidden is excluded, u1 appears only once)
+      expect(resNormal.totalRankedPlayers, equals(2));
+      expect(resNormal.top10.length, equals(2));
+      // u2 is #1 because both have maxScore 100, and u2 has streak 3 vs u1's streak 2
+      expect(resNormal.top10[0].userId, equals('u2'));
+      expect(resNormal.top10[0].streak, equals(3));
+      expect(resNormal.top10[0].rank, equals(1));
+      expect(resNormal.top10[1].userId, equals('u1'));
+      expect(resNormal.top10[1].streak, equals(2));
+      expect(resNormal.top10[1].rank, equals(2));
+      expect(resNormal.playerEntry?.rank, equals(2));
+
+      // Filtering on an unplayed hero for u1 (e.g. Pyromancer) returns null playerEntry for 11th row notice
+      final resUnplayed = LeaderboardCalculator.computeLeaderboard(
+        profilesByUserId: profiles,
+        allRecords: records,
+        mode: CommunityLeaderboardMode.normal,
+        currentUserId: 'u1',
+        heroFilter: HeroType.pyromancer,
+      );
+      expect(resUnplayed.playerEntry, isNull);
+
+      // Clan ID and invite message generation
+      final clanId = CommunityClanRepository.generateUniqueClanId();
+      expect(clanId.startsWith('DT-'), isTrue);
+      final clan = ClanData(
+        id: clanId,
+        name: 'Guardians',
+        ownerId: 'u1',
+        ownerPseudo: 'Alpha',
+        members: const [],
+      );
+      final msg = CommunityClanRepository.buildClanInviteMessage(clan);
+      expect(msg.contains(clanId), isTrue);
+      expect(msg.contains('Guardians'), isTrue);
+      expect(msg.contains(CommunityClanRepository.apkDownloadUrl), isTrue);
+    });
   });
 }
 

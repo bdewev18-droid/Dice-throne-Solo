@@ -1,6 +1,6 @@
 {
-    "version": "1.5.29",
-    "buildNumber": 494,
+    "version": "1.5.30",
+    "buildNumber": 495,
     "apkUrl": "https://github.com/bdewev18-droid/Dice-throne-Solo/releases/latest/download/app-release.apk",
-    "releaseNotes": "Ourokhor serpent passive text refinement, in-app APK installer with percentage progress and auto-launch."
+    "releaseNotes": "Community & Clans leaderboards (Top 10 + 11th player row), Player Profile with country flag & hero avatar, and Win Streak tracking."
 }

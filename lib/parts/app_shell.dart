@@ -603,14 +603,22 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: AccountChip(
-                      auth: widget.auth,
-                      onSignInGoogle: widget.onSignInGoogle,
-                      onSignInAnonymous: widget.onSignInAnonymous,
-                      onSignOut: widget.onSignOut,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      PlayerProfileChipButton(
+                        onUpdated: () => setState(() {}),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: AccountChip(
+                          auth: widget.auth,
+                          onSignInGoogle: widget.onSignInGoogle,
+                          onSignInAnonymous: widget.onSignInAnonymous,
+                          onSignOut: widget.onSignOut,
+                        ),
+                      ),
+                    ],
                   ),
                   const Spacer(),
                   Transform.translate(
@@ -2469,7 +2477,7 @@ class AccountChip extends StatelessWidget {
           const Icon(Icons.person_outline, size: 16, color: Colors.white),
           const SizedBox(width: 4),
           const Text(
-            'Invité',
+            'Guest',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
           ),
           const SizedBox(width: 8),

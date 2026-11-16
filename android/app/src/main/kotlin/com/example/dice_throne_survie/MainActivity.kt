@@ -61,6 +61,22 @@ class MainActivity : FlutterActivity() {
                         result.error("INSTALL_ERROR", e.message, null)
                     }
                 }
+                "shareText" -> {
+                    val text = call.argument<String>("text") ?: ""
+                    val subject = call.argument<String>("subject") ?: "D.T Solo Quest Clan Invite"
+                    try {
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, subject)
+                            putExtra(Intent.EXTRA_TEXT, text)
+                        }
+                        val shareIntent = Intent.createChooser(sendIntent, subject)
+                        startActivity(shareIntent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("SHARE_ERROR", e.message, null)
+                    }
+                }
                 else -> result.notImplemented()
             }
         }

@@ -192,3 +192,156 @@ create policy "admin_update_community_proposals"
 -- - La colonne user_id doit TOUJOURS valoir l'id du user connecté
 --   (vérifié côté policy + côté app via .eq('user_id', uid)).
 -- ============================================================
+
+
+-- ============================================================
+-- 8. Profils Joueurs, Classement Communauté & Clans
+-- ============================================================
+alter table public.game_records
+  add column if not exists boss_key text;
+
+create table if not exists public.player_profiles (
+  user_id       uuid primary key references auth.users(id) on delete cascade,
+  pseudo        text not null default '',
+  generic_id    text not null default '',
+  country_code  text not null default 'FR',
+  favorite_hero text not null default 'barbare',
+  share_stats   boolean not null default true,
+  updated_at    timestamptz not null default now()
+);
+
+alter table public.player_profiles enable row level security;
+
+drop policy if exists "anyone_select_public_profiles" on public.player_profiles;
+create policy "anyone_select_public_profiles"
+  on public.player_profiles
+  for select
+  to authenticated, anon
+  using (share_stats = true or auth.uid() = user_id);
+
+drop policy if exists "users_upsert_own_profile" on public.player_profiles;
+create policy "users_upsert_own_profile"
+  on public.player_profiles
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "users_update_own_profile" on public.player_profiles;
+create policy "users_update_own_profile"
+  on public.player_profiles
+  for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Permettre la lecture des records des joueurs qui ont activé share_stats
+drop policy if exists "anyone_select_shared_game_records" on public.game_records;
+create policy "anyone_select_shared_game_records"
+  on public.game_records
+  for select
+  to authenticated, anon
+  using (
+    auth.uid() = user_id
+    or exists (
+      select 1 from public.player_profiles p
+      where p.user_id = game_records.user_id
+        and p.share_stats = true
+    )
+  );
+
+-- Table des Clans (Groupes de joueurs)
+create table if not exists public.clans (
+  id            text primary key,
+  name          text not null,
+  owner_id      uuid not null references auth.users(id) on delete cascade,
+  owner_pseudo  text not null default '',
+  created_at    timestamptz not null default now()
+);
+
+alter table public.clans enable row level security;
+
+drop policy if exists "anyone_select_clans" on public.clans;
+create policy "anyone_select_clans"
+  on public.clans
+  for select
+  to authenticated, anon
+  using (true);
+
+drop policy if exists "authenticated_insert_clans" on public.clans;
+create policy "authenticated_insert_clans"
+  on public.clans
+  for insert
+  to authenticated
+  with check (auth.uid() = owner_id);
+
+drop policy if exists "owner_update_clans" on public.clans;
+create policy "owner_update_clans"
+  on public.clans
+  for update
+  to authenticated
+  using (auth.uid() = owner_id)
+  with check (auth.uid() = owner_id);
+
+-- Table des membres de Clans (avec statut pending / approved / rejected)
+create table if not exists public.clan_members (
+  id            uuid primary key default gen_random_uuid(),
+  clan_id       text not null references public.clans(id) on delete cascade,
+  user_id       uuid not null references auth.users(id) on delete cascade,
+  pseudo        text not null default '',
+  country_code  text not null default 'FR',
+  favorite_hero text not null default 'barbare',
+  status        text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  role          text not null default 'member' check (role in ('admin', 'member')),
+  created_at    timestamptz not null default now(),
+  unique (clan_id, user_id)
+);
+
+create index if not exists clan_members_clan_id_idx
+  on public.clan_members (clan_id, status);
+
+create index if not exists clan_members_user_id_idx
+  on public.clan_members (user_id);
+
+alter table public.clan_members enable row level security;
+
+drop policy if exists "anyone_select_clan_members" on public.clan_members;
+create policy "anyone_select_clan_members"
+  on public.clan_members
+  for select
+  to authenticated, anon
+  using (true);
+
+drop policy if exists "users_insert_own_clan_membership" on public.clan_members;
+create policy "users_insert_own_clan_membership"
+  on public.clan_members
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "user_or_admin_update_clan_membership" on public.clan_members;
+create policy "user_or_admin_update_clan_membership"
+  on public.clan_members
+  for update
+  to authenticated
+  using (
+    auth.uid() = user_id
+    or exists (
+      select 1 from public.clans c
+      where c.id = clan_members.clan_id
+        and c.owner_id = auth.uid()
+    )
+  );
+
+drop policy if exists "user_or_admin_delete_clan_membership" on public.clan_members;
+create policy "user_or_admin_delete_clan_membership"
+  on public.clan_members
+  for delete
+  to authenticated
+  using (
+    auth.uid() = user_id
+    or exists (
+      select 1 from public.clans c
+      where c.id = clan_members.clan_id
+        and c.owner_id = auth.uid()
+    )
+  );

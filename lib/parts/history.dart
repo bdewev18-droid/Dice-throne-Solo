@@ -28,6 +28,7 @@ class HistoryPage extends StatefulWidget {
 }
 
 class _HistoryPageState extends State<HistoryPage> {
+  HistoryMainTab _mainTab = HistoryMainTab.myHistory;
   HistorySort _sort = HistorySort.average;
   late HistoryCategory _category =
       (widget.initialDifficulty == RunDifficulty.naraxus)
@@ -46,6 +47,37 @@ class _HistoryPageState extends State<HistoryPage> {
   final Set<GameRecord> _selectedForDelete = {};
   final Set<HeroType> _expandedHeroes = {};
 
+  bool _loadingCommunity = false;
+  Map<String, PlayerProfileInfo> _communityProfiles = {};
+  List<GameRecord> _communityRecords = [];
+  List<ClanData> _clans = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshCommunityData();
+  }
+
+  Future<void> _refreshCommunityData() async {
+    if (!mounted) return;
+    setState(() => _loadingCommunity = true);
+    try {
+      final data = await CommunityClanRepository.instance
+          .loadCommunityAndClansData(widget.records);
+      if (!mounted) return;
+      setState(() {
+        _communityProfiles = data.profiles;
+        _communityRecords = data.records;
+        _clans = data.clans;
+        _loadingCommunity = false;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loadingCommunity = false);
+      }
+    }
+  }
+
   bool get _showRouteFilter =>
       _category == HistoryCategory.minionRush &&
       (_difficulty == RunDifficulty.medium ||
@@ -62,23 +94,40 @@ class _HistoryPageState extends State<HistoryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('History'),
+        title: const Text('History & Rankings'),
         actions: [
-          IconButton(
-            tooltip: 'Add run',
-            onPressed: _addManualRun,
-            icon: const Icon(Icons.add),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: PlayerProfileChipButton(
+              onUpdated: () {
+                setState(() {});
+                _refreshCommunityData();
+              },
+            ),
           ),
-          IconButton(
-            tooltip: _deleteMode ? 'Cancel delete' : 'Delete runs',
-            onPressed: () {
-              setState(() {
-                _deleteMode = !_deleteMode;
-                _selectedForDelete.clear();
-              });
-            },
-            icon: Icon(_deleteMode ? Icons.close : Icons.delete_outline),
-          ),
+          if (_mainTab == HistoryMainTab.myHistory)
+            IconButton(
+              tooltip: _deleteMode ? 'Cancel delete' : 'Delete runs',
+              onPressed: () {
+                setState(() {
+                  _deleteMode = !_deleteMode;
+                  _selectedForDelete.clear();
+                });
+              },
+              icon: Icon(_deleteMode ? Icons.close : Icons.delete_outline),
+            )
+          else
+            IconButton(
+              tooltip: 'Refresh rankings',
+              onPressed: _refreshCommunityData,
+              icon: _loadingCommunity
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh_rounded),
+            ),
         ],
       ),
       body: SafeArea(
@@ -87,31 +136,125 @@ class _HistoryPageState extends State<HistoryPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _HistoryCategorySlider(
-                    category: _category,
-                    onChanged: (cat) {
-                      setState(() {
-                        _category = cat;
-                        _selectedForDelete.clear();
-                        _selectedGridHero = null;
-                      });
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  _HistoryViewToggle(
-                    isGrid: _isGridView,
-                    onChanged: (val) {
-                      setState(() {
-                        _isGridView = val;
-                        _selectedGridHero = null;
-                      });
-                    },
-                  ),
-                ],
+              // 3 Main Tabs: My History | Community | Clans
+              Container(
+                height: 44,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xff181b26),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Row(
+                  children: HistoryMainTab.values.map((tab) {
+                    final selected = _mainTab == tab;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _mainTab = tab;
+                            _deleteMode = false;
+                            _selectedForDelete.clear();
+                          });
+                          if (tab != HistoryMainTab.myHistory) {
+                            _refreshCommunityData();
+                          }
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? const Color(0xffffe22d)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                tab.icon,
+                                size: 16,
+                                color: selected ? Colors.black : Colors.white70,
+                              ),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  tab.label,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: selected
+                                        ? Colors.black
+                                        : Colors.white70,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
+              const SizedBox(height: 12),
+              if (_mainTab == HistoryMainTab.community)
+                Expanded(
+                  child: CommunityLeaderboardView(
+                    profilesByUserId: _communityProfiles,
+                    allRecords: _communityRecords,
+                    currentUserId: CommunityClanRepository.instance
+                        .currentEffectiveUserId(),
+                    onOpenProfile: () async {
+                      final updated = await showPlayerProfileDialog(context);
+                      if (updated == true) {
+                        setState(() {});
+                        _refreshCommunityData();
+                      }
+                    },
+                  ),
+                )
+              else if (_mainTab == HistoryMainTab.clans)
+                Expanded(
+                  child: ClansTabView(
+                    profilesByUserId: _communityProfiles,
+                    allRecords: _communityRecords,
+                    clans: _clans,
+                    currentUserId: CommunityClanRepository.instance
+                        .currentEffectiveUserId(),
+                    onRefresh: () {
+                      setState(() {});
+                      _refreshCommunityData();
+                    },
+                  ),
+                )
+              else ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _HistoryCategorySlider(
+                      category: _category,
+                      onChanged: (cat) {
+                        setState(() {
+                          _category = cat;
+                          _selectedForDelete.clear();
+                          _selectedGridHero = null;
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _HistoryViewToggle(
+                      isGrid: _isGridView,
+                      onChanged: (val) {
+                        setState(() {
+                          _isGridView = val;
+                          _selectedGridHero = null;
+                        });
+                      },
+                    ),
+                  ],
+                ),
               const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -439,6 +582,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   icon: const Icon(Icons.delete),
                   label: Text('Delete ${_selectedForDelete.length} run(s)'),
                 ),
+              ],
             ],
           ),
         ),
@@ -698,6 +842,23 @@ class _HistoryPageState extends State<HistoryPage> {
                         _formatNumber(_averageScore(runs)),
                       ),
                     ),
+                    Expanded(
+                      child: Builder(
+                        builder: (_) {
+                          final streak =
+                              LeaderboardCalculator.computeMyHistoryStreak(
+                                runs,
+                                isBossMode: isBoss,
+                              );
+                          return _HistoryMetricText(
+                            streak > 0 ? '🔥$streak' : '-',
+                            color: streak > 0
+                                ? Colors.orangeAccent
+                                : Colors.white38,
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -795,6 +956,9 @@ class _HistoryPageState extends State<HistoryPage> {
                         '-',
                         color: Colors.white24,
                       ),
+                    ),
+                    const Expanded(
+                      child: _HistoryMetricText('-', color: Colors.white24),
                     ),
                     const Expanded(
                       child: _HistoryMetricText('-', color: Colors.white24),
@@ -1011,6 +1175,13 @@ class _HistoryPageState extends State<HistoryPage> {
                 label: 'Best Score',
                 value: '${_bestScore(runs)} pts',
                 color: const Color(0xffFFD700),
+              ),
+              _buildDetailChip(
+                icon: Icons.local_fire_department_rounded,
+                label: isBoss ? 'Win Streak' : '100-pt Streak',
+                value:
+                    '${LeaderboardCalculator.computeMyHistoryStreak(runs, isBossMode: isBoss)}',
+                color: Colors.orangeAccent,
               ),
             ],
           ),
@@ -1576,6 +1747,46 @@ class _HistoryHeaderRow extends StatelessWidget {
                 Icons.emoji_events,
                 size: 18,
                 color: Color(0xffffe22d),
+              ),
+            ),
+          ),
+          // 6. Streak
+          Expanded(
+            child: _HistoryHeaderItem(
+              tooltip: 'Best Streak',
+              onTap: () {
+                final naxarusBestStreak =
+                    LeaderboardCalculator.computeUndefeatedStreak(naxarusRuns);
+                final mediumBestStreak =
+                    LeaderboardCalculator.computeConsecutive100Streak(
+                      mediumRuns.toList(),
+                    );
+                _openMultiStatSheet(
+                  context,
+                  title: 'Best Streaks',
+                  iconWidget: const Icon(
+                    Icons.local_fire_department_rounded,
+                    size: 22,
+                    color: Colors.orangeAccent,
+                  ),
+                  description:
+                      'Longest consecutive undefeated runs (Naxarus) and consecutive 100-point runs (Normal/Medium).',
+                  lines: [
+                    _StatLineData(
+                      label: 'Naxarus longest undefeated streak',
+                      value: '$naxarusBestStreak win(s)',
+                    ),
+                    _StatLineData(
+                      label: 'Normal (Medium) consecutive 100-pt streak',
+                      value: '$mediumBestStreak run(s)',
+                    ),
+                  ],
+                );
+              },
+              child: const Icon(
+                Icons.local_fire_department_rounded,
+                size: 18,
+                color: Colors.orangeAccent,
               ),
             ),
           ),
