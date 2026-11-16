@@ -55,8 +55,8 @@ part 'parts/fight_logic/ourokhor_logic.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.5.30';
-const int appBuildNumber = 495;
+const String appVersionLabel = 'Version 1.5.31';
+const int appBuildNumber = 496;
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
