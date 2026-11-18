@@ -2641,15 +2641,20 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
                         ? null
                         : onApply,
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xff8f43ff),
+                      backgroundColor: GameDesign.gold,
                       disabledBackgroundColor: Colors.white10,
                       disabledForegroundColor: Colors.white38,
-                      foregroundColor: Colors.white,
+                      foregroundColor: GameDesign.goldText,
                       padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          GameDesign.buttonRadius,
+                        ),
+                      ),
                     ),
                     child: const Text(
                       'OK',
-                      style: TextStyle(fontWeight: FontWeight.w900),
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
                     ),
                   ),
                 ),
@@ -2677,6 +2682,7 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
               const SizedBox.shrink()
             else
               _AiChatWithHealth(
+                            isIntroPhase: phase == CombatPhase.intro,
                             isRollPhase:
                                 phase == CombatPhase.hero ||
                                 phase == CombatPhase.minionAttack,
@@ -2789,42 +2795,49 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
                               onChanged();
                             },
                             trailing: SizedBox(
-                              width: 48,
+                              width: 52,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   Expanded(
                                     child: Material(
-                                      color: Colors.transparent,
+                                      color: GameDesign.slateSurface,
                                       child: InkWell(
                                         onTap: widget.showUndo ? widget.onUndo : null,
                                         child: Center(
                                           child: Icon(
-                                            Icons.arrow_back,
-                                            size: 24,
+                                            Icons.arrow_back_rounded,
+                                            size: 22,
                                             color: widget.showUndo
-                                                ? const Color(0xff8f43ff)
-                                                : const Color(0xff8f43ff).withValues(alpha: 0.25),
+                                                ? Colors.white
+                                                : Colors.white24,
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                  Container(height: 1, color: const Color(0xffe5ded0)),
+                                  Container(
+                                    height: 1,
+                                    color: GameDesign.slateBorder,
+                                  ),
                                   Expanded(
                                     child: _IntroPulse(
                                       active: widget.phase == CombatPhase.intro,
                                       child: Material(
-                                        color: Colors.transparent,
+                                        color: widget.canAdvancePhase
+                                            ? GameDesign.gold
+                                            : GameDesign.slateSurface,
                                         child: InkWell(
-                                          onTap: widget.canAdvancePhase ? widget.onNext : null,
+                                          onTap: widget.canAdvancePhase
+                                              ? widget.onNext
+                                              : null,
                                           child: Center(
                                             child: Icon(
-                                              Icons.arrow_forward,
-                                              size: 24,
+                                              Icons.arrow_forward_rounded,
+                                              size: 22,
                                               color: widget.canAdvancePhase
-                                                  ? const Color(0xff8f43ff)
-                                                  : const Color(0xff8f43ff).withValues(alpha: 0.25),
+                                                  ? GameDesign.goldText
+                                                  : Colors.white24,
                                             ),
                                           ),
                                         ),

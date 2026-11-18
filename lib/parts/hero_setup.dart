@@ -79,25 +79,11 @@ class _HeroChoicePageState extends State<HeroChoicePage> {
                   color: Colors.black.withValues(alpha: 0.86),
                   border: const Border(top: BorderSide(color: Colors.white24)),
                 ),
-                child: SizedBox(
-                  height: 50,
-                  child: FilledButton(
-                    onPressed: () => widget.onNext(selectedHero),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: selectedHero.color,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Launch campaign',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
+                child: GameActionButton(
+                  label: 'LAUNCH CAMPAIGN',
+                  icon: Icons.play_arrow_rounded,
+                  primary: true,
+                  onPressed: () => widget.onNext(selectedHero),
                 ),
               ),
             )

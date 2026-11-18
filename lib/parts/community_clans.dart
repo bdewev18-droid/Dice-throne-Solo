@@ -258,15 +258,28 @@ class LeaderboardCalculator {
     };
   }
 
-  /// Utilisé dans "My History" pour afficher la série par héros ou globale.
+  static bool isRunVictory(GameRecord r) {
+    if (r.isVictory) return true;
+    if (isBossRunRecord(r)) {
+      return r.score >= 100 || r.bossHealthRemaining == 0;
+    }
+    return r.score >= r.mode.defaultTarget;
+  }
+
+  /// Utilisé dans "My History" pour afficher la série par héros :
+  /// - 0 si aucune victoire
+  /// - 100% de victoires -> nb de victoires
+  /// - sinon (victoires - défaites), avec un minimum de 1 s'il y a au moins 1 victoire.
   static int computeMyHistoryStreak(
     List<GameRecord> runs, {
     required bool isBossMode,
   }) {
-    if (isBossMode) {
-      return computeUndefeatedStreak(runs);
-    }
-    return computeConsecutive100Streak(runs);
+    if (runs.isEmpty) return 0;
+    final wins = runs.where(isRunVictory).length;
+    if (wins == 0) return 0;
+    final losses = runs.length - wins;
+    if (losses == 0) return wins;
+    return max(1, wins - losses);
   }
 
   static int compareEntries(

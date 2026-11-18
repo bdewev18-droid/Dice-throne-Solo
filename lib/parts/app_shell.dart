@@ -12,6 +12,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   final _store = ActiveAdventureStore();
   AdventureState? _activeAdventure;
   bool _storageReady = false;
+  bool _startupCompleted = false;
   AuthSession _auth = AuthSession.unknown;
   StreamSubscription<AuthSessionEvent>? _authSub;
 
@@ -212,6 +213,13 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   Widget _buildHomePage(BuildContext context) {
     if (!_storageReady) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (!_startupCompleted) {
+      return StartupOnboardingFlow(
+        auth: _auth,
+        onSignInGoogle: _signInWithGoogle,
+        onCompleted: () => setState(() => _startupCompleted = true),
+      );
     }
     return HomePage(
       activeAdventure: _activeAdventure,
@@ -557,7 +565,6 @@ class _HomePageState extends State<HomePage> {
     Future<void>.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         setState(() => _showActions = true);
-        AppUpdateService.checkAndPrompt(context);
       }
     });
   }
@@ -573,7 +580,7 @@ class _HomePageState extends State<HomePage> {
           Positioned.fill(
             top: MediaQuery.paddingOf(context).top + 18,
             child: Image.asset(
-              'assets/home_background_v4.png',
+              'assets/home_background_v5.jpg',
               fit: BoxFit.cover,
             ),
           ),
@@ -610,14 +617,50 @@ class _HomePageState extends State<HomePage> {
                         onUpdated: () => setState(() {}),
                       ),
                       const SizedBox(width: 8),
-                      Flexible(
-                        child: AccountChip(
-                          auth: widget.auth,
-                          onSignInGoogle: widget.onSignInGoogle,
-                          onSignInAnonymous: widget.onSignInAnonymous,
-                          onSignOut: widget.onSignOut,
+                      if (widget.auth.isSignedIn && !widget.auth.isAnonymous)
+                        InkWell(
+                          onTap: widget.onSignOut,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.58),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white24),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.logout_rounded,
+                                  size: 15,
+                                  color: Colors.white70,
+                                ),
+                                SizedBox(width: 5),
+                                Text(
+                                  'Sign out',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Flexible(
+                          child: AccountChip(
+                            auth: widget.auth,
+                            onSignInGoogle: widget.onSignInGoogle,
+                            onSignInAnonymous: widget.onSignInAnonymous,
+                            onSignOut: widget.onSignOut,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                   const Spacer(),
@@ -639,58 +682,41 @@ class _HomePageState extends State<HomePage> {
                               ),
                               const SizedBox(height: 14),
                             ],
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: WedgeActionButton(
-                                    title: 'MINION',
-                                    titleAccent: 'RUSH',
-                                    titleAccentColor: const Color(0xffc084fc),
-                                    subtitle: '3 Game Modes',
-                                    subtitleColor: const Color(0xffffe22d),
-                                    imageAsset: _minionRushImage,
-                                    imageAlignment: _minionRushAlignment,
-                                    borderColor: const Color(0xff9b58ff),
-                                    onPressed: widget.onSurvival,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: BossBattleActionButton(
-                                    onPressed: widget.onNaraxus,
-                                  ),
-                                ),
-                              ],
+                            GameActionButton(
+                              label: 'MINION RUSH',
+                              subtitle: '3 Game Modes',
+                              icon: Icons.shield_rounded,
+                              primary: true,
+                              height: 58,
+                              onPressed: widget.onSurvival,
                             ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: WedgeActionButton(
-                                    title: 'HISTORY',
-                                    subtitle:
-                                        '${widget.historyCount} ${widget.historyCount <= 1 ? "Game" : "Games"}',
-                                    subtitleColor: const Color(0xffffe22d),
-                                    imageAsset: 'assets/podium.jpg',
-                                    imageAlignment: const Alignment(0.0, -0.35),
-                                    borderColor: const Color(0xffffd700),
-                                    onPressed: widget.onHistory,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: WedgeActionButton(
-                                    title: 'BESTIARY',
-                                    subtitle: '$validatedMonsters Monsters',
-                                    subtitleColor: const Color(0xffffe22d),
-                                    imageAsset:
-                                        'assets/enemy_previews/naxarus_head.png',
-                                    imageAlignment: const Alignment(0.4, 0.0),
-                                    borderColor: const Color(0xffd51f2a),
-                                    onPressed: widget.onBestiary,
-                                  ),
-                                ),
-                              ],
+                            const SizedBox(height: 10),
+                            GameActionButton(
+                              label: 'BOSS BATTLE',
+                              subtitle: 'New Monster Monthly',
+                              icon: Icons.local_fire_department_rounded,
+                              primary: true,
+                              height: 58,
+                              onPressed: widget.onNaraxus,
+                            ),
+                            const SizedBox(height: 10),
+                            GameActionButton(
+                              label: 'HISTORY & RANKINGS',
+                              subtitle:
+                                  '${widget.historyCount} ${widget.historyCount <= 1 ? "Game" : "Games"}',
+                              icon: Icons.emoji_events_rounded,
+                              primary: false,
+                              height: 54,
+                              onPressed: widget.onHistory,
+                            ),
+                            const SizedBox(height: 10),
+                            GameActionButton(
+                              label: 'BESTIARY',
+                              subtitle: '$validatedMonsters Monsters',
+                              icon: Icons.menu_book_rounded,
+                              primary: false,
+                              height: 54,
+                              onPressed: widget.onBestiary,
                             ),
                           ],
                         ),
@@ -701,7 +727,7 @@ class _HomePageState extends State<HomePage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Padding(
@@ -711,9 +737,6 @@ class _HomePageState extends State<HomePage> {
                                 '$appVersionLabel${AppSettings.instance.developerMode ? ' - Dev mode' : ''}',
                             isDev: AppSettings.instance.developerMode,
                           ),
-                        ),
-                        _PhysicalGameRequirementFooter(
-                          onTap: () => _showPhysicalRequirementsDialog(context),
                         ),
                       ],
                     ),

@@ -207,9 +207,11 @@ class _SolidRollButton extends StatelessWidget {
         disabledBackgroundColor: color.withValues(alpha: 0.28),
         foregroundColor: foreground,
         disabledForegroundColor: foreground.withValues(alpha: 0.42),
-        minimumSize: const Size.fromHeight(50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+        minimumSize: const Size.fromHeight(GameDesign.buttonHeight),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(GameDesign.buttonRadius),
+        ),
+        textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
       ),
       onPressed: onPressed,
       child: DefaultTextStyle.merge(
@@ -249,6 +251,7 @@ class DiceZone extends StatelessWidget {
         Container(
           height: 54,
           padding: const EdgeInsets.symmetric(horizontal: 6),
+          clipBehavior: Clip.none,
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.22),
             borderRadius: BorderRadius.circular(8),
@@ -417,13 +420,50 @@ class _DieTileState extends State<DieTile> with SingleTickerProviderStateMixin {
           AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
-              final turn = _controller.value * 10.0 * pi;
-              return Transform(
-                alignment: Alignment.center,
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.001)
-                  ..rotateX(turn),
-                child: child,
+              final t = _controller.value;
+              if (!_controller.isAnimating && widget.die.settled) {
+                return child!;
+              }
+              // Physical dice throw trajectory: launches high above the tray and settles cleanly
+              final throwArc = sin(t * pi);
+              final settleBounce = t > 0.80
+                  ? sin(((t - 0.80) / 0.20) * pi) * 5.0
+                  : 0.0;
+              final dy = (-32.0 * throwArc) - settleBounce;
+              final directionSeed = (widget.die.id % 2 == 0 ? 1.0 : -1.0);
+              final dx =
+                  directionSeed * (1.0 - t) * (12.0 + (widget.die.id % 3) * 6.0);
+              final scale = 1.0 + 0.34 * throwArc;
+              final spinZ = (1.0 - t) * directionSeed * 2.8 * pi;
+              final tumbleX = (1.0 - t) * 4.0 * pi;
+
+              return Transform.translate(
+                offset: Offset(dx, dy),
+                child: Transform.scale(
+                  scale: scale,
+                  child: Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, 0.0015)
+                      ..rotateZ(spinZ)
+                      ..rotateX(tumbleX),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                              alpha: 0.55 * throwArc,
+                            ),
+                            blurRadius: 14 * throwArc + 2,
+                            offset: Offset(0, 12 * throwArc + 2),
+                          ),
+                        ],
+                      ),
+                      child: child,
+                    ),
+                  ),
+                ),
               );
             },
             child: Container(

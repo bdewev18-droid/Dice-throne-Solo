@@ -437,9 +437,7 @@ class _FightPageState extends State<FightPage> {
       enemy.alterations.removeWhere((token) => token == 'PremiÃ¨re Frappe');
     }
     _phase = CombatPhase.intro;
-    _configureDiceForPhase(
-      autoRollAttack: _aiMode && _phase == CombatPhase.minionAttack,
-    );
+    _configureDiceForPhase(autoRollAttack: false);
     _recordTimelineEvent('combat_start');
     if (enemy.profileKey == 'ourokhor') {
       _checkAndTriggerOurokhorMilestones();
@@ -761,6 +759,9 @@ class _FightPageState extends State<FightPage> {
                               hasActiveAttack: _battleAttackValue > 0,
                               onBlindPressed: _checkAndTriggerBlindPopin,
                               onDeselectDie: _openDeselectDieDialog,
+                              aiIntentMessage: _phase == CombatPhase.minionAttack
+                                  ? _currentAiMessage()
+                                  : null,
                             ),
                             if (_showDruidFormRollPanel) ...[
                               const SizedBox(height: 12),
@@ -7748,7 +7749,7 @@ class _FightPageState extends State<FightPage> {
               die.settled = true;
             }
             _resetBattleResolution();
-            _configureDiceForPhase(autoRollAttack: _aiMode);
+            _configureDiceForPhase(autoRollAttack: false);
           });
           widget.adventure.log(
             '[PASSIVE] ${enemy.label}: Offensive Roll Phase failed. Rolled extra die (White face 1-3). Restarting Offensive Roll Phase!',
@@ -7782,7 +7783,7 @@ class _FightPageState extends State<FightPage> {
               die.settled = true;
             }
             _resetBattleResolution();
-            _configureDiceForPhase(autoRollAttack: _aiMode);
+            _configureDiceForPhase(autoRollAttack: false);
           });
           widget.adventure.log(
             '[TOKEN] Hand of the King: SUCCESS! Restarting Offensive Roll Phase for ${enemy.label}.',
@@ -11628,6 +11629,7 @@ class MinionAiPanel extends StatelessWidget {
     this.hasActiveAttack = false,
     this.onBlindPressed,
     this.onDeselectDie,
+    this.aiIntentMessage,
     super.key,
   });
 
@@ -11652,6 +11654,7 @@ class MinionAiPanel extends StatelessWidget {
   final bool hasActiveAttack;
   final VoidCallback? onBlindPressed;
   final VoidCallback? onDeselectDie;
+  final String? aiIntentMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -11666,10 +11669,46 @@ class MinionAiPanel extends StatelessWidget {
         ? null
         : dice.firstWhere((die) => die.id == editingDieId);
     final isDefensePhase = phase == CombatPhase.hero;
+    final intentText = aiIntentMessage?.trim() ?? '';
     return _DiceBackgroundBand(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (intentText.isNotEmpty) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: GameDesign.obsidianBg,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: enemy.rank.color.withValues(alpha: 0.55),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.psychology_rounded,
+                    size: 16,
+                    color: enemy.rank.color,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      intentText,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (visibleDice.isNotEmpty || isDefensePhase) ...[
             if (visibleDice.isNotEmpty)
               Row(
@@ -11837,13 +11876,13 @@ class MinionAiPanel extends StatelessWidget {
                                   diceToRoll > 0
                               ? onRoll
                               : null),
-                    color: enemy.rank.color,
+                    color: GameDesign.gold,
                     child: Text(
                       isDefensePhase
-                          ? 'Roll defense'
-                          : (rollCount == 0 ? 'Roll' : 'Reroll'),
+                          ? 'ROLL DEFENSE'
+                          : (rollCount == 0 ? 'ROLL ENEMY DICE' : 'REROLL'),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.w900),
                     ),
                   ),
                 ),
@@ -15665,31 +15704,36 @@ class CombatVersusStatusPanel extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _CombatBadgeButton(
-                        onTap: onHeroHp,
-                        child: Transform.scale(
-                          scale: 0.65,
-                          child: _HpHeartBadge(
-                            value: adventure.health,
-                            style: _CombatHpStyle.hero,
+                  child: CombatImpactAvatarWrapper(
+                    hp: adventure.health,
+                    cp: adventure.combatPoints,
+                    tokens: effectiveHeroTokens,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _CombatBadgeButton(
+                          onTap: onHeroHp,
+                          child: Transform.scale(
+                            scale: 0.65,
+                            child: _HpHeartBadge(
+                              value: adventure.health,
+                              style: _CombatHpStyle.hero,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      _CombatBadgeButton(
-                        onTap: onHeroCp,
-                        child: Transform.scale(
-                          scale: 0.65,
-                          child: _PcTriangleBadge(
-                            value: adventure.combatPoints,
-                            infinity: false,
+                        const SizedBox(width: 8),
+                        _CombatBadgeButton(
+                          onTap: onHeroCp,
+                          child: Transform.scale(
+                            scale: 0.65,
+                            child: _PcTriangleBadge(
+                              value: adventure.combatPoints,
+                              infinity: false,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 Container(
@@ -15698,39 +15742,44 @@ class CombatVersusStatusPanel extends StatelessWidget {
                   color: panelBorderGrey.withValues(alpha: 0.75),
                 ),
                 Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _CombatBadgeButton(
-                        onTap: onEnemyHp,
-                        child: Transform.scale(
-                          scale: 0.65,
-                          child: _HpHeartBadge(
-                            value: enemy.health,
-                            style: _CombatHpStyle.enemy,
+                  child: CombatImpactAvatarWrapper(
+                    hp: enemy.health,
+                    cp: enemy.combatPoints,
+                    tokens: effectiveEnemyTokens,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _CombatBadgeButton(
+                          onTap: onEnemyHp,
+                          child: Transform.scale(
+                            scale: 0.65,
+                            child: _HpHeartBadge(
+                              value: enemy.health,
+                              style: _CombatHpStyle.enemy,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      _CombatBadgeButton(
-                        onTap:
-                            enemy.profileKey == 'naraxus' ||
-                                enemy.profileKey == 'ourokhor' ||
-                                enemy.profileKey == 'viseer'
-                            ? () {}
-                            : onEnemyCp,
-                        child: Transform.scale(
-                          scale: 0.65,
-                          child: _PcTriangleBadge(
-                            value: enemy.combatPoints,
-                            infinity:
-                                enemy.profileKey == 'naraxus' ||
-                                enemy.profileKey == 'ourokhor' ||
-                                enemy.profileKey == 'viseer',
+                        const SizedBox(width: 8),
+                        _CombatBadgeButton(
+                          onTap:
+                              enemy.profileKey == 'naraxus' ||
+                                  enemy.profileKey == 'ourokhor' ||
+                                  enemy.profileKey == 'viseer'
+                              ? () {}
+                              : onEnemyCp,
+                          child: Transform.scale(
+                            scale: 0.65,
+                            child: _PcTriangleBadge(
+                              value: enemy.combatPoints,
+                              infinity:
+                                  enemy.profileKey == 'naraxus' ||
+                                  enemy.profileKey == 'ourokhor' ||
+                                  enemy.profileKey == 'viseer',
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -15802,30 +15851,36 @@ class CombatVersusStatusPanel extends StatelessWidget {
     return Container(
       height: 196,
       decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.26)),
-      clipBehavior: Clip.hardEdge,
+      clipBehavior: Clip.none,
       child: Stack(
+        clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
           Row(
             children: [
               Expanded(
-                child: _CombatantVersusHalf(
-                  title: adventure.hero.label,
+                child: CombatImpactAvatarWrapper(
                   hp: adventure.health,
                   cp: adventure.combatPoints,
                   tokens: effectiveHeroTokens,
-                  accent: heroAccent,
-                  portraitAsset: adventure.hero.asset,
-                  portraitAlignment: adventure.hero.imageAlignment,
-                  portraitScale: min(adventure.hero.imageScale, 1.08),
-                  hpStyle: _CombatHpStyle.hero,
-                  onHp: onHeroHp,
-                  onCp: onHeroCp,
-                  onEditTokens: onEditHeroTokens,
-                  onTokensChanged: onTokensChanged,
-                  onTokenRemoved: onHeroTokenRemoved,
-                  onTokenAdded: onHeroTokenAdded,
-                  imageOnRight: false,
+                  child: _CombatantVersusHalf(
+                    title: adventure.hero.label,
+                    hp: adventure.health,
+                    cp: adventure.combatPoints,
+                    tokens: effectiveHeroTokens,
+                    accent: heroAccent,
+                    portraitAsset: adventure.hero.asset,
+                    portraitAlignment: adventure.hero.imageAlignment,
+                    portraitScale: min(adventure.hero.imageScale, 1.08),
+                    hpStyle: _CombatHpStyle.hero,
+                    onHp: onHeroHp,
+                    onCp: onHeroCp,
+                    onEditTokens: onEditHeroTokens,
+                    onTokensChanged: onTokensChanged,
+                    onTokenRemoved: onHeroTokenRemoved,
+                    onTokenAdded: onHeroTokenAdded,
+                    imageOnRight: false,
+                  ),
                 ),
               ),
               Container(
@@ -15833,28 +15888,33 @@ class CombatVersusStatusPanel extends StatelessWidget {
                 color: panelBorderGrey.withValues(alpha: 0.75),
               ),
               Expanded(
-                child: _CombatantVersusHalf(
-                  title: enemy.label,
+                child: CombatImpactAvatarWrapper(
                   hp: enemy.health,
                   cp: enemy.combatPoints,
                   tokens: effectiveEnemyTokens,
-                  accent: enemy.rank.color,
-                  portraitAsset: enemy.previewAsset,
-                  portraitAlignment: enemy.profileKey == 'naraxus'
-                      ? Alignment.center
-                      : Alignment.centerLeft,
-                  hpStyle: _CombatHpStyle.enemy,
-                  infiniteCp:
-                      enemy.profileKey == 'naraxus' ||
-                      enemy.profileKey == 'ourokhor' ||
-                      enemy.profileKey == 'viseer',
-                  onHp: onEnemyHp,
+                  child: _CombatantVersusHalf(
+                    title: enemy.label,
+                    hp: enemy.health,
+                    cp: enemy.combatPoints,
+                    tokens: effectiveEnemyTokens,
+                    accent: enemy.rank.color,
+                    portraitAsset: enemy.previewAsset,
+                    portraitAlignment: enemy.profileKey == 'naraxus'
+                        ? Alignment.center
+                        : Alignment.centerLeft,
+                    hpStyle: _CombatHpStyle.enemy,
+                    infiniteCp:
+                        enemy.profileKey == 'naraxus' ||
+                        enemy.profileKey == 'ourokhor' ||
+                        enemy.profileKey == 'viseer',
+                    onHp: onEnemyHp,
                   onCp: onEnemyCp,
                   onEditTokens: onEditEnemyTokens,
                   onTokensChanged: onTokensChanged,
                   onTokenRemoved: onEnemyTokenRemoved,
                   onTokenAdded: onEnemyTokenAdded,
                   imageOnRight: true,
+                ),
                 ),
               ),
             ],

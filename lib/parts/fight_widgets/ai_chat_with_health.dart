@@ -58,6 +58,7 @@ enum _QuickVitalTarget { heroHp, heroCp, enemyHp, enemyCp }
 
 class _AiChatWithHealth extends StatefulWidget {
   const _AiChatWithHealth({
+    this.isIntroPhase = false,
     this.isRollPhase = false,
     required this.message,
     required this.accent,
@@ -120,6 +121,7 @@ class _AiChatWithHealth extends StatefulWidget {
   final ValueChanged<int> onHeroCpSaved;
   final ValueChanged<int> onEnemyHpSaved;
   final ValueChanged<int> onEnemyCpSaved;
+  final bool isIntroPhase;
   final bool isRollPhase;
   final Widget? trailing;
 
@@ -130,10 +132,15 @@ class _AiChatWithHealth extends StatefulWidget {
 class _AiChatWithHealthState extends State<_AiChatWithHealth> {
   _QuickVitalTarget? _target;
   late int _draftValue;
+  bool _expandedDetails = false;
+  int _eventIndex = 0;
 
   @override
   void didUpdateWidget(covariant _AiChatWithHealth oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.message != widget.message) {
+      _eventIndex = 0;
+    }
     final target = _target;
     if (target != null) {
       final current = _valueFor(target);
@@ -141,6 +148,16 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
         _draftValue = current;
       }
     }
+  }
+
+  List<String> _extractEvents(String msg) {
+    final lines = msg
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+    if (lines.isEmpty) return const ['Ready'];
+    return lines;
   }
 
   int _valueFor(_QuickVitalTarget target) {
@@ -197,30 +214,141 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
         : _isHeroTarget(target)
         ? heroAccent
         : widget.enemyColor;
+    final events = _extractEvents(widget.message);
+    final safeIdx = _eventIndex.clamp(0, events.length - 1);
+    final showCompactEventBar = !widget.isIntroPhase && !_expandedDetails;
+    final displayedText = showCompactEventBar ? events[safeIdx] : widget.message;
+
     final chat = Padding(
-      padding: const EdgeInsets.all(10),
-      child: SingleChildScrollView(
-        reverse: true,
-        child: RichText(
-          text: TextSpan(
-            style: DefaultTextStyle.of(
-              context,
-            ).style.copyWith(height: 1.25, color: const Color(0xff1c1b19)),
-            children: _chatSpans(
-              widget.message,
-              heroName: widget.heroName,
-              enemyName: widget.enemyName,
-              enemyColor: widget.enemyColor,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              reverse: !showCompactEventBar,
+              child: RichText(
+                text: TextSpan(
+                  style: DefaultTextStyle.of(context).style.copyWith(
+                    height: 1.3,
+                    fontSize: showCompactEventBar ? 12.5 : 12.0,
+                    color: Colors.white.withValues(alpha: 0.92),
+                  ),
+                  children: _chatSpans(
+                    displayedText,
+                    heroName: widget.heroName,
+                    enemyName: widget.enemyName,
+                    enemyColor: widget.enemyColor,
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+          if (!widget.isIntroPhase && (events.length > 1 || widget.message.length > 70)) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                if (events.length > 1 && showCompactEventBar) ...[
+                  InkWell(
+                    onTap: safeIdx > 0
+                        ? () => setState(() => _eventIndex = safeIdx - 1)
+                        : null,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: GameDesign.slateSurface,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(
+                        Icons.chevron_left_rounded,
+                        size: 16,
+                        color: safeIdx > 0 ? Colors.white : Colors.white24,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${safeIdx + 1}/${events.length}',
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white54,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  InkWell(
+                    onTap: safeIdx < events.length - 1
+                        ? () => setState(() => _eventIndex = safeIdx + 1)
+                        : null,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: GameDesign.slateSurface,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(
+                        Icons.chevron_right_rounded,
+                        size: 16,
+                        color: safeIdx < events.length - 1
+                            ? GameDesign.gold
+                            : Colors.white24,
+                      ),
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                InkWell(
+                  onTap: () =>
+                      setState(() => _expandedDetails = !_expandedDetails),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: GameDesign.slateSurface,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: GameDesign.slateBorder),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _expandedDetails ? 'Compact' : 'Details',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: GameDesign.gold,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(
+                          _expandedDetails
+                              ? Icons.keyboard_arrow_down_rounded
+                              : Icons.keyboard_arrow_up_rounded,
+                          size: 14,
+                          color: GameDesign.gold,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
     if (!widget.showHealthControls) {
       final lineCount = widget.message.trim().isEmpty
           ? 1
           : widget.message.trim().split('\n').length;
-      final chatHeight = (56.0 + lineCount * 18.0).clamp(86.0, 210.0);
+      final chatHeight = showCompactEventBar
+          ? 92.0
+          : (68.0 + lineCount * 18.0).clamp(110.0, 220.0);
       final portraitIsHero = widget.accent == heroAccent;
       final tokens = portraitIsHero ? widget.heroTokens : widget.enemyTokens;
       final onEditTokens = portraitIsHero
@@ -264,12 +392,16 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
           ),
         ),
       );
-      final chatRow = Container(
+      final chatRow = AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
         height: chatHeight,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: GameDesign.obsidianBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xffdcd4c5), width: 1),
+          border: Border.all(
+            color: widget.accent.withValues(alpha: 0.45),
+            width: 1.2,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Row(
@@ -277,7 +409,7 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
           children: [
             Expanded(child: chat),
             if (widget.trailing != null) ...[
-              Container(width: 1, color: const Color(0xffe5ded0)),
+              Container(width: 1, color: GameDesign.slateBorder),
               widget.trailing!,
             ],
           ],
@@ -317,9 +449,12 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
     return Container(
       height: 150,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: GameDesign.obsidianBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xffdcd4c5), width: 1),
+        border: Border.all(
+          color: widget.accent.withValues(alpha: 0.45),
+          width: 1.2,
+        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: Row(
@@ -327,7 +462,7 @@ class _AiChatWithHealthState extends State<_AiChatWithHealth> {
         children: [
           Expanded(child: chat),
           if (widget.trailing != null) ...[
-            Container(width: 1, color: const Color(0xffe5ded0)),
+            Container(width: 1, color: GameDesign.slateBorder),
             widget.trailing!,
           ],
           if (_target != null) ...[

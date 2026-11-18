@@ -3404,6 +3404,80 @@ void main() {
       expect(msg.contains(clanId), isTrue);
       expect(msg.contains('Guardians'), isTrue);
       expect(msg.contains(CommunityClanRepository.apkDownloadUrl), isTrue);
+
+      // My History streak calculation rules:
+      // 1) 100% wins (3/3 at 33 pts in Medium) -> 3
+      final allWins = List.generate(
+        3,
+        (i) => GameRecord(
+          hero: HeroType.barbare,
+          date: baseDate.add(Duration(hours: i)),
+          score: 33,
+          mode: SurvivalMode.mediumFixed,
+        ),
+      );
+      expect(
+        LeaderboardCalculator.computeMyHistoryStreak(allWins, isBossMode: false),
+        equals(3),
+      );
+
+      // 2) 4 runs, 3 wins, 1 loss -> 3 - 1 = 2
+      final threeWinsOneLoss = [
+        ...allWins,
+        GameRecord(
+          hero: HeroType.barbare,
+          date: baseDate.add(const Duration(hours: 5)),
+          score: 12,
+          mode: SurvivalMode.mediumFixed,
+        ),
+      ];
+      expect(
+        LeaderboardCalculator.computeMyHistoryStreak(
+          threeWinsOneLoss,
+          isBossMode: false,
+        ),
+        equals(2),
+      );
+
+      // 3) 2 runs, 1 win, 1 loss -> clamped to 1
+      final oneWinOneLoss = [
+        GameRecord(
+          hero: HeroType.artificer,
+          date: baseDate,
+          score: 33,
+          mode: SurvivalMode.mediumFixed,
+        ),
+        GameRecord(
+          hero: HeroType.artificer,
+          date: baseDate.add(const Duration(hours: 1)),
+          score: 10,
+          mode: SurvivalMode.mediumFixed,
+        ),
+      ];
+      expect(
+        LeaderboardCalculator.computeMyHistoryStreak(
+          oneWinOneLoss,
+          isBossMode: false,
+        ),
+        equals(1),
+      );
+
+      // 4) 0 wins -> 0
+      final zeroWins = [
+        GameRecord(
+          hero: HeroType.loki,
+          date: baseDate,
+          score: 5,
+          mode: SurvivalMode.mediumFixed,
+        ),
+      ];
+      expect(
+        LeaderboardCalculator.computeMyHistoryStreak(
+          zeroWins,
+          isBossMode: false,
+        ),
+        equals(0),
+      );
     });
   });
 }

@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'active_adventure_storage.dart';
 import 'data/enemy_profile_repository.dart';
 import 'data/fallback_enemy_profiles.dart';
+import 'design_system.dart';
 import 'game_engine.dart';
 import 'history_repository.dart';
 import 'models/enemy_profile.dart';
@@ -19,6 +20,7 @@ import 'services/app_update_service.dart';
 import 'supabase_service.dart';
 
 part 'parts/app_shell.dart';
+part 'parts/startup_flow.dart';
 part 'parts/bestiary.dart';
 part 'parts/history.dart';
 part 'parts/community_clans.dart';
@@ -46,6 +48,7 @@ part 'parts/fight_widgets/druid_form_dialog.dart';
 part 'parts/fight_widgets/chimera_failure_dialog.dart';
 part 'parts/fight_widgets/poison_gauge_card.dart';
 part 'parts/fight_widgets/deselect_die_dialog.dart';
+part 'parts/fight_widgets/combat_avatar_impact.dart';
 part 'parts/fight_logic/token_combat_helpers.dart';
 part 'parts/fight_logic/defense_formula_evaluator.dart';
 part 'parts/fight_logic/hydra_logic.dart';
@@ -55,8 +58,8 @@ part 'parts/fight_logic/ourokhor_logic.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.5.31';
-const int appBuildNumber = 496;
+const String appVersionLabel = 'Version 1.5.34';
+const int appBuildNumber = 499;
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -1192,6 +1195,7 @@ class AppSettings extends ChangeNotifier {
   String _playerCountryCode = 'FR';
   String _playerFavoriteHeroName = 'barbare';
   bool _shareStats = true;
+  bool _hidePhysicalRequirementsOnStartup = false;
   List<Map<String, dynamic>> _localClans = [];
   bool _loaded = false;
   bool _hasLocalSettings = false;
@@ -1210,6 +1214,7 @@ class AppSettings extends ChangeNotifier {
     _playerCountryCode = 'FR';
     _playerFavoriteHeroName = 'barbare';
     _shareStats = true;
+    _hidePhysicalRequirementsOnStartup = false;
     _localClans = [];
     _loaded = false;
     _hasLocalSettings = false;
@@ -1241,6 +1246,16 @@ class AppSettings extends ChangeNotifier {
   }
 
   bool get shareStats => _shareStats;
+
+  bool get hidePhysicalRequirementsOnStartup =>
+      _hidePhysicalRequirementsOnStartup;
+
+  Future<void> setHidePhysicalRequirementsOnStartup(bool value) async {
+    if (_hidePhysicalRequirementsOnStartup == value) return;
+    _hidePhysicalRequirementsOnStartup = value;
+    notifyListeners();
+    await _save();
+  }
 
   List<Map<String, dynamic>> get localClans =>
       List.unmodifiable(_localClans);
@@ -1434,6 +1449,8 @@ class AppSettings extends ChangeNotifier {
         _playerFavoriteHeroName =
             json['playerFavoriteHero']?.toString().trim() ?? 'barbare';
         _shareStats = json['shareStats'] as bool? ?? true;
+        _hidePhysicalRequirementsOnStartup =
+            json['hidePhysicalRequirementsOnStartup'] as bool? ?? false;
         final rawClans = json['localClans'] as List<dynamic>?;
         _localClans = rawClans == null
             ? []
@@ -1695,6 +1712,7 @@ class AppSettings extends ChangeNotifier {
       'playerCountryCode': _playerCountryCode,
       'playerFavoriteHero': _playerFavoriteHeroName,
       'shareStats': _shareStats,
+      'hidePhysicalRequirementsOnStartup': _hidePhysicalRequirementsOnStartup,
       'localClans': _localClans,
     };
     await _storage.write(_key, jsonEncode(payload));

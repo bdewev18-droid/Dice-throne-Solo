@@ -1027,7 +1027,9 @@ void showRulebooksDialog(BuildContext context, {bool isNaraxus = false}) {
                           vertical: 8,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(
+                            GameDesign.buttonRadius,
+                          ),
                         ),
                         visualDensity: VisualDensity.compact,
                       ),
@@ -1730,7 +1732,9 @@ class CurrentTargetCard extends StatelessWidget {
                         backgroundColor: accent,
                         foregroundColor: Colors.black,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(
+                            GameDesign.buttonRadius,
+                          ),
                         ),
                         textStyle: const TextStyle(
                           fontSize: 24,
@@ -2413,7 +2417,9 @@ class _RecipeEnemySelectionPageState extends State<RecipeEnemySelectionPage> {
                         side:
                             BorderSide(color: _selected.rank.color, width: 1.6),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(
+                            GameDesign.buttonRadius,
+                          ),
                         ),
                       ),
                       onPressed: _pickProfile,

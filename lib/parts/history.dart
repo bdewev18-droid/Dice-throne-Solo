@@ -865,7 +865,7 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
             if (expanded)
               Padding(
-                padding: const EdgeInsets.only(left: 12, bottom: 8),
+                padding: const EdgeInsets.only(bottom: 8),
                 child: Column(
                   children: runs
                       .map(
@@ -2423,9 +2423,10 @@ class _RunDetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isNaraxus = record.mode.difficulty == RunDifficulty.naraxus;
-    final enemiesLabel = isNaraxus ? '-' : record.enemiesDefeated.toString();
+    final isBoss = LeaderboardCalculator.isBossRunRecord(record);
+    final enemiesLabel = isBoss ? '-' : record.enemiesDefeated.toString();
     final pointsLabel = record.score.toString();
+    final isWin = LeaderboardCalculator.isRunVictory(record);
 
     return Row(
       children: [
@@ -2436,7 +2437,9 @@ class _RunDetailRow extends StatelessWidget {
               if (deleteMode)
                 Checkbox(value: selected, onChanged: onSelected)
               else if (showHero)
-                HeroAvatar(hero: record.hero, size: 30),
+                HeroAvatar(hero: record.hero, size: 30)
+              else
+                const SizedBox(width: 12),
               if (showHero || deleteMode) const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -2448,7 +2451,7 @@ class _RunDetailRow extends StatelessWidget {
           ),
         ),
         const Expanded(child: _HistoryMetricText('1')),
-        if (!isNaraxus) Expanded(child: _HistoryMetricText(enemiesLabel)),
+        if (!isBoss) Expanded(child: _HistoryMetricText(enemiesLabel)),
         Expanded(
           child: _HistoryMetricText(
             record.healthRemaining == null
@@ -2457,10 +2460,21 @@ class _RunDetailRow extends StatelessWidget {
           ),
         ),
         Expanded(
-          flex: isNaraxus ? 2 : 1,
+          flex: isBoss ? 2 : 1,
           child: _HistoryMetricText(_formatSmartDuration(record.duration)),
         ),
         Expanded(child: _HistoryMetricText(pointsLabel)),
+        Expanded(
+          child: Center(
+            child: isWin
+                ? const Icon(
+                    Icons.check_circle_rounded,
+                    size: 14,
+                    color: Color(0xff4ade80),
+                  )
+                : const _HistoryMetricText('-', color: Colors.white24),
+          ),
+        ),
       ],
     );
   }
