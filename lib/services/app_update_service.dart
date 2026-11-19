@@ -68,20 +68,27 @@ class AppUpdateService {
     if (_dialogShownThisSession) return;
     final update = await checkUpdate();
     if (update == null || !context.mounted) return;
-
     _dialogShownThisSession = true;
+    await promptUpdate(context, update);
+  }
+
+  /// Affiche la popin de mise à jour (non bloquante) à la demande de l'utilisateur.
+  static Future<void> promptUpdate(
+    BuildContext context,
+    RemoteAppVersion update,
+  ) async {
     await showDialog<void>(
       context: context,
       barrierDismissible: true,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: const Color(0xff1e1e2c),
+        backgroundColor: const Color(0xff131620),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xff8f43ff), width: 1.5),
+          side: const BorderSide(color: Color(0xffe2e8f0), width: 1.5),
         ),
         title: Row(
           children: [
-            const Icon(Icons.system_update, color: heroAccent, size: 28),
+            const Icon(Icons.system_update, color: Color(0xffe2e8f0), size: 28),
             const SizedBox(width: 10),
             const Expanded(
               child: Text(
@@ -137,8 +144,8 @@ class AppUpdateService {
           ),
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xff8f43ff),
-              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xffe2e8f0),
+              foregroundColor: const Color(0xff121212),
             ),
             onPressed: () {
               Navigator.of(dialogCtx).pop();

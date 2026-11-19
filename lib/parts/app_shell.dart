@@ -13,6 +13,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   AdventureState? _activeAdventure;
   bool _storageReady = false;
   bool _startupCompleted = false;
+  RemoteAppVersion? _availableUpdate;
   AuthSession _auth = AuthSession.unknown;
   StreamSubscription<AuthSessionEvent>? _authSub;
 
@@ -138,11 +139,18 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
 
   Future<void> _signOut() async {
     await SupabaseService.instance.signOut();
+    await HistoryRepository.instance.clearCache();
+    await AppSettings.instance.clearProfileOnSignOut();
+    await _store.clear();
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _auth = AuthSession.signedOut;
       _history.clear();
+      _activeAdventure = null;
+      _startupCompleted = false;
     });
-    await _loadHistory();
   }
 
   void _showAuthError(BuildContext context, Object error) {
@@ -217,13 +225,18 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
     if (!_startupCompleted) {
       return StartupOnboardingFlow(
         auth: _auth,
+        historyRecords: _history,
         onSignInGoogle: _signInWithGoogle,
-        onCompleted: () => setState(() => _startupCompleted = true),
+        onCompleted: (update) => setState(() {
+          _availableUpdate = update;
+          _startupCompleted = true;
+        }),
       );
     }
     return HomePage(
       activeAdventure: _activeAdventure,
       auth: _auth,
+      availableUpdate: _availableUpdate,
       historyCount: _history.length,
       onHistory: () => _openHistory(context),
       onBestiary: () => _openBestiary(context),
@@ -273,6 +286,7 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
       },
       onStopCampaign: _stopActiveCampaign,
       onNaraxus: () => _openBossBattle(context),
+      onOurokhorNews: () => _openOurokhorDetail(context),
       onSignInGoogle: _signInWithGoogle,
       onSignInAnonymous: _signInAnonymously,
       onSignOut: _signOut,
@@ -380,26 +394,44 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => BossBattleSelectionPage(
-          onStartBossWithHero: (bossKey) {
-            Navigator.of(context).push(
+          onStartBossWithHero: (bossKey) => _launchBossHeroChoice(context, bossKey),
+        ),
+      ),
+    );
+  }
+
+  void _openOurokhorDetail(BuildContext context) {
+    final ourokhor =
+        EnemyProfileRepository.byKey('ourokhor') ?? ourokhorProfile;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BossBattleDetailPage(
+          profile: ourokhor,
+          isUnofficial: true,
+          isBossOfTheMonth: true,
+          onChooseHeroAndFight: () =>
+              _launchBossHeroChoice(context, ourokhor.key),
+        ),
+      ),
+    );
+  }
+
+  void _launchBossHeroChoice(BuildContext context, String bossKey) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => HeroChoicePage(
+          onNext: (hero) {
+            Navigator.of(context).pushReplacement(
               MaterialPageRoute<void>(
-                builder: (_) => HeroChoicePage(
-                  onNext: (hero) {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute<void>(
-                        builder: (_) => NaraxusBattlePage(
-                          hero: hero,
-                          bossKey: bossKey,
-                          historyRecords: _history,
-                          onRecord: (record) => _handleAddRecord(record),
-                          onOpenHistory: () => _openHistory(
-                            appNavigatorKey.currentContext ?? context,
-                            initialDifficulty: RunDifficulty.naraxus,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+                builder: (_) => NaraxusBattlePage(
+                  hero: hero,
+                  bossKey: bossKey,
+                  historyRecords: _history,
+                  onRecord: (record) => _handleAddRecord(record),
+                  onOpenHistory: () => _openHistory(
+                    appNavigatorKey.currentContext ?? context,
+                    initialDifficulty: RunDifficulty.naraxus,
+                  ),
                 ),
               ),
             );
@@ -529,15 +561,18 @@ class HomePage extends StatefulWidget {
     required this.onResume,
     required this.onStopCampaign,
     required this.onNaraxus,
+    required this.onOurokhorNews,
     required this.onSignInGoogle,
     required this.onSignInAnonymous,
     required this.onSignOut,
+    this.availableUpdate,
     this.historyCount = 0,
     super.key,
   });
 
   final AdventureState? activeAdventure;
   final AuthSession auth;
+  final RemoteAppVersion? availableUpdate;
   final int historyCount;
   final VoidCallback onHistory;
   final VoidCallback onBestiary;
@@ -545,6 +580,7 @@ class HomePage extends StatefulWidget {
   final VoidCallback onResume;
   final VoidCallback onStopCampaign;
   final VoidCallback onNaraxus;
+  final VoidCallback onOurokhorNews;
   final VoidCallback onSignInGoogle;
   final VoidCallback onSignInAnonymous;
   final VoidCallback onSignOut;
@@ -613,11 +649,11 @@ class _HomePageState extends State<HomePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      PlayerProfileChipButton(
-                        onUpdated: () => setState(() {}),
-                      ),
-                      const SizedBox(width: 8),
-                      if (widget.auth.isSignedIn && !widget.auth.isAnonymous)
+                      if (widget.auth.isSignedIn && !widget.auth.isAnonymous) ...[
+                        PlayerProfileChipButton(
+                          onUpdated: () => setState(() {}),
+                        ),
+                        const SizedBox(width: 8),
                         InkWell(
                           onTap: widget.onSignOut,
                           borderRadius: BorderRadius.circular(20),
@@ -651,94 +687,185 @@ class _HomePageState extends State<HomePage> {
                               ],
                             ),
                           ),
-                        )
-                      else
-                        Flexible(
-                          child: AccountChip(
-                            auth: widget.auth,
-                            onSignInGoogle: widget.onSignInGoogle,
-                            onSignInAnonymous: widget.onSignInAnonymous,
-                            onSignOut: widget.onSignOut,
+                        ),
+                      ] else ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.58),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white24),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.person_outline_rounded,
+                                size: 15,
+                                color: Colors.white70,
+                              ),
+                              SizedBox(width: 5),
+                              Text(
+                                'Guest',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Transform.translate(
-                    offset: const Offset(0, -30),
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 650),
-                      opacity: _showActions ? 1 : 0,
-                      child: IgnorePointer(
-                        ignoring: !_showActions,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (widget.activeAdventure != null) ...[
-                              ActiveCampaignHomeCard(
-                                adventure: widget.activeAdventure!,
-                                onResume: widget.onResume,
-                                onStop: widget.onStopCampaign,
-                              ),
-                              const SizedBox(height: 14),
-                            ],
-                            GameActionButton(
-                              label: 'MINION RUSH',
-                              subtitle: '3 Game Modes',
-                              icon: Icons.shield_rounded,
-                              primary: true,
-                              height: 58,
-                              onPressed: widget.onSurvival,
+                        InkWell(
+                          onTap: widget.onSignInGoogle,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
                             ),
-                            const SizedBox(height: 10),
-                            GameActionButton(
-                              label: 'BOSS BATTLE',
-                              subtitle: 'New Monster Monthly',
-                              icon: Icons.local_fire_department_rounded,
-                              primary: true,
-                              height: 58,
-                              onPressed: widget.onNaraxus,
+                            decoration: BoxDecoration(
+                              color: GameDesign.actionPrimary,
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                            const SizedBox(height: 10),
-                            GameActionButton(
-                              label: 'HISTORY & RANKINGS',
-                              subtitle:
-                                  '${widget.historyCount} ${widget.historyCount <= 1 ? "Game" : "Games"}',
-                              icon: Icons.emoji_events_rounded,
-                              primary: false,
-                              height: 54,
-                              onPressed: widget.onHistory,
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.login_rounded,
+                                  size: 15,
+                                  color: GameDesign.goldText,
+                                ),
+                                SizedBox(width: 5),
+                                Text(
+                                  'Sign in',
+                                  style: TextStyle(
+                                    color: GameDesign.goldText,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 10),
-                            GameActionButton(
-                              label: 'BESTIARY',
-                              subtitle: '$validatedMonsters Monsters',
-                              icon: Icons.menu_book_rounded,
-                              primary: false,
-                              height: 54,
-                              onPressed: widget.onBestiary,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: VersionPill(
-                            label:
-                                '$appVersionLabel${AppSettings.instance.developerMode ? ' - Dev mode' : ''}',
-                            isDev: AppSettings.instance.developerMode,
                           ),
                         ),
                       ],
+                    ],
+                  ),
+                  if (widget.availableUpdate != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.center,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => AppUpdateService.promptUpdate(
+                          context,
+                          widget.availableUpdate!,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xffffb300).withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xffffb300).withValues(alpha: 0.7),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.system_update_rounded,
+                                size: 15,
+                                color: Color(0xffffb300),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'New version available (v${widget.availableUpdate!.version})',
+                                style: const TextStyle(
+                                  color: Color(0xffffe22d),
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const Spacer(),
+                  if (widget.activeAdventure == null) ...[
+                    _SnakeBossNewsBanner(onTap: widget.onOurokhorNews),
+                    const SizedBox(height: 12),
+                  ],
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 650),
+                    opacity: _showActions ? 1 : 0,
+                    child: IgnorePointer(
+                      ignoring: !_showActions,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (widget.activeAdventure != null) ...[
+                            ActiveCampaignHomeCard(
+                              adventure: widget.activeAdventure!,
+                              onResume: widget.onResume,
+                              onStop: widget.onStopCampaign,
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+                          // 1. Consultation row on a single glassmorphic line (Bestiary + History)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _GlassConsultationButton(
+                                  label: 'BESTIARY',
+                                  subtitle: '$validatedMonsters Monsters',
+                                  icon: Icons.menu_book_rounded,
+                                  onPressed: widget.onBestiary,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _GlassConsultationButton(
+                                  label: 'HISTORY',
+                                  subtitle:
+                                      '${widget.historyCount} ${widget.historyCount <= 1 ? "Game" : "Games"}',
+                                  icon: Icons.emoji_events_rounded,
+                                  onPressed: widget.onHistory,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          // 2. Boss Battle
+                          GameActionButton(
+                            label: 'BOSS BATTLE',
+                            subtitle: 'New Monster Monthly',
+                            icon: Icons.local_fire_department_rounded,
+                            primary: true,
+                            height: 58,
+                            onPressed: widget.onNaraxus,
+                          ),
+                          const SizedBox(height: 10),
+                          // 3. Minion Rush (bottom-most, closest to thumb)
+                          GameActionButton(
+                            label: 'MINION RUSH',
+                            subtitle: '3 Game Modes',
+                            icon: Icons.shield_rounded,
+                            primary: true,
+                            height: 58,
+                            onPressed: widget.onSurvival,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -1285,10 +1412,10 @@ Widget _buildHpButtonBadge({required String type}) {
           Text(
             'BATTLE',
             style: TextStyle(
-              color: Color(0xffffe22d),
-              fontSize: 11,
+              color: Color(0xffc084fc),
+              fontSize: 11.5,
               fontWeight: FontWeight.w900,
-              letterSpacing: 0.6,
+              letterSpacing: 0.7,
             ),
           ),
         ],
@@ -1316,18 +1443,18 @@ Widget _buildHpButtonBadge({required String type}) {
             'MINION ',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
-              letterSpacing: 0.6,
+              letterSpacing: 0.8,
             ),
           ),
           Text(
             'RUSH',
             style: TextStyle(
               color: Color(0xffc084fc),
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
-              letterSpacing: 0.6,
+              letterSpacing: 0.8,
             ),
           ),
         ],
@@ -2563,6 +2690,200 @@ class AccountChip extends StatelessWidget {
         border: Border.all(color: Colors.white24),
       ),
       child: child,
+    );
+  }
+}
+
+
+class _GlassConsultationButton extends StatelessWidget {
+  const _GlassConsultationButton({
+    required this.label,
+    required this.subtitle,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String label;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(GameDesign.buttonRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(GameDesign.buttonRadius),
+            child: Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.14),
+                    GameDesign.slateSurface.withValues(alpha: 0.78),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(GameDesign.buttonRadius),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.22),
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 18, color: GameDesign.actionPrimary),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.4,
+                            height: 1.1,
+                          ),
+                        ),
+                        Text(
+                          subtitle,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: GameDesign.actionPrimary,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+class _SnakeBossNewsBanner extends StatelessWidget {
+  const _SnakeBossNewsBanner({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: GameDesign.obsidianBg.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xff4ade80).withValues(alpha: 0.4),
+            width: 1.1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xff4ade80).withValues(alpha: 0.65),
+                  width: 1.2,
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Image.asset(
+                'assets/enemy_previews/ourokhor.jpg',
+                fit: BoxFit.cover,
+                alignment: const Alignment(0.0, -0.5),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 1.5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xff4ade80).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: const Color(0xff4ade80).withValues(alpha: 0.7),
+                          ),
+                        ),
+                        child: const Text(
+                          'NEW BOSS',
+                          style: TextStyle(
+                            color: Color(0xff4ade80),
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Flexible(
+                        child: Text(
+                          'Ourokhor',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Try the new Snake Boss in Boss Battle',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: Colors.white54,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

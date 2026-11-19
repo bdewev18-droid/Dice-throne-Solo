@@ -1146,6 +1146,8 @@ Future<bool?> showPlayerProfileDialog(
   var selectedCountry = settings.playerCountryCode;
   var selectedHero = settings.playerFavoriteHero;
   var hideFromLeaderboard = !settings.shareStats;
+  var displayGameRules = settings.showGameRules;
+  var displayPhysicalPopin = !settings.hidePhysicalRequirementsOnStartup;
   if (requireShareStatsForClan) {
     hideFromLeaderboard = false;
   }
@@ -1153,6 +1155,7 @@ Future<bool?> showPlayerProfileDialog(
   final playableHeroes =
       HeroType.values.where((h) => h != HeroType.benjamin).toList()
         ..sort((a, b) => a.label.compareTo(b.label));
+  Timer? devModeHoldTimer;
 
   return showDialog<bool>(
     context: context,
@@ -1160,11 +1163,15 @@ Future<bool?> showPlayerProfileDialog(
       return StatefulBuilder(
         builder: (ctx, setModalState) {
           final currentCountry = countryOptionForCode(selectedCountry);
+          final isDevMode = AppSettings.instance.developerMode;
           return Dialog(
-            backgroundColor: const Color(0xff161925),
+            backgroundColor: GameDesign.obsidianBg,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(18),
-              side: const BorderSide(color: Color(0xffffe22d), width: 1.4),
+              side: BorderSide(
+                color: GameDesign.actionPrimary.withValues(alpha: 0.7),
+                width: 1.5,
+              ),
             ),
             insetPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -1186,12 +1193,83 @@ Future<bool?> showPlayerProfileDialog(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Player Profile',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTapDown: (_) {
+                                  devModeHoldTimer?.cancel();
+                                  devModeHoldTimer = Timer(
+                                    const Duration(seconds: 10),
+                                    () async {
+                                      final newMode =
+                                          !AppSettings.instance.developerMode;
+                                      await AppSettings.instance
+                                          .setDeveloperMode(newMode);
+                                      if (ctx.mounted) {
+                                        setModalState(() {});
+                                        ScaffoldMessenger.of(
+                                          ctx,
+                                        ).hideCurrentSnackBar();
+                                        ScaffoldMessenger.of(ctx).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              newMode
+                                                  ? 'Developer mode activated!'
+                                                  : 'Developer mode deactivated.',
+                                            ),
+                                            duration: const Duration(
+                                              seconds: 2,
+                                            ),
+                                            backgroundColor: newMode
+                                                ? Colors.orange
+                                                : Colors.grey[800],
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  );
+                                },
+                                onTapUp: (_) => devModeHoldTimer?.cancel(),
+                                onTapCancel: () => devModeHoldTimer?.cancel(),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text(
+                                      'Player Profile',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    if (isDevMode) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange.withValues(
+                                            alpha: 0.25,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.orangeAccent,
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'DEV',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.orangeAccent,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
                               Text(
@@ -1377,13 +1455,80 @@ Future<bool?> showPlayerProfileDialog(
                         ),
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xffffe22d),
-                        foregroundColor: Colors.black,
+                    const SizedBox(height: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xff1e2233),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white12),
                       ),
+                      child: CheckboxListTile(
+                        value: displayGameRules,
+                        onChanged: (val) {
+                          setModalState(() => displayGameRules = val ?? true);
+                        },
+                        title: const Text(
+                          'Display game rules',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          'Show quick access to the How to Play rules in combat intro.',
+                          style: TextStyle(fontSize: 11, color: Colors.white60),
+                        ),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xff1e2233),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: CheckboxListTile(
+                        value: displayPhysicalPopin,
+                        onChanged: (val) {
+                          setModalState(
+                            () => displayPhysicalPopin = val ?? true,
+                          );
+                        },
+                        title: const Text(
+                          'Display physical game popin',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          'Show the physical board & setup guide when launching the app.',
+                          style: TextStyle(fontSize: 11, color: Colors.white60),
+                        ),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    GameActionButton(
+                      label: 'SAVE PROFILE',
+                      icon: Icons.check_circle_outline_rounded,
+                      primary: true,
                       onPressed: () async {
+                        await settings.setShowGameRules(displayGameRules);
+                        await settings.setHidePhysicalRequirementsOnStartup(
+                          !displayPhysicalPopin,
+                        );
                         await settings.updatePlayerProfile(
                           pseudo: pseudoController.text,
                           genericId: genericId,
@@ -1395,8 +1540,6 @@ Future<bool?> showPlayerProfileDialog(
                           Navigator.of(dialogCtx).pop(true);
                         }
                       },
-                      icon: const Icon(Icons.check_circle_outline_rounded),
-                      label: const Text('Save Profile'),
                     ),
                   ],
                 ),

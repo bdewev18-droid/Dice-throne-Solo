@@ -96,11 +96,13 @@ class _CombatResolutionPanel extends StatelessWidget {
                     ),
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xff8f43ff),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(50),
+                    backgroundColor: GameDesign.actionPrimary,
+                    foregroundColor: GameDesign.goldText,
+                    minimumSize: const Size.fromHeight(GameDesign.buttonHeight),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(
+                        GameDesign.buttonRadius,
+                      ),
                     ),
                   ),
                 ),
@@ -108,16 +110,18 @@ class _CombatResolutionPanel extends StatelessWidget {
                 ElevatedButton(
                   onPressed: onReview,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff2d2342),
+                    backgroundColor: GameDesign.slateSurface,
                     foregroundColor: Colors.white,
                     elevation: 2,
                     side: const BorderSide(
-                      color: Color(0xff8f43ff),
+                      color: GameDesign.slateBorder,
                       width: 1.5,
                     ),
-                    minimumSize: const Size.fromHeight(50),
+                    minimumSize: const Size.fromHeight(GameDesign.buttonHeight),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(
+                        GameDesign.buttonRadius,
+                      ),
                     ),
                   ),
                   child: const Text(
@@ -157,9 +161,15 @@ class _CombatResolutionPanel extends StatelessWidget {
                 FilledButton(
                   onPressed: onHistory,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xff8f43ff),
+                    backgroundColor: GameDesign.slateSurface,
                     foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(50),
+                    minimumSize: const Size.fromHeight(GameDesign.buttonHeight),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        GameDesign.buttonRadius,
+                      ),
+                      side: const BorderSide(color: GameDesign.slateBorder),
+                    ),
                   ),
                   child: const Text('History'),
                 ),
@@ -167,11 +177,19 @@ class _CombatResolutionPanel extends StatelessWidget {
                 FilledButton(
                   onPressed: onHomepage,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xff8f43ff),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(50),
+                    backgroundColor: GameDesign.actionPrimary,
+                    foregroundColor: GameDesign.goldText,
+                    minimumSize: const Size.fromHeight(GameDesign.buttonHeight),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        GameDesign.buttonRadius,
+                      ),
+                    ),
                   ),
-                  child: const Text('Homepage'),
+                  child: const Text(
+                    'Homepage',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
@@ -288,10 +306,13 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
   Widget build(BuildContext context) {
     final phaseLabel = widget.isRollPhase ? 'Roll Phase' : 'Upkeep Phase';
     return AlertDialog(
-      backgroundColor: const Color(0xff181424),
+      backgroundColor: GameDesign.obsidianBg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xff8f43ff), width: 2),
+        side: BorderSide(
+          color: GameDesign.actionPrimary.withValues(alpha: 0.7),
+          width: 1.5,
+        ),
       ),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -307,12 +328,12 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xff8f43ff).withValues(alpha: 0.2),
+                      color: GameDesign.actionPrimary.withValues(alpha: 0.16),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.alt_route,
-                      color: Color(0xff8f43ff),
+                      color: GameDesign.actionPrimary,
                       size: 24,
                     ),
                   ),
@@ -580,20 +601,10 @@ class _TokenOrderingDialogState extends State<TokenOrderingDialog> {
                 ],
               ),
               const SizedBox(height: 12),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff8f43ff),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(46),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: const Icon(Icons.check, size: 18),
-                label: const Text(
-                  'Confirm Order',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                ),
+              GameActionButton(
+                label: 'CONFIRM ORDER',
+                icon: Icons.check,
+                primary: true,
                 onPressed: () => Navigator.of(context).pop(_orderedRules),
               ),
             ],
@@ -935,10 +946,13 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
         : null;
 
     return AlertDialog(
-      backgroundColor: const Color(0xff181424),
+      backgroundColor: GameDesign.obsidianBg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xff8f43ff), width: 2),
+        side: BorderSide(
+          color: GameDesign.actionPrimary.withValues(alpha: 0.7),
+          width: 1.5,
+        ),
       ),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -1174,8 +1188,8 @@ class _TokenAnimationDialogState extends State<TokenAnimationDialog> {
                               if (_blindDieRoll == null)
                                 ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xff8f43ff),
-                                    foregroundColor: Colors.white,
+                                    backgroundColor: GameDesign.actionPrimary,
+                                    foregroundColor: GameDesign.goldText,
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
                                       vertical: 8,

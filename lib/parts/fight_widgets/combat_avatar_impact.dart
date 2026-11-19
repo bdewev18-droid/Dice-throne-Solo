@@ -34,7 +34,7 @@ class _CombatImpactAvatarWrapperState extends State<CombatImpactAvatarWrapper>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1150),
+      duration: const Duration(milliseconds: 1500),
     );
   }
 
@@ -46,7 +46,15 @@ class _CombatImpactAvatarWrapperState extends State<CombatImpactAvatarWrapper>
     final oldTokensCount = oldWidget.tokens.length;
     final newTokensCount = widget.tokens.length;
 
-    if (hpDelta != 0) {
+    if (hpDelta != 0 && cpDelta != 0) {
+      final hpText = hpDelta < 0 ? '$hpDelta HP' : '+$hpDelta HP';
+      final cpText = cpDelta < 0 ? '$cpDelta CP' : '+$cpDelta CP';
+      _triggerImpact(
+        text: '$hpText  •  $cpText',
+        color: hpDelta < 0 ? const Color(0xffff4d4d) : const Color(0xff4ade80),
+        shake: hpDelta < 0,
+      );
+    } else if (hpDelta != 0) {
       _triggerImpact(
         text: hpDelta < 0 ? '$hpDelta HP' : '+$hpDelta HP',
         color: hpDelta < 0 ? const Color(0xffff4d4d) : const Color(0xff4ade80),
@@ -96,57 +104,96 @@ class _CombatImpactAvatarWrapperState extends State<CombatImpactAvatarWrapper>
       builder: (context, child) {
         final t = _controller.value;
         final isActive = _controller.isAnimating && _badgeText != null;
-        final shakeX = (isActive && _shakeOnImpact && t < 0.35)
-            ? sin(t * 28 * pi) * 5.0 * (1.0 - t / 0.35)
+        final shakeX = (isActive && _shakeOnImpact && t < 0.42)
+            ? sin(t * 32 * pi) * 9.0 * (1.0 - t / 0.42)
             : 0.0;
-        final flashOpacity = (isActive && t < 0.30)
-            ? (1.0 - t / 0.30) * 0.38
+        final shakeY = (isActive && _shakeOnImpact && t < 0.35)
+            ? cos(t * 24 * pi) * 3.0 * (1.0 - t / 0.35)
             : 0.0;
+        final pulseScale = (isActive && !_shakeOnImpact && t < 0.30)
+            ? 1.0 + sin((t / 0.30) * pi) * 0.06
+            : 1.0;
+        final flashOpacity = (isActive && t < 0.38)
+            ? (1.0 - t / 0.38) * 0.58
+            : 0.0;
+        final badgeScale = t < 0.14
+            ? 0.5 + (t / 0.14) * 0.88
+            : t < 0.28
+            ? 1.38 - ((t - 0.14) / 0.14) * 0.26
+            : 1.12;
 
         return Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.center,
           children: [
             Transform.translate(
-              offset: Offset(shakeX, 0),
-              child: Stack(
-                children: [
-                  child!,
-                  if (flashOpacity > 0)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: _badgeColor.withValues(alpha: flashOpacity),
-                            borderRadius: BorderRadius.circular(10),
+              offset: Offset(shakeX, shakeY),
+              child: Transform.scale(
+                scale: pulseScale,
+                child: Container(
+                  decoration: isActive && flashOpacity > 0
+                      ? BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _badgeColor.withValues(
+                                alpha: flashOpacity * 0.85,
+                              ),
+                              blurRadius: 18,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        )
+                      : null,
+                  child: Stack(
+                    children: [
+                      child!,
+                      if (flashOpacity > 0)
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: _badgeColor.withValues(
+                                  alpha: flashOpacity,
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: _badgeColor.withValues(
+                                    alpha: (flashOpacity * 1.4).clamp(0.0, 1.0),
+                                  ),
+                                  width: 2.2,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
             if (isActive)
               Positioned(
-                top: -6 - (t * 28),
+                top: -10 - (t * 44),
                 child: IgnorePointer(
                   child: Opacity(
-                    opacity: t < 0.75 ? 1.0 : ((1.0 - t) / 0.25).clamp(0.0, 1.0),
+                    opacity: t < 0.78 ? 1.0 : ((1.0 - t) / 0.22).clamp(0.0, 1.0),
                     child: Transform.scale(
-                      scale: t < 0.15 ? 0.7 + (t / 0.15) * 0.4 : 1.0,
+                      scale: badgeScale,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                          horizontal: 14,
+                          vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.88),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: _badgeColor, width: 1.5),
+                          color: Colors.black.withValues(alpha: 0.94),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: _badgeColor, width: 2.0),
                           boxShadow: [
                             BoxShadow(
-                              color: _badgeColor.withValues(alpha: 0.45),
-                              blurRadius: 10,
+                              color: _badgeColor.withValues(alpha: 0.65),
+                              blurRadius: 16,
+                              spreadRadius: 1,
                             ),
                           ],
                         ),
@@ -154,9 +201,9 @@ class _CombatImpactAvatarWrapperState extends State<CombatImpactAvatarWrapper>
                           _badgeText!,
                           style: TextStyle(
                             color: _badgeColor,
-                            fontSize: 13,
+                            fontSize: 17,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 0.3,
+                            letterSpacing: 0.4,
                           ),
                         ),
                       ),

@@ -49,6 +49,8 @@ part 'parts/fight_widgets/chimera_failure_dialog.dart';
 part 'parts/fight_widgets/poison_gauge_card.dart';
 part 'parts/fight_widgets/deselect_die_dialog.dart';
 part 'parts/fight_widgets/combat_avatar_impact.dart';
+part 'parts/fight_widgets/combat_intro_dialog.dart';
+part 'parts/fight_widgets/combat_phase_narrative_banner.dart';
 part 'parts/fight_logic/token_combat_helpers.dart';
 part 'parts/fight_logic/defense_formula_evaluator.dart';
 part 'parts/fight_logic/hydra_logic.dart';
@@ -58,8 +60,8 @@ part 'parts/fight_logic/ourokhor_logic.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.5.34';
-const int appBuildNumber = 499;
+const String appVersionLabel = 'Version 1.5.43';
+const int appBuildNumber = 508;
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);
@@ -1196,6 +1198,7 @@ class AppSettings extends ChangeNotifier {
   String _playerFavoriteHeroName = 'barbare';
   bool _shareStats = true;
   bool _hidePhysicalRequirementsOnStartup = false;
+  bool _showGameRules = true;
   List<Map<String, dynamic>> _localClans = [];
   bool _loaded = false;
   bool _hasLocalSettings = false;
@@ -1215,6 +1218,7 @@ class AppSettings extends ChangeNotifier {
     _playerFavoriteHeroName = 'barbare';
     _shareStats = true;
     _hidePhysicalRequirementsOnStartup = false;
+    _showGameRules = true;
     _localClans = [];
     _loaded = false;
     _hasLocalSettings = false;
@@ -1253,6 +1257,15 @@ class AppSettings extends ChangeNotifier {
   Future<void> setHidePhysicalRequirementsOnStartup(bool value) async {
     if (_hidePhysicalRequirementsOnStartup == value) return;
     _hidePhysicalRequirementsOnStartup = value;
+    notifyListeners();
+    await _save();
+  }
+
+  bool get showGameRules => _showGameRules;
+
+  Future<void> setShowGameRules(bool value) async {
+    if (_showGameRules == value) return;
+    _showGameRules = value;
     notifyListeners();
     await _save();
   }
@@ -1451,6 +1464,7 @@ class AppSettings extends ChangeNotifier {
         _shareStats = json['shareStats'] as bool? ?? true;
         _hidePhysicalRequirementsOnStartup =
             json['hidePhysicalRequirementsOnStartup'] as bool? ?? false;
+        _showGameRules = json['showGameRules'] as bool? ?? true;
         final rawClans = json['localClans'] as List<dynamic>?;
         _localClans = rawClans == null
             ? []
@@ -1692,6 +1706,18 @@ class AppSettings extends ChangeNotifier {
     await _save();
   }
 
+  Future<void> clearProfileOnSignOut() async {
+    _playerPseudo = '';
+    _playerGenericId = _generateDefaultGenericId('');
+    _playerCountryCode = 'FR';
+    _playerFavoriteHeroName = 'barbare';
+    _defeatedEnemyKeys = {};
+    _encounteredEnemyKeys = {};
+    _localClans = [];
+    notifyListeners();
+    await _save();
+  }
+
   Future<void> _save({
     bool syncHeroes = false,
     bool syncDefeated = false,
@@ -1713,6 +1739,7 @@ class AppSettings extends ChangeNotifier {
       'playerFavoriteHero': _playerFavoriteHeroName,
       'shareStats': _shareStats,
       'hidePhysicalRequirementsOnStartup': _hidePhysicalRequirementsOnStartup,
+      'showGameRules': _showGameRules,
       'localClans': _localClans,
     };
     await _storage.write(_key, jsonEncode(payload));

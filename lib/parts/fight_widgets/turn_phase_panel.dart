@@ -53,7 +53,7 @@ class TurnPhasePanel extends StatelessWidget {
       ].join(' | '),
       CombatPhase.minionUpkeep => poisonCount > 0 ? 'Poison x$poisonCount' : '',
       CombatPhase.minionAttack => '',
-      CombatPhase.intro => 'Intro',
+      CombatPhase.intro => '',
     };
 
     return Padding(

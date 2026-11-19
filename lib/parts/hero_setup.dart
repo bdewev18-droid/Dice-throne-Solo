@@ -934,19 +934,10 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
             const SizedBox(height: 12),
             _buildMinionPacksCard(),
             const SizedBox(height: 16),
-            WedgeActionButton(
-              title: 'START',
-              titleAccent: 'RUN',
-              titleAccentColor: const Color(0xff54e98a),
-              blinkTitle: canStart,
-              subtitle: widget.hero.label.toUpperCase(),
-              subtitleColor: const Color(0xffffe22d),
-              imageAsset: widget.hero.asset,
-              imageAlignment: widget.hero.headAlignment,
-              imageScale: 1.0,
-              borderColor: const Color(0xff54e98a),
-              topRatio: 0.60,
-              bottomRatio: 0.46,
+            GameActionButton(
+              label: 'START RUN',
+              icon: Icons.play_arrow_rounded,
+              primary: true,
               onPressed: canStart ? () => widget.onStart(config) : null,
             ),
           ],
@@ -1394,11 +1385,13 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff7a33cc),
-                  foregroundColor: Colors.white,
+                  backgroundColor: GameDesign.actionPrimary,
+                  foregroundColor: GameDesign.goldText,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(
+                      GameDesign.buttonRadius,
+                    ),
                   ),
                 ),
                 icon: const Icon(Icons.style_rounded, size: 18),

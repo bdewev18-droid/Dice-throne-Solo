@@ -125,6 +125,8 @@ class HistoryRepository {
     await _refreshCache();
   }
 
+  Future<void> clearCache() => _cache.clear();
+
   // ---- Cache local (filet hors-ligne / démarrage) ----
 
   Future<void> _writeCache(List<GameRecord> records) async {

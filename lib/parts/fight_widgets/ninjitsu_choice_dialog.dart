@@ -17,10 +17,10 @@ class NinjitsuChoiceDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xff181424),
+      backgroundColor: GameDesign.obsidianBg,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xff8f43ff), width: 2),
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: GameDesign.actionPrimary, width: 1.5),
       ),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
@@ -35,14 +35,8 @@ class NinjitsuChoiceDialog extends StatelessWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xff2a2240),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xff8f43ff).withValues(alpha: 0.5),
-                      blurRadius: 20,
-                      spreadRadius: 2,
-                    ),
-                  ],
+                  color: GameDesign.slateSurface,
+                  border: Border.all(color: GameDesign.slateBorder),
                 ),
                 child: Image.asset(
                   'assets/token/Ninjutsu.webp',
@@ -52,7 +46,7 @@ class NinjitsuChoiceDialog extends StatelessWidget {
                   errorBuilder: (ctx, err, stack) => const Icon(
                     Icons.auto_awesome,
                     size: 54,
-                    color: Color(0xff8f43ff),
+                    color: GameDesign.actionPrimary,
                   ),
                 ),
               ),
@@ -74,10 +68,10 @@ class NinjitsuChoiceDialog extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xff8f43ff).withValues(alpha: 0.25),
+                  color: GameDesign.slateSurface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xff8f43ff).withValues(alpha: 0.6),
+                    color: GameDesign.slateBorder,
                   ),
                 ),
                 child: const Row(
@@ -86,15 +80,15 @@ class NinjitsuChoiceDialog extends StatelessWidget {
                     Icon(
                       Icons.casino,
                       size: 15,
-                      color: Color(0xffce93d8),
+                      color: GameDesign.actionPrimary,
                     ),
                     SizedBox(width: 6),
                     Text(
-                      'Résultat du dé : 6 (Critique)',
+                      'Die Roll: 6 (Critical)',
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xffce93d8),
+                        fontWeight: FontWeight.w700,
+                        color: GameDesign.actionPrimary,
                       ),
                     ),
                   ],
@@ -102,7 +96,7 @@ class NinjitsuChoiceDialog extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Choisissez votre récompense pour cette attaque :',
+                'Choose your reward for this attack:',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white70,
@@ -115,8 +109,8 @@ class NinjitsuChoiceDialog extends StatelessWidget {
               _NinjitsuChoiceCard(
                 icon: Icons.local_fire_department_rounded,
                 iconColor: const Color(0xffffb74d),
-                title: '+2 Dégâts',
-                description: 'Ajoute 2 dégâts supplémentaires à l\'attaque en cours.',
+                title: '+2 Damage',
+                description: 'Adds 2 extra damage to the current attack.',
                 onTap: () => Navigator.of(context).pop(1),
               ),
               const SizedBox(height: 10),
@@ -125,8 +119,8 @@ class NinjitsuChoiceDialog extends StatelessWidget {
               _NinjitsuChoiceCard(
                 icon: Icons.science_outlined,
                 iconColor: const Color(0xff66bb6a),
-                title: 'Poison Différé',
-                description: 'Inflige 1 jeton Poison Différé au défenseur (3 dégâts en phase d\'entretien).',
+                title: 'Delayed Poison',
+                description: 'Inflicts 1 Delayed Poison token on the defender (3 damage during upkeep).',
                 onTap: () => Navigator.of(context).pop(2),
               ),
               const SizedBox(height: 10),

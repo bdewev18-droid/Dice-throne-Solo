@@ -151,6 +151,7 @@ class CombatAiChatDock extends StatefulWidget {
     this.minionChaosDefenseTokens = 0,
     this.minionChaosDamage = 0,
     this.onNext,
+    this.onOpenLog,
     super.key,
   });
 
@@ -278,6 +279,7 @@ class CombatAiChatDock extends StatefulWidget {
   final VoidCallback onChanged;
   final VoidCallback? onEditHeroTokens;
   final VoidCallback? onEditEnemyTokens;
+  final VoidCallback? onOpenLog;
   final ValueChanged<String>? onHeroTokenRemoved;
   final ValueChanged<String>? onHeroTokenAdded;
   final ValueChanged<String>? onEnemyTokenRemoved;
@@ -496,10 +498,6 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
         entangleCount > 0 ||
         heroWellspringCount > 0 ||
         enemyWellspringCount > 0;
-
-    if (!aiMode && !showResolution && onFinish == null && !hasAnyAction) {
-      return const SizedBox.shrink();
-    }
     final chatAccent =
         phase == CombatPhase.hero || phase == CombatPhase.heroUpkeep
         ? heroAccent
@@ -773,6 +771,73 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
     final VoidCallback? onUseWellspring = isHeroTurn
         ? onUseHeroWellspring
         : onUseEnemyWellspring;
+    final attackerName = phase == CombatPhase.hero
+        ? adventure.hero.label
+        : enemy.label;
+    final defenderName = phase == CombatPhase.hero
+        ? enemy.label
+        : adventure.hero.label;
+    final isAttackAvoided =
+        showParlayAttackCover ||
+        smokeBombSuccess ||
+        showShadowsAttackCover ||
+        showFlightAttackCover ||
+        showEvasiveAttackCover ||
+        isAgilityAvoided ||
+        blindingLightZeroDamage;
+    final isDefenseBypassed =
+        showStunCover || showWebbedAttackCover || flightUndefendable;
+    final effectiveDefense = isDefenseBypassed ? 0 : defenseValue;
+    final pendingDamage = isAttackAvoided || attackValue <= 0
+        ? 0
+        : (attackValue - effectiveDefense).clamp(0, 99);
+    final anticipationLines = <String>[];
+    if (showResolution) {
+      if (isAttackAvoided) {
+        anticipationLines.add(
+          'Attack avoided: $defenderName will take 0 damage.',
+        );
+      } else if (attackValue <= 0) {
+        anticipationLines.add('$defenderName will take 0 damage.');
+      } else if (isDefenseBypassed) {
+        anticipationLines.add(
+          'Undefendable: $defenderName will take $pendingDamage damage.',
+        );
+      } else {
+        anticipationLines.add(
+          '$defenderName will take $pendingDamage damage ($attackValue ATK vs $effectiveDefense DEF).',
+        );
+      }
+      if (heroTokens.isNotEmpty) {
+        anticipationLines.add(
+          '${adventure.hero.label} will receive: ${heroTokens.join(', ')}.',
+        );
+      }
+      if (minionTokens.isNotEmpty) {
+        anticipationLines.add(
+          '${enemy.label} will receive: ${minionTokens.join(', ')}.',
+        );
+      }
+      if (returnDamage > 0) {
+        anticipationLines.add(
+          '$attackerName will take $returnDamage${returnDamageUndefendable ? ' undefendable' : ''} return damage.',
+        );
+      }
+      if (lifeSteal > 0) {
+        anticipationLines.add(
+          '$attackerName will heal $lifeSteal HP (Life Steal).',
+        );
+      }
+      if (loseHp > 0) {
+        anticipationLines.add('${adventure.hero.label} will lose $loseHp HP.');
+      }
+      if (enemyHeal > 0) {
+        anticipationLines.add('${enemy.label} will heal $enemyHeal HP.');
+      }
+      if (cpSteal > 0) {
+        anticipationLines.add('$attackerName will steal $cpSteal CP.');
+      }
+    }
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xf2121212),
@@ -792,6 +857,60 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
             ),
             const SizedBox(height: 8),
           ],
+          if (showResolution && anticipationLines.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: GameDesign.slateSurface.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: GameDesign.actionPrimary.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.upcoming_rounded,
+                        size: 14,
+                        color: GameDesign.actionPrimary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'ON OK — PENDING OUTCOME',
+                        style: TextStyle(
+                          color: GameDesign.actionPrimary.withValues(
+                            alpha: 0.9,
+                          ),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.7,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  for (var i = 0; i < anticipationLines.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 2),
+                    Text(
+                      anticipationLines[i],
+                      style: TextStyle(
+                        color: i == 0
+                            ? Colors.white.withValues(alpha: 0.95)
+                            : Colors.white.withValues(alpha: 0.8),
+                        fontSize: 12,
+                        fontWeight: i == 0 ? FontWeight.w700 : FontWeight.w500,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           _TokenGridLayout(
             children: [
               if (showWellspringRow) ...[
@@ -2661,194 +2780,40 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
               ],
             ),
           ],
-          GestureDetector(
-            onTap: () => setState(() => _isCollapsed = !_isCollapsed),
-            child: Container(
-              width: double.infinity,
-              alignment: Alignment.center,
-              padding: const EdgeInsets.only(top: 2, bottom: 2),
-              child: Icon(
-                _isCollapsed
-                    ? Icons.keyboard_arrow_up
-                    : Icons.keyboard_arrow_down,
-                color: Colors.white54,
-                size: 20,
+          if (!showResolution && phase != CombatPhase.intro)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GameActionButton(
+                      label: 'BACK',
+                      icon: Icons.arrow_back_rounded,
+                      primary: false,
+                      onPressed: widget.showUndo ? widget.onUndo : null,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: GameActionButton(
+                      label: 'LOG',
+                      icon: Icons.receipt_long_rounded,
+                      primary: false,
+                      onPressed: widget.onOpenLog,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: GameActionButton(
+                      label: 'NEXT',
+                      icon: Icons.arrow_forward_rounded,
+                      primary: true,
+                      onPressed: widget.canAdvancePhase ? widget.onNext : null,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          if (!_isCollapsed) ...[
-            const SizedBox(height: 8),
-            if (!aiMode)
-              const SizedBox.shrink()
-            else
-              _AiChatWithHealth(
-                            isIntroPhase: phase == CombatPhase.intro,
-                            isRollPhase:
-                                phase == CombatPhase.hero ||
-                                phase == CombatPhase.minionAttack,
-                            message: _battleChatText(aiMessage, tokenText),
-                            accent: chatAccent,
-                            heroHp: adventure.health,
-                            heroCp: adventure.combatPoints,
-                            enemyHp: enemy.health,
-                            enemyCp: enemy.combatPoints,
-                            enemyCpInfinity: enemyCpInfinity,
-                            enemyColor: enemy.rank.color,
-                            heroName: adventure.hero.label,
-                            enemyName: enemy.label,
-                            heroTokens: adventure.alterations.map((t) {
-                              if (shadowsActive &&
-                                  (t.toLowerCase() == 'shadows' ||
-                                      t.toLowerCase() == 'ombre')) {
-                                return '${t}_active';
-                              }
-                              if (phase == CombatPhase.hero &&
-                                  (barbedVineActive || barbedVineCount > 0) &&
-                                  (t.toLowerCase() == 'barbed vine' ||
-                                      t.toLowerCase() == 'barbedvine' ||
-                                      t.toLowerCase() == 'ronces' ||
-                                      t.toLowerCase() == 'ronce')) {
-                                return '${t}_active';
-                              }
-                              if ((phase == CombatPhase.hero ||
-                                      phase == CombatPhase.minionAttack) &&
-                                  influenceRollReduction > 0 &&
-                                  t.toLowerCase() == 'influence') {
-                                return '$t (-$influenceRollReduction)_active';
-                              }
-                              return t;
-                            }).toList(),
-                            enemyTokens: enemy.alterations.map((t) {
-                              if (phase == CombatPhase.minionAttack &&
-                                  (barbedVineActive || barbedVineCount > 0) &&
-                                  (t.toLowerCase() == 'barbed vine' ||
-                                      t.toLowerCase() == 'barbedvine' ||
-                                      t.toLowerCase() == 'ronces' ||
-                                      t.toLowerCase() == 'ronce')) {
-                                return '${t}_active';
-                              }
-                              if ((phase == CombatPhase.hero ||
-                                      phase == CombatPhase.minionAttack) &&
-                                  influenceRollReduction > 0 &&
-                                  t.toLowerCase() == 'influence') {
-                                return '$t (-$influenceRollReduction)_active';
-                              }
-                              return t;
-                            }).toList(),
-                            onEditHeroTokens: onEditHeroTokens,
-                            onEditEnemyTokens: onEditEnemyTokens,
-                            onTokensChanged: onChanged,
-                            onHeroTokenRemoved: onHeroTokenRemoved,
-                            onHeroTokenAdded: onHeroTokenAdded,
-                            onEnemyTokenRemoved: onEnemyTokenRemoved,
-                            onEnemyTokenAdded: onEnemyTokenAdded,
-                            portraitAsset:
-                                phase == CombatPhase.hero ||
-                                    phase == CombatPhase.heroUpkeep
-                                ? adventure.hero.asset
-                                : enemy.previewAsset,
-                            portraitAlignment:
-                                phase == CombatPhase.hero ||
-                                    phase == CombatPhase.heroUpkeep
-                                ? _topCropAlignment(
-                                    adventure.hero.imageAlignment,
-                                  )
-                                : enemy.profileKey == 'naraxus'
-                                ? Alignment.topCenter
-                                : _topCropAlignment(Alignment.centerLeft),
-                            portraitScale:
-                                phase == CombatPhase.hero ||
-                                    phase == CombatPhase.heroUpkeep
-                                ? adventure.hero.imageScale
-                                : 1,
-                            portraitFit: BoxFit.cover,
-                            showPortraitVitals:
-                                phase == CombatPhase.hero ||
-                                phase == CombatPhase.minionAttack,
-                            showHealthControls: false,
-                            onHeroHpSaved: (value) {
-                              adventure.setHeroHealth(value);
-                              onChanged();
-                            },
-                            onHeroCpSaved: (value) {
-                              adventure.setHeroPc(value);
-                              onChanged();
-                            },
-                            onEnemyHpSaved: (value) {
-                              final oldHp = enemy.health;
-                              enemy.health = value.clamp(0, enemy.maxHealth);
-                              if (oldHp != enemy.health) {
-                                adventure.log(
-                                  '[HP] ${enemy.label} HP: $oldHp âž” ${enemy.health} (Manual Adjustment)',
-                                );
-                              }
-                              onChanged();
-                            },
-                            onEnemyCpSaved: (value) {
-                              final oldCp = enemy.combatPoints;
-                              enemy.combatPoints = value.clamp(0, 99);
-                              if (oldCp != enemy.combatPoints) {
-                                adventure.log(
-                                  '[CP] ${enemy.label} CP: $oldCp âž” ${enemy.combatPoints} (Manual Adjustment)',
-                                );
-                              }
-                              onChanged();
-                            },
-                            trailing: SizedBox(
-                              width: 52,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(
-                                    child: Material(
-                                      color: GameDesign.slateSurface,
-                                      child: InkWell(
-                                        onTap: widget.showUndo ? widget.onUndo : null,
-                                        child: Center(
-                                          child: Icon(
-                                            Icons.arrow_back_rounded,
-                                            size: 22,
-                                            color: widget.showUndo
-                                                ? Colors.white
-                                                : Colors.white24,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    height: 1,
-                                    color: GameDesign.slateBorder,
-                                  ),
-                                  Expanded(
-                                    child: _IntroPulse(
-                                      active: widget.phase == CombatPhase.intro,
-                                      child: Material(
-                                        color: widget.canAdvancePhase
-                                            ? GameDesign.gold
-                                            : GameDesign.slateSurface,
-                                        child: InkWell(
-                                          onTap: widget.canAdvancePhase
-                                              ? widget.onNext
-                                              : null,
-                                          child: Center(
-                                            child: Icon(
-                                              Icons.arrow_forward_rounded,
-                                              size: 22,
-                                              color: widget.canAdvancePhase
-                                                  ? GameDesign.goldText
-                                                  : Colors.white24,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-          ],
           if (onFinish != null) ...[
             const SizedBox(height: 10),
             Center(

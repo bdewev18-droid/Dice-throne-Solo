@@ -112,15 +112,17 @@ class _RewardPanelState extends State<RewardPanel> {
                 if (d20 == null)
                   FilledButton.icon(
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xff8f43ff),
-                      foregroundColor: Colors.white,
+                      backgroundColor: GameDesign.actionPrimary,
+                      foregroundColor: GameDesign.goldText,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 28,
                         vertical: 14,
                       ),
                       minimumSize: const Size(170, 50),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(
+                          GameDesign.buttonRadius,
+                        ),
                       ),
                       elevation: 4,
                     ),
@@ -203,8 +205,11 @@ class _RewardPanelState extends State<RewardPanel> {
                     }
                   },
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xff8f43ff),
-              foregroundColor: Colors.white,
+              backgroundColor: GameDesign.actionPrimary,
+              foregroundColor: GameDesign.goldText,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(GameDesign.buttonRadius),
+              ),
             ),
             icon: const Icon(Icons.check),
             label: Text(
@@ -1090,6 +1095,14 @@ Future<List<String>?> showAlterationDialog(
         }
         visibleRules.sort((a, b) => a.label.compareTo(b.label));
         return Dialog(
+          backgroundColor: GameDesign.obsidianBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: BorderSide(
+              color: GameDesign.actionPrimary.withValues(alpha: 0.65),
+              width: 1.5,
+            ),
+          ),
           insetPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 18),
           child: SafeArea(
             child: Padding(
@@ -1235,9 +1248,10 @@ Future<List<String>?> showAlterationDialog(
                     ),
                   ),
                   const SizedBox(height: 8),
-                  FilledButton(
+                  GameActionButton(
+                    label: 'SAVE',
+                    primary: true,
                     onPressed: () => Navigator.of(context).pop(selected),
-                    child: const Text('Save'),
                   ),
                 ],
               ),
@@ -1263,7 +1277,14 @@ void showTokenDetails(
 }) {
   showModalBottomSheet<void>(
     context: context,
-    backgroundColor: const Color(0xff111111),
+    backgroundColor: GameDesign.obsidianBg,
+    shape: RoundedRectangleBorder(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      side: BorderSide(
+        color: GameDesign.actionPrimary.withValues(alpha: 0.5),
+        width: 1.2,
+      ),
+    ),
     showDragHandle: true,
     builder: (context) => StatefulBuilder(
       builder: (context, setSheetState) {

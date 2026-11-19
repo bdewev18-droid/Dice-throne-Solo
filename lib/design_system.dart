@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Unified Game Design System ("Obsidian & Gold") for D.T Solo Quest.
+/// Unified Game Design System ("Obsidian & Platinum") for D.T Solo Quest.
 /// Guarantees visual consistency from Home Page -> Hero Choice -> Map -> Fight.
 class GameDesign {
   const GameDesign._();
 
-  // Primary Action Color (outside the 4 game dice colors)
-  static const Color gold = Color(0xffffe22d);
-  static const Color goldDark = Color(0xffd4b411);
+  // Primary Action Color (Platinum — outside hero yellow and 5 enemy rank colors)
+  static const Color actionPrimary = Color(0xffe2e8f0);
+  static const Color gold = actionPrimary;
+  static const Color goldDark = Color(0xffcbd5e1);
   static const Color goldText = Color(0xff121212);
 
   // Secondary / Consultation Surfaces

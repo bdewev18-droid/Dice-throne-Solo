@@ -102,7 +102,7 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
       label: 'Attack',
       icon: Icons.gps_fixed,
       color: enemy.rank.color,
-      trailing: AttackObjectiveInline(enemy: enemy),
+      trailing: const SizedBox.shrink(),
       expanded: widget.aiMode ? _showAttack : true,
       onTap: () => setState(() {
         if (!widget.aiMode) {
@@ -363,9 +363,14 @@ class _EnemyRulesPanelState extends State<EnemyRulesPanel> {
                             widget.onRestartCombat(restartRank);
                           },
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xff8f43ff),
-                            foregroundColor: Colors.white,
+                            backgroundColor: GameDesign.actionPrimary,
+                            foregroundColor: GameDesign.goldText,
                             padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                GameDesign.buttonRadius,
+                              ),
+                            ),
                           ),
                           child: const Text(
                             'OK',

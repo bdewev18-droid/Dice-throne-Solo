@@ -442,6 +442,27 @@ class _FightPageState extends State<FightPage> {
     if (enemy.profileKey == 'ourokhor') {
       _checkAndTriggerOurokhorMilestones();
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _phase != CombatPhase.intro) return;
+      _showCombatIntroDialog();
+    });
+  }
+
+  void _showCombatIntroDialog() {
+    CombatIntroDialog.show(
+      context,
+      adventure: widget.adventure,
+      enemy: enemy,
+      battleText: _openingAiLines(
+        widget.adventure,
+        enemy,
+        widget.historyRecords,
+      ),
+      onNext: () {
+        if (!mounted || _phase != CombatPhase.intro) return;
+        _advancePhase();
+      },
+    );
   }
 
   String _currentAiMessage() {
@@ -565,6 +586,12 @@ class _FightPageState extends State<FightPage> {
                   onSettings: () => _openSettings(context),
                   onApplyUpkeep: () => _applyUpkeep(),
                   onApplyHeroUpkeep: () => _applyHeroUpkeep(),
+                ),
+                CombatPhaseNarrativeBanner(
+                  phase: _phase,
+                  adventure: widget.adventure,
+                  enemy: enemy,
+                  message: aiMessage,
                 ),
                 if (_phase == CombatPhase.hero ||
                     _phase == CombatPhase.minionAttack)
@@ -907,7 +934,8 @@ class _FightPageState extends State<FightPage> {
                     ],
                   ),
                 ),
-                if (!_isResolutionMode || _reviewingLog)
+                if (_phase != CombatPhase.intro &&
+                    (!_isResolutionMode || _reviewingLog))
                   CombatAiChatDock(
                     aiMode: _aiMode,
                     influenceRollReduction: _influenceRollReduction,
@@ -997,6 +1025,7 @@ class _FightPageState extends State<FightPage> {
                     onChanged: _syncAfterTokensChanged,
                     onEditHeroTokens: _editHeroTokens,
                     onEditEnemyTokens: _editEnemyTokens,
+                    onOpenLog: _openAdventureDetails,
                     onHeroTokenRemoved: _onHeroTokenRemoved,
                     onHeroTokenAdded: _onHeroTokenAdded,
                     onEnemyTokenRemoved: _onEnemyTokenRemoved,
@@ -11876,7 +11905,7 @@ class MinionAiPanel extends StatelessWidget {
                                   diceToRoll > 0
                               ? onRoll
                               : null),
-                    color: GameDesign.gold,
+                    color: isDefensePhase ? heroAccent : GameDesign.actionPrimary,
                     child: Text(
                       isDefensePhase
                           ? 'ROLL DEFENSE'
@@ -11893,14 +11922,22 @@ class MinionAiPanel extends StatelessWidget {
                     style: FilledButton.styleFrom(
                       backgroundColor: heroAccent,
                       foregroundColor: Colors.black,
-                      minimumSize: const Size(0, 46),
+                      minimumSize: const Size(0, GameDesign.buttonHeight),
                       padding: const EdgeInsets.symmetric(horizontal: 4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          GameDesign.buttonRadius,
+                        ),
+                      ),
                     ),
                     onPressed: onToggleEdit,
                     child: Text(
                       editMode ? 'Stop edit' : 'Edit die',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 13),
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ),
@@ -11911,14 +11948,22 @@ class MinionAiPanel extends StatelessWidget {
                     style: FilledButton.styleFrom(
                       backgroundColor: heroAccent,
                       foregroundColor: Colors.black,
-                      minimumSize: const Size(0, 46),
+                      minimumSize: const Size(0, GameDesign.buttonHeight),
                       padding: const EdgeInsets.symmetric(horizontal: 4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          GameDesign.buttonRadius,
+                        ),
+                      ),
                     ),
                     onPressed: onToggleRerollOne,
                     child: Text(
                       rerollOneMode ? 'Choose' : 'Reroll die',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 13),
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ),
@@ -12040,16 +12085,11 @@ String _introAiMessage(
   EnemyNode enemy,
   List<GameRecord> historyRecords,
 ) {
-  final whoStarts = _firstCombatPhaseFor(enemy);
-  final starterLabel = whoStarts == CombatPhase.heroUpkeep
-      ? adventure.hero.label
-      : enemy.label;
   final isFirstEverCombat =
       historyRecords.isEmpty && adventure.defeatedEnemies.isEmpty;
   return [
     _openingAiLines(adventure, enemy, historyRecords),
     if (isFirstEverCombat) '{video:how_to_play}',
-    '_Press the flashing arrow to start $starterLabel\'s upkeep phase._',
   ].join('\n');
 }
 
@@ -16655,8 +16695,20 @@ class _EnemyCombatPanelState extends State<EnemyCombatPanel> {
                   SizedBox(
                     width: 88,
                     child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: GameDesign.actionPrimary,
+                        foregroundColor: GameDesign.goldText,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            GameDesign.buttonRadius,
+                          ),
+                        ),
+                      ),
                       onPressed: _saveEnemyStat,
-                      child: const Text('Save'),
+                      child: const Text(
+                        'Save',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
                     ),
                   ),
                 ],

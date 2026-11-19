@@ -37,10 +37,10 @@ class _NanobotDetonationDialogState extends State<_NanobotDetonationDialog> {
         : (widget.enemyNanitesCount == 2 ? 3 : 5);
 
     return AlertDialog(
-      backgroundColor: const Color(0xff181424),
+      backgroundColor: GameDesign.obsidianBg,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xff8f43ff), width: 2),
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: GameDesign.actionPrimary, width: 1.5),
       ),
       title: Row(
         children: [
@@ -55,7 +55,10 @@ class _NanobotDetonationDialogState extends State<_NanobotDetonationDialog> {
             ),
           ),
           const Expanded(
-            child: Text('Nanobot', style: TextStyle(color: Color(0xff8f43ff))),
+            child: Text(
+              'Nanobot',
+              style: TextStyle(color: GameDesign.actionPrimary),
+            ),
           ),
         ],
       ),
@@ -81,10 +84,10 @@ class _NanobotDetonationDialogState extends State<_NanobotDetonationDialog> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xff251d38),
+                color: GameDesign.slateSurface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xff8f43ff).withValues(alpha: 0.4),
+                  color: GameDesign.slateBorder,
                 ),
               ),
               child: Row(
@@ -138,12 +141,18 @@ class _NanobotDetonationDialogState extends State<_NanobotDetonationDialog> {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context, false),
                 style: OutlinedButton.styleFrom(
+                  backgroundColor: GameDesign.slateSurface,
                   foregroundColor: Colors.white,
-                  side: const BorderSide(color: Color(0xff8f43ff), width: 1.5),
+                  side: const BorderSide(
+                    color: GameDesign.slateBorder,
+                    width: 1.5,
+                  ),
                   minimumSize: const Size.fromHeight(46),
                   padding: EdgeInsets.zero,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(
+                      GameDesign.buttonRadius,
+                    ),
                   ),
                 ),
                 child: const Text(
@@ -166,11 +175,14 @@ class _NanobotDetonationDialogState extends State<_NanobotDetonationDialog> {
                       }
                     : () => Navigator.pop(context, true),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xff8f43ff),
+                  backgroundColor: GameDesign.actionPrimary,
+                  foregroundColor: GameDesign.goldText,
                   minimumSize: const Size.fromHeight(46),
                   padding: EdgeInsets.zero,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(
+                      GameDesign.buttonRadius,
+                    ),
                   ),
                 ),
                 child: Row(

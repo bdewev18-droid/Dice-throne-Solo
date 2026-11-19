@@ -914,10 +914,10 @@ void showRulebooksDialog(BuildContext context, {bool isNaraxus = false}) {
   showDialog<void>(
     context: context,
     builder: (dialogCtx) => Dialog(
-      backgroundColor: const Color(0xff0d1527),
+      backgroundColor: GameDesign.obsidianBg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xff8f43ff), width: 1.5),
+        side: const BorderSide(color: GameDesign.actionPrimary, width: 1.5),
       ),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
@@ -930,7 +930,11 @@ void showRulebooksDialog(BuildContext context, {bool isNaraxus = false}) {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.menu_book_rounded, color: Color(0xff8f43ff), size: 24),
+                  const Icon(
+                    Icons.menu_book_rounded,
+                    color: GameDesign.actionPrimary,
+                    size: 24,
+                  ),
                   const SizedBox(width: 10),
                   const Expanded(
                     child: Column(
@@ -964,12 +968,10 @@ void showRulebooksDialog(BuildContext context, {bool isNaraxus = false}) {
                 margin: const EdgeInsets.only(bottom: 14),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xff2d124d), Color(0xff180d2e)],
-                  ),
+                  color: GameDesign.slateSurface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: const Color(0xff8f43ff).withValues(alpha: 0.6),
+                    color: GameDesign.slateBorder,
                   ),
                 ),
                 child: Row(
@@ -2066,10 +2068,15 @@ class _EndGameDialog extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
+                        backgroundColor: GameDesign.slateSurface,
                         foregroundColor: Colors.white,
-                        side: const BorderSide(color: Color(0xff8f43ff)),
+                        side: const BorderSide(color: GameDesign.slateBorder),
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            GameDesign.buttonRadius,
+                          ),
+                        ),
                       ),
                       onPressed: onOpenHistory,
                       icon: const Icon(Icons.history, size: 18),
@@ -2081,14 +2088,21 @@ class _EndGameDialog extends StatelessWidget {
               const SizedBox(height: 10),
               FilledButton.icon(
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xff8f43ff),
-                  foregroundColor: Colors.white,
+                  backgroundColor: GameDesign.actionPrimary,
+                  foregroundColor: GameDesign.goldText,
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      GameDesign.buttonRadius,
+                    ),
+                  ),
                 ),
                 onPressed: onReplay,
                 icon: const Icon(Icons.replay, size: 18),
-                label: const Text('Play Again'),
+                label: const Text(
+                  'Play Again',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
               ),
               const SizedBox(height: 6),
               TextButton(
@@ -2727,11 +2741,14 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                                           child: IconButton.filled(
                                             style: IconButton.styleFrom(
                                               backgroundColor:
-                                                  const Color(0xff8f43ff),
-                                              foregroundColor: Colors.white,
+                                                  GameDesign.actionPrimary,
+                                              foregroundColor:
+                                                  GameDesign.goldText,
                                               shape: RoundedRectangleBorder(
                                                 borderRadius:
-                                                    BorderRadius.circular(8),
+                                                    BorderRadius.circular(
+                                                      GameDesign.buttonRadius,
+                                                    ),
                                               ),
                                             ),
                                             tooltip: 'Start fight',
@@ -2808,11 +2825,13 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                                       child: IconButton.filled(
                                         style: IconButton.styleFrom(
                                           backgroundColor:
-                                              const Color(0xff8f43ff),
-                                          foregroundColor: Colors.white,
+                                              GameDesign.actionPrimary,
+                                          foregroundColor: GameDesign.goldText,
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
-                                                BorderRadius.circular(8),
+                                                BorderRadius.circular(
+                                                  GameDesign.buttonRadius,
+                                                ),
                                           ),
                                         ),
                                         tooltip: 'Start fight',
@@ -3189,24 +3208,36 @@ class PauseRunDialog extends StatelessWidget {
             children: [
               FilledButton.icon(
                 onPressed: () =>
-                    Navigator.of(context).pop(_PauseAction.resumeLater),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xff8f43ff),
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.save),
-                label: const Text('Resume later'),
-              ),
-              const SizedBox(height: 10),
-              FilledButton.icon(
-                onPressed: () =>
                     Navigator.of(context).pop(_PauseAction.abandon),
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  foregroundColor: Colors.white,
+                  backgroundColor: GameDesign.actionPrimary,
+                  foregroundColor: GameDesign.goldText,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.4,
+                  ),
                 ),
-                icon: const Icon(Icons.flag),
-                label: const Text('Abandon'),
+                icon: const Icon(
+                  Icons.flag_rounded,
+                  size: 18,
+                  color: Colors.redAccent,
+                ),
+                label: const Text('ABANDON RUN'),
+              ),
+              const SizedBox(height: 10),
+              GameActionButton(
+                label: 'RESUME LATER',
+                icon: Icons.save_rounded,
+                primary: false,
+                onPressed: () =>
+                    Navigator.of(context).pop(_PauseAction.resumeLater),
               ),
             ],
           ),

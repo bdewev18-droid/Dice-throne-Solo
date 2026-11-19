@@ -2762,31 +2762,12 @@ class _BossBattleDetailPageState extends State<BossBattleDetailPage> {
               ),
             ),
           ),
-          child: SizedBox(
+          child: GameActionButton(
+            label: 'CHOOSE HERO & FIGHT ${profile.name.toUpperCase()}',
+            icon: Icons.local_fire_department_rounded,
+            primary: true,
             height: 54,
-            child: ElevatedButton.icon(
-              onPressed: widget.onChooseHeroAndFight,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xffd51f2a),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: const BorderSide(
-                    color: Color(0xffffe22d),
-                    width: 1.5,
-                  ),
-                ),
-              ),
-              icon: const Icon(Icons.local_fire_department, size: 24),
-              label: Text(
-                'CHOOSE HERO & FIGHT ${profile.name.toUpperCase()}',
-                style: const TextStyle(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.6,
-                ),
-              ),
-            ),
+            onPressed: widget.onChooseHeroAndFight,
           ),
         ),
       ),

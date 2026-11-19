@@ -37,11 +37,11 @@ class DiscardPositiveTokenDialog extends StatelessWidget {
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xff181a20),
-          borderRadius: BorderRadius.circular(16),
+          color: GameDesign.obsidianBg,
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: const Color(0xffffe22d).withValues(alpha: 0.6),
-            width: 1.8,
+            color: GameDesign.actionPrimary.withValues(alpha: 0.7),
+            width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
@@ -61,16 +61,16 @@ class DiscardPositiveTokenDialog extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xffffe22d).withValues(alpha: 0.15),
+                    color: GameDesign.actionPrimary.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: const Color(0xffffe22d).withValues(alpha: 0.4),
+                      color: GameDesign.actionPrimary.withValues(alpha: 0.45),
                       width: 1.2,
                     ),
                   ),
                   child: const Icon(
                     Icons.stars_rounded,
-                    color: Color(0xffffe22d),
+                    color: GameDesign.actionPrimary,
                     size: 24,
                   ),
                 ),
@@ -83,7 +83,7 @@ class DiscardPositiveTokenDialog extends StatelessWidget {
                       const Text(
                         'DISCARD STATUS TOKEN',
                         style: TextStyle(
-                          color: Color(0xffffe22d),
+                          color: GameDesign.actionPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.1,
@@ -171,25 +171,10 @@ class DiscardPositiveTokenDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
+            GameActionButton(
+              label: 'CONFIRM',
+              primary: true,
               onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xffffe22d),
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'CONFIRM',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13,
-                  letterSpacing: 0.8,
-                ),
-              ),
             ),
           ],
         ),
