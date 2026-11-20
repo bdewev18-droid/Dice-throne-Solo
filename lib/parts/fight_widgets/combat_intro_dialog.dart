@@ -44,13 +44,19 @@ class CombatIntroDialog extends StatelessWidget {
         .toList();
   }
 
-  Widget _buildPortrait(String assetPath, Color accentColor) {
+  Widget _buildPortrait(
+    String assetPath,
+    Color accentColor, {
+    Alignment alignment = Alignment.center,
+    BoxFit fit = BoxFit.cover,
+  }) {
     final isNetwork =
         assetPath.startsWith('http://') || assetPath.startsWith('https://');
     final image = isNetwork
         ? Image.network(
             assetPath,
-            fit: BoxFit.cover,
+            fit: fit,
+            alignment: alignment,
             errorBuilder: (_, _, _) => const Icon(
               Icons.person_rounded,
               color: Colors.white54,
@@ -59,7 +65,8 @@ class CombatIntroDialog extends StatelessWidget {
           )
         : Image.asset(
             assetPath,
-            fit: BoxFit.cover,
+            fit: fit,
+            alignment: alignment,
             errorBuilder: (_, _, _) => const Icon(
               Icons.person_rounded,
               color: Colors.white54,
@@ -125,6 +132,7 @@ class CombatIntroDialog extends StatelessWidget {
                         _buildPortrait(
                           adventure.hero.asset,
                           const Color(0xffffe22d),
+                          alignment: _heroEyeAlignment(adventure.hero),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -171,6 +179,8 @@ class CombatIntroDialog extends StatelessWidget {
                         _buildPortrait(
                           enemy.previewAsset,
                           enemy.rank.color,
+                          alignment: _minionEyeAlignment(enemy),
+                          fit: _minionEyeFit(enemy),
                         ),
                         const SizedBox(height: 8),
                         Text(

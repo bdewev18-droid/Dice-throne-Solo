@@ -145,6 +145,7 @@ class _FightPageState extends State<FightPage> {
   final ScrollController _combatScrollController = ScrollController();
   final GlobalKey _attackRulesKey = GlobalKey();
   final GlobalKey _defenseRulesKey = GlobalKey();
+  final GlobalKey _diceSectionKey = GlobalKey();
   final GlobalKey _extraDicePhaseKey = GlobalKey();
   final List<GameDie> _dice = [];
   int _diceToRoll = 6;
@@ -490,6 +491,31 @@ class _FightPageState extends State<FightPage> {
     );
   }
 
+  String _phaseNarrativeMessage() {
+    if (!_aiMode) return '';
+    return _aiMessageFor(
+      enemy,
+      _phase,
+      _dice,
+      _rollCount,
+      widget.adventure,
+      widget.historyRecords,
+      '',
+      _extraDiceOutcomeMessage,
+      _heroAttackCount,
+      _lastHeroAttack,
+      _heroAttackTotal,
+      blindingLightRoll: _blindingLightRoll,
+      blindingLightZeroDamage: _blindingLightZeroDamage,
+      blindingLightReducedDamage: _blindingLightReducedDamage,
+      blindingLightBaseAttack: _blindingLightBaseAttack,
+      heroCoalTriggered: _heroCoalTriggered,
+      minionCoalTriggered: _minionCoalTriggered,
+      heroSilenceActive: _isHeroSilenced,
+      minionSilenceActive: _isMinionSilenced,
+    );
+  }
+
   List<Map<String, dynamic>> _diceSnapshot() {
     final visible = _dice.take(_visibleDiceCount.clamp(0, 6)).toList();
     return [
@@ -570,74 +596,53 @@ class _FightPageState extends State<FightPage> {
             }
           },
           child: SafeArea(
-            child: Column(
+            child: Stack(
               children: [
-                CombatBottomDock(
-                  phase: _phase,
-                  adventure: widget.adventure,
-                  enemy: enemy,
-                  primaryEnemy: _primaryEnemy,
-                  secondaryEnemy: _secondaryEnemy,
-                  upkeepApplied: _upkeepApplied,
-                  heroUpkeepApplied: _heroUpkeepApplied,
-                  canAdvancePhase: canAdvancePhase,
-                  onPhaseChanged: _setPhase,
-                  developerMode: _developerMode,
-                  onSettings: () => _openSettings(context),
-                  onApplyUpkeep: () => _applyUpkeep(),
-                  onApplyHeroUpkeep: () => _applyHeroUpkeep(),
-                ),
-                CombatPhaseNarrativeBanner(
-                  phase: _phase,
-                  adventure: widget.adventure,
-                  enemy: enemy,
-                  message: aiMessage,
-                ),
-                if (_phase == CombatPhase.hero ||
-                    _phase == CombatPhase.minionAttack)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: FightStatusPanel(
-                      adventure: widget.adventure,
-                      enemy: enemy,
-                      phase: _phase,
-                      heroTokens: _currentDisplayHeroTokens,
-                      enemyTokens: _currentDisplayEnemyTokens,
-                      naraxusRollHistory: _naraxusRollHistory,
-                      onFinish: null,
-                      onChanged: _syncAfterTokensChanged,
-                      onEditHeroTokens: _editHeroTokens,
-                      onEditEnemyTokens: _editEnemyTokens,
-                      onHeroTokenRemoved: _onHeroTokenRemoved,
-                      onHeroTokenAdded: _onHeroTokenAdded,
-                      onEnemyTokenRemoved: _onEnemyTokenRemoved,
-                      onEnemyTokenAdded: _onEnemyTokenAdded,
-                    ),
-                  ),
-                Expanded(
-                  child: ListView(
-                    controller: _combatScrollController,
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 180),
-                    children: [
-                      if (_phase != CombatPhase.hero &&
-                          _phase != CombatPhase.minionAttack)
-                        FightStatusPanel(
-                          adventure: widget.adventure,
-                          enemy: enemy,
-                          phase: _phase,
-                          heroTokens: _currentDisplayHeroTokens,
-                          enemyTokens: _currentDisplayEnemyTokens,
-                          naraxusRollHistory: _naraxusRollHistory,
-                          onFinish: null,
-                          onChanged: _syncAfterTokensChanged,
-                          onEditHeroTokens: _editHeroTokens,
-                          onEditEnemyTokens: _editEnemyTokens,
-                          onHeroTokenRemoved: _onHeroTokenRemoved,
-                          onHeroTokenAdded: _onHeroTokenAdded,
-                          onEnemyTokenRemoved: _onEnemyTokenRemoved,
-                          onEnemyTokenAdded: _onEnemyTokenAdded,
-                        ),
-                      const SizedBox(height: 12),
+                Column(
+                  children: [
+                    Expanded(
+                      child: ListView(
+                        controller: _combatScrollController,
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        children: [
+                          CombatBottomDock(
+                            phase: _phase,
+                            adventure: widget.adventure,
+                            enemy: enemy,
+                            primaryEnemy: _primaryEnemy,
+                            secondaryEnemy: _secondaryEnemy,
+                            upkeepApplied: _upkeepApplied,
+                            heroUpkeepApplied: _heroUpkeepApplied,
+                            canAdvancePhase: canAdvancePhase,
+                            onPhaseChanged: _setPhase,
+                            developerMode: _developerMode,
+                            onSettings: () => _openSettings(context),
+                            onApplyUpkeep: () => _applyUpkeep(),
+                            onApplyHeroUpkeep: () => _applyHeroUpkeep(),
+                          ),
+                          CombatPhaseNarrativeBanner(
+                            phase: _phase,
+                            adventure: widget.adventure,
+                            enemy: enemy,
+                            message: _phaseNarrativeMessage(),
+                          ),
+                          FightStatusPanel(
+                            adventure: widget.adventure,
+                            enemy: enemy,
+                            phase: _phase,
+                            heroTokens: _currentDisplayHeroTokens,
+                            enemyTokens: _currentDisplayEnemyTokens,
+                            naraxusRollHistory: _naraxusRollHistory,
+                            onFinish: null,
+                            onChanged: _syncAfterTokensChanged,
+                            onEditHeroTokens: _editHeroTokens,
+                            onEditEnemyTokens: _editEnemyTokens,
+                            onHeroTokenRemoved: _onHeroTokenRemoved,
+                            onHeroTokenAdded: _onHeroTokenAdded,
+                            onEnemyTokenRemoved: _onEnemyTokenRemoved,
+                            onEnemyTokenAdded: _onEnemyTokenAdded,
+                          ),
+                          const SizedBox(height: 12),
                       if (_isResolutionMode && !_reviewingLog)
                         _CombatResolutionPanel(
                           adventure: widget.adventure,
@@ -717,6 +722,7 @@ class _FightPageState extends State<FightPage> {
                           ),
                           const SizedBox(height: 12),
                         ],
+                        const SizedBox(height: 12),
                         EnemyRulesPanel(
                           enemy: enemy,
                           phase: _phase,
@@ -732,204 +738,196 @@ class _FightPageState extends State<FightPage> {
                           defenseKey: _defenseRulesKey,
                           showOnlyAttack: true,
                         ),
-                        if (_phase == CombatPhase.hero) ...[
-                          const SizedBox(height: 12),
-                          EnemyRulesPanel(
-                            enemy: enemy,
-                            phase: _phase,
-                            aiMode: _aiMode,
-                            developerMode: _developerMode,
-                            onDetails: _openAdventureDetails,
-                            onAbandon: _openPauseDialog,
-                            onExport: _openCombatExport,
-                            onRestartCombat: _restartCombatFromSettings,
-                            showUndo: _stepUndo != null,
-                            onUndo: _undoStep,
-                            attackKey: _attackRulesKey,
-                            defenseKey: _defenseRulesKey,
-                            showOnlyDefense: true,
-                          ),
-                        ],
-                        if (_aiMode) ...[
-                          if (_phase != CombatPhase.heroUpkeep &&
-                              _phase != CombatPhase.minionUpkeep &&
-                              _phase != CombatPhase.intro) ...[
-                            const SizedBox(height: 12),
-                            MinionAiPanel(
-                              enemy: enemy,
-                              phase: _phase,
-                              dice: _dice,
-                              adventure: widget.adventure,
-                              rollCount: _rollCount,
-                              diceToRoll: _diceToRoll,
-                              visibleDiceCount: _visibleDiceCount,
-                              maxRolls: _maxRolls,
-                              editMode: _editMode,
-                              rerollOneMode: _rerollOneMode,
-                              editingDieId: _editingDieId,
-                              onRoll: _rollDice,
-                              onTapDie: _tapDie,
-                              onSelectFace: _selectFace,
-                              onValidateEdit: () =>
-                                  setState(() => _editingDieId = null),
-                              onToggleEdit: () => setState(() {
-                                _editMode = !_editMode;
-                                _rerollOneMode = false;
-                                _editingDieId = null;
-                              }),
-                              onToggleRerollOne: () => setState(() {
-                                _rerollOneMode = !_rerollOneMode;
-                                _editMode = false;
-                                _editingDieId = null;
-                              }),
-                              hasBlindOnAttacker: _hasActiveBlindOnAttacker,
-                              hasActiveAttack: _battleAttackValue > 0,
-                              onBlindPressed: _checkAndTriggerBlindPopin,
-                              onDeselectDie: _openDeselectDieDialog,
-                              aiIntentMessage: _phase == CombatPhase.minionAttack
-                                  ? _currentAiMessage()
-                                  : null,
-                            ),
-                            if (_showDruidFormRollPanel) ...[
-                              const SizedBox(height: 12),
-                              ManualExtraDicePhasePanel(
-                                key: _extraDicePhaseKey,
-                                title: 'Druid form roll',
-                                initialDiceCount: 1,
-                                accent: enemy.rank.color,
-                                autoRoll: false,
-                                onChanged: _resolveDruidFormRoll,
-                              ),
+                        KeyedSubtree(
+                          key: _diceSectionKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (_aiMode) ...[
+                                if (_showDruidFormRollPanel) ...[
+                                  const SizedBox(height: 12),
+                                  ManualExtraDicePhasePanel(
+                                    key: _extraDicePhaseKey,
+                                    title: 'Druid form roll',
+                                    initialDiceCount: 1,
+                                    accent: enemy.rank.color,
+                                    autoRoll: false,
+                                    onChanged: _resolveDruidFormRoll,
+                                  ),
+                                ],
+                                if (_showBlindExtraDicePhase) ...[
+                                  const SizedBox(height: 12),
+                                  ManualExtraDicePhasePanel(
+                                    key: _extraDicePhaseKey,
+                                    title: 'Blind Roll (Éblouissement)',
+                                    initialDiceCount: 1,
+                                    accent: const Color(0xff8f43ff),
+                                    autoRoll: false,
+                                    onChanged: _resolveBlindRoll,
+                                  ),
+                                ],
+                                if (_showAiExtraDicePhase) ...[
+                                  const SizedBox(height: 12),
+                                  ManualExtraDicePhasePanel(
+                                    key: _extraDicePhaseKey,
+                                    title: _extraDicePhaseTitle,
+                                    initialDiceCount: _extraDiceCount,
+                                    accent: enemy.rank.color,
+                                    autoRoll: false,
+                                    isHexed:
+                                        _phase == CombatPhase.minionAttack &&
+                                        _minionHexedThisAttack,
+                                    onChanged: _resolveExtraDicePhase,
+                                  ),
+                                ],
+                                if (_phase != CombatPhase.heroUpkeep &&
+                                    _phase != CombatPhase.minionUpkeep &&
+                                    _phase != CombatPhase.intro) ...[
+                                  const SizedBox(height: 12),
+                                  MinionAiPanel(
+                                    enemy: enemy,
+                                    phase: _phase,
+                                    dice: _dice,
+                                    adventure: widget.adventure,
+                                    rollCount: _rollCount,
+                                    diceToRoll: _diceToRoll,
+                                    visibleDiceCount: _visibleDiceCount,
+                                    maxRolls: _maxRolls,
+                                    editMode: _editMode,
+                                    rerollOneMode: _rerollOneMode,
+                                    editingDieId: _editingDieId,
+                                    onRoll: _rollDice,
+                                    onTapDie: _tapDie,
+                                    onSelectFace: _selectFace,
+                                    onValidateEdit: () =>
+                                        setState(() => _editingDieId = null),
+                                    onToggleEdit: () => setState(() {
+                                      _editMode = !_editMode;
+                                      _rerollOneMode = false;
+                                      _editingDieId = null;
+                                    }),
+                                    onToggleRerollOne: () => setState(() {
+                                      _rerollOneMode = !_rerollOneMode;
+                                      _editMode = false;
+                                      _editingDieId = null;
+                                    }),
+                                    hasBlindOnAttacker:
+                                        _hasActiveBlindOnAttacker,
+                                    hasActiveAttack: _battleAttackValue > 0,
+                                    onBlindPressed: _checkAndTriggerBlindPopin,
+                                    onDeselectDie: _openDeselectDieDialog,
+                                    aiIntentMessage:
+                                        _phase == CombatPhase.minionAttack
+                                        ? _currentAiMessage()
+                                        : null,
+                                  ),
+                                ],
+                              ] else ...[
+                                const SizedBox(height: 12),
+                                OutlinedButton.icon(
+                                  onPressed: () => setState(
+                                    () => _showManualExtraDicePhase =
+                                        !_showManualExtraDicePhase,
+                                  ),
+                                  icon: const Icon(Icons.add_circle_outline),
+                                  label: Text(
+                                    _showManualExtraDicePhase
+                                        ? 'Hide extra dice phase'
+                                        : 'Add dice phase',
+                                  ),
+                                ),
+                                if (_showManualExtraDicePhase) ...[
+                                  const SizedBox(height: 8),
+                                  const ManualExtraDicePhasePanel(),
+                                ],
+                              ],
+                              if (_heroKnockdownSkippedRoll &&
+                                  _phase == CombatPhase.hero) ...[
+                                const SizedBox(height: 32),
+                                Center(
+                                  child: Image.asset(
+                                    'assets/token/A-terre.png',
+                                    width: 120,
+                                    height: 120,
+                                    errorBuilder: (ctx, _, _) => const Icon(
+                                      Icons.error,
+                                      size: 64,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                              ] else if (!_aiMode) ...[
+                                if (_phase != CombatPhase.heroUpkeep &&
+                                    _phase != CombatPhase.minionUpkeep &&
+                                    _phase != CombatPhase.intro) ...[
+                                  const SizedBox(height: 12),
+                                  DicePanel(
+                                    dice: _dice,
+                                    diceToRoll: _diceToRoll,
+                                    visibleDiceCount: _visibleDiceCount,
+                                    maxDiceCount: _diceMenuMax,
+                                    rollCount: _rollCount,
+                                    maxRolls: _maxRolls,
+                                    editMode: _editMode,
+                                    rerollOneMode: _rerollOneMode,
+                                    editingDieId: _editingDieId,
+                                    specialAttackMode: _specialAttackMode,
+                                    onDiceToRollChanged: (value) =>
+                                        setState(() => _diceToRoll = value),
+                                    onRoll: _rollDice,
+                                    onTapDie: _tapDie,
+                                    onSelectFace: _selectFace,
+                                    onValidateEdit: () =>
+                                        setState(() => _editingDieId = null),
+                                    onToggleEdit: () => setState(() {
+                                      _editMode = !_editMode;
+                                      _rerollOneMode = false;
+                                      _editingDieId = null;
+                                    }),
+                                    onToggleRerollOne: () => setState(() {
+                                      _rerollOneMode = !_rerollOneMode;
+                                      _editMode = false;
+                                      _editingDieId = null;
+                                    }),
+                                    rollLabel: _phase == CombatPhase.hero
+                                        ? 'Roll defense'
+                                        : (_rollCount == 0 ? 'Roll' : 'Reroll'),
+                                    rollColor: _phase == CombatPhase.hero
+                                        ? enemy.rank.color
+                                        : const Color(0xff8f43ff),
+                                  ),
+                                ],
+                              ],
+                              if ((_specialAttackReady ||
+                                      _shouldResolveSpecialAttack()) &&
+                                  !_aiMode) ...[
+                                const SizedBox(height: 12),
+                                ImageActionButton(
+                                  label: 'Next',
+                                  icon: Icons.arrow_forward,
+                                  onPressed: _resolveSpecialAttack,
+                                ),
+                              ],
                             ],
-                            if (_showBlindExtraDicePhase) ...[
-                              const SizedBox(height: 12),
-                              ManualExtraDicePhasePanel(
-                                key: _extraDicePhaseKey,
-                                title: 'Blind Roll (Ã‰blouissement)',
-                                initialDiceCount: 1,
-                                accent: const Color(0xff8f43ff),
-                                autoRoll: false,
-                                onChanged: _resolveBlindRoll,
-                              ),
-                            ],
-                            if (_showAiExtraDicePhase) ...[
-                              const SizedBox(height: 12),
-                              ManualExtraDicePhasePanel(
-                                key: _extraDicePhaseKey,
-                                title: _extraDicePhaseTitle,
-                                initialDiceCount: _extraDiceCount,
-                                accent: enemy.rank.color,
-                                autoRoll: false,
-                                isHexed:
-                                    _phase == CombatPhase.minionAttack &&
-                                    _minionHexedThisAttack,
-                                onChanged: _resolveExtraDicePhase,
-                              ),
-                            ],
-                          ],
-                        ] else ...[
-                          const SizedBox(height: 12),
-                          OutlinedButton.icon(
-                            onPressed: () => setState(
-                              () => _showManualExtraDicePhase =
-                                  !_showManualExtraDicePhase,
-                            ),
-                            icon: const Icon(Icons.add_circle_outline),
-                            label: Text(
-                              _showManualExtraDicePhase
-                                  ? 'Hide extra dice phase'
-                                  : 'Add dice phase',
-                            ),
                           ),
-                          if (_showManualExtraDicePhase) ...[
-                            const SizedBox(height: 8),
-                            const ManualExtraDicePhasePanel(),
-                          ],
-                        ],
-                        if (_heroKnockdownSkippedRoll &&
-                            _phase == CombatPhase.hero) ...[
-                          const SizedBox(height: 32),
-                          Center(
-                            child: Image.asset(
-                              'assets/token/A-terre.png',
-                              width: 120,
-                              height: 120,
-                              errorBuilder: (ctx, _, _) => const Icon(
-                                Icons.error,
-                                size: 64,
-                                color: Colors.red,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                        ] else if (!_aiMode) ...[
-                          if (_phase != CombatPhase.heroUpkeep &&
-                              _phase != CombatPhase.minionUpkeep &&
-                              _phase != CombatPhase.intro) ...[
-                            const SizedBox(height: 12),
-                            DicePanel(
-                              dice: _dice,
-                              diceToRoll: _diceToRoll,
-                              visibleDiceCount: _visibleDiceCount,
-                              maxDiceCount: _diceMenuMax,
-                              rollCount: _rollCount,
-                              maxRolls: _maxRolls,
-                              editMode: _editMode,
-                              rerollOneMode: _rerollOneMode,
-                              editingDieId: _editingDieId,
-                              specialAttackMode: _specialAttackMode,
-                              onDiceToRollChanged: (value) =>
-                                  setState(() => _diceToRoll = value),
-                              onRoll: _rollDice,
-                              onTapDie: _tapDie,
-                              onSelectFace: _selectFace,
-                              onValidateEdit: () =>
-                                  setState(() => _editingDieId = null),
-                              onToggleEdit: () => setState(() {
-                                _editMode = !_editMode;
-                                _rerollOneMode = false;
-                                _editingDieId = null;
-                              }),
-                              onToggleRerollOne: () => setState(() {
-                                _rerollOneMode = !_rerollOneMode;
-                                _editMode = false;
-                                _editingDieId = null;
-                              }),
-                              rollLabel: _phase == CombatPhase.hero
-                                  ? 'Roll defense'
-                                  : (_rollCount == 0 ? 'Roll' : 'Reroll'),
-                              rollColor: _phase == CombatPhase.hero
-                                  ? enemy.rank.color
-                                  : const Color(0xff8f43ff),
-                            ),
-                          ],
-                        ],
-                        if ((_specialAttackReady || _shouldResolveSpecialAttack()) && !_aiMode) ...[
-                          const SizedBox(height: 12),
-                          ImageActionButton(
-                            label: 'Next',
-                            icon: Icons.arrow_forward,
-                            onPressed: _resolveSpecialAttack,
-                          ),
-                        ],
-                        if (_phase != CombatPhase.hero) ...[
-                          const SizedBox(height: 12),
-                          EnemyRulesPanel(
-                            enemy: enemy,
-                            phase: _phase,
-                            aiMode: _aiMode,
-                            developerMode: _developerMode,
-                            onDetails: _openAdventureDetails,
-                            onAbandon: _openPauseDialog,
-                            onExport: _openCombatExport,
-                            onRestartCombat: _restartCombatFromSettings,
-                            showUndo: _stepUndo != null,
-                            onUndo: _undoStep,
-                            attackKey: _attackRulesKey,
-                            defenseKey: _defenseRulesKey,
-                            showOnlyDefense: true,
-                          ),
-                        ],
+                        ),
+                        const SizedBox(height: 12),
+                        EnemyRulesPanel(
+                          enemy: enemy,
+                          phase: _phase,
+                          aiMode: _aiMode,
+                          developerMode: _developerMode,
+                          onDetails: _openAdventureDetails,
+                          onAbandon: _openPauseDialog,
+                          onExport: _openCombatExport,
+                          onRestartCombat: _restartCombatFromSettings,
+                          showUndo: _stepUndo != null,
+                          onUndo: _undoStep,
+                          attackKey: _attackRulesKey,
+                          defenseKey: _defenseRulesKey,
+                          showOnlyDefense: true,
+                        ),
                       ],
                     ],
                   ),
@@ -1223,11 +1221,24 @@ class _FightPageState extends State<FightPage> {
                         : 0,
                     onNext: _handleNextStep,
                   ),
-              ],
-            ),
+                ],
+              ),
+              CombatCenterImpactOverlay(
+                heroLabel: widget.adventure.hero.label,
+                heroHp: widget.adventure.health,
+                heroCp: widget.adventure.combatPoints,
+                heroTokens: _currentDisplayHeroTokens,
+                enemyLabel: enemy.label,
+                enemyColor: enemy.rank.color,
+                enemyHp: enemy.health,
+                enemyCp: enemy.combatPoints,
+                enemyTokens: _currentDisplayEnemyTokens,
+              ),
+            ],
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -2197,10 +2208,8 @@ class _FightPageState extends State<FightPage> {
     _recordTimelineEvent('phase_change');
     if (phase == CombatPhase.heroUpkeep || phase == CombatPhase.minionUpkeep) {
       _scrollToTop();
-    } else if (phase == CombatPhase.hero) {
-      _scrollToRulesKey(_defenseRulesKey);
-    } else if (phase == CombatPhase.minionAttack) {
-      _scrollToRulesKey(_attackRulesKey);
+    } else if (phase == CombatPhase.hero || phase == CombatPhase.minionAttack) {
+      _scrollToDiceBottom();
     }
   }
 
@@ -2532,6 +2541,21 @@ class _FightPageState extends State<FightPage> {
       }
       _combatScrollController.animateTo(
         0,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  void _scrollToDiceBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _diceSectionKey.currentContext;
+      if (context == null) {
+        return;
+      }
+      Scrollable.ensureVisible(
+        context,
+        alignment: 1.0,
         duration: const Duration(milliseconds: 260),
         curve: Curves.easeOut,
       );
@@ -11905,13 +11929,27 @@ class MinionAiPanel extends StatelessWidget {
                                   diceToRoll > 0
                               ? onRoll
                               : null),
-                    color: isDefensePhase ? heroAccent : GameDesign.actionPrimary,
+                    color: isDefensePhase
+                        ? enemy.rank.color
+                        : GameDesign.actionPrimary,
                     child: Text(
                       isDefensePhase
                           ? 'ROLL DEFENSE'
                           : (rollCount == 0 ? 'ROLL ENEMY DICE' : 'REROLL'),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.4,
+                        color: isDefensePhase
+                            ? (ThemeData.estimateBrightnessForColor(
+                                        enemy.rank.color,
+                                      ) ==
+                                      Brightness.light
+                                  ? Colors.black
+                                  : Colors.white)
+                            : GameDesign.goldText,
+                      ),
                     ),
                   ),
                 ),

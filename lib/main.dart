@@ -51,6 +51,7 @@ part 'parts/fight_widgets/deselect_die_dialog.dart';
 part 'parts/fight_widgets/combat_avatar_impact.dart';
 part 'parts/fight_widgets/combat_intro_dialog.dart';
 part 'parts/fight_widgets/combat_phase_narrative_banner.dart';
+part 'parts/fight_widgets/combat_center_impact_overlay.dart';
 part 'parts/fight_logic/token_combat_helpers.dart';
 part 'parts/fight_logic/defense_formula_evaluator.dart';
 part 'parts/fight_logic/hydra_logic.dart';
@@ -60,8 +61,8 @@ part 'parts/fight_logic/ourokhor_logic.dart';
 part 'parts/rewards_details.dart';
 part 'parts/run_generation.dart';
 
-const String appVersionLabel = 'Version 1.5.43';
-const int appBuildNumber = 508;
+const String appVersionLabel = 'Version 1.5.49';
+const int appBuildNumber = 514;
 const String _activeAdventureKey = 'active_adventure_v1';
 const Color heroAccent = Color(0xffffe22d);
 const Color panelBorderGrey = Color(0xff3d4a3e);

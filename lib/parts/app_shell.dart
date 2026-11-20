@@ -848,20 +848,23 @@ class _HomePageState extends State<HomePage> {
                           // 2. Boss Battle
                           GameActionButton(
                             label: 'BOSS BATTLE',
-                            subtitle: 'New Monster Monthly',
+                            subtitle: 'Face a ruthless boss in a fierce battle',
                             icon: Icons.local_fire_department_rounded,
                             primary: true,
-                            height: 58,
+                            centerContent: true,
+                            height: 66,
                             onPressed: widget.onNaraxus,
                           ),
                           const SizedBox(height: 10),
                           // 3. Minion Rush (bottom-most, closest to thumb)
                           GameActionButton(
                             label: 'MINION RUSH',
-                            subtitle: '3 Game Modes',
+                            subtitle:
+                                '13-minion survival gauntlet across difficulty tiers',
                             icon: Icons.shield_rounded,
                             primary: true,
-                            height: 58,
+                            centerContent: true,
+                            height: 66,
                             onPressed: widget.onSurvival,
                           ),
                         ],

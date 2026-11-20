@@ -35,6 +35,7 @@ class GameActionButton extends StatelessWidget {
     this.foregroundColor,
     this.borderColor,
     this.height = GameDesign.buttonHeight,
+    this.centerContent = false,
     super.key,
   });
 
@@ -47,6 +48,7 @@ class GameActionButton extends StatelessWidget {
   final Color? foregroundColor;
   final Color? borderColor;
   final double height;
+  final bool centerContent;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +92,60 @@ class GameActionButton extends StatelessWidget {
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
+              child: centerContent && subtitle != null
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (icon != null) ...[
+                              Icon(
+                                icon,
+                                size: 20,
+                                color: isDisabled ? Colors.white38 : fg,
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            Flexible(
+                              child: Text(
+                                label,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: isDisabled ? Colors.white38 : fg,
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.4,
+                                  height: 1.1,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle!,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isDisabled
+                                ? Colors.white24
+                                : (primary
+                                      ? GameDesign.goldText.withValues(
+                                          alpha: 0.72,
+                                        )
+                                      : GameDesign.gold),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            height: 1.15,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (icon != null) ...[

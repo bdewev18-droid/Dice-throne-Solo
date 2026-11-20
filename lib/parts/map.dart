@@ -2562,6 +2562,25 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
             alignment: Alignment.topCenter,
           ),
           Container(color: Colors.black.withValues(alpha: 0.15)),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 180,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.78),
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
           if (isNaraxus && widget.showNext)
             SafeArea(
               child: Align(
@@ -2601,13 +2620,64 @@ class _EnemyIntroPageState extends State<EnemyIntroPage> {
                 children: [
                   Align(
                     alignment: Alignment.topCenter,
-                    child: Text(
-                      enemy.label.isEmpty ? 'Opponent name' : enemy.label,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: enemy.rank.color,
-                        fontSize: 30,
-                        fontWeight: FontWeight.w900,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: GameDesign.obsidianBg.withValues(alpha: 0.84),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: enemy.rank.color.withValues(alpha: 0.85),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.55),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.asset(
+                              enemy.rank.asset,
+                              width: 34,
+                              height: 24,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => Icon(
+                                Icons.shield_rounded,
+                                color: enemy.rank.color,
+                                size: 22,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              enemy.label.isEmpty ? 'Opponent name' : enemy.label,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 25,
+                                fontWeight: FontWeight.w900,
+                                height: 1.1,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black87,
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

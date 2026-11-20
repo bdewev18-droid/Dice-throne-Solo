@@ -1,6 +1,6 @@
 {
-    "version": "1.5.43",
-    "buildNumber": 508,
+    "version": "1.5.49",
+    "buildNumber": 514,
     "apkUrl": "https://github.com/bdewev18-droid/Dice-throne-Solo/releases/latest/download/app-release.apk",
     "releaseNotes": "Unified Game Design System, stacked Home menu buttons, dark Fight UI, manual AI roll with intent banner, physical dice throw animation, and avatar impact events."
 }

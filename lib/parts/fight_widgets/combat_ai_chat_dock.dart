@@ -311,29 +311,14 @@ class CombatAiChatDock extends StatefulWidget {
 }
 
 class _CombatAiChatDockState extends State<CombatAiChatDock> {
-  bool? _userToggledCollapsed;
+  bool _isDockCollapsed = false;
 
   @override
   void didUpdateWidget(covariant CombatAiChatDock oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.phase != oldWidget.phase) {
-      _userToggledCollapsed = null;
+      _isDockCollapsed = false;
     }
-  }
-
-  bool get _isCollapsed {
-    if (_userToggledCollapsed != null) return _userToggledCollapsed!;
-    if (widget.phase == CombatPhase.heroUpkeep ||
-        widget.phase == CombatPhase.minionUpkeep ||
-        widget.phase == CombatPhase.intro) {
-      return false; // Always unfolded
-    } else {
-      return true; // Always folded during roll phases
-    }
-  }
-
-  set _isCollapsed(bool val) {
-    _userToggledCollapsed = val;
   }
 
   @override
@@ -791,51 +776,254 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
     final pendingDamage = isAttackAvoided || attackValue <= 0
         ? 0
         : (attackValue - effectiveDefense).clamp(0, 99);
-    final anticipationLines = <String>[];
+    final anticipationWidgets = <Widget>[];
     if (showResolution) {
+      final attackerColor = phase == CombatPhase.hero
+          ? heroAccent
+          : enemy.rank.color;
+      final defenderColor = phase == CombatPhase.hero
+          ? enemy.rank.color
+          : heroAccent;
+
+      Widget buildAnticipationRow(
+        Widget leading, {
+        String? prefix,
+        required String targetName,
+        required Color targetColor,
+        required String suffix,
+      }) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 30,
+                height: 26,
+                child: Center(
+                  child: FittedBox(fit: BoxFit.scaleDown, child: leading),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                    ),
+                    children: [
+                      if (prefix != null) TextSpan(text: prefix),
+                      TextSpan(
+                        text: targetName,
+                        style: TextStyle(
+                          color: targetColor,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      TextSpan(text: suffix),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      Widget buildTokenAnticipationRow(
+        String targetLabel,
+        Color targetColor,
+        List<String> tokens,
+      ) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text.rich(
+                TextSpan(
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: targetLabel,
+                      style: TextStyle(
+                        color: targetColor,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const TextSpan(text: ' will receive:'),
+                  ],
+                ),
+              ),
+              for (final token in tokens)
+                Builder(
+                  builder: (_) {
+                    final rule = TokenCatalogRepository.byLabel(token);
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black38,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (rule != null) ...[
+                            StatusTokenImage(rule: rule, size: 16),
+                            const SizedBox(width: 4),
+                          ],
+                          Text(
+                            token,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+        );
+      }
+
       if (isAttackAvoided) {
-        anticipationLines.add(
-          'Attack avoided: $defenderName will take 0 damage.',
+        anticipationWidgets.add(
+          buildAnticipationRow(
+            const PreventBadge(value: 0),
+            prefix: 'Attack avoided: ',
+            targetName: defenderName,
+            targetColor: defenderColor,
+            suffix: ' will take 0 damage.',
+          ),
         );
       } else if (attackValue <= 0) {
-        anticipationLines.add('$defenderName will take 0 damage.');
+        anticipationWidgets.add(
+          buildAnticipationRow(
+            const DamageBadge(value: 0, imparable: false),
+            targetName: defenderName,
+            targetColor: defenderColor,
+            suffix: ' will take 0 damage.',
+          ),
+        );
       } else if (isDefenseBypassed) {
-        anticipationLines.add(
-          'Undefendable: $defenderName will take $pendingDamage damage.',
+        anticipationWidgets.add(
+          buildAnticipationRow(
+            DamageBadge(value: pendingDamage, imparable: true),
+            targetName: defenderName,
+            targetColor: defenderColor,
+            suffix: ' will take $pendingDamage undefendable damage.',
+          ),
         );
       } else {
-        anticipationLines.add(
-          '$defenderName will take $pendingDamage damage ($attackValue ATK vs $effectiveDefense DEF).',
+        anticipationWidgets.add(
+          buildAnticipationRow(
+            DamageBadge(value: pendingDamage, imparable: false),
+            targetName: defenderName,
+            targetColor: defenderColor,
+            suffix:
+                ' will take $pendingDamage damage ($attackValue ATK vs $effectiveDefense DEF).',
+          ),
         );
       }
       if (heroTokens.isNotEmpty) {
-        anticipationLines.add(
-          '${adventure.hero.label} will receive: ${heroTokens.join(', ')}.',
+        anticipationWidgets.add(
+          buildTokenAnticipationRow(
+            adventure.hero.label,
+            heroAccent,
+            heroTokens,
+          ),
         );
       }
       if (minionTokens.isNotEmpty) {
-        anticipationLines.add(
-          '${enemy.label} will receive: ${minionTokens.join(', ')}.',
+        anticipationWidgets.add(
+          buildTokenAnticipationRow(
+            enemy.label,
+            enemy.rank.color,
+            minionTokens,
+          ),
         );
       }
       if (returnDamage > 0) {
-        anticipationLines.add(
-          '$attackerName will take $returnDamage${returnDamageUndefendable ? ' undefendable' : ''} return damage.',
+        anticipationWidgets.add(
+          buildAnticipationRow(
+            DamageBadge(
+              value: returnDamage,
+              imparable: returnDamageUndefendable,
+            ),
+            targetName: attackerName,
+            targetColor: attackerColor,
+            suffix:
+                ' will take $returnDamage${returnDamageUndefendable ? ' undefendable' : ''} return damage.',
+          ),
         );
       }
       if (lifeSteal > 0) {
-        anticipationLines.add(
-          '$attackerName will heal $lifeSteal HP (Life Steal).',
+        anticipationWidgets.add(
+          buildAnticipationRow(
+            const Icon(
+              Icons.favorite_rounded,
+              color: Color(0xff4ade80),
+              size: 22,
+            ),
+            targetName: attackerName,
+            targetColor: attackerColor,
+            suffix: ' will heal $lifeSteal HP (Life Steal).',
+          ),
         );
       }
       if (loseHp > 0) {
-        anticipationLines.add('${adventure.hero.label} will lose $loseHp HP.');
+        anticipationWidgets.add(
+          buildAnticipationRow(
+            const Icon(
+              Icons.heart_broken_rounded,
+              color: Colors.redAccent,
+              size: 22,
+            ),
+            targetName: adventure.hero.label,
+            targetColor: heroAccent,
+            suffix: ' will lose $loseHp HP.',
+          ),
+        );
       }
       if (enemyHeal > 0) {
-        anticipationLines.add('${enemy.label} will heal $enemyHeal HP.');
+        anticipationWidgets.add(
+          buildAnticipationRow(
+            const Icon(
+              Icons.favorite_rounded,
+              color: Color(0xff4ade80),
+              size: 22,
+            ),
+            targetName: enemy.label,
+            targetColor: enemy.rank.color,
+            suffix: ' will heal $enemyHeal HP.',
+          ),
+        );
       }
       if (cpSteal > 0) {
-        anticipationLines.add('$attackerName will steal $cpSteal CP.');
+        anticipationWidgets.add(
+          buildAnticipationRow(
+            _PcTriangleBadge(value: cpSteal),
+            targetName: attackerName,
+            targetColor: attackerColor,
+            suffix: ' will steal $cpSteal CP.',
+          ),
+        );
       }
     }
     return Container(
@@ -848,6 +1036,40 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (showResolution)
+            InkWell(
+              onTap: () => setState(() => _isDockCollapsed = !_isDockCollapsed),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 6, 14, 2),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.upcoming_rounded,
+                      size: 14,
+                      color: GameDesign.actionPrimary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'PENDING OUTCOME',
+                      style: TextStyle(
+                        color: GameDesign.actionPrimary.withValues(alpha: 0.9),
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.7,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      _isDockCollapsed
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white70,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           if (aiMode && canSwitchTarget && secondaryEnemy != null) ...[
             _DualEnemyTargetButtons(
               primaryEnemy: primaryEnemy,
@@ -857,10 +1079,12 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
             ),
             const SizedBox(height: 8),
           ],
-          if (showResolution && anticipationLines.isNotEmpty)
+          if (showResolution &&
+              anticipationWidgets.isNotEmpty &&
+              !_isDockCollapsed)
             Container(
-              margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
               decoration: BoxDecoration(
                 color: GameDesign.slateSurface.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(12),
@@ -871,44 +1095,7 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.upcoming_rounded,
-                        size: 14,
-                        color: GameDesign.actionPrimary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'ON OK — PENDING OUTCOME',
-                        style: TextStyle(
-                          color: GameDesign.actionPrimary.withValues(
-                            alpha: 0.9,
-                          ),
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.7,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  for (var i = 0; i < anticipationLines.length; i++) ...[
-                    if (i > 0) const SizedBox(height: 2),
-                    Text(
-                      anticipationLines[i],
-                      style: TextStyle(
-                        color: i == 0
-                            ? Colors.white.withValues(alpha: 0.95)
-                            : Colors.white.withValues(alpha: 0.8),
-                        fontSize: 12,
-                        fontWeight: i == 0 ? FontWeight.w700 : FontWeight.w500,
-                        height: 1.25,
-                      ),
-                    ),
-                  ],
-                ],
+                children: anticipationWidgets,
               ),
             ),
           _TokenGridLayout(

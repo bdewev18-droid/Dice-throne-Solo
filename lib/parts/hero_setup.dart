@@ -953,6 +953,9 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
     final currentDifficult = isFree ? _freeHandOfTheKingDifficult : isDiff;
     final successRolls = currentDifficult ? '3, 4, 5, 6' : '4, 5, 6';
     final failRolls = currentDifficult ? '1, 2' : '1, 2, 3';
+    final hotkDescription =
+        TokenCatalogRepository.byLabel('Hand of the King')?.description ??
+        'When a minion fails an Offensive Roll Phase or you activate an Ultimate, spend 1 token and roll 1 die. On success, the minion restarts its attack or forces a die reroll.';
 
     return InfoCard(
       child: Column(
@@ -991,35 +994,6 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: currentDifficult
-                          ? const Color(0xffef5350).withValues(alpha: 0.18)
-                          : const Color(0xffffb300).withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: currentDifficult
-                            ? const Color(0xffef5350).withValues(alpha: 0.5)
-                            : const Color(0xffffb300).withValues(alpha: 0.5),
-                      ),
-                    ),
-                    child: Text(
-                      currentDifficult ? 'DIFFICULT' : 'MEDIUM',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
-                        color: currentDifficult
-                            ? const Color(0xffef9a9a)
-                            : const Color(0xffffd54f),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
                       horizontal: 6,
                       vertical: 2,
                     ),
@@ -1050,6 +1024,23 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: GameDesign.slateSurface.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: GameDesign.slateBorder),
+                    ),
+                    child: Text(
+                      hotkDescription,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
               Expanded(
@@ -1456,9 +1447,7 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: isActive
-              ? (locked
-                  ? Colors.amber.withValues(alpha: 0.6)
-                  : const Color(0xff7a33cc).withValues(alpha: 0.75))
+              ? GameDesign.actionPrimary.withValues(alpha: 0.7)
               : Colors.white12,
           width: 1.2,
         ),
@@ -1590,7 +1579,8 @@ class _SurvivalSetupPageState extends State<SurvivalSetupPage> {
           ),
           Switch(
             value: isActive,
-            activeColor: locked ? Colors.amber : const Color(0xff9b58ff),
+            activeThumbColor: GameDesign.actionPrimary,
+            activeTrackColor: GameDesign.actionPrimary.withValues(alpha: 0.35),
             onChanged: locked
                 ? null
                 : (val) async {
