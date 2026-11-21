@@ -96,18 +96,7 @@ class TurnPhasePanel extends StatelessWidget {
               ),
             ],
           ),
-          if (primaryEnemy.health <= 0) ...[
-            const SizedBox(height: 4),
-            const Text(
-              'Enemy defeated! Advance phase when ready to conclude battle.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xff54e98a),
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ] else if (reminder.isNotEmpty) ...[
+          if (reminder.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               reminder,

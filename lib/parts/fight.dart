@@ -566,8 +566,19 @@ class _FightPageState extends State<FightPage> {
     setState(() => _developerMode = AppSettings.instance.developerMode);
   }
 
+  bool _wasExtraDiceVisible = false;
+
   @override
   Widget build(BuildContext context) {
+    final isExtraDiceVisible =
+        _showDruidFormRollPanel ||
+        _showBlindExtraDicePhase ||
+        _showAiExtraDicePhase;
+    if (isExtraDiceVisible && !_wasExtraDiceVisible) {
+      _scrollToDiceBottom();
+    }
+    _wasExtraDiceVisible = isExtraDiceVisible;
+
     final aiMessage = _currentAiMessage();
     if (_isResolutionMode && !_runLogSavedToSupabase) {
       _runLogSavedToSupabase = true;
@@ -736,7 +747,8 @@ class _FightPageState extends State<FightPage> {
                           onUndo: _undoStep,
                           attackKey: _attackRulesKey,
                           defenseKey: _defenseRulesKey,
-                          showOnlyAttack: true,
+                          showOnlyAttack: _phase != CombatPhase.hero,
+                          showOnlyDefense: _phase == CombatPhase.hero,
                         ),
                         KeyedSubtree(
                           key: _diceSectionKey,
@@ -744,42 +756,6 @@ class _FightPageState extends State<FightPage> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               if (_aiMode) ...[
-                                if (_showDruidFormRollPanel) ...[
-                                  const SizedBox(height: 12),
-                                  ManualExtraDicePhasePanel(
-                                    key: _extraDicePhaseKey,
-                                    title: 'Druid form roll',
-                                    initialDiceCount: 1,
-                                    accent: enemy.rank.color,
-                                    autoRoll: false,
-                                    onChanged: _resolveDruidFormRoll,
-                                  ),
-                                ],
-                                if (_showBlindExtraDicePhase) ...[
-                                  const SizedBox(height: 12),
-                                  ManualExtraDicePhasePanel(
-                                    key: _extraDicePhaseKey,
-                                    title: 'Blind Roll (Éblouissement)',
-                                    initialDiceCount: 1,
-                                    accent: const Color(0xff8f43ff),
-                                    autoRoll: false,
-                                    onChanged: _resolveBlindRoll,
-                                  ),
-                                ],
-                                if (_showAiExtraDicePhase) ...[
-                                  const SizedBox(height: 12),
-                                  ManualExtraDicePhasePanel(
-                                    key: _extraDicePhaseKey,
-                                    title: _extraDicePhaseTitle,
-                                    initialDiceCount: _extraDiceCount,
-                                    accent: enemy.rank.color,
-                                    autoRoll: false,
-                                    isHexed:
-                                        _phase == CombatPhase.minionAttack &&
-                                        _minionHexedThisAttack,
-                                    onChanged: _resolveExtraDicePhase,
-                                  ),
-                                ],
                                 if (_phase != CombatPhase.heroUpkeep &&
                                     _phase != CombatPhase.minionUpkeep &&
                                     _phase != CombatPhase.intro) ...[
@@ -820,6 +796,42 @@ class _FightPageState extends State<FightPage> {
                                         _phase == CombatPhase.minionAttack
                                         ? _currentAiMessage()
                                         : null,
+                                  ),
+                                ],
+                                if (_showDruidFormRollPanel) ...[
+                                  const SizedBox(height: 12),
+                                  ManualExtraDicePhasePanel(
+                                    key: _extraDicePhaseKey,
+                                    title: 'Druid form roll',
+                                    initialDiceCount: 1,
+                                    accent: enemy.rank.color,
+                                    autoRoll: false,
+                                    onChanged: _resolveDruidFormRoll,
+                                  ),
+                                ],
+                                if (_showBlindExtraDicePhase) ...[
+                                  const SizedBox(height: 12),
+                                  ManualExtraDicePhasePanel(
+                                    key: _extraDicePhaseKey,
+                                    title: 'Blind Roll (Éblouissement)',
+                                    initialDiceCount: 1,
+                                    accent: const Color(0xff8f43ff),
+                                    autoRoll: false,
+                                    onChanged: _resolveBlindRoll,
+                                  ),
+                                ],
+                                if (_showAiExtraDicePhase) ...[
+                                  const SizedBox(height: 12),
+                                  ManualExtraDicePhasePanel(
+                                    key: _extraDicePhaseKey,
+                                    title: _extraDicePhaseTitle,
+                                    initialDiceCount: _extraDiceCount,
+                                    accent: enemy.rank.color,
+                                    autoRoll: false,
+                                    isHexed:
+                                        _phase == CombatPhase.minionAttack &&
+                                        _minionHexedThisAttack,
+                                    onChanged: _resolveExtraDicePhase,
                                   ),
                                 ],
                               ] else ...[
@@ -912,22 +924,24 @@ class _FightPageState extends State<FightPage> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        EnemyRulesPanel(
-                          enemy: enemy,
-                          phase: _phase,
-                          aiMode: _aiMode,
-                          developerMode: _developerMode,
-                          onDetails: _openAdventureDetails,
-                          onAbandon: _openPauseDialog,
-                          onExport: _openCombatExport,
-                          onRestartCombat: _restartCombatFromSettings,
-                          showUndo: _stepUndo != null,
-                          onUndo: _undoStep,
-                          attackKey: _attackRulesKey,
-                          defenseKey: _defenseRulesKey,
-                          showOnlyDefense: true,
-                        ),
+                        if (_phase != CombatPhase.hero) ...[
+                          const SizedBox(height: 12),
+                          EnemyRulesPanel(
+                            enemy: enemy,
+                            phase: _phase,
+                            aiMode: _aiMode,
+                            developerMode: _developerMode,
+                            onDetails: _openAdventureDetails,
+                            onAbandon: _openPauseDialog,
+                            onExport: _openCombatExport,
+                            onRestartCombat: _restartCombatFromSettings,
+                            showUndo: _stepUndo != null,
+                            onUndo: _undoStep,
+                            attackKey: _attackRulesKey,
+                            defenseKey: _defenseRulesKey,
+                            showOnlyDefense: true,
+                          ),
+                        ],
                       ],
                     ],
                   ),
@@ -973,6 +987,7 @@ class _FightPageState extends State<FightPage> {
                     showOnlyCardsCover:
                         _isCurrentAttackUndefendable &&
                         !_defenseOnlyCardsUnlocked,
+                    isAttackUndefendable: _isCurrentAttackUndefendable,
                     onOnlyCardsUnlock: () =>
                         setState(() => _defenseOnlyCardsUnlocked = true),
                     onAttackChanged: (delta) => setState(() {
@@ -2527,7 +2542,12 @@ class _FightPageState extends State<FightPage> {
         });
       }
     }
-    if (_aiMode &&
+    final isBossRoll =
+        _isNaraxus ||
+        enemy.profileKey == 'ourokhor' ||
+        enemy.rank == EnemyRank.naraxus;
+    if (!isBossRoll &&
+        _aiMode &&
         _phase == CombatPhase.minionAttack &&
         _rollCount < _maxRolls) {
       _rollDice();
@@ -6531,7 +6551,11 @@ class _FightPageState extends State<FightPage> {
     _battleEnemyHeal = acc.enemyHeal.clamp(0, 99);
     _battleCpSteal = acc.cpSteal.clamp(0, 99);
     _battleDiscardCards = acc.discardCards.clamp(0, 99);
-    final hasValidAttack = (acc.result != null && acc.result!.value > 0) || acc.attack > 0;
+    final hasValidAttack =
+        _currentAttackGoalMet() ||
+        (acc.result != null && acc.result!.value > 0) ||
+        acc.attack > 0 ||
+        _showAiExtraDicePhase;
     final hasDiscardPosToken = enemy.profileKey == 'bleu-bleu-015' ||
         (_currentMinionSymbolGoal()?.effect?.formulas.any((f) => f.toLowerCase().contains('discardpositivetoken')) ?? false);
     _battleDiscardPositiveToken = hasValidAttack && hasDiscardPosToken;
@@ -11748,15 +11772,7 @@ class MinionAiPanel extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      intentText,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        height: 1.3,
-                      ),
-                    ),
+                    child: _buildRollIntentRichText(intentText),
                   ),
                 ],
               ),
@@ -11929,7 +11945,10 @@ class MinionAiPanel extends StatelessWidget {
                                   diceToRoll > 0
                               ? onRoll
                               : null),
-                    color: isDefensePhase
+                    color: (isDefensePhase ||
+                            enemy.profileKey == 'naraxus' ||
+                            enemy.profileKey == 'ourokhor' ||
+                            enemy.rank == EnemyRank.naraxus)
                         ? enemy.rank.color
                         : GameDesign.actionPrimary,
                     child: Text(
@@ -11941,7 +11960,10 @@ class MinionAiPanel extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.4,
-                        color: isDefensePhase
+                        color: (isDefensePhase ||
+                                enemy.profileKey == 'naraxus' ||
+                                enemy.profileKey == 'ourokhor' ||
+                                enemy.rank == EnemyRank.naraxus)
                             ? (ThemeData.estimateBrightnessForColor(
                                         enemy.rank.color,
                                       ) ==
@@ -12039,6 +12061,11 @@ class MinionAiPanel extends StatelessWidget {
                         ),
                       ),
                   FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: GameDesign.actionPrimary,
+                      foregroundColor: GameDesign.goldText,
+                      textStyle: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
                     onPressed: onValidateEdit,
                     child: const Text('Confirm'),
                   ),
@@ -12047,6 +12074,147 @@ class MinionAiPanel extends StatelessWidget {
             ],
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildRollIntentRichText(String raw) {
+    final cleaned = raw
+        .replaceAll('**Battle phase.**\n', '')
+        .replaceAll('**Battle phase.**', '')
+        .replaceAll('**', '')
+        .replaceAll('_', '')
+        .trim();
+    final spans = <InlineSpan>[];
+    final tokenRegex = RegExp(
+      r'\{(die|undef|imparable|dmg):([^}]+)\}|'
+      r'\b(rolled|keep|with)\s+([1-6](?:/[1-6])*)|'
+      r'(Kept dice:\s*)([1-6](?:/[1-6])*)',
+      caseSensitive: false,
+    );
+
+    InlineSpan dieImageSpan(int face) {
+      return WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: Image.asset(
+              'assets/dice_faces/face_$face.webp',
+              width: 18,
+              height: 18,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+      );
+    }
+
+    InlineSpan dieColorSpan(String colorKey) {
+      final color = switch (colorKey.toLowerCase()) {
+        'white' => Colors.white,
+        'yellow' => const Color(0xffffe22d),
+        'orange' => const Color(0xffff9f1c),
+        'red' => const Color(0xffff4d4d),
+        _ => Colors.white70,
+      };
+      return WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
+        child: Container(
+          width: 16,
+          height: 16,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.black54, width: 1),
+          ),
+        ),
+      );
+    }
+
+    var cursor = 0;
+    for (final match in tokenRegex.allMatches(cleaned)) {
+      if (match.start > cursor) {
+        spans.add(TextSpan(text: cleaned.substring(cursor, match.start)));
+      }
+      final shortcodeKind = match.group(1)?.toLowerCase();
+      final shortcodeArg = match.group(2)?.trim();
+      final verb = match.group(3);
+      final verbDice = match.group(4);
+      final keptPrefix = match.group(5);
+      final keptDice = match.group(6);
+
+      if (shortcodeKind == 'die' && shortcodeArg != null) {
+        final face = int.tryParse(shortcodeArg);
+        if (face != null) {
+          spans.add(dieImageSpan(face));
+        } else if (shortcodeArg.toLowerCase() == 'any') {
+          spans.add(
+            const WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 2),
+                child: DieValueBadge(value: 6, showValue: false, size: 18),
+              ),
+            ),
+          );
+        } else {
+          spans.add(dieColorSpan(shortcodeArg));
+        }
+      } else if ((shortcodeKind == 'undef' ||
+              shortcodeKind == 'imparable' ||
+              shortcodeKind == 'dmg') &&
+          shortcodeArg != null) {
+        final val = int.tryParse(shortcodeArg) ?? 0;
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: SizedBox(
+                width: 24,
+                height: 22,
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: DamageBadge(
+                    value: val,
+                    imparable: shortcodeKind != 'dmg',
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      } else if (verb != null && verbDice != null) {
+        spans.add(TextSpan(text: '$verb '));
+        for (final part in verbDice.split('/')) {
+          final face = int.tryParse(part);
+          if (face != null) spans.add(dieImageSpan(face));
+        }
+      } else if (keptPrefix != null && keptDice != null) {
+        spans.add(TextSpan(text: keptPrefix));
+        for (final part in keptDice.split('/')) {
+          final face = int.tryParse(part);
+          if (face != null) spans.add(dieImageSpan(face));
+        }
+      }
+      cursor = match.end;
+    }
+    if (cursor < cleaned.length) {
+      spans.add(TextSpan(text: cleaned.substring(cursor)));
+    }
+
+    return Text.rich(
+      TextSpan(
+        style: const TextStyle(
+          fontSize: 12,
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+          height: 1.35,
+        ),
+        children: spans,
       ),
     );
   }
@@ -12407,16 +12575,14 @@ String _minionAttackAiMessage(
     if (enemy.attackPlan.style == MinionAttackStyle.suite) {
       final hasMicro = _suiteDamage(enemy, 3) != null;
       final minSuiteLabel = hasMicro ? 'micro suite' : 'small suite';
-      return '**Battle phase.**\n'
-          'I use $attackName.\n'
+      return 'I use $attackName.\n'
           '$parlayPrefix'
           '$blPrefix'
           '${hasBarbedVine ? 'Afflicted by Barbed Vine: I will stop rolling as soon as a suite is validated to avoid counter damage.\n' : ''}'
           '$constrictPrefix'
           'First target: $minSuiteLabel. If it succeeds, ${hasBarbedVine ? 'I will stop immediately.' : 'I will try to improve.'}';
     }
-    return '**Battle phase.**\n'
-        'I use $attackName.\n'
+    return 'I use $attackName.\n'
         '$parlayPrefix'
         '$blPrefix'
         '${hasBarbedVine ? 'Afflicted by Barbed Vine: I will stop rolling as soon as an attack is validated to avoid counter damage.\n' : ''}'
@@ -12568,8 +12734,15 @@ String _minionAttackAiMessage(
   final symbolDamage = rawSymbolDamage != null
       ? adjustDamage(rawSymbolDamage)
       : null;
+  final hasMetSymbolGoal = enemy.attackPlan.goals.any(
+    (g) => (g.white + g.yellow + g.red) > 0 && _symbolGoalMetDice(dice, g),
+  );
   final rollLabel = _rollLabel(rollCount);
   if (rollCount >= maxSymbolRolls) {
+    if (symbolDamage == null && hasMetSymbolGoal) {
+      return 'Attack is validated with ${_reservedDiceText(dice)}.$blLine'
+          '${extraDiceOutcome.isNotEmpty ? '\n$extraDiceOutcome' : ''}';
+    }
     if (symbolDamage == null) {
       final failOutcome = MinionPassiveResolver.resolveOffensiveFailure(
         enemy: enemy,
@@ -12606,15 +12779,15 @@ String _minionAttackAiMessage(
         : 'After my 3 attack rolls, the attack is validated with ${_reservedDiceText(dice)}.$blLine\n'
             '${_defenseInstruction(adventure, symbolDamage)}';
   }
-  if (symbolDamage != null) {
+  if (symbolDamage != null || hasMetSymbolGoal) {
     if (hasBarbedVine) {
       return 'On my $rollLabel roll, attack is validated with ${_reservedDiceText(dice)}.\n'
-          'Afflicted by Barbed Vine, I stop my attack rolls here to avoid taking counter damage.$blLine\n'
-          '${_defenseInstruction(adventure, symbolDamage)}';
+          'Afflicted by Barbed Vine, I stop my attack rolls here to avoid taking counter damage.$blLine'
+          '${symbolDamage != null ? '\n${_defenseInstruction(adventure, symbolDamage)}' : ''}';
     }
     return 'On my $rollLabel roll, the attack is validated with ${_reservedDiceText(dice)}.$blLine\n'
-        'I can hit, or try to improve if a roll remains.\n'
-        '${_defenseInstruction(adventure, symbolDamage)}';
+        'I can hit, or try to improve if a roll remains.'
+        '${symbolDamage != null ? '\n${_defenseInstruction(adventure, symbolDamage)}' : ''}';
   }
   final symbolDecision = MinionDiceEngineSymbols.chooseSymbolHold(
     dice: dice,
@@ -12711,83 +12884,38 @@ String _naraxusAiMessage(
   String extraDiceOutcome,
 ) {
   final isOurokhor = enemy.profileKey == 'ourokhor';
-  final bossName = isOurokhor ? 'Ourokhor' : 'Naxarus';
   if (rolled.isEmpty || rolled.first.value == null) {
-    return '**Battle phase.**\n'
-        '$bossName battle phase.\n'
-        'Roll 1 die to choose the boss attack.\n'
-        'The result will feed the battle counter.';
+    return 'Roll 1 {die:any} to choose the boss attack.';
   }
   final value = rolled.first.value!;
   if (isOurokhor) {
-    final result = switch (value) {
-      1 =>
-        'Ourokhor rolled 1 on the attack die and performs Venomous Spit.\n'
-            'Venomous Spit deals 4 undefendable damage and inflicts 1 Poison on the hero.\n'
-            '${adventure.hero.label} has no defense unless a card changes the attack.',
-      2 =>
-        'Ourokhor rolled 2 on the attack die and performs Toxic Miasma.\n'
-            'The hero receives 2x Poison tokens and takes 7 damage.\n'
-            '${adventure.hero.label} must perform a defensive phase.',
+    return switch (value) {
+      1 => '{die:1} Venomous Spit',
+      2 => '{die:2} Toxic Miasma',
       3 =>
-        'Ourokhor rolled 3 on the attack die and performs Corrosive Maw.\n'
-            'The player must roll 4 dice in the extra dice phase.\n'
-            'Damage equals the 2 highest dice, and Ourokhor heals 3 HP.\n'
-            '${extraDiceOutcome.isEmpty ? '' : '$extraDiceOutcome\n'}'
-            '${adventure.hero.label} must perform a defensive phase.',
-      4 =>
-        'Ourokhor rolled 4 on the attack die and performs Constricting Coil.\n'
-            'The hero loses 1 CP and takes 8 damage (10 damage if hero is Poisoned).\n'
-            '${adventure.hero.label} must perform a defensive phase.',
-      5 =>
-        'Ourokhor rolled 5 on the attack die and performs Shedding & Slough.\n'
-            'Ourokhor removes 1 negative status token, heals 6 HP, and deals 4 undefendable damage.\n'
-            '${adventure.hero.label} has no defense unless a card changes the attack.',
+        '{die:3} Corrosive Maw — roll 4 extra dice below.'
+            '${extraDiceOutcome.isEmpty ? '' : '\n$extraDiceOutcome'}',
+      4 => '{die:4} Constricting Coil',
+      5 => '{die:5} Shedding & Slough',
       6 =>
-        'Ourokhor rolled 6 on the attack die and performs Apocalyptic Surge.\n'
-            'Apocalyptic Surge inflicts 10 damage and 1 Poison.\n'
-            'The player must roll 1 extra die.\n'
-            'On 5 or 6, Shedding & Slough also triggers.\n'
-            '${extraDiceOutcome.isEmpty ? '' : extraDiceOutcome}',
+        '{die:6} Apocalyptic Surge — roll 1 extra die below (5-6 triggers Shedding & Slough).'
+            '${extraDiceOutcome.isEmpty ? '' : '\n$extraDiceOutcome'}',
       _ => 'Ourokhor coils and waits.',
     };
-    return '**Battle phase.**\n$result';
   }
-  final result = switch (value) {
-    1 =>
-      'Naxarus rolled 1 on his attack die and performs Swoop.\n'
-          'Swoop removes 1 random status token from Naxarus, heals 4 HP, then inflicts 3 undefendable damage.\n'
-          '${adventure.hero.label} has no defense unless a card changes the attack.',
-    2 =>
-      'Naxarus rolled 2 on his attack die and performs Ember Spark.\n'
-          'The active hero places the top 3 cards of their deck into the discard pile.\n'
-          'Naxarus inflicts 8 damage.\n'
-          '${adventure.hero.label} must perform a defensive phase.',
+  return switch (value) {
+    1 => '{die:1} Swoop',
+    2 => '{die:2} Ember Spark',
     3 =>
-      'Naxarus rolled 3 on his attack die and performs Gashing Bite.\n'
-          'The player must roll 4 dice in the extra dice phase.\n'
-          'Damage equals the 2 highest dice.\n'
-          '${extraDiceOutcome.isEmpty ? '' : '$extraDiceOutcome\n'}'
-          '${adventure.hero.label} must perform a defensive phase.',
-    4 =>
-      'Naxarus rolled 4 on his attack die and performs Hoarding.\n'
-          'The hero loses 1 die for the next battle roll.\n'
-          'Naxarus inflicts 9 damage.\n'
-          '${adventure.hero.label} must perform a defensive phase.',
-    5 =>
-      'Naxarus rolled 5 on his attack die and performs Thundering Roar.\n'
-          'The hero discards 1 card.\n'
-          'Naxarus inflicts 8 undefendable damage.\n'
-          '${adventure.hero.label} has no defense unless a card changes the attack.',
+      '{die:3} Gashing Bite — roll 4 extra dice below.'
+          '${extraDiceOutcome.isEmpty ? '' : '\n$extraDiceOutcome'}',
+    4 => '{die:4} Hoarding',
+    5 => '{die:5} Thundering Roar',
     6 =>
-      "Naxarus rolled 6 on his attack die and performs Dragon's Might.\n"
-          'Dragon\'s Might inflicts 10 damage.\n'
-          'The player must roll 1 extra die.\n'
-          'On 5 or 6, Swoop is added to the attack.\n'
-          '${extraDiceOutcome.isEmpty ? '' : extraDiceOutcome}',
+      "{die:6} Dragon's Might — roll 1 extra die below (5-6 adds Swoop)."
+          '${extraDiceOutcome.isEmpty ? '' : '\n$extraDiceOutcome'}',
     _ => 'Naxarus waits.',
   };
-  return '**Battle phase.**\n$result';
 }
 
 _AttackDamage? _bestSymbolAttackDamage(

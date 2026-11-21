@@ -29,6 +29,7 @@ class CombatAiChatDock extends StatefulWidget {
     this.defenseModifier,
     this.showStunCover = false,
     this.showOnlyCardsCover = false,
+    this.isAttackUndefendable = false,
     this.onOnlyCardsUnlock,
     required this.onAttackChanged,
     required this.onDefenseChanged,
@@ -270,6 +271,7 @@ class CombatAiChatDock extends StatefulWidget {
   final int? defenseModifier;
   final bool showStunCover;
   final bool showOnlyCardsCover;
+  final bool isAttackUndefendable;
   final VoidCallback? onOnlyCardsUnlock;
   final ValueChanged<int> onAttackChanged;
   final ValueChanged<int> onDefenseChanged;
@@ -319,6 +321,156 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
     if (widget.phase != oldWidget.phase) {
       _isDockCollapsed = false;
     }
+  }
+
+  Widget _buildPendingNoteRichText(String raw) {
+    final shortcodeRegex = RegExp(
+      r'\{(die|undef|imparable|dmg|heal|cp|steals-cp|token):([^}]+)\}',
+      caseSensitive: false,
+    );
+    final spans = <InlineSpan>[];
+    var cursor = 0;
+    for (final match in shortcodeRegex.allMatches(raw)) {
+      if (match.start > cursor) {
+        spans.add(TextSpan(text: raw.substring(cursor, match.start)));
+      }
+      final kind = match.group(1)!.toLowerCase();
+      final arg = match.group(2)!.trim();
+      if (kind == 'die') {
+        final face = int.tryParse(arg);
+        if (face != null && face >= 1 && face <= 6) {
+          spans.add(
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Image.asset(
+                    'assets/dice_faces/face_$face.webp',
+                    width: 18,
+                    height: 18,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          );
+        } else {
+          spans.add(
+            const WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 2),
+                child: DieValueBadge(value: 6, showValue: false, size: 18),
+              ),
+            ),
+          );
+        }
+      } else if (kind == 'undef' || kind == 'imparable' || kind == 'dmg') {
+        final val = int.tryParse(arg) ?? 0;
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: SizedBox(
+                width: 24,
+                height: 22,
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: DamageBadge(
+                    value: val,
+                    imparable: kind != 'dmg',
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      } else if (kind == 'heal') {
+        final val = int.tryParse(arg) ?? 0;
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.favorite_rounded,
+                    color: Color(0xff4ade80),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    '+$val',
+                    style: const TextStyle(
+                      color: Color(0xff4ade80),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      } else if (kind == 'cp' || kind == 'steals-cp') {
+        final val = int.tryParse(arg) ?? 0;
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: _PcTriangleBadge(value: val),
+                ),
+              ),
+            ),
+          ),
+        );
+      } else if (kind == 'token') {
+        final rule = TokenCatalogRepository.byLabel(arg);
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: rule != null
+                  ? StatusTokenImage(rule: rule, size: 18)
+                  : Text(
+                      arg,
+                      style: const TextStyle(
+                        color: Colors.amberAccent,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+            ),
+          ),
+        );
+      }
+      cursor = match.end;
+    }
+    if (cursor < raw.length) {
+      spans.add(TextSpan(text: raw.substring(cursor)));
+    }
+    return Text.rich(
+      TextSpan(
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.9),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          height: 1.2,
+        ),
+        children: spans,
+      ),
+    );
   }
 
   @override
@@ -771,7 +923,12 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
         isAgilityAvoided ||
         blindingLightZeroDamage;
     final isDefenseBypassed =
-        showStunCover || showWebbedAttackCover || flightUndefendable;
+        showStunCover ||
+        showWebbedAttackCover ||
+        flightUndefendable ||
+        showOnlyCardsCover ||
+        widget.isAttackUndefendable ||
+        ninjitsuUndefendable;
     final effectiveDefense = isDefenseBypassed ? 0 : defenseValue;
     final pendingDamage = isAttackAvoided || attackValue <= 0
         ? 0
@@ -1022,6 +1179,47 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
             targetName: attackerName,
             targetColor: attackerColor,
             suffix: ' will steal $cpSteal CP.',
+          ),
+        );
+      }
+      for (final note in notes) {
+        final trimmed = note.trim();
+        if (trimmed.isEmpty) continue;
+        final lower = trimmed.toLowerCase();
+        if (lower.startsWith('attack result:') &&
+            (lower.contains('damage') || lower.contains('deals'))) {
+          continue;
+        }
+        final noteIcon =
+            (lower.contains('card') ||
+                lower.contains('discard') ||
+                lower.contains('carte'))
+            ? const Icon(
+                Icons.style_rounded,
+                color: Colors.amberAccent,
+                size: 20,
+              )
+            : const Icon(
+                Icons.auto_awesome_rounded,
+                color: GameDesign.actionPrimary,
+                size: 20,
+              );
+        anticipationWidgets.add(
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 30,
+                  height: 26,
+                  child: Center(child: noteIcon),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildPendingNoteRichText(trimmed),
+                ),
+              ],
+            ),
           ),
         );
       }

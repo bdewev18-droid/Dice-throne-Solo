@@ -33,26 +33,15 @@ class CombatPhaseNarrativeBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (phase == CombatPhase.intro) {
+    final isUpkeep =
+        phase == CombatPhase.heroUpkeep || phase == CombatPhase.minionUpkeep;
+    if (!isUpkeep) {
       return const SizedBox.shrink();
     }
 
-    final isHeroTurn =
-        phase == CombatPhase.heroUpkeep || phase == CombatPhase.hero;
+    final isHeroTurn = phase == CombatPhase.heroUpkeep;
     final accent = isHeroTurn ? heroAccent : enemy.rank.color;
-    final isUpkeep =
-        phase == CombatPhase.heroUpkeep || phase == CombatPhase.minionUpkeep;
-
-    final List<String> lines;
-    if (isUpkeep) {
-      lines = _formatLines(message);
-    } else {
-      lines = [
-        phase == CombatPhase.hero
-            ? '${adventure.hero.label} — Roll & Attack Phase'
-            : '${enemy.label} — Attack & Hero Defense Phase',
-      ];
-    }
+    final lines = _formatLines(message);
 
     if (lines.isEmpty) {
       return const SizedBox.shrink();

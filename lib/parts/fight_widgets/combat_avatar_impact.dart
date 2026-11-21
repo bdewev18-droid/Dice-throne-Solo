@@ -172,45 +172,8 @@ class _CombatImpactAvatarWrapperState extends State<CombatImpactAvatarWrapper>
                 ),
               ),
             ),
-            if (isActive)
-              Positioned(
-                top: -10 - (t * 44),
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: t < 0.78 ? 1.0 : ((1.0 - t) / 0.22).clamp(0.0, 1.0),
-                    child: Transform.scale(
-                      scale: badgeScale,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.94),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _badgeColor, width: 2.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: _badgeColor.withValues(alpha: 0.65),
-                              blurRadius: 16,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          _badgeText!,
-                          style: TextStyle(
-                            color: _badgeColor,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.4,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            if (isActive && _shakeOnImpact)
+              const SizedBox.shrink(),
           ],
         );
       },
