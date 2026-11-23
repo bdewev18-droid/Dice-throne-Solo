@@ -3189,11 +3189,82 @@ class _CombatAiChatDockState extends State<CombatAiChatDock> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: GameActionButton(
-                      label: 'NEXT',
-                      icon: Icons.arrow_forward_rounded,
-                      primary: true,
-                      onPressed: widget.canAdvancePhase ? widget.onNext : null,
+                    child: Builder(
+                      builder: (_) {
+                        bool isKd(String t) {
+                          final k = _normalizeTokenKey(t);
+                          return k == 'knockdown' ||
+                              k == 'terre' ||
+                              k == 'aterre';
+                        }
+
+                        final isNaraxus =
+                            enemy.profileKey == 'naraxus' ||
+                            enemy.rank == EnemyRank.naraxus;
+                        final hasUpcomingKnockdown =
+                            (phase == CombatPhase.heroUpkeep &&
+                                adventure.alterations.any(isKd)) ||
+                            (phase == CombatPhase.minionUpkeep &&
+                                !isNaraxus &&
+                                enemy.alterations.any(isKd));
+                        if (!hasUpcomingKnockdown) {
+                          return GameActionButton(
+                            label: 'NEXT',
+                            icon: Icons.arrow_forward_rounded,
+                            primary: true,
+                            onPressed: widget.canAdvancePhase
+                                ? widget.onNext
+                                : null,
+                          );
+                        }
+                        final kdAsset =
+                            TokenCatalogRepository.byLabel('Knockdown')
+                                ?.imageAsset ??
+                            'assets/token/A-terre.png';
+                        return SizedBox(
+                          height: GameDesign.buttonHeight,
+                          child: FilledButton(
+                            onPressed: widget.canAdvancePhase
+                                ? widget.onNext
+                                : null,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: GameDesign.actionPrimary,
+                              disabledBackgroundColor: Colors.white10,
+                              foregroundColor: GameDesign.goldText,
+                              disabledForegroundColor: Colors.white38,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  GameDesign.buttonRadius,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Image.asset(
+                                  kdAsset,
+                                  width: 24,
+                                  height: 24,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, _, _) => const Icon(
+                                    Icons.personal_injury_rounded,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],

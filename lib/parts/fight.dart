@@ -2343,6 +2343,10 @@ class _FightPageState extends State<FightPage> {
         maskedTokens: widget.adventure.maskedPopinTokens,
       );
       if (!mounted) return;
+      if (_heroKnockdownSkippedRoll) {
+        _advancePhase();
+        return;
+      }
       if (hasRealityWarp) {
         setState(() {
           _heroRealityWarpThisAttack = true;
@@ -2503,6 +2507,10 @@ class _FightPageState extends State<FightPage> {
         maskedTokens: enemy.maskedPopinTokens,
       );
       if (!mounted) return;
+      if (_minionKnockdownSkippedRoll) {
+        _advancePhase();
+        return;
+      }
       if (hasRealityWarp) {
         setState(() {
           _minionRealityWarpThisAttack = true;
@@ -9233,6 +9241,7 @@ class _FightPageState extends State<FightPage> {
       final isDefenderRollToken =
           isTargeted || isFocusFire || isSunMarked || isWebbed;
       final isAttackerRollToken =
+          isKnockdown ||
           isEntangle ||
           isHex ||
           isBarbedVine ||
