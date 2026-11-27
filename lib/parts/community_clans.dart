@@ -345,10 +345,26 @@ class LeaderboardCalculator {
       return aQualified ? -1 : 1;
     }
 
+    if (!mode.isBoss) {
+      final avgDiff = b.avgScore.compareTo(a.avgScore);
+      if (avgDiff != 0) return avgDiff;
+
+      final hpDiff = b.avgHp.compareTo(a.avgHp);
+      if (hpDiff != 0) return hpDiff;
+
+      final timeDiff = a.avgDurationSeconds.compareTo(b.avgDurationSeconds);
+      if (timeDiff != 0) return timeDiff;
+
+      final countDiff = b.runsCount.compareTo(a.runsCount);
+      if (countDiff != 0) return countDiff;
+
+      return a.pseudo.toLowerCase().compareTo(b.pseudo.toLowerCase());
+    }
+
     final wilsonDiff = b.wilsonScore.compareTo(a.wilsonScore);
     if (wilsonDiff != 0) return wilsonDiff;
 
-    final streakDiff = b.streak.compareTo(a.streak);
+    final streakDiff = b.activeStreak.compareTo(a.activeStreak);
     if (streakDiff != 0) return streakDiff;
 
     final maxDiff = b.maxScore.compareTo(a.maxScore);
@@ -1898,11 +1914,11 @@ class _CommunityLeaderboardViewState extends State<CommunityLeaderboardView> {
     final limitLabel = _showTop3Only ? 'Top 3' : 'Top 10';
     return switch (mode) {
       CommunityLeaderboardMode.free =>
-        '$limitLabel by Wilson Score (min 3 runs) in Free Minion Rush.',
+        '$limitLabel by Average Score (min 3 runs) in Free Minion Rush.',
       CommunityLeaderboardMode.medium =>
-        '$limitLabel by Wilson Score (min 3 runs) in Medium Minion Rush.',
+        '$limitLabel by Average Score (min 3 runs) in Medium Minion Rush.',
       CommunityLeaderboardMode.difficult =>
-        '$limitLabel by Wilson Score (min 3 runs) in Difficult Minion Rush.',
+        '$limitLabel by Average Score (min 3 runs) in Difficult Minion Rush.',
       CommunityLeaderboardMode.naxarus =>
         '$limitLabel by Wilson Score (min 3 runs) vs Naxarus Boss.',
       CommunityLeaderboardMode.ourokhor =>
@@ -1943,9 +1959,9 @@ class _CommunityLeaderboardViewState extends State<CommunityLeaderboardView> {
           ],
         ),
         content: const Text(
-          '• 3-Run Minimum: You need at least 3 runs with a hero to enter the Top 10.\n\n'
-          '• Wilson Score (Win Rate + Volume): We use a 95% Wilson lower-bound score so both your win rate and consistency across multiple runs count. For example, 10/10 ranks higher than 3/3, and 18/20 beats 3/3.\n\n'
-          '• Tie-Breakers: Undefeated streak 🔥, best & average score, remaining HP ❤️, total runs, and clear time ⏱️.',
+          '• 3-Run Minimum: A hero needs at least 3 runs to qualify for the Top 3 / Top 10 (fewer than 3 runs appear dimmed).\n\n'
+          '• Minion Rush (Free / Medium / Difficult): Ranked by Average Score first, then Average Remaining HP ❤️, then Fastest Average Time ⏱️.\n\n'
+          '• Bosses (Naxarus / Ourokhor): Ranked by 95% Wilson Score (win rate + volume), then active streak 🔥, best & average score, remaining HP ❤️, and clear time ⏱️.',
           style: TextStyle(
             color: Colors.white70,
             fontSize: 13,
@@ -2015,16 +2031,31 @@ class _LeaderboardTableHeader extends StatelessWidget {
             child: Icon(Icons.timer, size: 16, color: Color(0xffffe22d)),
           ),
           const Expanded(
-            child: Icon(Icons.emoji_events, size: 16, color: Color(0xffffe22d)),
-          ),
-          const Expanded(
             child: Tooltip(
-              message: 'Wilson Score % (tap a score for details)',
-              child: Icon(
-                Icons.verified_rounded,
-                size: 17,
-                color: GameDesign.actionPrimary,
-              ),
+              message: 'Best Score',
+              child: Icon(Icons.emoji_events, size: 16, color: Colors.white60),
+            ),
+          ),
+          Expanded(
+            child: Tooltip(
+              message: isBossMode
+                  ? 'Wilson Score % (tap a score for details)'
+                  : 'Average Score (primary ranking stat)',
+              child: isBossMode
+                  ? const Icon(
+                      Icons.verified_rounded,
+                      size: 17,
+                      color: GameDesign.actionPrimary,
+                    )
+                  : const Text(
+                      'AVG',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xffffe22d),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11.5,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -2234,8 +2265,13 @@ class _LeaderboardRowWidget extends StatelessWidget {
         ? const Color(0xff2c2612)
         : Colors.transparent;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+    final qualified =
+        entry.runsCount >= LeaderboardCalculator.minQualifiedRuns;
+
+    return Opacity(
+      opacity: qualified ? 1.0 : 0.48,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(8),
@@ -2340,59 +2376,93 @@ class _LeaderboardRowWidget extends StatelessWidget {
           Expanded(
             child: _HistoryMetricText(
               entry.maxScore.toString(),
-              color: const Color(0xffffe22d),
+              color: Colors.white70,
             ),
           ),
           Expanded(
             child: Center(
-              child: GestureDetector(
-                onTap: () => showWilsonScoreDetailsDialog(
-                  context,
-                  title: entry.pseudo,
-                  hero: entry.hero,
-                  wins: entry.winsCount,
-                  total: entry.runsCount,
-                  wilsonScore: entry.wilsonScore,
-                  activeStreak: entry.activeStreak,
-                  avgScore: entry.avgScore,
-                  avgHp: entry.avgHp,
-                  modeLabel: mode.label,
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: entry.runsCount >=
-                            LeaderboardCalculator.minQualifiedRuns
-                        ? GameDesign.actionPrimary.withValues(alpha: 0.16)
-                        : Colors.white.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: entry.runsCount >=
-                              LeaderboardCalculator.minQualifiedRuns
-                          ? GameDesign.actionPrimary.withValues(alpha: 0.65)
-                          : Colors.white24,
-                      width: 1,
+              child: isBossMode
+                  ? GestureDetector(
+                      onTap: () => showWilsonScoreDetailsDialog(
+                        context,
+                        title: entry.pseudo,
+                        hero: entry.hero,
+                        wins: entry.winsCount,
+                        total: entry.runsCount,
+                        wilsonScore: entry.wilsonScore,
+                        activeStreak: entry.activeStreak,
+                        avgScore: entry.avgScore,
+                        avgHp: entry.avgHp,
+                        modeLabel: mode.label,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: entry.runsCount >=
+                                  LeaderboardCalculator.minQualifiedRuns
+                              ? GameDesign.actionPrimary.withValues(alpha: 0.16)
+                              : Colors.white.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: entry.runsCount >=
+                                    LeaderboardCalculator.minQualifiedRuns
+                                ? GameDesign.actionPrimary
+                                    .withValues(alpha: 0.65)
+                                : Colors.white24,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          '${(entry.wilsonScore * 100).round()}%',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            color: entry.runsCount >=
+                                    LeaderboardCalculator.minQualifiedRuns
+                                ? GameDesign.actionPrimary
+                                : Colors.white54,
+                          ),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: entry.runsCount >=
+                                LeaderboardCalculator.minQualifiedRuns
+                            ? const Color(0xffffe22d).withValues(alpha: 0.16)
+                            : Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: entry.runsCount >=
+                                  LeaderboardCalculator.minQualifiedRuns
+                              ? const Color(0xffffe22d).withValues(alpha: 0.65)
+                              : Colors.white24,
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        _formatNumber(entry.avgScore),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          color: entry.runsCount >=
+                                  LeaderboardCalculator.minQualifiedRuns
+                              ? const Color(0xffffe22d)
+                              : Colors.white54,
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    '${(entry.wilsonScore * 100).round()}%',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      color: entry.runsCount >=
-                              LeaderboardCalculator.minQualifiedRuns
-                          ? GameDesign.actionPrimary
-                          : Colors.white54,
-                    ),
-                  ),
-                ),
-              ),
             ),
           ),
         ],
+      ),
       ),
     );
   }

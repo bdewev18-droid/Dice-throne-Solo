@@ -9,12 +9,182 @@ enum HistoryCategory {
   final IconData icon;
 }
 
+class HistoryHubPage extends StatelessWidget {
+  const HistoryHubPage({
+    required this.records,
+    required this.onAddRecord,
+    required this.onDeleteRecord,
+    super.key,
+  });
+
+  final List<GameRecord> records;
+  final ValueChanged<GameRecord> onAddRecord;
+  final ValueChanged<GameRecord> onDeleteRecord;
+
+  void _openTab(BuildContext context, HistoryMainTab tab) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => HistoryPage(
+          records: records,
+          initialTab: tab,
+          onAddRecord: onAddRecord,
+          onDeleteRecord: onDeleteRecord,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: GameDesign.obsidianBg,
+      appBar: AppBar(
+        title: const Text('History & Rankings'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+            child: PlayerProfileChipButton(onUpdated: () {}),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Choose a section',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white60,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _HistoryHubCard(
+                icon: Icons.history_rounded,
+                title: 'My History',
+                subtitle:
+                    'Personal hero rankings, average scores, and run history.',
+                accentColor: const Color(0xffffe22d),
+                onTap: () => _openTab(context, HistoryMainTab.myHistory),
+              ),
+              const SizedBox(height: 14),
+              _HistoryHubCard(
+                icon: Icons.groups_rounded,
+                title: 'Clans',
+                subtitle:
+                    'Private leaderboards and shared runs with your clan.',
+                accentColor: const Color(0xff5eead4),
+                onTap: () => _openTab(context, HistoryMainTab.clans),
+              ),
+              const SizedBox(height: 14),
+              _HistoryHubCard(
+                icon: Icons.public_rounded,
+                title: 'Community',
+                subtitle:
+                    'Global Top 3 & Top 10 rankings across all Solo Quest players.',
+                accentColor: const Color(0xffe2e8f0),
+                onTap: () => _openTab(context, HistoryMainTab.community),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HistoryHubCard extends StatelessWidget {
+  const _HistoryHubCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.accentColor,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color accentColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xff1b1f2e),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: accentColor.withValues(alpha: 0.35)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.45),
+                  ),
+                ),
+                child: Icon(icon, color: accentColor, size: 26),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: accentColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: Colors.white70,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: accentColor.withValues(alpha: 0.8),
+                size: 26,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class HistoryPage extends StatefulWidget {
   const HistoryPage({
     required this.records,
     required this.onAddRecord,
     required this.onDeleteRecord,
     this.initialDifficulty,
+    this.initialTab = HistoryMainTab.myHistory,
     super.key,
   });
 
@@ -22,13 +192,14 @@ class HistoryPage extends StatefulWidget {
   final ValueChanged<GameRecord> onAddRecord;
   final ValueChanged<GameRecord> onDeleteRecord;
   final RunDifficulty? initialDifficulty;
+  final HistoryMainTab initialTab;
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
 }
 
 class _HistoryPageState extends State<HistoryPage> {
-  HistoryMainTab _mainTab = HistoryMainTab.myHistory;
+  late HistoryMainTab _mainTab = widget.initialTab;
   HistorySort _sort = HistorySort.average;
   late CommunityLeaderboardMode _selectedMode = switch (widget.initialDifficulty) {
     RunDifficulty.naraxus => CommunityLeaderboardMode.naxarus,
@@ -97,7 +268,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('History & Rankings'),
+        title: Text(_mainTab.label),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -135,73 +306,10 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 3 Main Tabs: My History | Community | Clans
-              Container(
-                height: 44,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: const Color(0xff181b26),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white12),
-                ),
-                child: Row(
-                  children: HistoryMainTab.values.map((tab) {
-                    final selected = _mainTab == tab;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _mainTab = tab;
-                            _deleteMode = false;
-                            _selectedForDelete.clear();
-                          });
-                          if (tab != HistoryMainTab.myHistory) {
-                            _refreshCommunityData();
-                          }
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? const Color(0xffffe22d)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(9),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                tab.icon,
-                                size: 16,
-                                color: selected ? Colors.black : Colors.white70,
-                              ),
-                              const SizedBox(width: 5),
-                              Flexible(
-                                child: Text(
-                                  tab.label,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w900,
-                                    color: selected
-                                        ? Colors.black
-                                        : Colors.white70,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: 12),
               if (_mainTab == HistoryMainTab.community)
                 Expanded(
                   child: CommunityLeaderboardView(
@@ -478,6 +586,34 @@ class _HistoryPageState extends State<HistoryPage> {
     MapEntry<HeroType, List<GameRecord>> a,
     MapEntry<HeroType, List<GameRecord>> b,
   ) {
+    final aQualified = a.value.length >= LeaderboardCalculator.minQualifiedRuns;
+    final bQualified = b.value.length >= LeaderboardCalculator.minQualifiedRuns;
+    if (aQualified != bQualified) {
+      return aQualified ? -1 : 1;
+    }
+
+    if (!_isBossMode) {
+      final avgScoreA = _averageScore(a.value);
+      final avgScoreB = _averageScore(b.value);
+      final scoreDiff = avgScoreB.compareTo(avgScoreA);
+      if (scoreDiff != 0) return scoreDiff;
+
+      final avgHpA = _averageHp(a.value);
+      final avgHpB = _averageHp(b.value);
+      final hpDiff = avgHpB.compareTo(avgHpA);
+      if (hpDiff != 0) return hpDiff;
+
+      final avgTimeA = _averageDurationSeconds(a.value);
+      final avgTimeB = _averageDurationSeconds(b.value);
+      final timeDiff = avgTimeA.compareTo(avgTimeB);
+      if (timeDiff != 0) return timeDiff;
+
+      final countDiff = b.value.length.compareTo(a.value.length);
+      if (countDiff != 0) return countDiff;
+
+      return a.key.label.toLowerCase().compareTo(b.key.label.toLowerCase());
+    }
+
     final winsA = a.value.where(LeaderboardCalculator.isRunVictory).length;
     final winsB = b.value.where(LeaderboardCalculator.isRunVictory).length;
     final wilsonA = LeaderboardCalculator.computeWilsonScore(
@@ -557,8 +693,10 @@ class _HistoryPageState extends State<HistoryPage> {
         entries.add(_PodiumEntry(r.hero, p, s));
       }
     } else {
-      var list = items as List<MapEntry<HeroType, List<GameRecord>>>;
-      list = list.toList()..sort(_compareHeroStats);
+      var list = (items as List<MapEntry<HeroType, List<GameRecord>>>)
+          .where((e) => e.value.length >= LeaderboardCalculator.minQualifiedRuns)
+          .toList()
+        ..sort(_compareHeroStats);
 
       if (!_showTop3Only) {
         final topList = list.take(10).toList();
@@ -645,41 +783,68 @@ class _HistoryPageState extends State<HistoryPage> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => showWilsonScoreDetailsDialog(
-                          context,
-                          title: 'My Stats',
-                          hero: hero,
-                          wins: wins,
-                          total: runs.length,
-                          wilsonScore: wilson,
-                          activeStreak: streak,
-                          avgScore: avgScore,
-                          avgHp: avgHp,
-                          modeLabel: _selectedMode.label,
-                        ),
-                        child: Container(
+                      if (_isBossMode)
+                        GestureDetector(
+                          onTap: () => showWilsonScoreDetailsDialog(
+                            context,
+                            title: 'My Stats',
+                            hero: hero,
+                            wins: wins,
+                            total: runs.length,
+                            wilsonScore: wilson,
+                            activeStreak: streak,
+                            avgScore: avgScore,
+                            avgHp: avgHp,
+                            modeLabel: _selectedMode.label,
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: GameDesign.actionPrimary
+                                  .withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: GameDesign.actionPrimary
+                                    .withValues(alpha: 0.6),
+                              ),
+                            ),
+                            child: Text(
+                              '${(wilson * 100).round()}%',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                color: GameDesign.actionPrimary,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: GameDesign.actionPrimary.withValues(alpha: 0.16),
+                            color: const Color(0xffffe22d)
+                                .withValues(alpha: 0.16),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: GameDesign.actionPrimary.withValues(alpha: 0.6),
+                              color: const Color(0xffffe22d)
+                                  .withValues(alpha: 0.6),
                             ),
                           ),
                           child: Text(
-                            '${(wilson * 100).round()}%',
+                            '${_formatNumber(avgScore)} avg',
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w900,
-                              color: GameDesign.actionPrimary,
+                              color: Color(0xffffe22d),
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 );
@@ -689,6 +854,10 @@ class _HistoryPageState extends State<HistoryPage> {
         );
       }
 
+      final pseudo = AppSettings.instance.playerPseudo.trim().isNotEmpty
+          ? AppSettings.instance.playerPseudo.trim()
+          : 'You';
+
       for (var i = 0; i < 3 && i < list.length; i++) {
         final r = list[i];
         final wins = r.value.where(LeaderboardCalculator.isRunVictory).length;
@@ -696,14 +865,20 @@ class _HistoryPageState extends State<HistoryPage> {
           wins,
           r.value.length,
         );
+        final avgScore = _averageScore(r.value);
+        final bestScore = _bestScore(r.value);
         final streak = LeaderboardCalculator.computeActiveWinStreak(r.value);
-        String p = '${(wilson * 100).round()}% Wilson';
-        String s = streak > 0
-            ? '$wins/${r.value.length} • 🔥$streak'
-            : '$wins/${r.value.length} runs';
+        final String p = _isBossMode
+            ? '${(wilson * 100).round()}% • $bestScore pts'
+            : '${_formatNumber(avgScore)} avg pts';
+        String s = _isBossMode
+            ? '$pseudo • $wins/${r.value.length}'
+            : (streak > 0
+                ? '${r.value.length} runs • 🔥$streak'
+                : '${r.value.length} runs');
 
-        if (_sort == HistorySort.best) {
-          s += ' • Max: ${r.value.first.score}';
+        if (!_isBossMode && _sort == HistorySort.best) {
+          s += ' • Max: $bestScore';
         }
 
         entries.add(_PodiumEntry(r.key, p, s));
@@ -740,9 +915,12 @@ class _HistoryPageState extends State<HistoryPage> {
         final activeStreak = LeaderboardCalculator.computeActiveWinStreak(runs);
         final avgScore = _averageScore(runs);
         final avgHp = _averageHp(runs);
-        return Column(
-          children: [
-            InkWell(
+        final qualified = runs.length >= LeaderboardCalculator.minQualifiedRuns;
+        return Opacity(
+          opacity: qualified ? 1.0 : 0.48,
+          child: Column(
+            children: [
+              InkWell(
               onTap: () {
                 setState(() {
                   if (expanded) {
@@ -828,58 +1006,87 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                     Expanded(
                       child: _HistoryMetricText(
-                        _formatNumber(_averageScore(runs)),
+                        _bestScore(runs).toString(),
+                        color: Colors.white70,
                       ),
                     ),
                     Expanded(
                       child: Center(
-                        child: GestureDetector(
-                          onTap: () => showWilsonScoreDetailsDialog(
-                            context,
-                            title: 'My Stats',
-                            hero: hero,
-                            wins: wins,
-                            total: runs.length,
-                            wilsonScore: wilson,
-                            activeStreak: activeStreak,
-                            avgScore: avgScore,
-                            avgHp: avgHp,
-                            modeLabel: _selectedMode.label,
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: runs.length >=
-                                      LeaderboardCalculator.minQualifiedRuns
-                                  ? GameDesign.actionPrimary
-                                      .withValues(alpha: 0.16)
-                                  : Colors.white.withValues(alpha: 0.06),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: runs.length >=
-                                        LeaderboardCalculator.minQualifiedRuns
-                                    ? GameDesign.actionPrimary
-                                        .withValues(alpha: 0.65)
-                                    : Colors.white24,
-                                width: 1,
+                        child: isBoss
+                            ? GestureDetector(
+                                onTap: () => showWilsonScoreDetailsDialog(
+                                  context,
+                                  title: 'My Stats',
+                                  hero: hero,
+                                  wins: wins,
+                                  total: runs.length,
+                                  wilsonScore: wilson,
+                                  activeStreak: activeStreak,
+                                  avgScore: avgScore,
+                                  avgHp: avgHp,
+                                  modeLabel: _selectedMode.label,
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: qualified
+                                        ? GameDesign.actionPrimary
+                                            .withValues(alpha: 0.16)
+                                        : Colors.white.withValues(alpha: 0.06),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: qualified
+                                          ? GameDesign.actionPrimary
+                                              .withValues(alpha: 0.65)
+                                          : Colors.white24,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    '${(wilson * 100).round()}%',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w900,
+                                      color: qualified
+                                          ? GameDesign.actionPrimary
+                                          : Colors.white54,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: qualified
+                                      ? const Color(0xffffe22d)
+                                          .withValues(alpha: 0.16)
+                                      : Colors.white.withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: qualified
+                                        ? const Color(0xffffe22d)
+                                            .withValues(alpha: 0.65)
+                                        : Colors.white24,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  _formatNumber(avgScore),
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: qualified
+                                        ? const Color(0xffffe22d)
+                                        : Colors.white54,
+                                  ),
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              '${(wilson * 100).round()}%',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w900,
-                                color: runs.length >=
-                                        LeaderboardCalculator.minQualifiedRuns
-                                    ? GameDesign.actionPrimary
-                                    : Colors.white54,
-                              ),
-                            ),
-                          ),
-                        ),
                       ),
                     ),
                   ],
@@ -907,6 +1114,7 @@ class _HistoryPageState extends State<HistoryPage> {
               ),
             const Divider(height: 1),
           ],
+          ),
         );
       }),
       if (unplayedHeroes.isNotEmpty) ...[
@@ -1313,10 +1521,7 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  bool _canDeleteRecord(GameRecord record) {
-    if (AppSettings.instance.developerMode) return true;
-    return record.enemiesDefeated == 0;
-  }
+  bool _canDeleteRecord(GameRecord record) => true;
 
   void _toggleRuns(List<GameRecord> runs, bool? value) {
     final deletable = runs.where(_canDeleteRecord).toList();
@@ -1357,9 +1562,9 @@ class _HistoryPageState extends State<HistoryPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete runs'),
+        title: const Text('Delete selected runs'),
         content: Text(
-          'Delete ${_selectedForDelete.length} selected run(s) from history?',
+          'Are you sure you want to delete ${_selectedForDelete.length} selected run(s)?\n\nEverything selected will be permanently deleted (including hero stats, rankings, and active streaks for these runs). This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -1367,8 +1572,9 @@ class _HistoryPageState extends State<HistoryPage> {
             child: const Text('Cancel'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: const Text('Delete everything'),
           ),
         ],
       ),
@@ -1786,21 +1992,35 @@ class _HistoryHeaderRow extends StatelessWidget {
               ),
             ),
           ),
-          // 6. Wilson Score %
+          // 6. Average Score (Minion Rush) or Wilson Score % (Bosses)
           Expanded(
             child: _HistoryHeaderItem(
-              tooltip: 'Wilson Score % (tap a score for details)',
+              tooltip: isBossMode
+                  ? 'Wilson Score % (tap a score for details)'
+                  : 'Average Score (primary ranking stat)',
               onTap: () {
                 _openMultiStatSheet(
                   context,
-                  title: 'Wilson Score & Streak',
-                  iconWidget: const Icon(
-                    Icons.verified_rounded,
-                    size: 22,
-                    color: GameDesign.actionPrimary,
-                  ),
-                  description:
-                      '95% Wilson lower-bound score balances win rate and run volume (minimum 3 runs to qualify for Top 3 / Top 10). Tap any hero\'s Wilson % pill to inspect their detailed stats.',
+                  title: isBossMode
+                      ? 'Wilson Score & Streak'
+                      : 'Average Score & Qualification',
+                  iconWidget: isBossMode
+                      ? const Icon(
+                          Icons.verified_rounded,
+                          size: 22,
+                          color: GameDesign.actionPrimary,
+                        )
+                      : const Text(
+                          'AVG',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xffffe22d),
+                          ),
+                        ),
+                  description: isBossMode
+                      ? '95% Wilson lower-bound score balances win rate and run volume (minimum 3 runs to qualify for Top 3 / Top 10). Tap any hero\'s Wilson % pill to inspect their detailed stats.'
+                      : 'Minion Rush heroes are ranked by Average Score (min 3 runs to qualify), then Average Remaining HP, then Fastest Average Time.',
                   lines: [
                     _StatLineData(
                       label: 'Min runs for Top 3 / Top 10',
@@ -1813,11 +2033,21 @@ class _HistoryHeaderRow extends StatelessWidget {
                   ],
                 );
               },
-              child: const Icon(
-                Icons.verified_rounded,
-                size: 18,
-                color: GameDesign.actionPrimary,
-              ),
+              child: isBossMode
+                  ? const Icon(
+                      Icons.verified_rounded,
+                      size: 18,
+                      color: GameDesign.actionPrimary,
+                    )
+                  : const Text(
+                      'AVG',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xffffe22d),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -2350,25 +2580,14 @@ class _HeroUnitRunCard extends StatelessWidget {
                 ),
               ),
               if (deleteMode)
-                (AppSettings.instance.developerMode ||
-                        record.enemiesDefeated == 0)
-                    ? SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: Checkbox(
-                          value: selected,
-                          onChanged: onToggleSelect,
-                        ),
-                      )
-                    : const Tooltip(
-                        message:
-                            'Runs with 1+ defeated enemy cannot be deleted',
-                        child: Icon(
-                          Icons.lock_outline_rounded,
-                          size: 16,
-                          color: Colors.white38,
-                        ),
-                      )
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: Checkbox(
+                    value: selected,
+                    onChanged: onToggleSelect,
+                  ),
+                )
               else
                 Text(
                   '${record.date.day.toString().padLeft(2, '0')}/${record.date.month.toString().padLeft(2, '0')}/${record.date.year}',
@@ -2476,21 +2695,7 @@ class _RunDetailRow extends StatelessWidget {
           child: Row(
             children: [
               if (deleteMode)
-                (AppSettings.instance.developerMode ||
-                        record.enemiesDefeated == 0)
-                    ? Checkbox(value: selected, onChanged: onSelected)
-                    : const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Tooltip(
-                          message:
-                              'Runs with 1+ defeated enemy cannot be deleted',
-                          child: Icon(
-                            Icons.lock_outline_rounded,
-                            size: 18,
-                            color: Colors.white38,
-                          ),
-                        ),
-                      )
+                Checkbox(value: selected, onChanged: onSelected)
               else if (showHero)
                 HeroAvatar(hero: record.hero, size: 30)
               else

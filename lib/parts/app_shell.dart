@@ -345,12 +345,18 @@ class _DiceThroneSurvieAppState extends State<DiceThroneSurvieApp> {
   void _openHistory(BuildContext context, {RunDifficulty? initialDifficulty}) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => HistoryPage(
-          records: _history,
-          initialDifficulty: initialDifficulty,
-          onAddRecord: (record) => _handleAddRecord(record),
-          onDeleteRecord: (record) => _handleDeleteRecord(record),
-        ),
+        builder: (_) => initialDifficulty == null
+            ? HistoryHubPage(
+                records: _history,
+                onAddRecord: (record) => _handleAddRecord(record),
+                onDeleteRecord: (record) => _handleDeleteRecord(record),
+              )
+            : HistoryPage(
+                records: _history,
+                initialDifficulty: initialDifficulty,
+                onAddRecord: (record) => _handleAddRecord(record),
+                onDeleteRecord: (record) => _handleDeleteRecord(record),
+              ),
       ),
     );
   }

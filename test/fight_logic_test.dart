@@ -3371,14 +3371,14 @@ void main() {
       // Only u1 and u2 are ranked (u_hidden is excluded, u1 appears only once)
       expect(resNormal.totalRankedPlayers, equals(2));
       expect(resNormal.top10.length, equals(2));
-      // u1 is #1 under Wilson Score (4/4 wins > 3/3 wins)
-      expect(resNormal.top10[0].userId, equals('u1'));
-      expect(resNormal.top10[0].activeStreak, equals(4));
+      // u2 is #1 in Minion Rush (100 avg pts > u1's lower avg pts)
+      expect(resNormal.top10[0].userId, equals('u2'));
+      expect(resNormal.top10[0].activeStreak, equals(3));
       expect(resNormal.top10[0].rank, equals(1));
-      expect(resNormal.top10[1].userId, equals('u2'));
-      expect(resNormal.top10[1].activeStreak, equals(3));
+      expect(resNormal.top10[1].userId, equals('u1'));
+      expect(resNormal.top10[1].activeStreak, equals(4));
       expect(resNormal.top10[1].rank, equals(2));
-      expect(resNormal.playerEntry?.rank, equals(1));
+      expect(resNormal.playerEntry?.rank, equals(2));
 
       // Filtering on an unplayed hero for u1 (e.g. Pyromancer) returns null playerEntry for 11th row notice
       final resUnplayed = LeaderboardCalculator.computeLeaderboard(
