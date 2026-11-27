@@ -30,22 +30,27 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   HistoryMainTab _mainTab = HistoryMainTab.myHistory;
   HistorySort _sort = HistorySort.average;
-  late HistoryCategory _category =
-      (widget.initialDifficulty == RunDifficulty.naraxus)
-      ? HistoryCategory.bosses
-      : HistoryCategory.minionRush;
-  String _selectedBossKey = 'all';
-  String _selectedBossDifficulty = 'all';
-  late RunDifficulty _difficulty =
-      (widget.initialDifficulty == RunDifficulty.naraxus)
-      ? RunDifficulty.medium
-      : (widget.initialDifficulty ?? RunDifficulty.medium);
-  RandomFilter _randomFilter = RandomFilter.both;
+  late CommunityLeaderboardMode _selectedMode = switch (widget.initialDifficulty) {
+    RunDifficulty.naraxus => CommunityLeaderboardMode.naxarus,
+    RunDifficulty.free => CommunityLeaderboardMode.free,
+    RunDifficulty.hard => CommunityLeaderboardMode.difficult,
+    _ => CommunityLeaderboardMode.medium,
+  };
+  bool _showTop3Only = true;
   bool _deleteMode = false;
   bool _isGridView = false;
   HeroType? _selectedGridHero;
   final Set<GameRecord> _selectedForDelete = {};
   final Set<HeroType> _expandedHeroes = {};
+
+  bool get _isBossMode => _selectedMode.isBoss;
+  RunDifficulty get _effectiveDifficulty => switch (_selectedMode) {
+    CommunityLeaderboardMode.free => RunDifficulty.free,
+    CommunityLeaderboardMode.medium => RunDifficulty.medium,
+    CommunityLeaderboardMode.difficult => RunDifficulty.hard,
+    CommunityLeaderboardMode.naxarus ||
+    CommunityLeaderboardMode.ourokhor => RunDifficulty.naraxus,
+  };
 
   bool _loadingCommunity = false;
   Map<String, PlayerProfileInfo> _communityProfiles = {};
@@ -78,10 +83,8 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
-  bool get _showRouteFilter =>
-      _category == HistoryCategory.minionRush &&
-      (_difficulty == RunDifficulty.medium ||
-          _difficulty == RunDifficulty.hard);
+  bool _isRecordForSelectedMode(GameRecord record) =>
+      LeaderboardCalculator.matchesLeaderboardMode(record, _selectedMode);
 
   @override
   Widget build(BuildContext context) {
@@ -230,20 +233,130 @@ class _HistoryPageState extends State<HistoryPage> {
                   ),
                 )
               else ...[
+                // 5 Modes on 1 single row: Free | Medium | Difficult | Naxarus | Ourokhor
+                Container(
+                  height: 40,
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff1b1d29),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Row(
+                    children: CommunityLeaderboardMode.values.map((m) {
+                      final selected = _selectedMode == m;
+                      final accent = m.accentColor;
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() {
+                            _selectedMode = m;
+                            _selectedForDelete.clear();
+                            _selectedGridHero = null;
+                          }),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? accent
+                                  : m.isBoss
+                                  ? const Color(0xffff6b4a)
+                                      .withValues(alpha: 0.08)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    m.icon,
+                                    size: 13,
+                                    color: selected
+                                        ? Colors.black
+                                        : m.isBoss
+                                        ? const Color(0xffff8a65)
+                                        : Colors.white70,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    m.label,
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: selected
+                                          ? Colors.black
+                                          : m.isBoss
+                                          ? const Color(0xffffab91)
+                                          : Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Inline Sort by (icon + dropdown) + Top 3/10 + List/Grid toggle
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _HistoryCategorySlider(
-                      category: _category,
-                      onChanged: (cat) {
-                        setState(() {
-                          _category = cat;
-                          _selectedForDelete.clear();
-                          _selectedGridHero = null;
-                        });
-                      },
+                    Container(
+                      height: 36,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xff1b1d29),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.sort_rounded,
+                            size: 16,
+                            color: GameDesign.actionPrimary,
+                          ),
+                          const SizedBox(width: 6),
+                          DropdownButtonHideUnderline(
+                            child: DropdownButton<HistorySort>(
+                              value: _sort,
+                              isDense: true,
+                              dropdownColor: const Color(0xff1b1f2e),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                              items: HistorySort.values
+                                  .map(
+                                    (d) => DropdownMenuItem(
+                                      value: d,
+                                      child: Text(d.label),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (val) {
+                                if (val != null) setState(() => _sort = val);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    const Spacer(),
+                    if (!_isGridView) ...[
+                      _TopLimitToggle(
+                        showTop3Only: _showTop3Only,
+                        onChanged: (v) => setState(() => _showTop3Only = v),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     _HistoryViewToggle(
                       isGrid: _isGridView,
                       onChanged: (val) {
@@ -255,279 +368,29 @@ class _HistoryPageState extends State<HistoryPage> {
                     ),
                   ],
                 ),
-              const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_category == HistoryCategory.bosses) ...[
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            'Boss',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          DropdownButtonFormField<String>(
-                            initialValue: _selectedBossKey,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 8,
-                              ),
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'all',
-                                child: Text(
-                                  'All',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'naraxus',
-                                child: Text(
-                                  'Naxarus',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'ourokhor',
-                                child: Text(
-                                  'Ourokhor',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ),
-                            ],
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() {
-                                  _selectedBossKey = val;
-                                  _selectedForDelete.clear();
-                                });
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            'Mode',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          DropdownButtonFormField<String>(
-                            initialValue: _selectedBossDifficulty,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 8,
-                              ),
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'all',
-                                child: Text(
-                                  'All',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'normal',
-                                child: Text(
-                                  'Normal',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'difficult',
-                                child: Text(
-                                  'Difficult',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ),
-                            ],
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() {
-                                  _selectedBossDifficulty = val;
-                                  _selectedForDelete.clear();
-                                });
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ] else ...[
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            'Mode',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          DropdownButtonFormField<RunDifficulty>(
-                            initialValue: _difficulty,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 8,
-                              ),
-                            ),
-                            items: RunDifficulty.values
-                                .where((d) => d != RunDifficulty.naraxus)
-                                .map(
-                                  (d) => DropdownMenuItem(
-                                    value: d,
-                                    child: Text(
-                                      d.label,
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (val) {
-                              if (val != null)
-                                setState(() {
-                                  _difficulty = val;
-                                  _selectedForDelete.clear();
-                                });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (_showRouteFilter) ...[
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Text(
-                              'Route',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white70,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            DropdownButtonFormField<RandomFilter>(
-                              initialValue: _randomFilter,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 8,
-                                ),
-                              ),
-                              items: RandomFilter.values
-                                  .map(
-                                    (d) => DropdownMenuItem(
-                                      value: d,
-                                      child: Text(
-                                        d.label,
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (val) {
-                                if (val != null)
-                                  setState(() => _randomFilter = val);
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                  ],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Text(
-                          'Sort by',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        DropdownButtonFormField<HistorySort>(
-                          initialValue: _sort,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                          ),
-                          items: HistorySort.values
-                              .map(
-                                (d) => DropdownMenuItem(
-                                  value: d,
-                                  child: Text(
-                                    d.label,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) {
-                            if (val != null) setState(() => _sort = val);
-                          },
-                        ),
-                      ],
+                if (_sort == HistorySort.best)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text(
+                      'Best score uses points first, then remaining HP when available.',
+                      style: TextStyle(color: Color(0xffbbcbbb), fontSize: 11.5),
                     ),
                   ),
-                ],
-              ),
-              if (_sort == HistorySort.best)
-                const Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Text(
-                    'Best score uses points first, then remaining HP when available.',
-                    style: TextStyle(color: Color(0xffbbcbbb), fontSize: 12),
-                  ),
-                ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: ListView(
-                  children: [
-                    if (!_isGridView) ...[
-                      _buildPodiumSection(
-                        flatMode ? records : grouped.entries.toList(),
-                        flatMode,
-                      ),
-                      const SizedBox(height: 16),
-                      _HistoryHeaderRow(
-                        isBossMode: _category == HistoryCategory.bosses,
-                        difficulty: _difficulty,
-                        allRecords: widget.records,
-                      ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      if (!_isGridView) ...[
+                        _buildPodiumSection(
+                          flatMode ? records : grouped.entries.toList(),
+                          flatMode,
+                        ),
+                        const SizedBox(height: 16),
+                        _HistoryHeaderRow(
+                          isBossMode: _isBossMode,
+                          difficulty: _effectiveDifficulty,
+                          allRecords: widget.records,
+                        ),
                       const Divider(),
                       if (flatMode)
                         if (records.isEmpty)
@@ -591,61 +454,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   bool _matchesFilters(GameRecord record) {
-    if (record.hero == HeroType.benjamin) {
-      return false;
-    }
-    if (_category == HistoryCategory.bosses) {
-      final isBoss =
-          record.mode.difficulty == RunDifficulty.naraxus ||
-          record.bossKey != null ||
-          record.mode.name.toLowerCase().contains('boss') ||
-          record.mode.name.toLowerCase().contains('naxarus') ||
-          record.mode.name.toLowerCase().contains('ourokhor') ||
-          record.mode.name.toLowerCase().contains('kaelen');
-      if (!isBoss) return false;
-      if (_selectedBossKey != 'all') {
-        if (_selectedBossKey == 'naraxus') {
-          final isNaraxus = (record.bossKey == 'naraxus') ||
-              (record.bossKey == null &&
-                  (record.mode.difficulty == RunDifficulty.naraxus ||
-                      record.mode.name.toLowerCase().contains('naxarus')));
-          if (!isNaraxus) return false;
-        } else {
-          final isTargetBoss = (record.bossKey == _selectedBossKey) ||
-              record.mode.name.toLowerCase().contains(_selectedBossKey);
-          if (!isTargetBoss) return false;
-        }
-      }
-      if (_selectedBossDifficulty != 'all') {
-        final isHard = record.mode == SurvivalMode.naraxusHard ||
-            record.mode.name.toLowerCase().contains('hard') ||
-            record.mode.name.toLowerCase().contains('difficult');
-        if (_selectedBossDifficulty == 'difficult' && !isHard) return false;
-        if (_selectedBossDifficulty == 'normal' && isHard) return false;
-      }
-      return true;
-    }
-
-    final isBoss =
-        record.mode.difficulty == RunDifficulty.naraxus ||
-        record.bossKey != null ||
-        record.mode.name.toLowerCase().contains('boss') ||
-        record.mode.name.toLowerCase().contains('naxarus') ||
-        record.mode.name.toLowerCase().contains('ourokhor') ||
-        record.mode.name.toLowerCase().contains('kaelen');
-    if (isBoss) return false;
-
-    if (record.mode.difficulty != _difficulty) {
-      return false;
-    }
-    if (!_showRouteFilter) {
-      return true;
-    }
-    return switch (_randomFilter) {
-      RandomFilter.both => true,
-      RandomFilter.fixed => !record.mode.random,
-      RandomFilter.random => record.mode.random,
-    };
+    return _isRecordForSelectedMode(record);
   }
 
   int _sortRecords(GameRecord a, GameRecord b) {
@@ -669,6 +478,24 @@ class _HistoryPageState extends State<HistoryPage> {
     MapEntry<HeroType, List<GameRecord>> a,
     MapEntry<HeroType, List<GameRecord>> b,
   ) {
+    final winsA = a.value.where(LeaderboardCalculator.isRunVictory).length;
+    final winsB = b.value.where(LeaderboardCalculator.isRunVictory).length;
+    final wilsonA = LeaderboardCalculator.computeWilsonScore(
+      winsA,
+      a.value.length,
+    );
+    final wilsonB = LeaderboardCalculator.computeWilsonScore(
+      winsB,
+      b.value.length,
+    );
+    final wilsonDiff = wilsonB.compareTo(wilsonA);
+    if (wilsonDiff != 0) return wilsonDiff;
+
+    final streakA = LeaderboardCalculator.computeActiveWinStreak(a.value);
+    final streakB = LeaderboardCalculator.computeActiveWinStreak(b.value);
+    final streakDiff = streakB.compareTo(streakA);
+    if (streakDiff != 0) return streakDiff;
+
     final avgScoreA = _averageScore(a.value);
     final avgScoreB = _averageScore(b.value);
     final scoreDiff = avgScoreB.compareTo(avgScoreA);
@@ -731,18 +558,152 @@ class _HistoryPageState extends State<HistoryPage> {
       }
     } else {
       var list = items as List<MapEntry<HeroType, List<GameRecord>>>;
-      // Always sort the podium using the 5 tie-breaking criteria
       list = list.toList()..sort(_compareHeroStats);
+
+      if (!_showTop3Only) {
+        final topList = list.take(10).toList();
+        if (topList.isEmpty) {
+          return _PodiumWidget(entries: entries);
+        }
+        return Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xff171a26),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.leaderboard_rounded,
+                    size: 15,
+                    color: _selectedMode.accentColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Top ${topList.length} Heroes • ${_selectedMode.label}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ...List.generate(topList.length, (i) {
+                final hero = topList[i].key;
+                final runs = topList[i].value;
+                final wins = runs.where(LeaderboardCalculator.isRunVictory).length;
+                final wilson = LeaderboardCalculator.computeWilsonScore(
+                  wins,
+                  runs.length,
+                );
+                final streak = LeaderboardCalculator.computeActiveWinStreak(runs);
+                final avgScore = _averageScore(runs);
+                final avgHp = _averageHp(runs);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        child: Text(
+                          '#${i + 1}',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w900,
+                            color: i < 3
+                                ? GameDesign.actionPrimary
+                                : Colors.white54,
+                          ),
+                        ),
+                      ),
+                      HeroAvatar(hero: hero, size: 22),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          hero.label,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        streak > 0
+                            ? '$wins/${runs.length} • 🔥$streak'
+                            : '$wins/${runs.length}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.white60,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => showWilsonScoreDetailsDialog(
+                          context,
+                          title: 'My Stats',
+                          hero: hero,
+                          wins: wins,
+                          total: runs.length,
+                          wilsonScore: wilson,
+                          activeStreak: streak,
+                          avgScore: avgScore,
+                          avgHp: avgHp,
+                          modeLabel: _selectedMode.label,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: GameDesign.actionPrimary.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: GameDesign.actionPrimary.withValues(alpha: 0.6),
+                            ),
+                          ),
+                          child: Text(
+                            '${(wilson * 100).round()}%',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: GameDesign.actionPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      }
 
       for (var i = 0; i < 3 && i < list.length; i++) {
         final r = list[i];
-        final avgStr = _formatNumber(_averageScore(r.value));
-        String p = '$avgStr avg';
-        String s = '${r.value.length} game${r.value.length > 1 ? 's' : ''}';
+        final wins = r.value.where(LeaderboardCalculator.isRunVictory).length;
+        final wilson = LeaderboardCalculator.computeWilsonScore(
+          wins,
+          r.value.length,
+        );
+        final streak = LeaderboardCalculator.computeActiveWinStreak(r.value);
+        String p = '${(wilson * 100).round()}% Wilson';
+        String s = streak > 0
+            ? '$wins/${r.value.length} • 🔥$streak'
+            : '$wins/${r.value.length} runs';
 
-        // Also show the best score in the secondary if sort is 'best', just for info
         if (_sort == HistorySort.best) {
-          s += ' - Max: ${r.value.first.score}';
+          s += ' • Max: ${r.value.first.score}';
         }
 
         entries.add(_PodiumEntry(r.key, p, s));
@@ -759,7 +720,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   List<Widget> _buildGroupedChildren(Map<HeroType, List<GameRecord>> grouped) {
-    final isBoss = _category == HistoryCategory.bosses;
+    final isBoss = _isBossMode;
     final unplayedHeroes =
         HeroType.values
             .where((h) => h != HeroType.benjamin && !grouped.containsKey(h))
@@ -771,6 +732,14 @@ class _HistoryPageState extends State<HistoryPage> {
         final hero = entry.key;
         final runs = entry.value;
         final expanded = _expandedHeroes.contains(hero);
+        final wins = runs.where(LeaderboardCalculator.isRunVictory).length;
+        final wilson = LeaderboardCalculator.computeWilsonScore(
+          wins,
+          runs.length,
+        );
+        final activeStreak = LeaderboardCalculator.computeActiveWinStreak(runs);
+        final avgScore = _averageScore(runs);
+        final avgHp = _averageHp(runs);
         return Column(
           children: [
             InkWell(
@@ -793,21 +762,41 @@ class _HistoryPageState extends State<HistoryPage> {
                         children: [
                           _deleteMode
                               ? Checkbox(
-                                  value: runs.every(
-                                    _selectedForDelete.contains,
-                                  ),
-                                  onChanged: (value) =>
-                                      _toggleRuns(runs, value),
+                                  value:
+                                      runs.any(_canDeleteRecord) &&
+                                      runs
+                                          .where(_canDeleteRecord)
+                                          .every(_selectedForDelete.contains),
+                                  onChanged: runs.any(_canDeleteRecord)
+                                      ? (value) => _toggleRuns(runs, value)
+                                      : null,
                                 )
                               : HeroAvatar(hero: hero, size: 36),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              hero.label,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  hero.label,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  activeStreak > 0
+                                      ? '$wins/${runs.length} • 🔥$activeStreak'
+                                      : '$wins/${runs.length}',
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    color: Colors.white60,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -843,20 +832,54 @@ class _HistoryPageState extends State<HistoryPage> {
                       ),
                     ),
                     Expanded(
-                      child: Builder(
-                        builder: (_) {
-                          final streak =
-                              LeaderboardCalculator.computeMyHistoryStreak(
-                                runs,
-                                isBossMode: isBoss,
-                              );
-                          return _HistoryMetricText(
-                            streak > 0 ? '🔥$streak' : '-',
-                            color: streak > 0
-                                ? Colors.orangeAccent
-                                : Colors.white38,
-                          );
-                        },
+                      child: Center(
+                        child: GestureDetector(
+                          onTap: () => showWilsonScoreDetailsDialog(
+                            context,
+                            title: 'My Stats',
+                            hero: hero,
+                            wins: wins,
+                            total: runs.length,
+                            wilsonScore: wilson,
+                            activeStreak: activeStreak,
+                            avgScore: avgScore,
+                            avgHp: avgHp,
+                            modeLabel: _selectedMode.label,
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: runs.length >=
+                                      LeaderboardCalculator.minQualifiedRuns
+                                  ? GameDesign.actionPrimary
+                                      .withValues(alpha: 0.16)
+                                  : Colors.white.withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: runs.length >=
+                                        LeaderboardCalculator.minQualifiedRuns
+                                    ? GameDesign.actionPrimary
+                                        .withValues(alpha: 0.65)
+                                    : Colors.white24,
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              '${(wilson * 100).round()}%',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                color: runs.length >=
+                                        LeaderboardCalculator.minQualifiedRuns
+                                    ? GameDesign.actionPrimary
+                                    : Colors.white54,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -1079,7 +1102,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Widget _buildHeroDetailSection(HeroType hero, List<GameRecord> runs) {
-    final isBoss = _category == HistoryCategory.bosses;
+    final isBoss = _isBossMode;
     return Container(
       margin: const EdgeInsets.only(top: 14),
       padding: const EdgeInsets.all(12),
@@ -1177,10 +1200,17 @@ class _HistoryPageState extends State<HistoryPage> {
                 color: const Color(0xffFFD700),
               ),
               _buildDetailChip(
-                icon: Icons.local_fire_department_rounded,
-                label: isBoss ? 'Win Streak' : '100-pt Streak',
+                icon: Icons.verified_rounded,
+                label: 'Wilson Score',
                 value:
-                    '${LeaderboardCalculator.computeMyHistoryStreak(runs, isBossMode: isBoss)}',
+                    '${(LeaderboardCalculator.computeWilsonScore(runs.where(LeaderboardCalculator.isRunVictory).length, runs.length) * 100).round()}%',
+                color: GameDesign.actionPrimary,
+              ),
+              _buildDetailChip(
+                icon: Icons.local_fire_department_rounded,
+                label: 'Active Streak',
+                value:
+                    '${LeaderboardCalculator.computeActiveWinStreak(runs)}',
                 color: Colors.orangeAccent,
               ),
             ],
@@ -1283,10 +1313,16 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
+  bool _canDeleteRecord(GameRecord record) {
+    if (AppSettings.instance.developerMode) return true;
+    return record.enemiesDefeated == 0;
+  }
+
   void _toggleRuns(List<GameRecord> runs, bool? value) {
+    final deletable = runs.where(_canDeleteRecord).toList();
     setState(() {
       if (value ?? false) {
-        _selectedForDelete.addAll(runs);
+        _selectedForDelete.addAll(deletable);
       } else {
         _selectedForDelete.removeAll(runs);
       }
@@ -1750,43 +1786,37 @@ class _HistoryHeaderRow extends StatelessWidget {
               ),
             ),
           ),
-          // 6. Streak
+          // 6. Wilson Score %
           Expanded(
             child: _HistoryHeaderItem(
-              tooltip: 'Best Streak',
+              tooltip: 'Wilson Score % (tap a score for details)',
               onTap: () {
-                final naxarusBestStreak =
-                    LeaderboardCalculator.computeUndefeatedStreak(naxarusRuns);
-                final mediumBestStreak =
-                    LeaderboardCalculator.computeConsecutive100Streak(
-                      mediumRuns.toList(),
-                    );
                 _openMultiStatSheet(
                   context,
-                  title: 'Best Streaks',
+                  title: 'Wilson Score & Streak',
                   iconWidget: const Icon(
-                    Icons.local_fire_department_rounded,
+                    Icons.verified_rounded,
                     size: 22,
-                    color: Colors.orangeAccent,
+                    color: GameDesign.actionPrimary,
                   ),
                   description:
-                      'Longest consecutive undefeated runs (Naxarus) and consecutive 100-point runs (Normal/Medium).',
+                      '95% Wilson lower-bound score balances win rate and run volume (minimum 3 runs to qualify for Top 3 / Top 10). Tap any hero\'s Wilson % pill to inspect their detailed stats.',
                   lines: [
                     _StatLineData(
-                      label: 'Naxarus longest undefeated streak',
-                      value: '$naxarusBestStreak win(s)',
+                      label: 'Min runs for Top 3 / Top 10',
+                      value: '${LeaderboardCalculator.minQualifiedRuns} runs',
                     ),
                     _StatLineData(
-                      label: 'Normal (Medium) consecutive 100-pt streak',
-                      value: '$mediumBestStreak run(s)',
+                      label: 'Active Streak',
+                      value: 'Current consecutive wins (🔥)',
                     ),
                   ],
                 );
               },
               child: const Icon(
-                Icons.local_fire_department_rounded,
+                Icons.verified_rounded,
                 size: 18,
-                color: Colors.orangeAccent,
+                color: GameDesign.actionPrimary,
               ),
             ),
           ),
@@ -2320,14 +2350,25 @@ class _HeroUnitRunCard extends StatelessWidget {
                 ),
               ),
               if (deleteMode)
-                SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: Checkbox(
-                    value: selected,
-                    onChanged: onToggleSelect,
-                  ),
-                )
+                (AppSettings.instance.developerMode ||
+                        record.enemiesDefeated == 0)
+                    ? SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: Checkbox(
+                          value: selected,
+                          onChanged: onToggleSelect,
+                        ),
+                      )
+                    : const Tooltip(
+                        message:
+                            'Runs with 1+ defeated enemy cannot be deleted',
+                        child: Icon(
+                          Icons.lock_outline_rounded,
+                          size: 16,
+                          color: Colors.white38,
+                        ),
+                      )
               else
                 Text(
                   '${record.date.day.toString().padLeft(2, '0')}/${record.date.month.toString().padLeft(2, '0')}/${record.date.year}',
@@ -2435,7 +2476,21 @@ class _RunDetailRow extends StatelessWidget {
           child: Row(
             children: [
               if (deleteMode)
-                Checkbox(value: selected, onChanged: onSelected)
+                (AppSettings.instance.developerMode ||
+                        record.enemiesDefeated == 0)
+                    ? Checkbox(value: selected, onChanged: onSelected)
+                    : const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: Tooltip(
+                          message:
+                              'Runs with 1+ defeated enemy cannot be deleted',
+                          child: Icon(
+                            Icons.lock_outline_rounded,
+                            size: 18,
+                            color: Colors.white38,
+                          ),
+                        ),
+                      )
               else if (showHero)
                 HeroAvatar(hero: record.hero, size: 30)
               else

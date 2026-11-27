@@ -11,13 +11,19 @@ enum HistoryMainTab {
 }
 
 enum CommunityLeaderboardMode {
-  normal('Normal', Icons.shield_rounded),
-  free('Free', Icons.all_inclusive_rounded),
-  naxarus('Naxarus', Icons.local_fire_department_rounded);
+  free('Free', Icons.all_inclusive_rounded, false),
+  medium('Medium', Icons.shield_rounded, false),
+  difficult('Difficult', Icons.military_tech_rounded, false),
+  naxarus('Naxarus', Icons.local_fire_department_rounded, true),
+  ourokhor('Ourokhor', Icons.whatshot_rounded, true);
 
-  const CommunityLeaderboardMode(this.label, this.icon);
+  const CommunityLeaderboardMode(this.label, this.icon, this.isBoss);
   final String label;
   final IconData icon;
+  final bool isBoss;
+
+  Color get accentColor =>
+      isBoss ? const Color(0xffff6b4a) : const Color(0xffe2e8f0);
 }
 
 class CountryOption {
@@ -126,6 +132,9 @@ class LeaderboardEntry {
     required this.maxScore,
     required this.streak,
     required this.isCurrentUser,
+    this.winsCount = 0,
+    this.wilsonScore = 0.0,
+    this.activeStreak = 0,
   });
 
   final int rank;
@@ -142,6 +151,9 @@ class LeaderboardEntry {
   final int maxScore;
   final int streak;
   final bool isCurrentUser;
+  final int winsCount;
+  final double wilsonScore;
+  final int activeStreak;
 
   LeaderboardEntry copyWithRank(int newRank) => LeaderboardEntry(
     rank: newRank,
@@ -158,6 +170,9 @@ class LeaderboardEntry {
     maxScore: maxScore,
     streak: streak,
     isCurrentUser: isCurrentUser,
+    winsCount: winsCount,
+    wilsonScore: wilsonScore,
+    activeStreak: activeStreak,
   );
 }
 
@@ -196,19 +211,29 @@ class LeaderboardCalculator {
     return true;
   }
 
+  static bool isOurokhorRunRecord(GameRecord record) {
+    if (!isBossRunRecord(record)) return false;
+    return record.bossKey == 'ourokhor' ||
+        record.mode.name.toLowerCase().contains('ourokhor');
+  }
+
   static bool matchesLeaderboardMode(
     GameRecord record,
     CommunityLeaderboardMode mode,
   ) {
     if (record.hero == HeroType.benjamin) return false;
     return switch (mode) {
-      CommunityLeaderboardMode.normal =>
-        !isBossRunRecord(record) &&
-            record.mode.difficulty == RunDifficulty.medium,
       CommunityLeaderboardMode.free =>
         !isBossRunRecord(record) &&
             record.mode.difficulty == RunDifficulty.free,
+      CommunityLeaderboardMode.medium =>
+        !isBossRunRecord(record) &&
+            record.mode.difficulty == RunDifficulty.medium,
+      CommunityLeaderboardMode.difficult =>
+        !isBossRunRecord(record) &&
+            record.mode.difficulty == RunDifficulty.hard,
       CommunityLeaderboardMode.naxarus => isNaxarusRunRecord(record),
+      CommunityLeaderboardMode.ourokhor => isOurokhorRunRecord(record),
     };
   }
 
@@ -246,16 +271,27 @@ class LeaderboardCalculator {
     return best;
   }
 
+  /// Computes the active consecutive win streak starting from the most recent run.
+  static int computeActiveWinStreak(List<GameRecord> runs) {
+    if (runs.isEmpty) return 0;
+    final chronological = [...runs]..sort((a, b) => a.date.compareTo(b.date));
+    var streak = 0;
+    for (var i = chronological.length - 1; i >= 0; i--) {
+      if (isRunVictory(chronological[i])) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
   /// Calcule la série pertinente pour une liste de runs selon le mode de classement.
   static int computeStreakForMode(
     List<GameRecord> runs,
     CommunityLeaderboardMode mode,
   ) {
-    return switch (mode) {
-      CommunityLeaderboardMode.normal => computeConsecutive100Streak(runs),
-      CommunityLeaderboardMode.free => computeUndefeatedStreak(runs),
-      CommunityLeaderboardMode.naxarus => computeUndefeatedStreak(runs),
-    };
+    return computeActiveWinStreak(runs);
   }
 
   static bool isRunVictory(GameRecord r) {
@@ -282,62 +318,55 @@ class LeaderboardCalculator {
     return max(1, wins - losses);
   }
 
+  static const int minQualifiedRuns = 3;
+
+  /// Lower bound of Wilson score confidence interval (z = 1.96, 95% confidence).
+  /// Balances win rate and sample size (volume of runs).
+  static double computeWilsonScore(int wins, int total) {
+    if (total <= 0 || wins <= 0) return 0.0;
+    final n = total.toDouble();
+    final p = (wins / n).clamp(0.0, 1.0);
+    const z = 1.96;
+    const z2 = z * z;
+    final denom = 1.0 + z2 / n;
+    final center = p + z2 / (2.0 * n);
+    final margin = z * sqrt((p * (1.0 - p) + z2 / (4.0 * n)) / n);
+    return ((center - margin) / denom).clamp(0.0, 1.0);
+  }
+
   static int compareEntries(
     LeaderboardEntry a,
     LeaderboardEntry b,
     CommunityLeaderboardMode mode,
   ) {
-    switch (mode) {
-      case CommunityLeaderboardMode.normal:
-        final maxDiff = b.maxScore.compareTo(a.maxScore);
-        if (maxDiff != 0) return maxDiff;
-        // Si le score de 100 est atteint, on met en avant et départage par la série !
-        if (a.maxScore >= 100 && b.maxScore >= 100) {
-          final streakDiff = b.streak.compareTo(a.streak);
-          if (streakDiff != 0) return streakDiff;
-        }
-        final avgDiff = b.avgScore.compareTo(a.avgScore);
-        if (avgDiff != 0) return avgDiff;
-        final countDiff = b.runsCount.compareTo(a.runsCount);
-        if (countDiff != 0) return countDiff;
-        final enemiesDiff = b.avgEnemies.compareTo(a.avgEnemies);
-        if (enemiesDiff != 0) return enemiesDiff;
-        final hpDiff = b.avgHp.compareTo(a.avgHp);
-        if (hpDiff != 0) return hpDiff;
-        final timeDiff = a.avgDurationSeconds.compareTo(b.avgDurationSeconds);
-        if (timeDiff != 0) return timeDiff;
-        return a.pseudo.toLowerCase().compareTo(b.pseudo.toLowerCase());
-
-      case CommunityLeaderboardMode.free:
-        final maxDiff = b.maxScore.compareTo(a.maxScore);
-        if (maxDiff != 0) return maxDiff;
-        final avgDiff = b.avgScore.compareTo(a.avgScore);
-        if (avgDiff != 0) return avgDiff;
-        final countDiff = b.runsCount.compareTo(a.runsCount);
-        if (countDiff != 0) return countDiff;
-        final enemiesDiff = b.avgEnemies.compareTo(a.avgEnemies);
-        if (enemiesDiff != 0) return enemiesDiff;
-        final hpDiff = b.avgHp.compareTo(a.avgHp);
-        if (hpDiff != 0) return hpDiff;
-        final timeDiff = a.avgDurationSeconds.compareTo(b.avgDurationSeconds);
-        if (timeDiff != 0) return timeDiff;
-        return a.pseudo.toLowerCase().compareTo(b.pseudo.toLowerCase());
-
-      case CommunityLeaderboardMode.naxarus:
-        final streakDiff = b.streak.compareTo(a.streak);
-        if (streakDiff != 0) return streakDiff;
-        final maxDiff = b.maxScore.compareTo(a.maxScore);
-        if (maxDiff != 0) return maxDiff;
-        final avgDiff = b.avgScore.compareTo(a.avgScore);
-        if (avgDiff != 0) return avgDiff;
-        final countDiff = b.runsCount.compareTo(a.runsCount);
-        if (countDiff != 0) return countDiff;
-        final hpDiff = b.avgHp.compareTo(a.avgHp);
-        if (hpDiff != 0) return hpDiff;
-        final timeDiff = a.avgDurationSeconds.compareTo(b.avgDurationSeconds);
-        if (timeDiff != 0) return timeDiff;
-        return a.pseudo.toLowerCase().compareTo(b.pseudo.toLowerCase());
+    final aQualified = a.runsCount >= minQualifiedRuns;
+    final bQualified = b.runsCount >= minQualifiedRuns;
+    if (aQualified != bQualified) {
+      return aQualified ? -1 : 1;
     }
+
+    final wilsonDiff = b.wilsonScore.compareTo(a.wilsonScore);
+    if (wilsonDiff != 0) return wilsonDiff;
+
+    final streakDiff = b.streak.compareTo(a.streak);
+    if (streakDiff != 0) return streakDiff;
+
+    final maxDiff = b.maxScore.compareTo(a.maxScore);
+    if (maxDiff != 0) return maxDiff;
+
+    final avgDiff = b.avgScore.compareTo(a.avgScore);
+    if (avgDiff != 0) return avgDiff;
+
+    final hpDiff = b.avgHp.compareTo(a.avgHp);
+    if (hpDiff != 0) return hpDiff;
+
+    final countDiff = b.runsCount.compareTo(a.runsCount);
+    if (countDiff != 0) return countDiff;
+
+    final timeDiff = a.avgDurationSeconds.compareTo(b.avgDurationSeconds);
+    if (timeDiff != 0) return timeDiff;
+
+    return a.pseudo.toLowerCase().compareTo(b.pseudo.toLowerCase());
   }
 
   /// Construit le Top 10 (1 seule entrée max par joueur) + la 11e ligne du joueur courant.
@@ -412,7 +441,10 @@ class LeaderboardCalculator {
         final avgDur = durValues.isEmpty
             ? 0.0
             : durValues.fold<int>(0, (s, v) => s + v) / durValues.length;
-        final streak = computeStreakForMode(hRuns, mode);
+        final activeStreak = computeActiveWinStreak(hRuns);
+        final streak = activeStreak;
+        final winsCount = hRuns.where(isRunVictory).length;
+        final wilsonScore = computeWilsonScore(winsCount, count);
 
         candidateHeroEntries.add(
           LeaderboardEntry(
@@ -430,6 +462,9 @@ class LeaderboardCalculator {
             maxScore: maxScore,
             streak: streak,
             isCurrentUser: uid == currentUserId,
+            winsCount: winsCount,
+            wilsonScore: wilsonScore,
+            activeStreak: activeStreak,
           ),
         );
       }
@@ -443,11 +478,17 @@ class LeaderboardCalculator {
     final ranked = <LeaderboardEntry>[];
     LeaderboardEntry? currentPlayerEntry;
 
-    for (var i = 0; i < bestEntryPerPlayer.length; i++) {
-      final entryWithRank = bestEntryPerPlayer[i].copyWithRank(i + 1);
-      ranked.add(entryWithRank);
-      if (entryWithRank.userId == currentUserId) {
-        currentPlayerEntry = entryWithRank;
+    var qualifiedRank = 0;
+    for (final entry in bestEntryPerPlayer) {
+      if (entry.runsCount >= minQualifiedRuns) {
+        qualifiedRank++;
+        final entryWithRank = entry.copyWithRank(qualifiedRank);
+        ranked.add(entryWithRank);
+        if (entryWithRank.userId == currentUserId) {
+          currentPlayerEntry = entryWithRank;
+        }
+      } else if (entry.userId == currentUserId) {
+        currentPlayerEntry = entry.copyWithRank(0);
       }
     }
 
@@ -1634,8 +1675,9 @@ class CommunityLeaderboardView extends StatefulWidget {
 }
 
 class _CommunityLeaderboardViewState extends State<CommunityLeaderboardView> {
-  CommunityLeaderboardMode _mode = CommunityLeaderboardMode.normal;
+  CommunityLeaderboardMode _mode = CommunityLeaderboardMode.medium;
   HeroType? _selectedHero; // null = All Heroes
+  bool _showTop3Only = false;
 
   @override
   Widget build(BuildContext context) {
@@ -1652,8 +1694,11 @@ class _CommunityLeaderboardViewState extends State<CommunityLeaderboardView> {
       allowedUserIds: widget.allowedUserIds,
     );
 
-    final isBossMode = _mode == CommunityLeaderboardMode.naxarus;
+    final isBossMode = _mode.isBoss;
     final shareEnabled = AppSettings.instance.shareStats;
+    final visibleEntries = _showTop3Only
+        ? result.top10.take(3).toList()
+        : result.top10;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1662,115 +1707,157 @@ class _CommunityLeaderboardViewState extends State<CommunityLeaderboardView> {
           widget.headerBanner!,
           const SizedBox(height: 10),
         ],
-        // Mode Selector (Normal | Free | Naxarus) & Hero Filter
-        Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: Container(
-                height: 40,
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: const Color(0xff1b1d29),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white12),
-                ),
-                child: Row(
-                  children: CommunityLeaderboardMode.values.map((m) {
-                    final selected = _mode == m;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _mode = m),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          decoration: BoxDecoration(
+        // 5 Modes on 1 single row: Free | Medium | Difficult | Naxarus | Ourokhor
+        Container(
+          height: 40,
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: const Color(0xff1b1d29),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Row(
+            children: CommunityLeaderboardMode.values.map((m) {
+              final selected = _mode == m;
+              final accent = m.accentColor;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _mode = m),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? accent
+                          : m.isBoss
+                          ? const Color(0xffff6b4a).withValues(alpha: 0.08)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            m.icon,
+                            size: 13,
                             color: selected
-                                ? const Color(0xffffe22d)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(7),
+                                ? Colors.black
+                                : m.isBoss
+                                ? const Color(0xffff8a65)
+                                : Colors.white70,
                           ),
-                          alignment: Alignment.center,
-                          child: Text(
+                          const SizedBox(width: 3),
+                          Text(
                             m.label,
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.w900,
-                              color: selected ? Colors.black : Colors.white70,
+                              color: selected
+                                  ? Colors.black
+                                  : m.isBoss
+                                  ? const Color(0xffffab91)
+                                  : Colors.white70,
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    );
-                  }).toList(),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Below mode bar: Hero selector on left + Description & Top 3/10 on right
+        Row(
+          children: [
+            SizedBox(
+              width: 150,
+              height: 38,
+              child: DropdownButtonFormField<HeroType?>(
+                initialValue: _selectedHero,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                ),
+                items: [
+                  const DropdownMenuItem<HeroType?>(
+                    value: null,
+                    child: Text(
+                      'All Heroes',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  ...playableHeroes.map(
+                    (h) => DropdownMenuItem<HeroType?>(
+                      value: h,
+                      child: Row(
+                        children: [
+                          HeroAvatar(hero: h, size: 18),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              h.label,
+                              style: const TextStyle(fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                onChanged: (val) => setState(() => _selectedHero = val),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                _modeDescription(_mode),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xffbbcbbb),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              flex: 2,
-              child: SizedBox(
-                height: 40,
-                child: DropdownButtonFormField<HeroType?>(
-                  initialValue: _selectedHero,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                  ),
-                  items: [
-                    const DropdownMenuItem<HeroType?>(
-                      value: null,
-                      child: Text(
-                        'All Heroes',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    ...playableHeroes.map(
-                      (h) => DropdownMenuItem<HeroType?>(
-                        value: h,
-                        child: Row(
-                          children: [
-                            HeroAvatar(hero: h, size: 20),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                h.label,
-                                style: const TextStyle(fontSize: 12),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                  onChanged: (val) => setState(() => _selectedHero = val),
-                ),
+            const SizedBox(width: 6),
+            _TopLimitToggle(
+              showTop3Only: _showTop3Only,
+              onChanged: (v) => setState(() => _showTop3Only = v),
+            ),
+            IconButton(
+              tooltip: 'How Wilson ranking works',
+              visualDensity: VisualDensity.compact,
+              onPressed: () => _showRankingInfoDialog(context),
+              icon: const Icon(
+                Icons.info_outline_rounded,
+                size: 18,
+                color: GameDesign.actionPrimary,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
-        Text(
-          _modeDescription(_mode),
-          style: const TextStyle(fontSize: 11.5, color: Color(0xffbbcbbb)),
-        ),
         const SizedBox(height: 10),
-        // Table Header matching History columns + Streak
+        // Table Header harmonized across My History, Community & Clans
         _LeaderboardTableHeader(isBossMode: isBossMode),
         const Divider(height: 10),
-        // Top 10 List
+        // Top 3 or Top 10 List
         Expanded(
-          child: result.top10.isEmpty
+          child: visibleEntries.isEmpty
               ? Center(
                   child: Text(
                     _selectedHero == null
@@ -1781,10 +1868,10 @@ class _CommunityLeaderboardViewState extends State<CommunityLeaderboardView> {
                   ),
                 )
               : ListView.separated(
-                  itemCount: result.top10.length,
+                  itemCount: visibleEntries.length,
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
-                    final entry = result.top10[index];
+                    final entry = visibleEntries[index];
                     return _LeaderboardRowWidget(
                       entry: entry,
                       mode: _mode,
@@ -1808,14 +1895,72 @@ class _CommunityLeaderboardViewState extends State<CommunityLeaderboardView> {
   }
 
   String _modeDescription(CommunityLeaderboardMode mode) {
+    final limitLabel = _showTop3Only ? 'Top 3' : 'Top 10';
     return switch (mode) {
-      CommunityLeaderboardMode.normal =>
-        'Top 10 by Best Score in Normal (Medium) mode — Consecutive 100-pt Streak 🔥 highlighted & breaks ties at 100 pts.',
       CommunityLeaderboardMode.free =>
-        'Top 10 by Maximum Score achieved in Free mode.',
+        '$limitLabel by Wilson Score (min 3 runs) in Free Minion Rush.',
+      CommunityLeaderboardMode.medium =>
+        '$limitLabel by Wilson Score (min 3 runs) in Medium Minion Rush.',
+      CommunityLeaderboardMode.difficult =>
+        '$limitLabel by Wilson Score (min 3 runs) in Difficult Minion Rush.',
       CommunityLeaderboardMode.naxarus =>
-        'Top 10 by Longest Undefeated Win Streak 🔥 against Naxarus.',
+        '$limitLabel by Wilson Score (min 3 runs) vs Naxarus Boss.',
+      CommunityLeaderboardMode.ourokhor =>
+        '$limitLabel by Wilson Score (min 3 runs) vs Ourokhor Boss.',
     };
+  }
+
+  void _showRankingInfoDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: GameDesign.obsidianBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(
+            color: GameDesign.actionPrimary.withValues(alpha: 0.7),
+            width: 1.5,
+          ),
+        ),
+        title: const Row(
+          children: [
+            Icon(
+              Icons.leaderboard_rounded,
+              color: GameDesign.actionPrimary,
+              size: 22,
+            ),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'How Ranking Works',
+                style: TextStyle(
+                  color: GameDesign.actionPrimary,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 17,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          '• 3-Run Minimum: You need at least 3 runs with a hero to enter the Top 10.\n\n'
+          '• Wilson Score (Win Rate + Volume): We use a 95% Wilson lower-bound score so both your win rate and consistency across multiple runs count. For example, 10/10 ranks higher than 3/3, and 18/20 beats 3/3.\n\n'
+          '• Tie-Breakers: Undefeated streak 🔥, best & average score, remaining HP ❤️, total runs, and clear time ⏱️.',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          GameActionButton(
+            label: 'GOT IT',
+            primary: true,
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -1874,11 +2019,11 @@ class _LeaderboardTableHeader extends StatelessWidget {
           ),
           const Expanded(
             child: Tooltip(
-              message: 'Streak',
+              message: 'Wilson Score % (tap a score for details)',
               child: Icon(
-                Icons.local_fire_department_rounded,
+                Icons.verified_rounded,
                 size: 17,
-                color: Colors.orangeAccent,
+                color: GameDesign.actionPrimary,
               ),
             ),
           ),
@@ -1886,6 +2031,184 @@ class _LeaderboardTableHeader extends StatelessWidget {
       ),
     );
   }
+}
+
+class _TopLimitToggle extends StatelessWidget {
+  const _TopLimitToggle({
+    required this.showTop3Only,
+    required this.onChanged,
+  });
+
+  final bool showTop3Only;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: const Color(0xff1b1d29),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildChip('Top 3', showTop3Only, () => onChanged(true)),
+          _buildChip('Top 10', !showTop3Only, () => onChanged(false)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChip(String label, bool active, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: active ? GameDesign.actionPrimary : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w900,
+            color: active ? Colors.black : Colors.white60,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+void showWilsonScoreDetailsDialog(
+  BuildContext context, {
+  required String title,
+  required HeroType hero,
+  required int wins,
+  required int total,
+  required double wilsonScore,
+  required int activeStreak,
+  required double avgScore,
+  required double avgHp,
+  required String modeLabel,
+}) {
+  final rawWinRate = total > 0 ? (wins / total * 100) : 0.0;
+  final wilsonPct = (wilsonScore * 100).toStringAsFixed(1);
+  final qualified = total >= LeaderboardCalculator.minQualifiedRuns;
+
+  showDialog<void>(
+    context: context,
+    builder: (dialogCtx) => AlertDialog(
+      backgroundColor: GameDesign.obsidianBg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: GameDesign.actionPrimary.withValues(alpha: 0.7),
+          width: 1.5,
+        ),
+      ),
+      title: Row(
+        children: [
+          HeroAvatar(hero: hero, size: 28),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: GameDesign.actionPrimary,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                  ),
+                ),
+                Text(
+                  '${hero.label} • $modeLabel',
+                  style: const TextStyle(
+                    color: Colors.white60,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xff1b1f2e),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Column(
+              children: [
+                _wilsonStatRow('Wilson Score (95% CI)', '$wilsonPct%', highlight: true),
+                const SizedBox(height: 6),
+                _wilsonStatRow('Wins / Total Runs', '$wins / $total (${rawWinRate.toStringAsFixed(0)}%)'),
+                const SizedBox(height: 6),
+                _wilsonStatRow('Active Win Streak', activeStreak > 0 ? '🔥 $activeStreak' : '0'),
+                const SizedBox(height: 6),
+                _wilsonStatRow('Average Score', '${avgScore.round()} pts'),
+                const SizedBox(height: 6),
+                _wilsonStatRow('Average Remaining HP', '${avgHp.round()} HP'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            qualified
+                ? 'Why $wilsonPct%? Wilson Score computes the 95% lower confidence bound of your win rate ($wins/$total). More victories with fewer losses raise this bound closer to your raw win rate.'
+                : 'Qualification: At least ${LeaderboardCalculator.minQualifiedRuns} runs are required to enter the Top 3 / Top 10 ($total/${LeaderboardCalculator.minQualifiedRuns} played).',
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        GameActionButton(
+          label: 'CLOSE',
+          primary: true,
+          onPressed: () => Navigator.of(dialogCtx).pop(),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _wilsonStatRow(String label, String value, {bool highlight = false}) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(fontSize: 12, color: Colors.white70),
+      ),
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w900,
+          color: highlight ? GameDesign.actionPrimary : Colors.white,
+        ),
+      ),
+    ],
+  );
 }
 
 class _LeaderboardRowWidget extends StatelessWidget {
@@ -1904,12 +2227,6 @@ class _LeaderboardRowWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final country = countryOptionForCode(entry.countryCode);
-    final highlightStreak =
-        (mode == CommunityLeaderboardMode.normal &&
-            entry.maxScore >= 100 &&
-            entry.streak > 0) ||
-        (mode == CommunityLeaderboardMode.naxarus && entry.streak > 0) ||
-        (mode == CommunityLeaderboardMode.free && entry.streak > 0);
 
     final bgColor = isPinnedFooter
         ? const Color(0xff262214)
@@ -1987,7 +2304,9 @@ class _LeaderboardRowWidget extends StatelessWidget {
                         ],
                       ),
                       Text(
-                        entry.hero.label,
+                        entry.activeStreak > 0
+                            ? '${entry.hero.label} • ${entry.winsCount}/${entry.runsCount} • 🔥${entry.activeStreak}'
+                            : '${entry.hero.label} • ${entry.winsCount}/${entry.runsCount}',
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 10.5,
@@ -2026,36 +2345,51 @@ class _LeaderboardRowWidget extends StatelessWidget {
           ),
           Expanded(
             child: Center(
-              child: highlightStreak
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.deepOrange.withValues(alpha: 0.28),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: Colors.orangeAccent,
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        '🔥${entry.streak}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.orangeAccent,
-                        ),
-                      ),
-                    )
-                  : Text(
-                      entry.streak > 0 ? '${entry.streak}' : '-',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.white38,
-                      ),
+              child: GestureDetector(
+                onTap: () => showWilsonScoreDetailsDialog(
+                  context,
+                  title: entry.pseudo,
+                  hero: entry.hero,
+                  wins: entry.winsCount,
+                  total: entry.runsCount,
+                  wilsonScore: entry.wilsonScore,
+                  activeStreak: entry.activeStreak,
+                  avgScore: entry.avgScore,
+                  avgHp: entry.avgHp,
+                  modeLabel: mode.label,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: entry.runsCount >=
+                            LeaderboardCalculator.minQualifiedRuns
+                        ? GameDesign.actionPrimary.withValues(alpha: 0.16)
+                        : Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: entry.runsCount >=
+                              LeaderboardCalculator.minQualifiedRuns
+                          ? GameDesign.actionPrimary.withValues(alpha: 0.65)
+                          : Colors.white24,
+                      width: 1,
                     ),
+                  ),
+                  child: Text(
+                    '${(entry.wilsonScore * 100).round()}%',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      color: entry.runsCount >=
+                              LeaderboardCalculator.minQualifiedRuns
+                          ? GameDesign.actionPrimary
+                          : Colors.white54,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],

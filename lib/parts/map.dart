@@ -703,7 +703,9 @@ class _MapPageState extends State<MapPage> {
   Future<void> _openPauseDialog() async {
     final action = await showDialog<_PauseAction>(
       context: context,
-      builder: (context) => const PauseRunDialog(),
+      builder: (context) => PauseRunDialog(
+        enemiesDefeated: widget.adventure.defeatedEnemies.length,
+      ),
     );
     if (!mounted || action == null) {
       return;
@@ -3249,10 +3251,13 @@ class _NaxarusTopHeroChip extends StatelessWidget {
 enum _PauseAction { resumeLater, abandon }
 
 class PauseRunDialog extends StatelessWidget {
-  const PauseRunDialog({super.key});
+  const PauseRunDialog({this.enemiesDefeated = 0, super.key});
+
+  final int enemiesDefeated;
 
   @override
   Widget build(BuildContext context) {
+    final hasProgress = enemiesDefeated > 0;
     return AlertDialog(
       titlePadding: const EdgeInsets.fromLTRB(24, 18, 8, 0),
       title: Row(
@@ -3265,9 +3270,12 @@ class PauseRunDialog extends StatelessWidget {
           ),
         ],
       ),
-      content: const Text(
-        'Do you want to leave this run and resume it later, or abandon it now? '
-        'Abandoning keeps your current score for statistics.',
+      content: Text(
+        hasProgress
+            ? 'Do you want to pause and resume later, or abandon now?\n\n'
+                'Abandoning stops your progression at the current step. Because at least 1 enemy was defeated ($enemiesDefeated), this run will be recorded as a defeat, will break your win streak, and cannot be deleted from history.'
+            : 'Do you want to pause and resume later, or abandon now?\n\n'
+                'Abandoning stops your progression at the current step. Since 0 enemies were defeated, this run can still be deleted from your history.',
       ),
       actions: [
         SizedBox(

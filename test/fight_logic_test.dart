@@ -3364,31 +3364,103 @@ void main() {
       final resNormal = LeaderboardCalculator.computeLeaderboard(
         profilesByUserId: profiles,
         allRecords: records,
-        mode: CommunityLeaderboardMode.normal,
+        mode: CommunityLeaderboardMode.medium,
         currentUserId: 'u1',
       );
 
-      // Only u2 and u1 are ranked (u_hidden is excluded, u1 appears only once)
+      // Only u1 and u2 are ranked (u_hidden is excluded, u1 appears only once)
       expect(resNormal.totalRankedPlayers, equals(2));
       expect(resNormal.top10.length, equals(2));
-      // u2 is #1 because both have maxScore 100, and u2 has streak 3 vs u1's streak 2
-      expect(resNormal.top10[0].userId, equals('u2'));
-      expect(resNormal.top10[0].streak, equals(3));
+      // u1 is #1 under Wilson Score (4/4 wins > 3/3 wins)
+      expect(resNormal.top10[0].userId, equals('u1'));
+      expect(resNormal.top10[0].activeStreak, equals(4));
       expect(resNormal.top10[0].rank, equals(1));
-      expect(resNormal.top10[1].userId, equals('u1'));
-      expect(resNormal.top10[1].streak, equals(2));
+      expect(resNormal.top10[1].userId, equals('u2'));
+      expect(resNormal.top10[1].activeStreak, equals(3));
       expect(resNormal.top10[1].rank, equals(2));
-      expect(resNormal.playerEntry?.rank, equals(2));
+      expect(resNormal.playerEntry?.rank, equals(1));
 
       // Filtering on an unplayed hero for u1 (e.g. Pyromancer) returns null playerEntry for 11th row notice
       final resUnplayed = LeaderboardCalculator.computeLeaderboard(
         profilesByUserId: profiles,
         allRecords: records,
-        mode: CommunityLeaderboardMode.normal,
+        mode: CommunityLeaderboardMode.medium,
         currentUserId: 'u1',
         heroFilter: HeroType.pyromancer,
       );
       expect(resUnplayed.playerEntry, isNull);
+
+      // 5-mode filter checks: Difficult & Ourokhor & active win streak
+      final difficultRecord = GameRecord(
+        hero: HeroType.barbare,
+        date: baseDate,
+        score: 100,
+        mode: SurvivalMode.hardFixed,
+        isVictory: true,
+      );
+      final ourokhorRecord = GameRecord(
+        hero: HeroType.shadowThief,
+        date: baseDate,
+        score: 100,
+        mode: SurvivalMode.naraxus,
+        bossKey: 'ourokhor',
+        isVictory: true,
+      );
+      expect(
+        LeaderboardCalculator.matchesLeaderboardMode(
+          difficultRecord,
+          CommunityLeaderboardMode.difficult,
+        ),
+        isTrue,
+      );
+      expect(
+        LeaderboardCalculator.matchesLeaderboardMode(
+          ourokhorRecord,
+          CommunityLeaderboardMode.ourokhor,
+        ),
+        isTrue,
+      );
+      expect(
+        LeaderboardCalculator.matchesLeaderboardMode(
+          ourokhorRecord,
+          CommunityLeaderboardMode.naxarus,
+        ),
+        isFalse,
+      );
+      final activeStreakRuns = [
+        GameRecord(
+          hero: HeroType.barbare,
+          date: baseDate,
+          score: 33,
+          mode: SurvivalMode.mediumFixed,
+          isVictory: true,
+        ),
+        GameRecord(
+          hero: HeroType.barbare,
+          date: baseDate.add(const Duration(hours: 1)),
+          score: 10,
+          mode: SurvivalMode.mediumFixed,
+          isVictory: false,
+        ),
+        GameRecord(
+          hero: HeroType.barbare,
+          date: baseDate.add(const Duration(hours: 2)),
+          score: 33,
+          mode: SurvivalMode.mediumFixed,
+          isVictory: true,
+        ),
+        GameRecord(
+          hero: HeroType.barbare,
+          date: baseDate.add(const Duration(hours: 3)),
+          score: 33,
+          mode: SurvivalMode.mediumFixed,
+          isVictory: true,
+        ),
+      ];
+      expect(
+        LeaderboardCalculator.computeActiveWinStreak(activeStreakRuns),
+        equals(2),
+      );
 
       // Clan ID and invite message generation
       final clanId = CommunityClanRepository.generateUniqueClanId();

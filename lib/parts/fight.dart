@@ -11038,7 +11038,9 @@ class _FightPageState extends State<FightPage> {
   Future<void> _openPauseDialog() async {
     final action = await showDialog<_PauseAction>(
       context: context,
-      builder: (context) => const PauseRunDialog(),
+      builder: (context) => PauseRunDialog(
+        enemiesDefeated: widget.adventure.defeatedEnemies.length,
+      ),
     );
     if (!mounted || action == null) {
       return;

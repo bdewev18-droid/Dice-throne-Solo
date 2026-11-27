@@ -12,6 +12,9 @@ Pour le build web local, si le port est occupÃ©, ouvrir un autre port.
 Chaque fois que tu fais un build local (web ou autre), tu DOIS OBLIGATOIREMENT incrementer la version du projet via `.\tool\set-version.ps1 -Version X -BuildNumber Y`.
 De plus, si tu as modifiÃ© les fichiers de l'admin web (`web/admin/*`), tu DOIS incrÃ©menter manuellement la version dans `web/admin/index.html` ET ajouter un paramÃ¨tre de cache buster aux appels CSS/JS (ex: `?v=1.5.6`) pour forcer le rafraÃ®chissement.
 
+## Règle de déploiement APK + Pages (`version.json`)
+À chaque déploiement de `deploy-pages.yml` après un bump de version, tu DOIS **toujours lancer `build-apk.yml` en même temps** (ou ne jamais publier `web/version.json` avec un `buildNumber` supérieur à celui du dernier APK publié sur GitHub Releases `releases/latest`), sinon l'application Android télécharge l'ancien APK en boucle infinie.
+
 ## Agent Spécifique: Nina (UX/UI Designer)
 Nina est notre experte Product Designer. Chaque fois qu'une tâche implique une refonte UI, une adaptation d'interface ou des choix d'expérience utilisateur (UX), tu DOIS faire appel à Nina (ou assumer son persona).
 Directives de Nina :
