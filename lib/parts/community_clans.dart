@@ -11,9 +11,9 @@ enum HistoryMainTab {
 }
 
 enum CommunityLeaderboardMode {
-  free('Free', Icons.all_inclusive_rounded, false),
   medium('Medium', Icons.shield_rounded, false),
   difficult('Difficult', Icons.military_tech_rounded, false),
+  free('Free', Icons.all_inclusive_rounded, false),
   naxarus('Naxarus', Icons.local_fire_department_rounded, true),
   ourokhor('Ourokhor', Icons.whatshot_rounded, true);
 
@@ -21,6 +21,8 @@ enum CommunityLeaderboardMode {
   final String label;
   final IconData icon;
   final bool isBoss;
+
+  int get minRunsRequired => this == CommunityLeaderboardMode.free ? 1 : 3;
 
   Color get accentColor =>
       isBoss ? const Color(0xffff6b4a) : const Color(0xffe2e8f0);
@@ -339,8 +341,9 @@ class LeaderboardCalculator {
     LeaderboardEntry b,
     CommunityLeaderboardMode mode,
   ) {
-    final aQualified = a.runsCount >= minQualifiedRuns;
-    final bQualified = b.runsCount >= minQualifiedRuns;
+    final minRuns = mode.minRunsRequired;
+    final aQualified = a.runsCount >= minRuns;
+    final bQualified = b.runsCount >= minRuns;
     if (aQualified != bQualified) {
       return aQualified ? -1 : 1;
     }
@@ -436,6 +439,41 @@ class LeaderboardCalculator {
         final hero = hEntry.key;
         final hRuns = hEntry.value;
         final count = hRuns.length;
+
+        if (mode == CommunityLeaderboardMode.free) {
+          final sortedRuns = [...hRuns]..sort((a, b) {
+              final sDiff = b.score.compareTo(a.score);
+              if (sDiff != 0) return sDiff;
+              final hpDiff = (b.healthRemaining ?? 0)
+                  .compareTo(a.healthRemaining ?? 0);
+              if (hpDiff != 0) return hpDiff;
+              return a.duration.inSeconds.compareTo(b.duration.inSeconds);
+            });
+          final best = sortedRuns.first;
+          candidateHeroEntries.add(
+            LeaderboardEntry(
+              rank: 0,
+              userId: uid,
+              pseudo: profile.displayPseudo,
+              countryCode: profile.countryCode,
+              favoriteHero: profile.favoriteHero,
+              hero: hero,
+              runsCount: count,
+              avgEnemies: best.enemiesDefeated.toDouble(),
+              avgHp: (best.healthRemaining ?? 0).toDouble(),
+              avgDurationSeconds: best.duration.inSeconds.toDouble(),
+              avgScore: best.score.toDouble(),
+              maxScore: best.score,
+              streak: computeActiveWinStreak(hRuns),
+              isCurrentUser: uid == currentUserId,
+              winsCount: hRuns.where(isRunVictory).length,
+              wilsonScore: 1.0,
+              activeStreak: computeActiveWinStreak(hRuns),
+            ),
+          );
+          continue;
+        }
+
         final maxScore = hRuns
             .map((r) => r.score)
             .reduce((a, b) => a > b ? a : b);
@@ -495,8 +533,9 @@ class LeaderboardCalculator {
     LeaderboardEntry? currentPlayerEntry;
 
     var qualifiedRank = 0;
+    final minRuns = mode.minRunsRequired;
     for (final entry in bestEntryPerPlayer) {
-      if (entry.runsCount >= minQualifiedRuns) {
+      if (entry.runsCount >= minRuns) {
         qualifiedRank++;
         final entryWithRank = entry.copyWithRank(qualifiedRank);
         ranked.add(entryWithRank);
@@ -1788,75 +1827,66 @@ class _CommunityLeaderboardViewState extends State<CommunityLeaderboardView> {
           ),
         ),
         const SizedBox(height: 8),
-        // Below mode bar: Hero selector on left + Description & Top 3/10 on right
+        // Below mode bar: Hero selector + Top 3/10 + Info
         Row(
           children: [
-            SizedBox(
-              width: 150,
-              height: 38,
-              child: DropdownButtonFormField<HeroType?>(
-                initialValue: _selectedHero,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                ),
-                items: [
-                  const DropdownMenuItem<HeroType?>(
-                    value: null,
-                    child: Text(
-                      'All Heroes',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  ...playableHeroes.map(
-                    (h) => DropdownMenuItem<HeroType?>(
-                      value: h,
-                      child: Row(
-                        children: [
-                          HeroAvatar(hero: h, size: 18),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              h.label,
-                              style: const TextStyle(fontSize: 12),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-                onChanged: (val) => setState(() => _selectedHero = val),
-              ),
-            ),
-            const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                _modeDescription(_mode),
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xffbbcbbb),
+              child: SizedBox(
+                height: 38,
+                child: DropdownButtonFormField<HeroType?>(
+                  initialValue: _selectedHero,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                  ),
+                  items: [
+                    const DropdownMenuItem<HeroType?>(
+                      value: null,
+                      child: Text(
+                        'All Heroes',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    ...playableHeroes.map(
+                      (h) => DropdownMenuItem<HeroType?>(
+                        value: h,
+                        child: Row(
+                          children: [
+                            HeroAvatar(hero: h, size: 18),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                h.label,
+                                style: const TextStyle(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  onChanged: (val) => setState(() => _selectedHero = val),
                 ),
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             _TopLimitToggle(
               showTop3Only: _showTop3Only,
               onChanged: (v) => setState(() => _showTop3Only = v),
             ),
             IconButton(
-              tooltip: 'How Wilson ranking works',
+              tooltip: 'How ranking works',
               visualDensity: VisualDensity.compact,
               onPressed: () => _showRankingInfoDialog(context),
               icon: const Icon(
@@ -1866,6 +1896,14 @@ class _CommunityLeaderboardViewState extends State<CommunityLeaderboardView> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          _modeDescription(_mode),
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xffbbcbbb),
+          ),
         ),
         const SizedBox(height: 10),
         // Table Header harmonized across My History, Community & Clans
@@ -1914,15 +1952,15 @@ class _CommunityLeaderboardViewState extends State<CommunityLeaderboardView> {
     final limitLabel = _showTop3Only ? 'Top 3' : 'Top 10';
     return switch (mode) {
       CommunityLeaderboardMode.free =>
-        '$limitLabel by Average Score (min 3 runs) in Free Minion Rush.',
+        '$limitLabel by Best Run Score (no 3-run minimum) in Free Minion Rush.',
       CommunityLeaderboardMode.medium =>
-        '$limitLabel by Average Score (min 3 runs) in Medium Minion Rush.',
+        '$limitLabel by Average Score (min 3 runs required) in Medium Minion Rush.',
       CommunityLeaderboardMode.difficult =>
-        '$limitLabel by Average Score (min 3 runs) in Difficult Minion Rush.',
+        '$limitLabel by Average Score (min 3 runs required) in Difficult Minion Rush.',
       CommunityLeaderboardMode.naxarus =>
-        '$limitLabel by Wilson Score (min 3 runs) vs Naxarus Boss.',
+        '$limitLabel by Wilson Score (min 3 runs required) vs Naxarus Boss.',
       CommunityLeaderboardMode.ourokhor =>
-        '$limitLabel by Wilson Score (min 3 runs) vs Ourokhor Boss.',
+        '$limitLabel by Wilson Score (min 3 runs required) vs Ourokhor Boss.',
     };
   }
 
@@ -2004,12 +2042,12 @@ class _LeaderboardTableHeader extends StatelessWidget {
           ),
           const Expanded(
             child: Text(
-              'NB',
+              'RUN',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Color(0xffffe22d),
+                color: Colors.white,
                 fontWeight: FontWeight.w900,
-                fontSize: 12,
+                fontSize: 11.5,
               ),
             ),
           ),
@@ -2030,34 +2068,46 @@ class _LeaderboardTableHeader extends StatelessWidget {
           const Expanded(
             child: Icon(Icons.timer, size: 16, color: Color(0xffffe22d)),
           ),
-          const Expanded(
-            child: Tooltip(
-              message: 'Best Score',
-              child: Icon(Icons.emoji_events, size: 16, color: Colors.white60),
+          if (isBossMode) ...[
+            const Expanded(
+              child: Tooltip(
+                message: 'Average Score',
+                child: Text(
+                  'AVG',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ),
             ),
-          ),
-          Expanded(
-            child: Tooltip(
-              message: isBossMode
-                  ? 'Wilson Score % (tap a score for details)'
-                  : 'Average Score (primary ranking stat)',
-              child: isBossMode
-                  ? const Icon(
-                      Icons.verified_rounded,
-                      size: 17,
-                      color: GameDesign.actionPrimary,
-                    )
-                  : const Text(
-                      'AVG',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xffffe22d),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 11.5,
-                      ),
-                    ),
+            const Expanded(
+              child: Tooltip(
+                message: 'Wilson Score % (tap a score for details)',
+                child: Icon(
+                  Icons.verified_rounded,
+                  size: 17,
+                  color: GameDesign.actionPrimary,
+                ),
+              ),
             ),
-          ),
+          ] else
+            const Expanded(
+              child: Tooltip(
+                message: 'Average Score (primary ranking stat)',
+                child: Text(
+                  'AVG',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -2265,13 +2315,8 @@ class _LeaderboardRowWidget extends StatelessWidget {
         ? const Color(0xff2c2612)
         : Colors.transparent;
 
-    final qualified =
-        entry.runsCount >= LeaderboardCalculator.minQualifiedRuns;
-
-    return Opacity(
-      opacity: qualified ? 1.0 : 0.48,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(8),
@@ -2373,96 +2418,71 @@ class _LeaderboardRowWidget extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
-            child: _HistoryMetricText(
-              entry.maxScore.toString(),
-              color: Colors.white70,
+          if (isBossMode) ...[
+            Expanded(
+              child: _HistoryMetricText(
+                entry.avgScore.toStringAsFixed(1),
+                color: Colors.white,
+              ),
             ),
-          ),
-          Expanded(
-            child: Center(
-              child: isBossMode
-                  ? GestureDetector(
-                      onTap: () => showWilsonScoreDetailsDialog(
-                        context,
-                        title: entry.pseudo,
-                        hero: entry.hero,
-                        wins: entry.winsCount,
-                        total: entry.runsCount,
-                        wilsonScore: entry.wilsonScore,
-                        activeStreak: entry.activeStreak,
-                        avgScore: entry.avgScore,
-                        avgHp: entry.avgHp,
-                        modeLabel: mode.label,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 5,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: entry.runsCount >=
-                                  LeaderboardCalculator.minQualifiedRuns
-                              ? GameDesign.actionPrimary.withValues(alpha: 0.16)
-                              : Colors.white.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: entry.runsCount >=
-                                    LeaderboardCalculator.minQualifiedRuns
-                                ? GameDesign.actionPrimary
-                                    .withValues(alpha: 0.65)
-                                : Colors.white24,
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          '${(entry.wilsonScore * 100).round()}%',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            color: entry.runsCount >=
-                                    LeaderboardCalculator.minQualifiedRuns
-                                ? GameDesign.actionPrimary
-                                : Colors.white54,
-                          ),
-                        ),
-                      ),
-                    )
-                  : Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: entry.runsCount >=
-                                LeaderboardCalculator.minQualifiedRuns
-                            ? const Color(0xffffe22d).withValues(alpha: 0.16)
-                            : Colors.white.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: entry.runsCount >=
-                                  LeaderboardCalculator.minQualifiedRuns
-                              ? const Color(0xffffe22d).withValues(alpha: 0.65)
-                              : Colors.white24,
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        _formatNumber(entry.avgScore),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          color: entry.runsCount >=
-                                  LeaderboardCalculator.minQualifiedRuns
-                              ? const Color(0xffffe22d)
-                              : Colors.white54,
-                        ),
+            Expanded(
+              child: Center(
+                child: GestureDetector(
+                  onTap: () => showWilsonScoreDetailsDialog(
+                    context,
+                    title: entry.pseudo,
+                    hero: entry.hero,
+                    wins: entry.winsCount,
+                    total: entry.runsCount,
+                    wilsonScore: entry.wilsonScore,
+                    activeStreak: entry.activeStreak,
+                    avgScore: entry.avgScore,
+                    avgHp: entry.avgHp,
+                    modeLabel: mode.label,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: GameDesign.actionPrimary.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: GameDesign.actionPrimary.withValues(alpha: 0.65),
+                        width: 1,
                       ),
                     ),
+                    child: Text(
+                      '${(entry.wilsonScore * 100).round()}%',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        color: GameDesign.actionPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
+          ] else
+            Expanded(
+              child: Center(
+                child: Text(
+                  mode == CommunityLeaderboardMode.free
+                      ? '${entry.maxScore}\npts'
+                      : '${entry.avgScore.toStringAsFixed(1)}\npts',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    height: 1.1,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
         ],
-      ),
       ),
     );
   }
@@ -2563,7 +2583,9 @@ class _Pinned11thPlayerRow extends StatelessWidget {
                 ),
                 if (playerEntry != null)
                   Text(
-                    'Rank #${playerEntry!.rank}',
+                    playerEntry!.rank > 0
+                        ? 'Rank #${playerEntry!.rank}'
+                        : 'Not ranked yet',
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
@@ -2573,6 +2595,20 @@ class _Pinned11thPlayerRow extends StatelessWidget {
               ],
             ),
           ),
+          if (playerEntry != null &&
+              mode != CommunityLeaderboardMode.free &&
+              playerEntry!.runsCount < mode.minRunsRequired)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 6, 10, 0),
+              child: Text(
+                '${playerEntry!.hero.label}: ${playerEntry!.runsCount}/${mode.minRunsRequired} runs (3 runs required to enter the ranking)',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.orangeAccent,
+                ),
+              ),
+            ),
           if (!shareEnabled)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
