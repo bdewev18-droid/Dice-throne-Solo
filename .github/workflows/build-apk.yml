@@ -49,11 +49,21 @@ jobs:
       - name: Build release APK
         run: timeout 900s flutter build apk --release --no-pub
 
+      - name: Build release AAB (Play Store)
+        run: timeout 900s flutter build appbundle --release --no-pub
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: dt-solo-quest-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dt-solo-quest-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
       - name: Extract version from pubspec.yaml
@@ -72,7 +82,10 @@ jobs:
             Version : **v${{ steps.get_version.outputs.version }}**
             
             Téléchargement direct de l'APK : [app-release.apk](https://github.com/bdewev18-droid/Dice-throne-Solo/releases/latest/download/app-release.apk)
-          files: build/app/outputs/flutter-apk/app-release.apk
+            Bundle Play Store (AAB) : [app-release.aab](https://github.com/bdewev18-droid/Dice-throne-Solo/releases/latest/download/app-release.aab)
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
